@@ -62,6 +62,23 @@ A web application that helps job seekers optimize their resumes for specific job
 4. Claude AI tailors your resume to highlight relevant experience and skills
 5. Download your tailored resume
 
+## Recent Updates
+
+### Job Parser Enhancements
+- Improved structure detection for job listings
+- Enhanced parsing of "About the job" sections
+- Better extraction of required skills and qualifications
+- Support for more job posting formats
+
+### Claude API Integration
+- Improved error handling for API requests
+- Enhanced prompt engineering for better tailoring results
+- Structured logging for API interactions
+
+### User Interface
+- Aligned Resume and Job Requirements panels side by side for better comparison
+- Added HTTPS support using self-signed certificates
+
 ## License
 
 MIT 
