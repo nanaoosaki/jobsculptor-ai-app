@@ -45,19 +45,6 @@
                         <div id="uploadStatus" class="mt-3"></div>
                     </div>
                 </div>
-                
-                <!-- User Resume Parsed Panel -->
-                <div class="card mb-4">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="card-title mb-0">User Resume Parsed</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="userResumeParsed" class="scrollable-section p-3">
-                            <!-- This content will be filled by JavaScript -->
-                            <p class="text-muted">Resume content will appear here after uploading.</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 2 - Enter Job URL -->
@@ -96,10 +83,26 @@
             </div>
         </div>
         
-        <!-- Job Requirements Panel (between Step 2 and Step 3) -->
-        <div class="row">
-            <div class="col-md-8 offset-md-4">
-                <div class="card job-requirements-card">
+        <!-- Resume and Job Requirements Row (aligned at top) -->
+        <div class="row mb-4">
+            <!-- User Resume Parsed Panel -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">User Resume Parsed</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="userResumeParsed" class="scrollable-section p-3">
+                            <!-- This content will be filled by JavaScript -->
+                            <p class="text-muted">Resume content will appear here after uploading.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Job Requirements Panel -->
+            <div class="col-md-6">
+                <div class="card h-100">
                     <div class="card-header bg-info text-white">
                         <h5 class="card-title mb-0">Job Requirements</h5>
                     </div>
@@ -142,3 +145,4 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+

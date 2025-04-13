@@ -92,7 +92,7 @@ header {
   border: 1px solid #ddd;
 }
 
-#jobRequirements {
+#jobRequirements, #userResumeParsed {
   min-height: 150px;
 }
 
@@ -124,6 +124,20 @@ header {
 .scrollable-section::-webkit-scrollbar-thumb {
   background-color: var(--primary-color);
   border-radius: 4px;
+}
+
+/* Top row cards styling */
+.row.mb-4 .card {
+  margin-bottom: 0;
+  height: 100%;
+}
+
+.row.mb-4 .card-body {
+  padding: 0;
+}
+
+.row.mb-4 .scrollable-section {
+  max-height: 250px;
 }
 
 /* Job Requirements styling */
@@ -199,6 +213,10 @@ header {
   
   .job-requirements-card {
     margin-top: 0;
+  }
+  
+  .row.mb-4 .scrollable-section {
+    max-height: 200px;
   }
 }
 

@@ -36,11 +36,22 @@ This application helps users tailor their resumes to match specific job listings
 6. Fixed regex character range error in job_parser.py that was causing LinkedIn job parsing to fail
 7. Fixed demo mode vs. API mode by ensuring the Claude API key is properly configured
 8. Added .env and sensitive files to .gitignore to prevent exposing API keys
+9. Improved UI layout by aligning "User Resume Parsed" and "Job Requirements" panels side by side
+10. Made HTTP/HTTPS dynamic based on certificate availability
+11. Ensured proper dependency installation for PDF and DOCX processing
+
+## UI Improvements
+- Reorganized the layout to show the "User Resume Parsed" and "Job Requirements" panels side by side in a dedicated row
+- Enhanced card styling for consistent heights and better visual alignment
+- Ensured responsive design for mobile devices
+- Added proper scrolling behavior for content overflow
+- Maintained the original step-based workflow with clear visual separation
 
 ## Latest Status
 - Application is successfully parsing LinkedIn job listings
 - Claude API integration is working for resume tailoring
 - Resume preview is showing the tailored content
+- UI has been improved for better user experience
 - All known blocking issues have been resolved
 
 ## Environment
@@ -53,4 +64,5 @@ This application helps users tailor their resumes to match specific job listings
 - Requires Claude API key in .env file
 - Flask SECRET_KEY must be set in .env
 - Run with `python app.py`
-- Accessible at http://localhost:5000 
+- Accessible at http://localhost:5000 or https://localhost:5000 if certificates are available
+- Required dependencies: flask, python-dotenv, requests, beautifulsoup4, python-docx, werkzeug, docx2txt, PyPDF2, pdfminer.six, flask-cors 
