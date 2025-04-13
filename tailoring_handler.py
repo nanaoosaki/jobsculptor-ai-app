@@ -4,6 +4,7 @@ import traceback
 import logging
 from flask import request, jsonify, current_app
 from claude_integration import tailor_resume_with_claude, generate_resume_preview
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -102,42 +103,26 @@ def setup_tailoring_routes(app):
             api_key = current_app.config.get('CLAUDE_API_KEY', 'demo-api-key')
             api_url = current_app.config.get('CLAUDE_API_URL', 'https://api.anthropic.com/v1/messages')
             
-            # Check if using demo key and provide appropriate response
+            # Fallback to environment variable if not in config
             if api_key == 'demo-api-key' or not api_key:
-                logger.info("Using demo mode (no API key)")
-                try:
-                    # Generate a mock preview without actually calling Claude API
-                    from docx import Document
-                    doc = Document(resume_path)
-                    preview_html = generate_resume_preview(resume_path)
-                    
-                    # Create a copy of the formatted resume as the "tailored" version
-                    import shutil
-                    tailored_filename = resume_filename.replace('_formatted.docx', '_tailored.docx')
-                    tailored_path = os.path.join(current_app.config['UPLOAD_FOLDER'], tailored_filename)
-                    shutil.copy2(resume_path, tailored_path)
-                    
-                    logger.info(f"Demo mode: Created tailored resume at {tailored_path}")
-                    
-                    response_data = {
-                        'success': True,
-                        'filename': tailored_filename,
-                        'preview': preview_html,
-                        'message': 'Demo mode: Resume copied without actual tailoring. To enable real tailoring, please add a Claude API key to the .env file.'
-                    }
-                    
-                    logger.info("Demo mode: Returning success response")
-                    return jsonify(response_data), 200
-                    
-                except Exception as e:
-                    logger.error(f"Error in demo mode: {str(e)}")
-                    logger.error(traceback.format_exc())
-                    return jsonify({
-                        'success': False,
-                        'error': f'Error in demo mode: {str(e)}'
-                    }), 500
+                # Try to get API key from environment directly
+                # Reload .env file to ensure latest values
+                load_dotenv(override=True)
+                env_api_key = os.environ.get('CLAUDE_API_KEY')
+                
+                if env_api_key and env_api_key.startswith('sk-ant'):
+                    logger.info(f"Using API key from environment: {env_api_key[:5]}...")
+                    api_key = env_api_key
             
-            # Tailor the resume with actual API key
+            # Check if we have a valid API key now
+            if api_key == 'demo-api-key' or not api_key or not api_key.startswith('sk-ant'):
+                logger.error("No valid Claude API key found - cannot tailor resume")
+                return jsonify({
+                    'success': False,
+                    'error': 'No valid Claude API key found. Please add a Claude API key to the .env file.'
+                }), 400
+            
+            # Tailor the resume with API key
             logger.info("Using Claude API for tailoring")
             try:
                 tailored_filename, tailored_path = tailor_resume_with_claude(

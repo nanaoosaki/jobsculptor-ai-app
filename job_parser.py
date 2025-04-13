@@ -5,7 +5,7 @@ import json
 
 def parse_linkedin_job(url):
     """
-    Parse a LinkedIn job listing URL to extract key requirements
+    Parse a LinkedIn job listing URL to extract key requirements and all sections
     """
     try:
         # Make request to the job listing page
@@ -33,23 +33,27 @@ def parse_linkedin_job(url):
         
         # Extract job description
         description_elem = soup.find('div', class_='show-more-less-html__markup')
-        description = description_elem.text.strip() if description_elem else ''
+        full_description = description_elem.text.strip() if description_elem else ''
         
-        # Extract requirements from description with improved patterns
-        requirements = extract_linkedin_requirements(description)
+        # Extract structured sections from the full description
+        sections = extract_job_sections(full_description)
         
-        # If no requirements found with the improved method, fall back to the original method
+        # Extract requirements and skills using existing functions
+        requirements = extract_linkedin_requirements(full_description)
+        
+        # If no requirements found with the improved method, try other approaches
         if not requirements:
-            requirements = extract_requirements_from_description(description)
+            requirements = extract_requirements_from_description(full_description)
         
         # Extract skills
-        skills = extract_skills_from_description(description)
+        skills = extract_skills_from_description(full_description)
         
         return {
             'success': True,
             'job_title': job_title,
             'company': company,
-            'description': description,
+            'full_description': full_description,
+            'sections': sections,
             'requirements': requirements,
             'skills': skills
         }
@@ -59,6 +63,72 @@ def parse_linkedin_job(url):
             'success': False,
             'error': f'Error parsing job listing: {str(e)}'
         }
+
+def extract_job_sections(description):
+    """
+    Extract sections from LinkedIn job description
+    """
+    sections = {}
+    
+    # Common section names and patterns
+    section_patterns = [
+        (r"About the job\s*(?::|\.|\n)", "About the job"),
+        (r"Team Description\s*(?::|\.|\n)", "Team Description"),
+        (r"In this role,?\s*you will\s*(?::|\.|\n)", "In this role"),
+        (r"Responsibilities\s*(?::|\.|\n)", "Responsibilities"),
+        (r"Requirements\s*(?::|\.|\n)", "Requirements"),
+        (r"Qualifications\s*(?::|\.|\n)", "Qualifications"),
+        (r"Basic Qualifications\s*(?::|\.|\n)", "Basic Qualifications"),
+        (r"Preferred Qualifications\s*(?::|\.|\n)", "Preferred Qualifications"),
+        (r"The Ideal Candidate is\s*(?::|\.|\n)", "Ideal Candidate"),
+        (r"Our Tech Stack\s*(?::|\.|\n)", "Tech Stack"),
+        (r"Benefits\s*(?::|\.|\n)", "Benefits"),
+        (r"About the team\s*(?::|\.|\n)", "About the team"),
+        (r"What You'll Need\s*(?::|\.|\n)", "What You'll Need"),
+        (r"What You'll Do\s*(?::|\.|\n)", "What You'll Do"),
+        (r"Required Skills\s*(?::|\.|\n)", "Required Skills"),
+        (r"Required Experience\s*(?::|\.|\n)", "Required Experience"),
+        (r"Required Education\s*(?::|\.|\n)", "Required Education")
+    ]
+    
+    # Find all potential section headings
+    section_matches = []
+    for pattern, section_name in section_patterns:
+        matches = re.finditer(pattern, description, re.IGNORECASE)
+        for match in matches:
+            section_matches.append((match.start(), section_name))
+    
+    # Sort matches by position
+    section_matches.sort(key=lambda x: x[0])
+    
+    # Extract content between section headings
+    for i, (pos, section_name) in enumerate(section_matches):
+        # Find the end of the current section (start of next section or end of text)
+        if i < len(section_matches) - 1:
+            next_pos = section_matches[i+1][0]
+            section_text = description[pos:next_pos].strip()
+        else:
+            section_text = description[pos:].strip()
+        
+        # Remove the heading from the section text
+        section_heading_match = re.search(r"^.*?(?::|\.|\n)", section_text)
+        if section_heading_match:
+            section_text = section_text[section_heading_match.end():].strip()
+        
+        sections[section_name] = section_text
+    
+    # If no sections were found, add the entire description as "Full Description"
+    if not sections:
+        sections["Full Description"] = description
+    
+    # Special handling for "About the job" if it wasn't found
+    if "About the job" not in sections and description:
+        # Try to get first paragraph or section
+        first_paragraph_match = re.search(r"^(.*?)(?:\n\n|\n[A-Z])", description, re.DOTALL)
+        if first_paragraph_match:
+            sections["About the job"] = first_paragraph_match.group(1).strip()
+    
+    return sections
 
 def extract_linkedin_requirements(description):
     """
@@ -107,6 +177,32 @@ def extract_linkedin_requirements(description):
                 for para in paragraphs:
                     if len(para) > 20 and para not in requirements:
                         requirements.append(para)
+    
+    # Also check "Basic Qualifications" and "Requirements" sections
+    qual_patterns = [
+        r'Basic Qualifications:(.*?)(?=\n\n[A-Z]|\Z)',
+        r'Requirements:(.*?)(?=\n\n[A-Z]|\Z)',
+        r'Qualifications:(.*?)(?=\n\n[A-Z]|\Z)',
+        r'What You\'ll Need:(.*?)(?=\n\n[A-Z]|\Z)',
+        r'Required Skills:(.*?)(?=\n\n[A-Z]|\Z)',
+        r'Required Experience:(.*?)(?=\n\n[A-Z]|\Z)'
+    ]
+    
+    for pattern in qual_patterns:
+        matches = re.findall(pattern, description, re.DOTALL | re.IGNORECASE)
+        for match in matches:
+            # Extract bullet points with various symbols
+            items = re.findall(r'[•■◦⦿⚫⚪○●★☆▪▫-]\s*(.*?)(?=\n[•■◦⦿⚫⚪○●★☆▪▫-]|\n\n|\Z)', match, re.DOTALL)
+            
+            # If no bullet points, try with numbered list
+            if not items:
+                items = re.findall(r'\d+\.\s*(.*?)(?=\n\d+\.|\n\n|\Z)', match, re.DOTALL)
+            
+            # Clean and add the items
+            for item in items:
+                item = item.strip()
+                if item and len(item) > 5 and item not in requirements:
+                    requirements.append(item)
     
     return requirements
 
@@ -192,7 +288,8 @@ def extract_skills_from_description(description):
         'Data Science', 'Data Analysis', 'Data Visualization', 'Big Data',
         'Hadoop', 'Spark', 'Kafka', 'Elasticsearch', 'Logstash', 'Kibana',
         'Tableau', 'Power BI', 'Looker', 'Grafana', 'Prometheus',
-        'H2O', 'Conda'
+        'DevOps', 'MLOps', 'GenAI', 'LLM', 'Transformers', 'PySpark',
+        'Reinforcement Learning', 'Recommender Systems', 'Information Retrieval'
     ]
     
     # Common soft skills
@@ -238,6 +335,9 @@ def parse_generic_job(url):
         # Extract all text from the page
         all_text = soup.get_text()
         
+        # Extract sections
+        sections = extract_job_sections(all_text)
+        
         # Extract requirements from text
         requirements = extract_requirements_from_description(all_text)
         
@@ -246,6 +346,8 @@ def parse_generic_job(url):
         
         return {
             'success': True,
+            'full_description': all_text,
+            'sections': sections,
             'requirements': requirements,
             'skills': skills
         }

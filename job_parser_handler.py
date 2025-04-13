@@ -28,13 +28,24 @@ def setup_job_parser_routes(app):
                     import json
                     json.dump(result, f, indent=2)
                 
-                return jsonify({
+                # Include sections in the response if available
+                response_data = {
                     'success': True,
                     'job_title': result.get('job_title', 'Unknown Position'),
                     'company': result.get('company', 'Unknown Company'),
                     'requirements': result.get('requirements', []),
                     'skills': result.get('skills', [])
-                }), 200
+                }
+                
+                # Add sections if available
+                if 'sections' in result:
+                    response_data['sections'] = result['sections']
+                    
+                    # Include about_the_job section in the main response for convenience
+                    if 'About the job' in result['sections']:
+                        response_data['about_the_job'] = result['sections']['About the job']
+                
+                return jsonify(response_data), 200
             else:
                 return jsonify({'error': result.get('error', 'Failed to parse job listing')}), 500
                 
