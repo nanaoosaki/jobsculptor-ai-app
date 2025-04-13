@@ -90,7 +90,8 @@ IMPROVED {section_name.upper()} SECTION:
                     "model": "claude-3-opus-20240229",
                     "prompt_length": len(prompt),
                     "section": section_name,
-                    "resume_id": resume_id
+                    "resume_id": resume_id,
+                    "prompt": prompt[:1000] if len(prompt) > 1000 else prompt  # Include truncated prompt
                 }
                 
                 response_summary = {
@@ -98,7 +99,8 @@ IMPROVED {section_name.upper()} SECTION:
                     "was_modified": tailored_content.strip() != resume_content.strip(),
                     "input_tokens": response.usage.input_tokens,
                     "output_tokens": response.usage.output_tokens,
-                    "total_tokens": response.usage.input_tokens + response.usage.output_tokens
+                    "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+                    "tailored_content": tailored_content  # Include full tailored content
                 }
                 
                 api_logger.log_api_call(
@@ -256,142 +258,173 @@ def tailor_resume_with_claude(formatted_resume_path, job_data, api_key, api_url)
     tailored_sections['other'] = resume_sections.get('other', '')
     
     # Create new document with tailored content
-    doc = docx.Document(formatted_resume_path)
+    doc = docx.Document()
     
-    # Clear existing content
-    for i in range(len(doc.paragraphs)-1, -1, -1):
-        p = doc.paragraphs[i]
-        p_element = p._element
-        p_element.getparent().remove(p_element)
+    # Set document styles
+    styles = doc.styles
     
-    # Add tailored content
+    # Set up Heading 1 style
+    heading1_style = styles['Heading 1']
+    heading1_style.font.bold = True
+    heading1_style.font.size = Pt(14)
+    
+    # Set up Heading 2 style
+    heading2_style = styles['Heading 2']
+    heading2_style.font.bold = True
+    heading2_style.font.size = Pt(12)
+    
+    # Set up Normal style
+    normal_style = styles['Normal']
+    normal_style.font.size = Pt(11)
+    
+    # Add tailored content with proper section headers
+    
     # Contact Information
     if tailored_sections['contact_info']:
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
-        p.alignment = 1  # Center
-        run = p.add_run("CONTACT INFORMATION")
-        run.bold = True
-        
-        for line in tailored_sections['contact_info'].split('\n'):
-            if "CONTACT INFORMATION" not in line:  # Skip the heading
-                p = doc.add_paragraph()
-                p.style = 'Normal'
-                p.alignment = 1  # Center
+        # Get first line which is usually the name
+        name_lines = [line for line in tailored_sections['contact_info'].split('\n') if line.strip()]
+        if name_lines:
+            p = doc.add_paragraph(style='Normal')
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = p.add_run(name_lines[0])
+            run.bold = True
+            run.font.size = Pt(16)
+            
+            # Add the rest of contact info
+            contact_lines = name_lines[1:] if len(name_lines) > 1 else []
+            for line in contact_lines:
+                p = doc.add_paragraph(style='Normal')
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 p.add_run(line)
     
     # Summary
     if tailored_sections['summary'] and tailored_sections['summary'].strip():
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
+        p = doc.add_paragraph(style='Heading 1')
         run = p.add_run("PROFESSIONAL SUMMARY")
-        run.bold = True
         
-        for line in tailored_sections['summary'].split('\n'):
-            if "PROFESSIONAL SUMMARY" not in line:  # Skip the heading
-                p = doc.add_paragraph()
-                p.style = 'Normal'
+        # Process the tailored content line by line
+        summary_lines = tailored_sections['summary'].split('\n')
+        
+        # Skip any "PROFESSIONAL SUMMARY" or similar headers in the content
+        for line in summary_lines:
+            if "SUMMARY" in line.upper() or not line.strip():
+                continue
+                
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Bullet point
+                p = doc.add_paragraph(style='Normal')
+                p.style = 'List Bullet'
+                p.add_run(line[1:].strip())
+            else:
+                p = doc.add_paragraph(style='Normal')
                 p.add_run(line)
     
     # Experience
     if tailored_sections['experience'] and tailored_sections['experience'].strip():
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
+        p = doc.add_paragraph(style='Heading 1')
         run = p.add_run("WORK EXPERIENCE")
-        run.bold = True
         
         in_job_title = False
-        for line in tailored_sections['experience'].split('\n'):
-            if "WORK EXPERIENCE" in line:  # Skip the heading
+        exp_lines = tailored_sections['experience'].split('\n')
+        
+        # Skip any "EXPERIENCE" or similar headers in the content
+        for line in exp_lines:
+            if "EXPERIENCE" in line.upper() or not line.strip():
                 continue
                 
-            if line.isupper() or all(run.isupper() for run in line.split()):
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Bullet point
+                p = doc.add_paragraph(style='Normal')
+                p.style = 'List Bullet'
+                p.add_run(line[1:].strip())
+            elif len(line.strip()) > 0 and (line.isupper() or any(keyword in line for keyword in ['Manager', 'Director', 'Lead', 'Engineer', 'Scientist', 'Developer'])):
                 # This is likely a job title
-                p = doc.add_paragraph()
-                p.style = 'Heading 2'
-                run = p.add_run(line)
-                run.bold = True
-                in_job_title = True
-            elif in_job_title and line.strip() and not line.startswith('-'):
-                # This is likely a company/date line
-                p = doc.add_paragraph()
-                p.style = 'Normal'
+                p = doc.add_paragraph(style='Heading 2')
                 p.add_run(line)
+                in_job_title = True
+            elif in_job_title and len(line.strip()) > 0:
+                # This is likely a company/date line
+                p = doc.add_paragraph(style='Normal')
+                run = p.add_run(line)
+                run.italic = True
                 in_job_title = False
             else:
                 # Regular content
-                p = doc.add_paragraph()
-                p.style = 'Normal'
+                p = doc.add_paragraph(style='Normal')
                 p.add_run(line)
     
     # Education
     if tailored_sections['education'] and tailored_sections['education'].strip():
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
+        p = doc.add_paragraph(style='Heading 1')
         run = p.add_run("EDUCATION")
-        run.bold = True
         
         for line in tailored_sections['education'].split('\n'):
-            if "EDUCATION" in line:  # Skip the heading
+            if "EDUCATION" in line.upper() or not line.strip():
                 continue
                 
-            if any(term in line.lower() for term in ['university', 'college', 'school']):
-                p = doc.add_paragraph()
-                p.style = 'Heading 2'
-                run = p.add_run(line)
-                run.bold = True
+            if any(term in line.lower() for term in ['university', 'college', 'school', 'degree']):
+                p = doc.add_paragraph(style='Heading 2')
+                p.add_run(line)
             else:
-                p = doc.add_paragraph()
-                p.style = 'Normal'
+                p = doc.add_paragraph(style='Normal')
                 p.add_run(line)
     
     # Skills
     if tailored_sections['skills'] and tailored_sections['skills'].strip():
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
+        p = doc.add_paragraph(style='Heading 1')
         run = p.add_run("SKILLS")
-        run.bold = True
         
         for line in tailored_sections['skills'].split('\n'):
-            if "SKILLS" in line:  # Skip the heading
+            if "SKILLS" in line.upper() or not line.strip():
                 continue
                 
-            p = doc.add_paragraph()
-            p.style = 'Normal'
-            p.add_run(line)
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Bullet point
+                p = doc.add_paragraph(style='Normal')
+                p.style = 'List Bullet'
+                p.add_run(line[1:].strip())
+            else:
+                p = doc.add_paragraph(style='Normal')
+                p.add_run(line)
     
     # Projects
     if tailored_sections['projects'] and tailored_sections['projects'].strip():
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
+        p = doc.add_paragraph(style='Heading 1')
         run = p.add_run("PROJECTS")
-        run.bold = True
         
         for line in tailored_sections['projects'].split('\n'):
-            if "PROJECTS" in line:  # Skip the heading
+            if "PROJECTS" in line.upper() or not line.strip():
                 continue
                 
-            if any(run.bold for run in p.runs):
-                p = doc.add_paragraph()
-                p.style = 'Heading 2'
-                run = p.add_run(line)
-                run.bold = True
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Bullet point
+                p = doc.add_paragraph(style='Normal')
+                p.style = 'List Bullet'
+                p.add_run(line[1:].strip())
+            elif any(run.bold for run in p.runs):
+                p = doc.add_paragraph(style='Heading 2')
+                p.add_run(line)
             else:
-                p = doc.add_paragraph()
-                p.style = 'Normal'
+                p = doc.add_paragraph(style='Normal')
                 p.add_run(line)
     
-    # Other sections
+    # Other sections (only if they contain content)
     if tailored_sections['other'] and tailored_sections['other'].strip():
-        p = doc.add_paragraph()
-        p.style = 'Heading 1'
+        p = doc.add_paragraph(style='Heading 1')
         run = p.add_run("ADDITIONAL INFORMATION")
-        run.bold = True
         
         for line in tailored_sections['other'].split('\n'):
-            p = doc.add_paragraph()
-            p.style = 'Normal'
-            p.add_run(line)
+            if not line.strip():
+                continue
+                
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Bullet point
+                p = doc.add_paragraph(style='Normal')
+                p.style = 'List Bullet'
+                p.add_run(line[1:].strip())
+            else:
+                p = doc.add_paragraph(style='Normal')
+                p.add_run(line)
     
     # Generate output filename
     output_filename = os.path.basename(formatted_resume_path).replace('.docx', '_tailored.docx')
@@ -403,21 +436,49 @@ def tailor_resume_with_claude(formatted_resume_path, job_data, api_key, api_url)
     return output_filename, output_path
 
 def generate_resume_preview(docx_path):
-    """Generate HTML preview of resume content"""
+    """Generate HTML preview of resume content with proper formatting and bullet points"""
     doc = docx.Document(docx_path)
     
     html = "<div class='resume-preview'>"
     
+    current_section = None
+    
     for para in doc.paragraphs:
         if not para.text.strip():
             continue
-            
-        if para.style.name.startswith('Heading 1'):
-            html += f"<h2 class='resume-heading-1'>{para.text}</h2>"
-        elif para.style.name.startswith('Heading 2'):
+        
+        # Section headers (usually Heading 1)
+        if para.style.name.startswith('Heading 1') or all(run.bold for run in para.runs if run.text.strip()):
+            current_section = para.text.strip()
+            html += f"<h2 class='resume-heading-1'>{current_section}</h2>"
+        
+        # Subsections (usually Heading 2 or bold text)
+        elif para.style.name.startswith('Heading 2') or any(run.bold for run in para.runs if run.text.strip()):
             html += f"<h3 class='resume-heading-2'>{para.text}</h3>"
+        
+        # Regular paragraphs
         else:
-            html += f"<p class='resume-paragraph'>{para.text}</p>"
+            text = para.text.strip()
+            
+            # Check if this is a bullet point (Claude often uses • or - for bullets)
+            if text.startswith('•') or text.startswith('-') or text.startswith('*'):
+                # If we're not already in a list, start a new one
+                if not html.endswith('</li>') and not html.endswith('<ul>'):
+                    html += "<ul class='resume-bullet-list'>"
+                
+                # Add the bullet point
+                html += f"<li class='resume-bullet-item'>{text[1:].strip()}</li>"
+            else:
+                # If we were in a list and now we're not, close the list
+                if html.endswith('</li>'):
+                    html += "</ul>"
+                
+                # Regular paragraph
+                html += f"<p class='resume-paragraph'>{text}</p>"
+    
+    # Close any open list
+    if html.endswith('</li>'):
+        html += "</ul>"
     
     html += "</div>"
     

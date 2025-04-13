@@ -3,4 +3,26 @@ python-dotenv==1.0.0
 requests==2.31.0
 beautifulsoup4==4.12.2
 python-docx==0.8.11
-werkzeug==2.3.7 
+werkzeug==2.3.7
+anthropic>=0.42.0
+openai>=1.59.8
+docx2txt
+PyPDF2
+pdfminer.six
+flask-cors
+
+# Web scraping
+playwright>=1.41.0
+html5lib>=1.1
+
+# Search engine
+duckduckgo-search>=7.2.1
+
+# Google Generative AI
+google-generativeai
+grpcio==1.70.0
+
+# Testing
+unittest2>=1.1.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.5 
