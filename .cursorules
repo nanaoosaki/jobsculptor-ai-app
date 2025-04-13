@@ -33,6 +33,15 @@ This application helps users tailor their resumes to match specific job listings
 3. Fixed template_resume.docx path issue by copying to static/uploads directory
 4. Fixed 'summary' KeyError by properly initializing empty sections
 5. Enhanced section handling to properly check for empty content before processing
+6. Fixed regex character range error in job_parser.py that was causing LinkedIn job parsing to fail
+7. Fixed demo mode vs. API mode by ensuring the Claude API key is properly configured
+8. Added .env and sensitive files to .gitignore to prevent exposing API keys
+
+## Latest Status
+- Application is successfully parsing LinkedIn job listings
+- Claude API integration is working for resume tailoring
+- Resume preview is showing the tailored content
+- All known blocking issues have been resolved
 
 ## Environment
 - Python 3.x

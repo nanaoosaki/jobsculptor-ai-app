@@ -134,7 +134,7 @@ def extract_requirements_from_description(description):
         matches = re.findall(pattern, description, re.DOTALL | re.IGNORECASE)
         for match in matches:
             # Extract bullet points with various symbols
-            items = re.findall(r'[•■◦⦿⚫⚪○●★☆▪▫-*+]\s*(.*?)(?=\n[•■◦⦿⚫⚪○●★☆▪▫-*+]|\n\n|\Z)', match, re.DOTALL)
+            items = re.findall(r'[•■◦⦿⚫⚪○●★☆▪▫+*-]\s*(.*?)(?=\n[•■◦⦿⚫⚪○●★☆▪▫+*-]|\n\n|\Z)', match, re.DOTALL)
             
             # If no bullet points, try with numbered list
             if not items:
