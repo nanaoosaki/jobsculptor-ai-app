@@ -104,6 +104,39 @@ header {
   border-radius: 4px;
 }
 
+/* Scrollable sections */
+.scrollable-section {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) #f0f0f0;
+}
+
+.scrollable-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-section::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.scrollable-section::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 4px;
+}
+
+/* Job Requirements styling */
+.job-requirements-card {
+  margin-top: -10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--info-color);
+}
+
+.job-requirements-card .card-header {
+  background-color: var(--info-color);
+}
+
 /* Resume Preview Component Styles */
 .resume-preview-container {
   border: 1px solid #ddd;
@@ -162,6 +195,10 @@ header {
   
   .resume-preview-content {
     max-height: 300px;
+  }
+  
+  .job-requirements-card {
+    margin-top: 0;
   }
 }
 

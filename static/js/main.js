@@ -194,24 +194,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to display the user's uploaded resume preview
     function displayUserResumePreview(previewHtml) {
-        // Create or get the resume preview container
-        let userResumePreview = document.getElementById('userResumePreview');
+        // Get the user resume preview container
+        const userResumeParsed = document.getElementById('userResumeParsed');
         
-        if (!userResumePreview) {
-            // Create the container if it doesn't exist
-            userResumePreview = document.createElement('div');
-            userResumePreview.id = 'userResumePreview';
-            userResumePreview.className = 'mt-4';
-            
-            // Find the upload form card to insert after
-            const uploadCard = resumeUploadForm.closest('.card');
-            if (uploadCard && uploadCard.parentNode) {
-                uploadCard.parentNode.insertBefore(userResumePreview, uploadCard.nextSibling);
-            }
+        if (userResumeParsed) {
+            // Set the preview HTML content
+            userResumeParsed.innerHTML = previewHtml;
         }
         
-        // Set the preview HTML content
-        userResumePreview.innerHTML = previewHtml;
+        // Also update the resume preview section
+        const resumePreview = document.getElementById('resumePreview');
+        if (resumePreview) {
+            resumePreview.innerHTML = previewHtml;
+        }
     }
     
     // Helper function to check if tailoring should be enabled
