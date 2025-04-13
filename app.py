@@ -1,4 +1,5 @@
 import os
+import ssl
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from config import Config
 from upload_handler import setup_upload_routes
@@ -37,4 +38,20 @@ def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Check if certificates exist
+    cert_path = 'certs/cert.pem'
+    key_path = 'certs/key.pem'
+    
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        # Create SSL context
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(cert_path, key_path)
+        
+        # Run with HTTPS
+        print("Running with HTTPS on https://0.0.0.0:5000")
+        app.run(host='0.0.0.0', port=5000, debug=True, ssl_context=context)
+    else:
+        # Fall back to HTTP if certificates are not found
+        print("Certificates not found. Running with HTTP on http://0.0.0.0:5000")
+        print("To enable HTTPS, run generate_cert.py to create SSL certificates")
+        app.run(host='0.0.0.0', port=5000, debug=True)
