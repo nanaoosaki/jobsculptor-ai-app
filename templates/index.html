@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Tailor - Optimize Your Resume for Job Applications</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="py-4 text-center">
+            <h1 class="display-4">Resume Tailor</h1>
+            <p class="lead">Optimize your resume for your target position using AI</p>
+        </header>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Step 1: Upload Your Resume</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="resumeUploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="resumeFile" class="form-label">Select your resume (DOCX only)</label>
+                                <input class="form-control" type="file" id="resumeFile" name="resume" accept=".docx">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Upload Resume</button>
+                        </form>
+                        <div id="uploadStatus" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Step 2: Enter Job Listing URL</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="jobUrlForm">
+                            <div class="mb-3">
+                                <label for="jobUrl" class="form-label">LinkedIn or other job listing URL</label>
+                                <input type="url" class="form-control" id="jobUrl" name="jobUrl" 
+                                       placeholder="https://www.linkedin.com/jobs/view/...">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="parseJobBtn">Parse Job Listing</button>
+                        </form>
+                        <div id="jobParseStatus" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Step 3: Tailor Your Resume</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Once you've uploaded your resume and parsed a job listing, click below to tailor your resume.</p>
+                        <button id="tailorResumeBtn" class="btn btn-primary w-100" disabled>Tailor Resume</button>
+                        <div id="tailorStatus" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Job Requirements</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="jobRequirements">
+                            <p class="text-muted">Job requirements will appear here after parsing.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">Download Tailored Resume</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p>After tailoring is complete, you can download your optimized resume.</p>
+                        <button id="downloadResumeBtn" class="btn btn-success" disabled>Download Tailored Resume</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">Resume Preview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="resumePreview">
+                            <p class="text-muted">Resume preview will appear here after tailoring.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-3 mt-4 bg-light">
+        <div class="container text-center">
+            <p class="text-muted">Resume Tailor - Powered by AI</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

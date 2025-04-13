@@ -1,0 +1,47 @@
+# Resume Tailoring Website Using LLM Technology
+
+## Project Overview
+This application helps users tailor their resumes to match specific job listings using Claude AI. The application analyzes job postings, extracts requirements, and optimizes the resume accordingly.
+
+## Files and Structure
+- **app.py**: Main Flask application entrypoint
+- **config.py**: Configuration settings (API keys, upload paths)
+- **upload_handler.py**: Handles resume file uploads
+- **resume_processor.py**: Processes and analyzes uploaded resumes
+- **resume_formatter.py**: Formats resumes into a standardized structure
+- **job_parser.py**: Parses job listings from URLs (LinkedIn and generic)
+- **claude_integration.py**: Interfaces with Claude AI for resume tailoring
+- **tailoring_handler.py**: Orchestrates the tailoring process
+- **format_handler.py**: API routes for resume formatting
+- **job_parser_handler.py**: API routes for job parsing
+- **static/css/styles.css**: Styling for the application
+- **static/js/main.js**: Frontend JavaScript
+- **templates/index.html**: Main HTML interface
+- **static/uploads/**: Stores uploaded and processed files
+
+## Input/Output Flow
+1. **Input**: User uploads DOCX resume and provides job listing URL
+2. **Processing**: 
+   - Resume is formatted into standardized structure
+   - Job listing is parsed to extract requirements and skills
+   - Claude AI tailors resume content to match job requirements
+3. **Output**: Tailored resume available for download as DOCX
+
+## Fixes Applied
+1. Added proper secret key for Flask app security
+2. Created correct folder structure for Flask app (templates/, static/)
+3. Fixed template_resume.docx path issue by copying to static/uploads directory
+4. Fixed 'summary' KeyError by properly initializing empty sections
+5. Enhanced section handling to properly check for empty content before processing
+
+## Environment
+- Python 3.x
+- Flask web framework
+- Claude API for AI-based resume tailoring
+- Required packages in requirements.txt
+
+## Setup Notes
+- Requires Claude API key in .env file
+- Flask SECRET_KEY must be set in .env
+- Run with `python app.py`
+- Accessible at http://localhost:5000 

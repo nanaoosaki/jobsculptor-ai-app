@@ -1,0 +1,67 @@
+# Resume Tailoring Website Using LLM Technology
+
+A web application that helps job seekers optimize their resumes for specific job postings using Claude AI.
+
+## Features
+
+- Upload and parse resumes (DOCX format)
+- Extract key requirements from job listings (supports LinkedIn and generic job sites)
+- Automatically tailor resume content to match job requirements
+- Preview and download tailored resumes
+
+## Technology Stack
+
+- **Backend**: Python, Flask
+- **Frontend**: HTML, CSS, JavaScript, Bootstrap
+- **AI Integration**: Claude API (Anthropic)
+- **Document Processing**: python-docx
+- **Web Scraping**: BeautifulSoup, Requests
+
+## Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/nanaoosaki/manus_resume.git
+   cd manus_resume
+   ```
+
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Create a `.env` file with your API keys:
+   ```
+   SECRET_KEY=your_flask_secret_key
+   CLAUDE_API_KEY=your_claude_api_key
+   ```
+
+4. Run the application:
+   ```
+   python app.py
+   ```
+
+5. Access the application at http://localhost:5000
+
+## Project Structure
+
+- `app.py`: Main Flask application
+- `config.py`: Configuration settings
+- `claude_integration.py`: Claude API integration for resume tailoring
+- `job_parser.py`: Job listing parsing functionality
+- `resume_formatter.py`: Resume formatting utilities
+- `resume_processor.py`: Resume processing and analysis
+- `static/`: CSS, JavaScript, and uploads
+- `templates/`: HTML templates
+
+## How It Works
+
+1. Upload your resume (DOCX format)
+2. Enter a job listing URL
+3. The application parses the job listing to extract requirements and skills
+4. Claude AI tailors your resume to highlight relevant experience and skills
+5. Download your tailored resume
+
+## License
+
+MIT 
