@@ -11,6 +11,7 @@ This application helps users tailor their resumes to match specific job listings
 - **resume_formatter.py**: Formats resumes into a standardized structure
 - **job_parser.py**: Parses job listings from URLs (LinkedIn and generic)
 - **claude_integration.py**: Interfaces with Claude AI for resume tailoring
+- **llm_resume_parser.py**: LLM-based resume parsing with fallback mechanism
 - **tailoring_handler.py**: Orchestrates the tailoring process
 - **format_handler.py**: API routes for resume formatting
 - **job_parser_handler.py**: API routes for job parsing
@@ -21,11 +22,22 @@ This application helps users tailor their resumes to match specific job listings
 
 ## Input/Output Flow
 1. **Input**: User uploads DOCX resume and provides job listing URL
-2. **Processing**: 
-   - Resume is formatted into standardized structure
-   - Job listing is parsed to extract requirements and skills
-   - Claude AI tailors resume content to match job requirements
-3. **Output**: Tailored resume available for download as DOCX
+2. **Resume Processing**:
+   - Resume is uploaded and saved to uploads directory
+   - LLM parser extracts sections (contact, summary, experience, education, skills, etc.)
+   - If LLM parsing fails, traditional heading-based parsing is used as fallback
+   - Parsed sections are displayed in UI and stored for tailoring
+3. **Job Listing Processing**:
+   - Job URL is processed to extract content based on site type
+   - Requirements and skills are extracted from job description
+   - Full job listing sections are displayed in UI
+4. **Tailoring**:
+   - LLM (Claude/OpenAI) analyzes resume sections against job requirements
+   - Each section is tailored individually with specific prompts
+   - Tailored content is assembled into a new document
+5. **Output**: 
+   - Tailored resume available for download as DOCX
+   - HTML preview of tailored content displayed in UI
 
 ## Fixes Applied
 1. Added proper secret key for Flask app security
@@ -43,6 +55,40 @@ This application helps users tailor their resumes to match specific job listings
 13. Enhanced section detection in job listings using advanced pattern matching
 14. Fixed Claude API integration to properly use official Anthropic SDK
 15. Removed demo mode fallback to ensure consistent API usage and testing
+16. Implemented LLM-based resume parsing with traditional parsing fallback
+17. Fixed upload handler to use LLM parsing during initial resume upload
+18. Added configuration settings for LLM provider selection and enabling/disabling
+
+## LLM Resume Parsing Implementation
+- Created new `llm_resume_parser.py` module for LLM-based resume parsing
+- Integrated both Claude and OpenAI as parsing options
+- Implemented auto-detection of available API keys
+- Added robust validation, error handling, and logging
+- Created JSON caching system to avoid repeated API calls
+- Maintained backwards compatibility with existing code
+- Modified both initial upload parsing and tailoring process to use LLM parsing
+
+## Resume Parsing Flow
+1. **Upload Phase**:
+   - `upload_handler.py` receives resume file
+   - If LLM parsing is enabled, `llm_resume_parser.py` processes the file
+   - LLM receives the entire resume text and returns structured JSON
+   - Parsed sections are mapped to UI-compatible format
+   - Preview HTML is generated and rendered
+   - If LLM parsing fails, traditional parsing is used
+
+2. **Tailoring Phase**:
+   - `claude_integration.py` retrieves the resume file
+   - LLM parser is used again to ensure consistent section extraction
+   - Each section is sent to the tailoring LLM with job requirements
+   - Tailored sections are combined into a complete document
+
+3. **File Structure**:
+   - Original resume: `uuid.docx`
+   - LLM parsing cache: `uuid_llm_parsed.json`
+   - Traditional parsing cache: `uuid_analysis.json`
+   - Formatted resume: `uuid_formatted.docx`
+   - Tailored resume: `uuid_formatted_tailored_claude.docx` or `uuid_formatted_tailored_openai.docx`
 
 ## Job Parser Improvements
 - Added comprehensive section extraction for LinkedIn and generic job postings
@@ -52,12 +98,14 @@ This application helps users tailor their resumes to match specific job listings
 - Structured response to include full sections alongside extracted requirements
 - Added special handling for "About the job" section to ensure it's always captured
 
-## Claude API Integration Fixes
-- Switched from direct HTTP requests to official Anthropic Python SDK
+## Claude and OpenAI API Integration
+- Switched from direct HTTP requests to official SDKs for both APIs
 - Added robust error handling and logging of API calls
 - Improved environment variable handling to prevent API key issues
 - Created more effective prompting for bold, significant changes in tailored content
-- Fixed serialization issues when handling Claude API responses
+- Fixed serialization issues when handling API responses
+- Added configurable provider selection (auto, claude, openai)
+- Auto-detection of available API keys when using "auto" setting
 
 ## UI Improvements
 - Reorganized the layout to show the "User Resume Parsed" and "Job Requirements" panels side by side in a dedicated row
@@ -65,26 +113,31 @@ This application helps users tailor their resumes to match specific job listings
 - Ensured responsive design for mobile devices
 - Added proper scrolling behavior for content overflow
 - Maintained the original step-based workflow with clear visual separation
+- Added LLM indicator to parsed resume preview
 
 ## Latest Status
 - Application is successfully parsing LinkedIn job listings with comprehensive section extraction
-- Claude API integration is properly configured and working for resume tailoring
-- Job parser now captures the complete job description including "About the job" sections
-- Resume preview shows the Claude AI tailored content with significant improvements
+- LLM-based resume parsing is working correctly with multiple resume formats
+- OpenAI and Claude API integration properly configured and working for resume tailoring
+- Resume preview shows the tailored content with significant improvements
 - All known blocking issues have been resolved and the application is functioning as expected
 
 ## Environment
 - Python 3.x
 - Flask web framework
 - Claude API (via official Anthropic SDK) for AI-based resume tailoring
+- OpenAI API (via official SDK) as an alternative LLM provider
 - Required packages in requirements.txt
 
 ## Setup Notes
-- Requires Claude API key in .env file
+- Requires API key in .env file (Claude API key, OpenAI API key, or both)
 - Flask SECRET_KEY must be set in .env
+- LLM resume parsing configuration in .env:
+  - USE_LLM_RESUME_PARSING=true
+  - LLM_RESUME_PARSER_PROVIDER=auto
 - Run with `python app.py`
 - Accessible at http://localhost:5000 or https://localhost:5000 if certificates are available
-- Required dependencies: flask, python-dotenv, requests, beautifulsoup4, python-docx, werkzeug, docx2txt, PyPDF2, pdfminer.six, flask-cors, anthropic 
+- Required dependencies: flask, python-dotenv, requests, beautifulsoup4, python-docx, werkzeug, docx2txt, PyPDF2, pdfminer.six, flask-cors, anthropic, openai
 
 # Instructions
 
@@ -199,6 +252,21 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 - Add detailed logging throughout the resume parsing process to quickly identify extraction issues
 - Be aware that resume formats vary widely; some may not use standard headings or formatting
 - Count the total paragraphs with content to validate that document parsing is working correctly
+- Consider multiple stages of parsing in a web application:
+  - Initial upload parsing requires different handling than later processing
+  - Modify both stages to use the same parsing logic for consistency
+  - Map between different data structures when necessary
+- When implementing LLM-based parsing:
+  - Use low temperature (0.1) for consistent, deterministic results
+  - Include clear, specific instructions about expected output format
+  - Implement JSON parsing fallbacks for malformed responses
+  - Add robust validation to verify the expected structure is present
+  - Always have a traditional fallback method ready
+- For multiple LLM provider support:
+  - Implement provider-specific classes or methods
+  - Use environment variables for configuration
+  - Add auto-detection of available API keys
+  - Maintain consistent input/output formats across providers
 
 ## User Specified Lessons
 - You have a python venv in ./venv. Always use (activate) it when doing python development. First, to check whether 'uv' is available, use `which uv`. If that's the case, first activate the venv, and then use `uv pip install` to install packages. Otherwise, fall back to `pip`.
@@ -267,9 +335,35 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
   - Verified that tailored content is properly generated when sections are extracted
   - Confirmed that the fallback mechanism works correctly when standard detection fails
 
+## LLM Resume Parsing Implementation - April 15, 2025
+
+[X] Created LLM-based resume parsing module
+  - Implemented `llm_resume_parser.py` with `LLMResumeParser` class
+  - Added support for both Claude and OpenAI APIs
+  - Created detailed prompting for accurate section extraction
+  - Implemented robust validation and error handling
+
+[X] Integrated LLM parsing with existing code
+  - Updated `claude_integration.py` to use LLM parsing for tailoring
+  - Modified `upload_handler.py` to use LLM parsing for initial upload
+  - Added mapping between different data structures for compatibility
+  - Maintained fallback to traditional parsing when needed
+
+[X] Added configuration and environment support
+  - Created toggle for LLM parsing in `config.py`
+  - Added provider selection (auto, claude, openai)
+  - Implemented auto-detection of available API keys
+  - Added new variables to `.env` file
+
+[X] Enhanced logging and caching
+  - Added detailed logging throughout the parsing process
+  - Created JSON caching to avoid repeated API calls
+  - Added token usage and processing time tracking
+  - Implemented clear success/failure indicators
+
 Next steps:
-- Consider refining UI to better display tailored sections
-- Add option to see "diff" between original and tailored resume
-- Explore using other LLMs from devin tools as fallbacks
-- Consider adding job search functionality using the new search engine tools
-- Create a resume format validator to help users prepare optimal resumes for tailoring
+- Add confidence scores to LLM parsing results
+- Create resume format validator to help prepare optimal resumes
+- Add visual diff feature to highlight tailoring changes  
+- Enhance UI to better display tailored sections
+- Implement few-shot learning with example resumes for improved parsing
