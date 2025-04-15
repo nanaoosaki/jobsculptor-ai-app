@@ -13,3 +13,10 @@ class Config:
     # Claude API configuration
     CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
     CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages'
+    
+    # OpenAI API configuration
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    
+    # Resume parsing configuration
+    USE_LLM_RESUME_PARSING = os.environ.get('USE_LLM_RESUME_PARSING', 'true').lower() == 'true'
+    LLM_RESUME_PARSER_PROVIDER = os.environ.get('LLM_RESUME_PARSER_PROVIDER', 'auto')  # 'auto', 'claude', 'openai'

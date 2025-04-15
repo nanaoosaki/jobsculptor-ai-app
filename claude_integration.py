@@ -276,6 +276,54 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
     try:
         logger.info(f"Extracting sections from resume: {doc_path}")
         
+        # Import config to check if LLM parsing is enabled
+        from config import Config
+        use_llm_parsing = Config.USE_LLM_RESUME_PARSING
+        llm_provider_config = Config.LLM_RESUME_PARSER_PROVIDER
+        
+        # First try to parse with LLM if enabled and the module is available
+        if use_llm_parsing:
+            try:
+                # Import the LLM parser module
+                from llm_resume_parser import parse_resume_with_llm
+                
+                # Determine which LLM provider to use based on config or available API keys
+                llm_provider = llm_provider_config
+                if llm_provider == "auto":
+                    if os.environ.get("OPENAI_API_KEY"):
+                        llm_provider = "openai"
+                    elif os.environ.get("CLAUDE_API_KEY"):
+                        llm_provider = "claude"
+                    else:
+                        logger.warning("No LLM API keys found for resume parsing. Will use traditional parsing.")
+                        raise ImportError("No LLM API keys available")
+                    
+                # Try to parse with LLM
+                logger.info(f"Attempting to parse resume with LLM ({llm_provider})...")
+                llm_sections = parse_resume_with_llm(doc_path, llm_provider)
+                
+                # If LLM parsing succeeded, return the results
+                if llm_sections and any(content for content in llm_sections.values()):
+                    logger.info("LLM parsing successful. Using LLM-parsed sections.")
+                    
+                    # Log extraction results from LLM
+                    for section, content in llm_sections.items():
+                        if content:
+                            logger.info(f"LLM extracted {section} section: {len(content)} chars")
+                        else:
+                            logger.info(f"LLM found no content for {section} section")
+                    
+                    return llm_sections
+                else:
+                    logger.warning("LLM parsing did not return usable results. Falling back to traditional parsing.")
+            except (ImportError, Exception) as e:
+                logger.warning(f"LLM parsing unavailable or failed: {str(e)}. Using traditional parsing.")
+        else:
+            logger.info("LLM parsing is disabled by configuration. Using traditional parsing.")
+        
+        # If LLM parsing failed, is unavailable, or is disabled, fall back to traditional parsing
+        logger.info("Using traditional resume section extraction...")
+        
         # Extract plain text content from the DOCX file
         text = docx2txt.process(doc_path)
         
