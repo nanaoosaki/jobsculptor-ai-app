@@ -1,27 +1,26 @@
 // Main JavaScript for Resume Tailor application
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Global variables to store state
-    let uploadedResumeFilename = null;
-    let parsedJobData = null;
-    let tailoredResumeFilename = null;
-    
-    // Form references
+    // Get form and button elements
     const resumeUploadForm = document.getElementById('resumeUploadForm');
     const jobUrlForm = document.getElementById('jobUrlForm');
-    
-    // Button references
     const tailorResumeBtn = document.getElementById('tailorResumeBtn');
     const downloadResumeBtn = document.getElementById('downloadResumeBtn');
     
-    // Status display references
+    // Get status elements
     const uploadStatus = document.getElementById('uploadStatus');
     const jobParseStatus = document.getElementById('jobParseStatus');
     const tailorStatus = document.getElementById('tailorStatus');
     
-    // Content display references
+    // Get content display elements
+    const userResumeParsed = document.getElementById('userResumeParsed');
     const jobRequirements = document.getElementById('jobRequirements');
     const resumePreview = document.getElementById('resumePreview');
+    
+    // State variables
+    let uploadedResumeFilename = null;
+    let parsedJobData = null;
+    let tailoredResumeFilename = null;
     
     // Handle resume upload
     resumeUploadForm.addEventListener('submit', function(e) {
@@ -49,23 +48,32 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Resume upload failed');
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.success) {
-                uploadedResumeFilename = data.filename;
-                showStatus(uploadStatus, 'Resume uploaded successfully!', 'success');
-                
-                // Display the parsed resume preview if available
-                if (data.preview) {
-                    displayUserResumePreview(data.preview);
-                }
-                
-                checkEnableTailorButton();
-            } else {
-                showStatus(uploadStatus, data.error || 'Upload failed.', 'error');
+            showStatus(uploadStatus, 'Resume uploaded and parsed successfully!', 'success');
+            console.log('Resume parsed data:', data);
+            
+            uploadedResumeFilename = data.filename;
+            
+            // Display the user's parsed resume in the userResumeParsed section
+            displayUserResumePreview(data);
+            
+            // Enable the job URL input and parse button
+            jobUrlForm.querySelector('input[name="jobUrl"]').disabled = false;
+            jobUrlForm.querySelector('button[type="submit"]').disabled = false;
+            
+            // If we already have job requirements, enable the tailor button
+            if (jobRequirements.innerHTML.trim() !== '') {
+                tailorResumeBtn.disabled = false;
             }
         })
         .catch(error => {
+            console.error('Error:', error);
             showStatus(uploadStatus, 'Error: ' + error.message, 'error');
         });
     });
@@ -74,10 +82,10 @@ document.addEventListener('DOMContentLoaded', function() {
     jobUrlForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const jobUrl = document.getElementById('jobUrl').value.trim();
+        const jobUrl = document.getElementById('jobUrl').value;
         
         if (!jobUrl) {
-            showStatus(jobParseStatus, 'Please enter a job listing URL.', 'error');
+            showStatus(jobParseStatus, 'Please enter a job URL.', 'error');
             return;
         }
         
@@ -93,10 +101,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Store the complete job data object instead of just requirements
                 parsedJobData = data;
                 showStatus(jobParseStatus, 'Job listing parsed successfully!', 'success');
-                displayJobRequirements(data.requirements);
+                
+                // Display job requirements if available
+                if (data.requirements) {
+                    displayJobRequirements(data.requirements);
+                }
+                
                 checkEnableTailorButton();
             } else {
                 showStatus(jobParseStatus, data.error || 'Parsing failed.', 'error');
@@ -114,30 +126,52 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        showStatus(tailorStatus, 'Tailoring your resume...', 'loading');
+        showStatus(tailorStatus, 'Tailoring your resume... (this may take a minute)', 'loading');
         
+        // Get job requirements from the displayed content
+        const requirementsText = Array.from(jobRequirements.querySelectorAll('.requirement-item'))
+            .map(item => item.textContent)
+            .join('\n');
+        
+        // Send the tailoring request
         fetch('/tailor-resume', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 resumeFilename: uploadedResumeFilename,
-                jobRequirements: parsedJobData
+                jobRequirements: requirementsText
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                tailoredResumeFilename = data.filename;
-                showStatus(tailorStatus, 'Resume tailored successfully!', 'success');
-                displayResumePreview(data.preview);
-                downloadResumeBtn.disabled = false;
-            } else {
-                showStatus(tailorStatus, data.error || 'Tailoring failed.', 'error');
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Resume tailoring failed');
             }
+            return response.json();
+        })
+        .then(data => {
+            showStatus(tailorStatus, 'Resume tailored successfully!', 'success');
+            console.log('Tailored resume data:', data);
+            
+            // Display the tailored resume preview
+            if (data.preview) {
+                displayResumePreview(data.preview);
+                
+                // Scroll to resume preview
+                document.getElementById('resumePreview').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                throw new Error('No preview generated');
+            }
+            
+            // Store the tailored filename for download
+            tailoredResumeFilename = data.filename;
+            
+            // Enable the download button
+            downloadResumeBtn.disabled = false;
         })
         .catch(error => {
+            console.error('Error:', error);
             showStatus(tailorStatus, 'Error: ' + error.message, 'error');
         });
     });
@@ -182,31 +216,85 @@ document.addEventListener('DOMContentLoaded', function() {
         jobRequirements.innerHTML = html;
     }
     
-    // Helper function to display resume preview
-    function displayResumePreview(preview) {
-        if (!preview) {
-            resumePreview.innerHTML = '<p class="text-muted">No preview available.</p>';
+    // Helper function to display the user's original resume preview
+    function displayUserResumePreview(data) {
+        console.log('Displaying user resume preview with data:', data);
+        
+        // This function should update ONLY the userResumeParsed element, not the main resumePreview
+        const userResumeParsed = document.getElementById('userResumeParsed');
+        userResumeParsed.innerHTML = '';
+        
+        // Check if we have sections data directly or if it's nested in the response
+        let sections = data.sections;
+        
+        // If no sections found or empty, display a message
+        if (!sections || Object.keys(sections).length === 0) {
+            userResumeParsed.innerHTML = '<p class="text-muted">No resume content could be parsed.</p>';
+            console.warn('No sections found in resume data');
             return;
         }
         
-        resumePreview.innerHTML = preview;
+        // Add each section to the preview
+        for (const section in sections) {
+            if (sections[section] && sections[section].trim && sections[section].trim()) {
+                const sectionTitle = document.createElement('h4');
+                sectionTitle.className = 'resume-section-title';
+                sectionTitle.textContent = section.replace(/_/g, ' ').toUpperCase();
+                userResumeParsed.appendChild(sectionTitle);
+                
+                const sectionContent = document.createElement('div');
+                sectionContent.className = 'resume-section-content';
+                sectionContent.innerHTML = sections[section].replace(/\n/g, '<br>');
+                userResumeParsed.appendChild(sectionContent);
+            }
+        }
+        
+        console.log('User resume preview displayed with sections:', Object.keys(sections));
     }
     
-    // Helper function to display the user's uploaded resume preview
-    function displayUserResumePreview(previewHtml) {
-        // Get the user resume preview container
-        const userResumeParsed = document.getElementById('userResumeParsed');
+    // Helper function to display the tailored resume preview
+    function displayResumePreview(preview) {
+        console.log('Displaying tailored resume preview with HTML content length:', preview.length);
         
-        if (userResumeParsed) {
-            // Set the preview HTML content
-            userResumeParsed.innerHTML = previewHtml;
-        }
-        
-        // Also update the resume preview section
         const resumePreview = document.getElementById('resumePreview');
-        if (resumePreview) {
-            resumePreview.innerHTML = previewHtml;
+        
+        // Clear current preview content
+        resumePreview.innerHTML = '';
+        
+        // Create heading for tailored preview
+        const heading = document.createElement('h3');
+        heading.textContent = 'Tailored Resume Preview';
+        heading.style.color = '#4a6fdc';
+        heading.style.borderBottom = '2px solid #4a6fdc';
+        heading.style.paddingBottom = '8px';
+        heading.style.marginBottom = '15px';
+        
+        // Add heading and preview content
+        resumePreview.appendChild(heading);
+        
+        // Show a debug message when preview is empty
+        if (!preview || preview.trim() === '') {
+            const errorMsg = document.createElement('p');
+            errorMsg.className = 'text-danger';
+            errorMsg.innerHTML = 'Error: Empty preview content received from server';
+            resumePreview.appendChild(errorMsg);
+            console.error('Empty preview content received');
+            return;
         }
+        
+        // Create a container for the preview HTML to ensure proper styling
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'tailored-resume-content';
+        previewContainer.innerHTML = preview;
+        resumePreview.appendChild(previewContainer);
+        
+        // Enable download button after preview is shown
+        downloadResumeBtn.disabled = false;
+        
+        // Scroll to the resume preview section
+        resumePreview.scrollIntoView({ behavior: 'smooth' });
+        
+        console.log("Tailored resume preview displayed successfully");
     }
     
     // Helper function to check if tailoring should be enabled
@@ -214,3 +302,4 @@ document.addEventListener('DOMContentLoaded', function() {
         tailorResumeBtn.disabled = !(uploadedResumeFilename && parsedJobData);
     }
 });
+

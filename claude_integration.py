@@ -1,485 +1,709 @@
 import os
 import json
-import docx
-from docx.shared import Pt
+import logging
 import time
 import traceback
+import re
+import io
+from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+import docx2txt
+import tempfile
+from typing import Dict, List, Tuple, Optional, Any, Union
+
+# Third-party imports for Claude
+from anthropic import Anthropic, RateLimitError
+
+# Third-party imports for OpenAI
+import openai
+from openai import OpenAI
 from claude_api_logger import api_logger
-from anthropic import Anthropic, AI_PROMPT
 
-class ClaudeClient:
-    """Client for interacting with Claude API to tailor resumes"""
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Global variable to track the last LLM client used
+last_llm_client = None
+
+class LLMClient:
+    """Base class for LLM API clients"""
     
-    def __init__(self, api_key, api_url=None):
+    def __init__(self, api_key: str):
         self.api_key = api_key
-        self.api_url = api_url  # Not used with SDK but kept for compatibility
-        self.client = Anthropic(api_key=api_key)
-    
-    def tailor_resume_content(self, resume_content, job_requirements, section_name, resume_id=None):
-        """
-        Use Claude API to tailor a specific section of resume content based on job requirements
-        """
-        if not resume_content.strip():
-            return resume_content
+        self.tailored_content = {}  # Store tailored responses for direct HTML generation
         
-        # Use a placeholder resume ID if none provided
-        if resume_id is None:
-            resume_id = f"unknown-{int(time.time())}"
+    def tailor_resume_content(self, section_name: str, content: str, job_data: Dict) -> str:
+        """Tailor resume content using LLM API - to be implemented by subclasses"""
+        raise NotImplementedError("Subclasses must implement this method")
+
+class ClaudeClient(LLMClient):
+    """Client for interacting with Claude API"""
+    
+    def __init__(self, api_key: str, api_url: str = None):
+        super().__init__(api_key)
+        self.api_url = api_url
+        self.client = None
+        
+        # Validate API key format
+        if not api_key or not api_key.startswith('sk-ant'):
+            print(f"WARNING: Invalid Claude API key format. Key starts with: {api_key[:6] if api_key else 'None'}")
+            print(f"API key length: {len(api_key) if api_key else 0} characters")
+            raise ValueError("Claude API key must start with 'sk-ant'")
             
-        prompt = f"""
-You are an expert resume writer helping a job applicant tailor their resume to a specific job posting.
-Your task is to significantly improve the following {section_name} section to match the job requirements.
-
-JOB REQUIREMENTS:
-{job_requirements}
-
-CURRENT {section_name.upper()} SECTION:
-{resume_content}
-
-Please rewrite this {section_name} section to:
-1. Make BOLD, SIGNIFICANT changes that highlight relevant skills and experiences matching the job requirements
-2. Use strong action verbs and quantify achievements where possible
-3. Remove irrelevant information
-4. Add relevant keywords from the job posting (even if not in the original resume)
-5. Maintain a professional tone
-6. Visibly reorganize and restructure content to better match the job requirements
-
-IMPORTANT: Your changes should be significant and noticeable. A good tailored resume should look different from the original.
-
-IMPROVED {section_name.upper()} SECTION:
-"""
-
+        print(f"Initializing Claude client with API key starting with: {api_key[:8]}...")
+        print(f"API key length: {len(api_key)} characters")
+        
+        # Initialize Anthropic client
         try:
-            print(f"\n\n========== TAILORING {section_name.upper()} SECTION ==========")
-            print(f"Input length: {len(prompt)} characters")
+            print("Testing Claude API connection...")
+            self.client = Anthropic(api_key=api_key)
+            print("Claude client initialized successfully")
+        except Exception as e:
+            print(f"Error initializing Claude client: {str(e)}")
+            print(traceback.format_exc())
+            raise ValueError(f"Failed to initialize Claude client: {str(e)}")
+    
+    def tailor_resume_content(self, section_name: str, content: str, job_data: Dict) -> str:
+        """Tailor resume content using Claude API"""
+        try:
+            logger.info(f"Tailoring {section_name} with Claude API")
             
-            print(f"Sending request to Claude API...")
+            # Create the system prompt
+            system_prompt = (
+                "You are an expert resume writer helping customize a resume for a specific job posting. "
+                "Your task is to rewrite and enhance the provided resume section to better align with the "
+                "job requirements while maintaining truthfulness. Make impactful improvements that highlight "
+                "relevant experience and skills. Be concise and impactful."
+            )
             
-            # Use the official SDK instead of raw HTTP requests
+            # Format requirements and skills as bullet points for clearer prompting
+            requirements_text = "\n".join([f"• {req}" for req in job_data.get('requirements', [])])
+            skills_text = "\n".join([f"• {skill}" for skill in job_data.get('skills', [])])
+            
+            # Create the user prompt
+            user_prompt = f"""
+            # Job Requirements
+            {requirements_text}
+
+            # Desired Skills
+            {skills_text}
+
+            # Current Resume Section: {section_name}
+            {content}
+
+            Please rewrite and enhance the "{section_name}" section to better align with the job requirements. 
+            Make specific, tailored improvements while maintaining factual accuracy.
+            
+            For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
+            
+            Bold (using **text**) the most significant changes that directly address job requirements.
+            
+            Return ONLY the enhanced content, maintaining the original format with bullet points if present.
+            """
+            
+            # Make the API request
             response = self.client.messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=1000,
+                model="claude-3-sonnet-20240229",
+                max_tokens=4000,
+                temperature=0.7,
+                system=system_prompt,
                 messages=[
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": user_prompt}
                 ]
             )
             
-            print(f"API call successful!")
+            # Log token usage
+            logger.info(f"Claude API response for {section_name}: {len(response.content[0].text)} chars")
+            logger.info(f"Input tokens: {response.usage.input_tokens}, Output tokens: {response.usage.output_tokens}")
             
-            # Extract response text
-            tailored_content = response.content[0].text
-            print(f"Original length: {len(resume_content)} | Tailored length: {len(tailored_content)}")
+            # Store the tailored content for direct HTML generation
+            self.tailored_content[section_name] = response.content[0].text.strip()
             
-            # Check if content actually changed
-            if tailored_content.strip() == resume_content.strip():
-                print("WARNING: Tailored content is identical to original content")
-            else:
-                print("Content was modified by Claude API")
+            return response.content[0].text.strip()
             
-            # Extract token usage
-            token_usage = {
-                "input_tokens": response.usage.input_tokens,
-                "output_tokens": response.usage.output_tokens,
-                "total_tokens": response.usage.input_tokens + response.usage.output_tokens
-            }
-            
-            # Log the API call
-            try:
-                # Simple, safe request/response summary for logging
-                request_summary = {
-                    "model": "claude-3-opus-20240229",
-                    "prompt_length": len(prompt),
-                    "section": section_name,
-                    "resume_id": resume_id,
-                    "prompt": prompt[:1000] if len(prompt) > 1000 else prompt  # Include truncated prompt
-                }
-                
-                response_summary = {
-                    "content_length": len(tailored_content),
-                    "was_modified": tailored_content.strip() != resume_content.strip(),
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
-                    "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
-                    "tailored_content": tailored_content  # Include full tailored content
-                }
-                
-                api_logger.log_api_call(
-                    request_data=request_summary,
-                    response_data=response_summary,
-                    resume_id=resume_id,
-                    section=section_name,
-                    token_usage=token_usage
-                )
-                print("API call logged successfully")
-            except Exception as log_error:
-                print(f"Warning: Failed to log API call: {str(log_error)}")
-                
-            return tailored_content
-                
         except Exception as e:
-            print(f"Error calling Claude API: {str(e)}")
-            print(f"Traceback: {traceback.format_exc()}")
-            
-            # Log exception
-            try:
-                api_logger.log_api_call(
-                    request_data={"prompt": prompt[:200] + "..." if len(prompt) > 200 else prompt},
-                    response_data={"error": str(e)},
-                    resume_id=resume_id,
-                    section=section_name,
-                    token_usage={"error": True}
-                )
-            except Exception as log_error:
-                print(f"Warning: Failed to log API error: {str(log_error)}")
-            
-            # Return original content but also re-raise so it's properly logged
-            raise
+            logger.error(f"Error tailoring {section_name} with Claude API: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Partial key for debugging
+            api_key_prefix = self.api_key[:8] + "..." if self.api_key else "None"
+            logger.error(f"Claude API key prefix: {api_key_prefix}, API URL: {self.api_url}")
+            raise Exception(f"Claude API error: {str(e)}")
 
-def extract_resume_content(filepath):
-    """Extract content from a resume DOCX file by section"""
-    doc = docx.Document(filepath)
+class OpenAIClient(LLMClient):
+    """Client for interacting with OpenAI API"""
     
-    sections = {
-        'contact_info': [],
-        'summary': [],
-        'experience': [],
-        'education': [],
-        'skills': [],
-        'projects': [],
-        'other': []
-    }
-    
-    current_section = 'other'
-    
-    for para in doc.paragraphs:
-        text = para.text.strip()
-        if not text:
-            continue
+    def __init__(self, api_key: str):
+        super().__init__(api_key)
+        self.client = None
+        
+        # Validate API key format
+        if not api_key or not api_key.startswith('sk-'):
+            print(f"WARNING: Invalid OpenAI API key format. Key starts with: {api_key[:6] if api_key else 'None'}")
+            print(f"API key length: {len(api_key) if api_key else 0} characters")
+            raise ValueError("OpenAI API key must start with 'sk-'")
             
-        # Determine section based on heading text
-        if any(run.bold for run in para.runs) or para.style.name.startswith('Heading'):
-            text_lower = text.lower()
-            if any(term in text_lower for term in ['contact', 'email', 'phone', 'address']):
-                current_section = 'contact_info'
-            elif any(term in text_lower for term in ['summary', 'objective', 'profile']):
-                current_section = 'summary'
-            elif any(term in text_lower for term in ['experience', 'employment', 'work']):
-                current_section = 'experience'
-            elif any(term in text_lower for term in ['education', 'academic']):
-                current_section = 'education'
-            elif any(term in text_lower for term in ['skill', 'technology', 'competenc']):
-                current_section = 'skills'
-            elif any(term in text_lower for term in ['project', 'portfolio']):
-                current_section = 'projects'
-            else:
-                current_section = 'other'
+        print(f"Initializing OpenAI client with API key starting with: {api_key[:8]}...")
+        print(f"API key length: {len(api_key)} characters")
         
-        # Add paragraph to current section
-        sections[current_section].append(text)
+        # Initialize OpenAI client
+        try:
+            print("Testing OpenAI API connection...")
+            self.client = OpenAI(api_key=api_key)
+            # No API call validation - just initialize the client
+            print("OpenAI client initialized successfully")
+        except Exception as e:
+            print(f"Error initializing OpenAI client: {str(e)}")
+            print(traceback.format_exc())
+            raise ValueError(f"Failed to initialize OpenAI client: {str(e)}")
     
-    # Convert lists to strings
-    section_texts = {}
-    for section, paragraphs in sections.items():
-        section_texts[section] = '\n'.join(paragraphs)
-    
-    return section_texts
-
-def tailor_resume_with_claude(formatted_resume_path, job_data, api_key, api_url):
-    """
-    Use Claude API to tailor a resume based on job requirements
-    """
-    # Get resume ID from filename (strip extension)
-    resume_id = os.path.basename(formatted_resume_path).split('.')[0]
-    
-    # Initialize Claude client
-    claude_client = ClaudeClient(api_key, api_url)
-    
-    # Extract content from formatted resume
-    resume_sections = extract_resume_content(formatted_resume_path)
-    
-    # Format job requirements as text
-    job_requirements_text = "Job Title: " + job_data.get('job_title', 'Unknown Position') + "\n"
-    job_requirements_text += "Company: " + job_data.get('company', 'Unknown Company') + "\n\n"
-    job_requirements_text += "Requirements:\n"
-    for req in job_data.get('requirements', []):
-        job_requirements_text += f"- {req}\n"
-    job_requirements_text += "\nSkills:\n"
-    for skill in job_data.get('skills', []):
-        job_requirements_text += f"- {skill}\n"
-    
-    # Tailor each section
-    tailored_sections = {}
-    
-    # Don't tailor contact info
-    tailored_sections['contact_info'] = resume_sections['contact_info']
-    
-    # Initialize all sections with empty strings if they don't exist
-    for section in ['summary', 'experience', 'education', 'skills', 'projects', 'other']:
-        if section not in tailored_sections:
-            tailored_sections[section] = ''
-    
-    # Tailor summary
-    if resume_sections.get('summary'):
-        print("Tailoring summary section...")
-        tailored_sections['summary'] = claude_client.tailor_resume_content(
-            resume_sections['summary'], 
-            job_requirements_text,
-            "summary",
-            resume_id
-        )
-        # Add a small delay to avoid rate limiting
-        time.sleep(1)
-    
-    # Tailor experience
-    if resume_sections.get('experience'):
-        print("Tailoring experience section...")
-        tailored_sections['experience'] = claude_client.tailor_resume_content(
-            resume_sections['experience'], 
-            job_requirements_text,
-            "experience",
-            resume_id
-        )
-        time.sleep(1)
-    
-    # Tailor skills
-    if resume_sections.get('skills'):
-        print("Tailoring skills section...")
-        tailored_sections['skills'] = claude_client.tailor_resume_content(
-            resume_sections['skills'], 
-            job_requirements_text,
-            "skills",
-            resume_id
-        )
-        time.sleep(1)
-    
-    # Other sections remain unchanged
-    tailored_sections['education'] = resume_sections.get('education', '')
-    tailored_sections['projects'] = resume_sections.get('projects', '')
-    tailored_sections['other'] = resume_sections.get('other', '')
-    
-    # Create new document with tailored content
-    doc = docx.Document()
-    
-    # Set document styles
-    styles = doc.styles
-    
-    # Set up Heading 1 style
-    heading1_style = styles['Heading 1']
-    heading1_style.font.bold = True
-    heading1_style.font.size = Pt(14)
-    
-    # Set up Heading 2 style
-    heading2_style = styles['Heading 2']
-    heading2_style.font.bold = True
-    heading2_style.font.size = Pt(12)
-    
-    # Set up Normal style
-    normal_style = styles['Normal']
-    normal_style.font.size = Pt(11)
-    
-    # Add tailored content with proper section headers
-    
-    # Contact Information
-    if tailored_sections['contact_info']:
-        # Get first line which is usually the name
-        name_lines = [line for line in tailored_sections['contact_info'].split('\n') if line.strip()]
-        if name_lines:
-            p = doc.add_paragraph(style='Normal')
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run = p.add_run(name_lines[0])
-            run.bold = True
-            run.font.size = Pt(16)
+    def tailor_resume_content(self, section_name: str, content: str, job_data: Dict) -> str:
+        """Tailor resume content using OpenAI API"""
+        try:
+            logger.info(f"Tailoring {section_name} with OpenAI API")
             
-            # Add the rest of contact info
-            contact_lines = name_lines[1:] if len(name_lines) > 1 else []
-            for line in contact_lines:
-                p = doc.add_paragraph(style='Normal')
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                p.add_run(line)
-    
-    # Summary
-    if tailored_sections['summary'] and tailored_sections['summary'].strip():
-        p = doc.add_paragraph(style='Heading 1')
-        run = p.add_run("PROFESSIONAL SUMMARY")
-        
-        # Process the tailored content line by line
-        summary_lines = tailored_sections['summary'].split('\n')
-        
-        # Skip any "PROFESSIONAL SUMMARY" or similar headers in the content
-        for line in summary_lines:
-            if "SUMMARY" in line.upper() or not line.strip():
-                continue
-                
-            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
-                # Bullet point
-                p = doc.add_paragraph(style='Normal')
-                p.style = 'List Bullet'
-                p.add_run(line[1:].strip())
-            else:
-                p = doc.add_paragraph(style='Normal')
-                p.add_run(line)
-    
-    # Experience
-    if tailored_sections['experience'] and tailored_sections['experience'].strip():
-        p = doc.add_paragraph(style='Heading 1')
-        run = p.add_run("WORK EXPERIENCE")
-        
-        in_job_title = False
-        exp_lines = tailored_sections['experience'].split('\n')
-        
-        # Skip any "EXPERIENCE" or similar headers in the content
-        for line in exp_lines:
-            if "EXPERIENCE" in line.upper() or not line.strip():
-                continue
-                
-            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
-                # Bullet point
-                p = doc.add_paragraph(style='Normal')
-                p.style = 'List Bullet'
-                p.add_run(line[1:].strip())
-            elif len(line.strip()) > 0 and (line.isupper() or any(keyword in line for keyword in ['Manager', 'Director', 'Lead', 'Engineer', 'Scientist', 'Developer'])):
-                # This is likely a job title
-                p = doc.add_paragraph(style='Heading 2')
-                p.add_run(line)
-                in_job_title = True
-            elif in_job_title and len(line.strip()) > 0:
-                # This is likely a company/date line
-                p = doc.add_paragraph(style='Normal')
-                run = p.add_run(line)
-                run.italic = True
-                in_job_title = False
-            else:
-                # Regular content
-                p = doc.add_paragraph(style='Normal')
-                p.add_run(line)
-    
-    # Education
-    if tailored_sections['education'] and tailored_sections['education'].strip():
-        p = doc.add_paragraph(style='Heading 1')
-        run = p.add_run("EDUCATION")
-        
-        for line in tailored_sections['education'].split('\n'):
-            if "EDUCATION" in line.upper() or not line.strip():
-                continue
-                
-            if any(term in line.lower() for term in ['university', 'college', 'school', 'degree']):
-                p = doc.add_paragraph(style='Heading 2')
-                p.add_run(line)
-            else:
-                p = doc.add_paragraph(style='Normal')
-                p.add_run(line)
-    
-    # Skills
-    if tailored_sections['skills'] and tailored_sections['skills'].strip():
-        p = doc.add_paragraph(style='Heading 1')
-        run = p.add_run("SKILLS")
-        
-        for line in tailored_sections['skills'].split('\n'):
-            if "SKILLS" in line.upper() or not line.strip():
-                continue
-                
-            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
-                # Bullet point
-                p = doc.add_paragraph(style='Normal')
-                p.style = 'List Bullet'
-                p.add_run(line[1:].strip())
-            else:
-                p = doc.add_paragraph(style='Normal')
-                p.add_run(line)
-    
-    # Projects
-    if tailored_sections['projects'] and tailored_sections['projects'].strip():
-        p = doc.add_paragraph(style='Heading 1')
-        run = p.add_run("PROJECTS")
-        
-        for line in tailored_sections['projects'].split('\n'):
-            if "PROJECTS" in line.upper() or not line.strip():
-                continue
-                
-            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
-                # Bullet point
-                p = doc.add_paragraph(style='Normal')
-                p.style = 'List Bullet'
-                p.add_run(line[1:].strip())
-            elif any(run.bold for run in p.runs):
-                p = doc.add_paragraph(style='Heading 2')
-                p.add_run(line)
-            else:
-                p = doc.add_paragraph(style='Normal')
-                p.add_run(line)
-    
-    # Other sections (only if they contain content)
-    if tailored_sections['other'] and tailored_sections['other'].strip():
-        p = doc.add_paragraph(style='Heading 1')
-        run = p.add_run("ADDITIONAL INFORMATION")
-        
-        for line in tailored_sections['other'].split('\n'):
-            if not line.strip():
-                continue
-                
-            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
-                # Bullet point
-                p = doc.add_paragraph(style='Normal')
-                p.style = 'List Bullet'
-                p.add_run(line[1:].strip())
-            else:
-                p = doc.add_paragraph(style='Normal')
-                p.add_run(line)
-    
-    # Generate output filename
-    output_filename = os.path.basename(formatted_resume_path).replace('.docx', '_tailored.docx')
-    output_path = os.path.join(os.path.dirname(formatted_resume_path), output_filename)
-    
-    # Save the tailored resume
-    doc.save(output_path)
-    
-    return output_filename, output_path
+            # Create the system prompt
+            system_prompt = (
+                "You are an expert resume writer helping customize a resume for a specific job posting. "
+                "Your task is to rewrite and enhance the provided resume section to better align with the "
+                "job requirements while maintaining truthfulness. Make impactful improvements that highlight "
+                "relevant experience and skills. Be concise and impactful."
+            )
+            
+            # Format requirements and skills as bullet points for clearer prompting
+            requirements_text = "\n".join([f"• {req}" for req in job_data.get('requirements', [])])
+            skills_text = "\n".join([f"• {skill}" for skill in job_data.get('skills', [])])
+            
+            # Create the user prompt
+            user_prompt = f"""
+            # Job Requirements
+            {requirements_text}
 
-def generate_resume_preview(docx_path):
-    """Generate HTML preview of resume content with proper formatting and bullet points"""
-    doc = docx.Document(docx_path)
+            # Desired Skills
+            {skills_text}
+
+            # Current Resume Section: {section_name}
+            {content}
+
+            Please rewrite and enhance the "{section_name}" section to better align with the job requirements. 
+            Make specific, tailored improvements while maintaining factual accuracy.
+            
+            For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
+            
+            Bold (using **text**) the most significant changes that directly address job requirements.
+            
+            Return ONLY the enhanced content, maintaining the original format with bullet points if present.
+            """
+            
+            # Make the API request
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                temperature=0.7,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+            
+            # Log token usage
+            output_text = response.choices[0].message.content
+            logger.info(f"OpenAI API response for {section_name}: {len(output_text)} chars")
+            logger.info(f"Completion tokens: {response.usage.completion_tokens}, Prompt tokens: {response.usage.prompt_tokens}")
+            
+            # Store the tailored content for direct HTML generation
+            self.tailored_content[section_name] = output_text.strip()
+            
+            return output_text.strip()
+            
+        except Exception as e:
+            logger.error(f"Error tailoring {section_name} with OpenAI API: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Partial key for debugging
+            api_key_prefix = self.api_key[:8] + "..." if self.api_key else "None"
+            logger.error(f"OpenAI API key prefix: {api_key_prefix}")
+            raise Exception(f"OpenAI API error: {str(e)}")
+
+def format_section_content(content: str) -> str:
+    """Format section content for HTML display, handling bullet points and markdown"""
+    if not content:
+        return ""
     
-    html = "<div class='resume-preview'>"
+    # Convert markdown bold to HTML bold
+    content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', content)
     
-    current_section = None
+    # Check if the content has bullet points
+    bullet_point_pattern = r'^[\s]*[•\-\*][\s]'
+    lines = content.strip().split('\n')
     
-    for para in doc.paragraphs:
-        if not para.text.strip():
-            continue
+    # If content contains bullet points, format as a list
+    if any(re.match(bullet_point_pattern, line) for line in lines):
+        formatted_lines = []
+        is_in_list = False
         
-        # Section headers (usually Heading 1)
-        if para.style.name.startswith('Heading 1') or all(run.bold for run in para.runs if run.text.strip()):
-            current_section = para.text.strip()
-            html += f"<h2 class='resume-heading-1'>{current_section}</h2>"
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Handle bullet points (•, -, *)
+            if re.match(bullet_point_pattern, line):
+                if not is_in_list:
+                    formatted_lines.append("<ul>")
+                    is_in_list = True
+                
+                # Remove the bullet and any leading/trailing whitespace
+                bullet_content = re.sub(r'^[\s]*[•\-\*][\s]*', '', line).strip()
+                formatted_lines.append(f"<li>{bullet_content}</li>")
+            else:
+                if is_in_list:
+                    formatted_lines.append("</ul>")
+                    is_in_list = False
+                formatted_lines.append(f"<p>{line}</p>")
         
-        # Subsections (usually Heading 2 or bold text)
-        elif para.style.name.startswith('Heading 2') or any(run.bold for run in para.runs if run.text.strip()):
-            html += f"<h3 class='resume-heading-2'>{para.text}</h3>"
+        # Close any open list
+        if is_in_list:
+            formatted_lines.append("</ul>")
+            
+        return "\n".join(formatted_lines)
+    else:
+        # Regular paragraph text
+        paragraphs = [p.strip() for p in content.split('\n') if p.strip()]
+        return "\n".join([f"<p>{p}</p>" for p in paragraphs])
+
+def extract_resume_sections(doc_path: str) -> Dict[str, str]:
+    """Extract sections from a resume document"""
+    try:
+        logger.info(f"Extracting sections from resume: {doc_path}")
         
-        # Regular paragraphs
-        else:
+        # Extract plain text content from the DOCX file
+        text = docx2txt.process(doc_path)
+        
+        # Parse the document into sections
+        doc = Document(doc_path)
+        
+        # Initialize standard resume sections
+        sections = {
+            "contact": "",
+            "summary": "",
+            "experience": "",
+            "education": "",
+            "skills": "",
+            "projects": "",
+            "additional": ""
+        }
+        
+        # Debug: Count total paragraphs with content
+        total_paragraphs = sum(1 for para in doc.paragraphs if para.text.strip())
+        logger.info(f"Total paragraphs with content: {total_paragraphs}")
+        
+        # Extract sections based on heading style
+        current_section = "contact"  # Default to contact for initial content
+        section_content = []
+        
+        # Log all potential section headers for debugging
+        logger.info("Scanning document for potential section headers...")
+        for i, para in enumerate(doc.paragraphs):
             text = para.text.strip()
             
-            # Check if this is a bullet point (Claude often uses • or - for bullets)
-            if text.startswith('•') or text.startswith('-') or text.startswith('*'):
-                # If we're not already in a list, start a new one
-                if not html.endswith('</li>') and not html.endswith('<ul>'):
-                    html += "<ul class='resume-bullet-list'>"
+            # Skip empty paragraphs
+            if not text:
+                continue
+            
+            # Debug potential headers
+            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
+                logger.info(f"Potential header found at para {i}: '{text}' (Style: {para.style.name}, Bold: {any(p.bold for p in para.runs)})")
+            
+        # First pass - try to extract based on formatting
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            
+            # Skip empty paragraphs
+            if not text:
+                continue
+            
+            # Check if this is a heading (section title)
+            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
+                # Store previous section content
+                if section_content:
+                    sections[current_section] = "\n".join(section_content)
+                    section_content = []
                 
-                # Add the bullet point
-                html += f"<li class='resume-bullet-item'>{text[1:].strip()}</li>"
+                # Determine new section type based on heading text
+                if re.search(r'contact|info|email|phone|address', text.lower()):
+                    current_section = "contact"
+                elif re.search(r'summary|objective|profile|about', text.lower()):
+                    current_section = "summary"
+                elif re.search(r'experience|work|employment|job|career|professional', text.lower()):
+                    current_section = "experience"
+                elif re.search(r'education|degree|university|college|school|academic', text.lower()):
+                    current_section = "education"
+                elif re.search(r'skills|expertise|technologies|competencies|qualification|proficiencies', text.lower()):
+                    current_section = "skills"
+                elif re.search(r'projects|portfolio|works', text.lower()):
+                    current_section = "projects"
+                elif re.search(r'additional|interests|activities|volunteer|certification|awards|achievements', text.lower()):
+                    current_section = "additional"
+                else:
+                    # Default to additional for unknown headings
+                    current_section = "additional"
+                
+                logger.info(f"Section header detected: '{text}' -> categorized as '{current_section}'")
             else:
-                # If we were in a list and now we're not, close the list
-                if html.endswith('</li>'):
-                    html += "</ul>"
+                # Add content to current section
+                section_content.append(text)
+        
+        # Add the last section content
+        if section_content:
+            sections[current_section] = "\n".join(section_content)
+        
+        # Check if we actually found any sections beyond contact
+        sections_found = sum(1 for section, content in sections.items() if content and section != "contact")
+        logger.info(f"Sections found with standard detection: {sections_found}")
+        
+        # If we didn't find any sections or only found contact, try a simpler approach
+        if sections_found == 0:
+            logger.info("No sections detected with standard method. Using fallback approach...")
+            
+            # Fallback: Treat the entire document as experience section
+            if total_paragraphs > 0:
+                all_content = "\n".join(para.text for para in doc.paragraphs if para.text.strip())
+                if len(all_content) > 0:
+                    sections["experience"] = all_content
+                    logger.info(f"Fallback: Added {len(all_content)} chars to experience section")
+        
+        # Log extraction results
+        for section, content in sections.items():
+            if content:
+                logger.info(f"Final extracted {section} section: {len(content)} chars")
+            else:
+                logger.info(f"No content found for {section} section")
+        
+        return sections
+    
+    except Exception as e:
+        logger.error(f"Error extracting resume sections: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        # Return at least an empty structure in case of error
+        return {
+            "contact": "",
+            "summary": "",
+            "experience": "Error extracting content. Please check your resume format.",
+            "education": "",
+            "skills": "",
+            "projects": "",
+            "additional": ""
+        }
+
+def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAIClient]) -> str:
+    """Generate HTML preview directly from LLM API responses"""
+    if not llm_client or not llm_client.tailored_content:
+        logger.warning("No direct LLM responses available for preview generation")
+        return None
+        
+    logger.info(f"Generating preview from direct LLM responses: {len(llm_client.tailored_content)} sections")
+    
+    html_parts = []
+    
+    # Contact information (usually not tailored)
+    if "contact" in llm_client.tailored_content:
+        contact_html = format_section_content(llm_client.tailored_content["contact"])
+        html_parts.append(f'<div class="resume-section"><h2>Contact Information</h2>{contact_html}</div>')
+    
+    # Summary section
+    if "summary" in llm_client.tailored_content:
+        summary_html = format_section_content(llm_client.tailored_content["summary"])
+        html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2>{summary_html}</div>')
+    
+    # Experience section
+    if "experience" in llm_client.tailored_content:
+        experience_html = format_section_content(llm_client.tailored_content["experience"])
+        html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2>{experience_html}</div>')
+    
+    # Education section
+    if "education" in llm_client.tailored_content:
+        education_html = format_section_content(llm_client.tailored_content["education"])
+        html_parts.append(f'<div class="resume-section"><h2>Education</h2>{education_html}</div>')
+    
+    # Skills section
+    if "skills" in llm_client.tailored_content:
+        skills_html = format_section_content(llm_client.tailored_content["skills"])
+        html_parts.append(f'<div class="resume-section"><h2>Skills</h2>{skills_html}</div>')
+    
+    # Projects section
+    if "projects" in llm_client.tailored_content:
+        projects_html = format_section_content(llm_client.tailored_content["projects"])
+        html_parts.append(f'<div class="resume-section"><h2>Projects</h2>{projects_html}</div>')
+    
+    # Additional information section
+    if "additional" in llm_client.tailored_content:
+        additional_html = format_section_content(llm_client.tailored_content["additional"])
+        html_parts.append(f'<div class="resume-section"><h2>Additional Information</h2>{additional_html}</div>')
+    
+    # Combine all HTML parts
+    preview_html = "\n".join(html_parts)
+    
+    logger.info(f"Generated tailored resume preview HTML from direct LLM responses: {len(preview_html)} characters")
+    
+    return preview_html
+
+def generate_resume_preview(doc_path: str) -> str:
+    """Generate HTML preview of the resume document"""
+    global last_llm_client
+    
+    # Try to generate preview from direct LLM responses if available
+    if last_llm_client:
+        preview_html = generate_preview_from_llm_responses(last_llm_client)
+        if preview_html:
+            logger.info("Using direct LLM responses for preview")
+            return preview_html
+    
+    logger.info("No direct LLM responses available, generating preview from DOCX file")
+    
+    try:
+        # Extract plain text from the document
+        text = docx2txt.process(doc_path)
+        
+        # Parse the document object
+        doc = Document(doc_path)
+        
+        html_parts = []
+        current_section = None
+        section_content = []
+        
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            
+            # Skip empty paragraphs
+            if not text:
+                continue
+            
+            # Check if this is a heading (section title)
+            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
+                # Add previous section to HTML
+                if current_section and section_content:
+                    section_html = "\n".join(section_content)
+                    html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
+                    section_content = []
                 
-                # Regular paragraph
-                html += f"<p class='resume-paragraph'>{text}</p>"
+                # Set new section
+                current_section = text
+                
+            else:
+                # Process content based on if it's a bullet point
+                if text.startswith('•') or text.startswith('-') or text.startswith('*'):
+                    if not section_content or not section_content[-1].startswith('<ul>'):
+                        section_content.append('<ul>')
+                    
+                    # Remove the bullet point character and format as list item
+                    item_text = text[1:].strip()
+                    section_content.append(f'<li>{item_text}</li>')
+                    
+                    # Check if we need to close the list
+                    next_is_bullet = False
+                    for next_para in doc.paragraphs:
+                        if next_para.text.strip() and (next_para.text.strip().startswith('•') or 
+                                                      next_para.text.strip().startswith('-') or 
+                                                      next_para.text.strip().startswith('*')):
+                            next_is_bullet = True
+                            break
+                    
+                    if not next_is_bullet:
+                        section_content.append('</ul>')
+                else:
+                    # Regular paragraph
+                    section_content.append(f'<p>{text}</p>')
+        
+        # Add last section
+        if current_section and section_content:
+            section_html = "\n".join(section_content)
+            html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
+        
+        # Combine all HTML parts
+        preview_html = "\n".join(html_parts)
+        
+        logger.info(f"Generated tailored resume preview HTML from DOCX: {len(preview_html)} characters")
+        
+        return preview_html
     
-    # Close any open list
-    if html.endswith('</li>'):
-        html += "</ul>"
+    except Exception as e:
+        logger.error(f"Error generating resume preview: {str(e)}")
+        return f"<p>Error generating preview: {str(e)}</p>"
+
+def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = 'openai', api_url: str = None) -> Tuple[str, str]:
+    """Tailor a resume using an LLM API (Claude or OpenAI)"""
+    global last_llm_client
     
-    html += "</div>"
+    try:
+        logger.info(f"Tailoring resume with {provider.upper()} API: {resume_path}")
+        
+        # Extract resume sections
+        resume_sections = extract_resume_sections(resume_path)
+        
+        # Initialize the appropriate LLM client based on provider
+        if provider.lower() == 'claude':
+            llm_client = ClaudeClient(api_key, api_url)
+        elif provider.lower() == 'openai':
+            llm_client = OpenAIClient(api_key)
+        else:
+            raise ValueError(f"Unsupported LLM provider: {provider}. Please use 'claude' or 'openai'.")
+            
+        # Store the client for preview generation
+        last_llm_client = llm_client
+        
+        # Create a new document based on the template
+        template_path = os.path.join(os.path.dirname(__file__), 'static', 'template_resume.docx')
+        if not os.path.exists(template_path):
+            template_path = os.path.join('static', 'template_resume.docx')
+            
+        if not os.path.exists(template_path):
+            # Copy original as template
+            template_path = resume_path
+            
+        logger.info(f"Using template: {template_path}")
+        
+        doc = Document(template_path)
+        
+        # Clear the document content
+        for para in list(doc.paragraphs):
+            p = para._element
+            if p.getparent() is not None:
+                p.getparent().remove(p)
+        
+        # Add contact information (not tailored)
+        if resume_sections.get('contact'):
+            contact_para = doc.add_paragraph()
+            contact_para.add_run("Contact Information").bold = True
+            contact_para.style = 'Heading 1'
+            doc.add_paragraph(resume_sections.get('contact', ''))
+        
+        # Tailor the professional summary
+        if resume_sections.get('summary'):
+            summary_para = doc.add_paragraph()
+            summary_para.add_run("Professional Summary").bold = True
+            summary_para.style = 'Heading 1'
+            
+            tailored_summary = llm_client.tailor_resume_content(
+                'summary', 
+                resume_sections.get('summary', ''),
+                job_data
+            )
+            doc.add_paragraph(tailored_summary)
+        
+        # Tailor the work experience
+        if resume_sections.get('experience'):
+            exp_para = doc.add_paragraph()
+            exp_para.add_run("Work Experience").bold = True
+            exp_para.style = 'Heading 1'
+            
+            tailored_experience = llm_client.tailor_resume_content(
+                'experience', 
+                resume_sections.get('experience', ''),
+                job_data
+            )
+            
+            # Process experience content with bullet points
+            for line in tailored_experience.split('\n'):
+                if line.strip():
+                    if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
+                        # Add as bullet point
+                        p = doc.add_paragraph(line.strip()[1:].strip(), style='List Bullet')
+                    else:
+                        # Add as regular paragraph
+                        doc.add_paragraph(line.strip())
+        
+        # Add education section (typically not heavily tailored)
+        if resume_sections.get('education'):
+            edu_para = doc.add_paragraph()
+            edu_para.add_run("Education").bold = True
+            edu_para.style = 'Heading 1'
+            
+            tailored_education = llm_client.tailor_resume_content(
+                'education',
+                resume_sections.get('education', ''),
+                job_data
+            )
+            
+            for line in tailored_education.split('\n'):
+                if line.strip():
+                    doc.add_paragraph(line.strip())
+        
+        # Tailor the skills section
+        if resume_sections.get('skills'):
+            skills_para = doc.add_paragraph()
+            skills_para.add_run("Skills").bold = True
+            skills_para.style = 'Heading 1'
+            
+            tailored_skills = llm_client.tailor_resume_content(
+                'skills', 
+                resume_sections.get('skills', ''),
+                job_data
+            )
+            
+            # Process skills with bullet points
+            for line in tailored_skills.split('\n'):
+                if line.strip():
+                    if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
+                        # Add as bullet point
+                        p = doc.add_paragraph(line.strip()[1:].strip(), style='List Bullet')
+                    else:
+                        # Add as regular paragraph
+                        doc.add_paragraph(line.strip())
+        
+        # Add projects section
+        if resume_sections.get('projects'):
+            proj_para = doc.add_paragraph()
+            proj_para.add_run("Projects").bold = True
+            proj_para.style = 'Heading 1'
+            
+            tailored_projects = llm_client.tailor_resume_content(
+                'projects',
+                resume_sections.get('projects', ''),
+                job_data
+            )
+            
+            for line in tailored_projects.split('\n'):
+                if line.strip():
+                    if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
+                        # Add as bullet point
+                        p = doc.add_paragraph(line.strip()[1:].strip(), style='List Bullet')
+                    else:
+                        # Add as regular paragraph
+                        doc.add_paragraph(line.strip())
+        
+        # Add additional information
+        if resume_sections.get('additional'):
+            add_para = doc.add_paragraph()
+            add_para.add_run("Additional Information").bold = True
+            add_para.style = 'Heading 1'
+            
+            tailored_additional = llm_client.tailor_resume_content(
+                'additional',
+                resume_sections.get('additional', ''),
+                job_data
+            )
+            
+            for line in tailored_additional.split('\n'):
+                if line.strip():
+                    doc.add_paragraph(line.strip())
+        
+        # Save the tailored resume
+        filename_parts = os.path.splitext(os.path.basename(resume_path))
+        tailored_filename = f"{filename_parts[0]}_tailored_{provider}{filename_parts[1]}"
+        
+        # Determine the directory for the tailored resume
+        uploads_dir = os.path.dirname(resume_path)
+        tailored_path = os.path.join(uploads_dir, tailored_filename)
+        
+        # Save the document
+        doc.save(tailored_path)
+        
+        logger.info(f"Tailored resume saved to: {tailored_path}")
+        
+        return tailored_filename, tailored_path
     
-    return html
+    except Exception as e:
+        logger.error(f"Error tailoring resume with {provider.upper()}: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise Exception(f"Error tailoring resume with {provider.upper()}: {str(e)}")

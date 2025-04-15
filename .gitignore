@@ -1,11 +1,51 @@
-# Python
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Flask files
 __pycache__/
 *.py[cod]
 *$py.class
+instance/
+.webassets-cache
+
+# Uploaded files
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/template_resume.docx
+
+# Logs
+logs/
+*.log
+
+# Temp files
+*~
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python env
+venv/
+env/
+ENV/
+
+# Build files
+dist/
+build/
+*.egg-info/
+
+# Python
 *.so
 .Python
 env/
-build/
 develop-eggs/
 dist/
 downloads/
@@ -23,10 +63,6 @@ var/
 # Virtual Environment
 venv/
 ENV/
-
-# Flask
-instance/
-.webassets-cache
 
 # Upload directory content but keep directory
 static/uploads/*

@@ -189,6 +189,16 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 - Ensure the proper use of section headers in the document to create well-structured resumes
 - When testing API functionality, create standalone test scripts that can verify each part of the workflow
 - Split document creation from content tailoring for cleaner code organization
+- Implement robust resume section extraction with multiple detection approaches:
+  - Use both paragraph style and text formatting (bold) to identify potential section headers
+  - Expand regex patterns for section detection to catch various naming conventions (e.g., "about" for summary)
+  - Default new documents to "contact" section rather than "header" to ensure content is properly categorized
+  - Log potential section headers for easier debugging of parsing issues
+  - Implement fallback mechanisms that process the entire document when standard detection fails
+  - Always return a structured response even when extraction fails to prevent KeyErrors downstream
+- Add detailed logging throughout the resume parsing process to quickly identify extraction issues
+- Be aware that resume formats vary widely; some may not use standard headings or formatting
+- Count the total paragraphs with content to validate that document parsing is working correctly
 
 ## User Specified Lessons
 - You have a python venv in ./venv. Always use (activate) it when doing python development. First, to check whether 'uv' is available, use `which uv`. If that's the case, first activate the venv, and then use `uv pip install` to install packages. Otherwise, fall back to `pip`.
@@ -237,8 +247,29 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
   - Created commit message
   - Added detailed Scratchpad notes
 
+## Resume Section Parsing Improvements - April 15, 2025
+
+[X] Fixed critical resume section extraction issues
+  - Enhanced regex patterns to detect various section naming conventions
+  - Added detailed logging of potential section headers for debugging
+  - Implemented fallback mechanism for documents with non-standard formatting
+  - Created robust error handling to prevent downstream failures
+  - Fixed default section from "header" to "contact" for better initial content categorization
+  
+[X] Improved debugging and visibility
+  - Added paragraph counting to validate document parsing
+  - Logged detailed section detection process for transparency
+  - Created comprehensive section detection report in logs
+  - Added fallback mechanism that treats content as experience section when headers aren't detected
+
+[X] Tested with various resume formats
+  - Successfully processed resume with non-standard formatting
+  - Verified that tailored content is properly generated when sections are extracted
+  - Confirmed that the fallback mechanism works correctly when standard detection fails
+
 Next steps:
 - Consider refining UI to better display tailored sections
 - Add option to see "diff" between original and tailored resume
 - Explore using other LLMs from devin tools as fallbacks
 - Consider adding job search functionality using the new search engine tools
+- Create a resume format validator to help users prepare optimal resumes for tailoring
