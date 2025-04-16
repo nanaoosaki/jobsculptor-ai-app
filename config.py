@@ -20,3 +20,8 @@ class Config:
     # Resume parsing configuration
     USE_LLM_RESUME_PARSING = os.environ.get('USE_LLM_RESUME_PARSING', 'true').lower() == 'true'
     LLM_RESUME_PARSER_PROVIDER = os.environ.get('LLM_RESUME_PARSER_PROVIDER', 'auto')  # 'auto', 'claude', 'openai'
+    
+    # Job analysis configuration
+    USE_LLM_JOB_ANALYSIS = os.environ.get('USE_LLM_JOB_ANALYSIS', 'true').lower() == 'true'
+    LLM_JOB_ANALYZER_PROVIDER = os.environ.get('LLM_JOB_ANALYZER_PROVIDER', 'auto')  # 'auto', 'claude', 'openai'
+    JOB_ANALYSIS_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads/job_analysis_cache')

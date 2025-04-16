@@ -126,8 +126,8 @@ def setup_job_parser_routes(app):
             return jsonify({'error': 'No job URL provided'}), 400
         
         job_url = data['url']
-        # Default to OpenAI instead of auto
-        provider = data.get('provider', 'openai')
+        # Get provider preference from request
+        preferred_provider = data.get('provider', 'auto')
         
         try:
             # Parse the job listing first
@@ -148,11 +148,31 @@ def setup_job_parser_routes(app):
             
             # Include LLM analysis if available
             if LLM_JOB_ANALYZER_AVAILABLE:
-                # Use OpenAI API key directly
-                api_key = app.config.get('OPENAI_API_KEY')
+                # Get available API keys
+                openai_api_key = app.config.get('OPENAI_API_KEY')
+                claude_api_key = app.config.get('CLAUDE_API_KEY')
                 
-                if not api_key:
-                    return jsonify({'error': 'OpenAI API key not configured'}), 500
+                # Determine which provider to use based on availability and preference
+                provider = None
+                api_key = None
+                
+                if preferred_provider == 'openai' and openai_api_key:
+                    provider = 'openai'
+                    api_key = openai_api_key
+                elif preferred_provider == 'claude' and claude_api_key:
+                    provider = 'claude'
+                    api_key = claude_api_key
+                elif preferred_provider == 'auto':
+                    # Auto mode - prefer OpenAI if available
+                    if openai_api_key:
+                        provider = 'openai'
+                        api_key = openai_api_key
+                    elif claude_api_key:
+                        provider = 'claude'
+                        api_key = claude_api_key
+                
+                if not provider or not api_key:
+                    return jsonify({'error': 'No LLM API keys configured'}), 500
                 
                 # Analyze the job posting with LLM
                 job_text = parse_result.get('complete_job_text', '')
@@ -168,13 +188,14 @@ def setup_job_parser_routes(app):
                     company=company,
                     job_text=job_text,
                     api_key=api_key,
-                    provider='openai',  # Explicitly use OpenAI
+                    provider=provider,
+                    api_url=app.config.get('CLAUDE_API_URL') if provider == 'claude' else None,
                     cache_dir=cache_dir
                 )
                 
                 # Add analysis results to response
                 response_data['analysis'] = analysis_results
-                response_data['analysis_provider'] = 'openai'
+                response_data['analysis_provider'] = provider
             else:
                 # If LLM analysis is not available, create basic analysis from parsed data
                 response_data['analysis'] = {
