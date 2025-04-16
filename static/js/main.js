@@ -466,56 +466,51 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to display the user's original resume preview
     function displayUserResumePreview(data) {
-        console.log('Displaying user resume preview with data:', data);
-        
-        // This function should update ONLY the userResumeParsed element, not the main resumePreview
+        // Get the userResumeParsed container
         const userResumeParsed = document.getElementById('userResumeParsed');
+        
+        // Clear existing content
         userResumeParsed.innerHTML = '';
         
-        // Check if we have sections data directly or if it's nested in the response
-        let sections = data.sections;
+        // Create heading for the parsed content
+        const heading = document.createElement('h4');
+        heading.textContent = 'Your Resume (Parsed by AI)';
+        heading.style.marginBottom = '10px';
         
-        // If no sections found or empty, display a message
-        if (!sections || Object.keys(sections).length === 0) {
-            userResumeParsed.innerHTML = '<p class="text-muted">No resume content could be parsed.</p>';
-            console.warn('No sections found in resume data');
-            return;
+        // Add heading
+        userResumeParsed.appendChild(heading);
+        
+        // Check if we have preview data
+        if (data.preview) {
+            // Create a container for the preview HTML
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'user-resume-content';
+            previewContainer.innerHTML = data.preview;
+            userResumeParsed.appendChild(previewContainer);
+            
+            console.log("User resume preview displayed in userResumeParsed section");
+        } else {
+            // Display message if no preview
+            const noPreview = document.createElement('p');
+            noPreview.className = 'text-muted';
+            noPreview.textContent = 'No preview available for this resume.';
+            userResumeParsed.appendChild(noPreview);
         }
-        
-        // Add each section to the preview
-        for (const section in sections) {
-            if (sections[section] && sections[section].trim && sections[section].trim()) {
-                const sectionTitle = document.createElement('h4');
-                sectionTitle.className = 'resume-section-title';
-                sectionTitle.textContent = section.replace(/_/g, ' ').toUpperCase();
-                userResumeParsed.appendChild(sectionTitle);
-                
-                const sectionContent = document.createElement('div');
-                sectionContent.className = 'resume-section-content';
-                sectionContent.innerHTML = sections[section].replace(/\n/g, '<br>');
-                userResumeParsed.appendChild(sectionContent);
-            }
-        }
-        
-        console.log('User resume preview displayed with sections:', Object.keys(sections));
     }
     
     // Helper function to display the tailored resume preview
     function displayResumePreview(preview) {
-        console.log('Displaying tailored resume preview with HTML content length:', preview.length);
-        
+        // Get the resume preview container
         const resumePreview = document.getElementById('resumePreview');
         
-        // Clear current preview content
+        // Clear existing content
         resumePreview.innerHTML = '';
         
-        // Create heading for tailored preview
+        // Create heading for tailored content
         const heading = document.createElement('h3');
         heading.textContent = 'Tailored Resume Preview';
-        heading.style.color = '#4a6fdc';
-        heading.style.borderBottom = '2px solid #4a6fdc';
-        heading.style.paddingBottom = '8px';
         heading.style.marginBottom = '15px';
+        heading.style.color = '#4e2a8e'; // Purple color to indicate AI tailoring
         
         // Add heading and preview content
         resumePreview.appendChild(heading);
@@ -536,13 +531,15 @@ document.addEventListener('DOMContentLoaded', function() {
         previewContainer.innerHTML = preview;
         resumePreview.appendChild(previewContainer);
         
+        // Add a log message to the console
+        console.log("Tailored resume preview displayed successfully");
+        console.log("Preview length:", preview.length);
+        
         // Enable download button after preview is shown
         downloadResumeBtn.disabled = false;
         
         // Scroll to the resume preview section
         resumePreview.scrollIntoView({ behavior: 'smooth' });
-        
-        console.log("Tailored resume preview displayed successfully");
     }
     
     // Helper function to check if tailoring should be enabled

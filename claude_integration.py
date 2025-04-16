@@ -9,7 +9,6 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import docx2txt
-import tempfile
 from typing import Dict, List, Tuple, Optional, Any, Union
 
 # Third-party imports for Claude
@@ -26,6 +25,9 @@ logger = logging.getLogger(__name__)
 
 # Global variable to track the last LLM client used
 last_llm_client = None
+
+# Import our YC Resume Generator
+from yc_resume_generator import YCResumeGenerator
 
 class LLMClient:
     """Base class for LLM API clients"""
@@ -82,6 +84,29 @@ class ClaudeClient(LLMClient):
             requirements_text = "\n".join([f"• {req}" for req in job_data.get('requirements', [])])
             skills_text = "\n".join([f"• {skill}" for skill in job_data.get('skills', [])])
             
+            # Include AI analysis if available
+            ai_analysis_text = ""
+            if 'analysis' in job_data and isinstance(job_data['analysis'], dict):
+                analysis = job_data['analysis']
+                
+                # Add candidate profile if available
+                if 'candidate_profile' in analysis and analysis['candidate_profile']:
+                    ai_analysis_text += f"\n## Candidate Profile\n{analysis['candidate_profile']}\n"
+                
+                # Add hard skills if available
+                if 'hard_skills' in analysis and analysis['hard_skills']:
+                    hard_skills = "\n".join([f"• {skill}" for skill in analysis['hard_skills']])
+                    ai_analysis_text += f"\n## Required Hard Skills\n{hard_skills}\n"
+                    
+                # Add soft skills if available
+                if 'soft_skills' in analysis and analysis['soft_skills']:
+                    soft_skills = "\n".join([f"• {skill}" for skill in analysis['soft_skills']])
+                    ai_analysis_text += f"\n## Required Soft Skills\n{soft_skills}\n"
+                
+                # Add ideal candidate description if available
+                if 'ideal_candidate' in analysis and analysis['ideal_candidate']:
+                    ai_analysis_text += f"\n## Ideal Candidate\n{analysis['ideal_candidate']}\n"
+            
             # Create the user prompt
             user_prompt = f"""
             # Job Requirements
@@ -89,11 +114,13 @@ class ClaudeClient(LLMClient):
 
             # Desired Skills
             {skills_text}
+            
+            {ai_analysis_text}
 
             # Current Resume Section: {section_name}
             {content}
 
-            Please rewrite and enhance the "{section_name}" section to better align with the job requirements. 
+            Please rewrite and enhance the "{section_name}" section to better align with the job requirements and analysis. 
             Make specific, tailored improvements while maintaining factual accuracy.
             
             For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
@@ -175,6 +202,29 @@ class OpenAIClient(LLMClient):
             requirements_text = "\n".join([f"• {req}" for req in job_data.get('requirements', [])])
             skills_text = "\n".join([f"• {skill}" for skill in job_data.get('skills', [])])
             
+            # Include AI analysis if available
+            ai_analysis_text = ""
+            if 'analysis' in job_data and isinstance(job_data['analysis'], dict):
+                analysis = job_data['analysis']
+                
+                # Add candidate profile if available
+                if 'candidate_profile' in analysis and analysis['candidate_profile']:
+                    ai_analysis_text += f"\n## Candidate Profile\n{analysis['candidate_profile']}\n"
+                
+                # Add hard skills if available
+                if 'hard_skills' in analysis and analysis['hard_skills']:
+                    hard_skills = "\n".join([f"• {skill}" for skill in analysis['hard_skills']])
+                    ai_analysis_text += f"\n## Required Hard Skills\n{hard_skills}\n"
+                    
+                # Add soft skills if available
+                if 'soft_skills' in analysis and analysis['soft_skills']:
+                    soft_skills = "\n".join([f"• {skill}" for skill in analysis['soft_skills']])
+                    ai_analysis_text += f"\n## Required Soft Skills\n{soft_skills}\n"
+                
+                # Add ideal candidate description if available
+                if 'ideal_candidate' in analysis and analysis['ideal_candidate']:
+                    ai_analysis_text += f"\n## Ideal Candidate\n{analysis['ideal_candidate']}\n"
+            
             # Create the user prompt
             user_prompt = f"""
             # Job Requirements
@@ -182,11 +232,13 @@ class OpenAIClient(LLMClient):
 
             # Desired Skills
             {skills_text}
+            
+            {ai_analysis_text}
 
             # Current Resume Section: {section_name}
             {content}
 
-            Please rewrite and enhance the "{section_name}" section to better align with the job requirements. 
+            Please rewrite and enhance the "{section_name}" section to better align with the job requirements and analysis. 
             Make specific, tailored improvements while maintaining factual accuracy.
             
             For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
@@ -215,7 +267,7 @@ class OpenAIClient(LLMClient):
             self.tailored_content[section_name] = output_text.strip()
             
             return output_text.strip()
-            
+                
         except Exception as e:
             logger.error(f"Error tailoring {section_name} with OpenAI API: {str(e)}")
             logger.error(traceback.format_exc())
@@ -275,6 +327,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
     """Extract sections from a resume document"""
     try:
         logger.info(f"Extracting sections from resume: {doc_path}")
+        print(f"DEBUG: extract_resume_sections called with doc_path: {doc_path}")
         
         # Import config to check if LLM parsing is enabled
         from config import Config
@@ -323,12 +376,15 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
         
         # If LLM parsing failed, is unavailable, or is disabled, fall back to traditional parsing
         logger.info("Using traditional resume section extraction...")
+        print(f"DEBUG: fallback to traditional parsing - will examine document: {doc_path}")
         
         # Extract plain text content from the DOCX file
         text = docx2txt.process(doc_path)
         
         # Parse the document into sections
+        print(f"DEBUG: About to create Document object from: {doc_path}")
         doc = Document(doc_path)
+        print(f"DEBUG: Document object created successfully - examining sections")
         
         # Initialize standard resume sections
         sections = {
@@ -361,7 +417,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
             # Debug potential headers
             if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
                 logger.info(f"Potential header found at para {i}: '{text}' (Style: {para.style.name}, Bold: {any(p.bold for p in para.runs)})")
-            
+        
         # First pass - try to extract based on formatting
         for para in doc.paragraphs:
             text = para.text.strip()
@@ -500,6 +556,8 @@ def generate_resume_preview(doc_path: str) -> str:
     """Generate HTML preview of the resume document"""
     global last_llm_client
     
+    print(f"DEBUG: generate_resume_preview called for doc_path: {doc_path}")
+    
     # Try to generate preview from direct LLM responses if available
     if last_llm_client:
         preview_html = generate_preview_from_llm_responses(last_llm_client)
@@ -508,6 +566,7 @@ def generate_resume_preview(doc_path: str) -> str:
             return preview_html
     
     logger.info("No direct LLM responses available, generating preview from DOCX file")
+    print(f"DEBUG: Will now process DOCX file for preview: {doc_path}")
     
     try:
         # Extract plain text from the document
@@ -579,6 +638,297 @@ def generate_resume_preview(doc_path: str) -> str:
         logger.error(f"Error generating resume preview: {str(e)}")
         return f"<p>Error generating preview: {str(e)}</p>"
 
+def tailor_resume_sections(resume_sections, job_data, api_key, provider='claude', api_url=None):
+    """
+    Tailor each section of the resume based on job requirements.
+    Uses the specified LLM provider (claude or openai).
+    
+    Args:
+        resume_sections (dict): Dictionary of resume sections
+        job_data (dict): Job data including requirements and skills
+        api_key (str): API key for the LLM service
+        provider (str): LLM provider to use ('claude' or 'openai')
+        api_url (str, optional): API URL for Claude API
+        
+    Returns:
+        dict: Dictionary containing tailored resume sections
+    """
+    logger.info(f"Tailoring resume sections using {provider}")
+    
+    if not api_key:
+        logger.error("No API key provided for tailoring resume")
+        raise ValueError(f"Missing API key for {provider}")
+    
+    # Create the client for the chosen provider
+    if provider.lower() == 'claude':
+        client = ClaudeClient(api_key, api_url)
+        logger.info("Created Claude client for tailoring")
+    elif provider.lower() == 'openai':
+        client = OpenAIClient(api_key)
+        logger.info("Created OpenAI client for tailoring")
+    else:
+        logger.error(f"Unsupported provider: {provider}")
+        raise ValueError(f"Unsupported provider: {provider}")
+    
+    # Extract job requirements
+    requirements = job_data.get('requirements', [])
+    skills = job_data.get('skills', [])
+    
+    # Get AI analysis data if available
+    analysis_data = job_data.get('analysis', {})
+    candidate_profile = analysis_data.get('candidate_profile', '')
+    hard_skills = analysis_data.get('hard_skills', [])
+    soft_skills = analysis_data.get('soft_skills', [])
+    ideal_candidate = analysis_data.get('ideal_candidate', '')
+    
+    # Convert lists to string for easier handling in prompts
+    requirements_text = "\n".join([f"• {req}" for req in requirements]) if requirements else "No specific requirements provided."
+    skills_text = "\n".join([f"• {skill}" for skill in skills]) if skills else "No specific skills provided."
+    
+    # Format AI analysis data for prompt inclusion
+    has_analysis = bool(candidate_profile or hard_skills or soft_skills or ideal_candidate)
+    
+    analysis_prompt = ""
+    if has_analysis:
+        analysis_prompt += "\n\n=== AI ANALYSIS OF THE JOB POSTING ===\n\n"
+        
+        if candidate_profile:
+            analysis_prompt += f"CANDIDATE PROFILE:\n{candidate_profile}\n\n"
+            
+        if hard_skills:
+            hard_skills_text = "\n".join([f"• {skill}" for skill in hard_skills])
+            analysis_prompt += f"HARD SKILLS REQUIRED:\n{hard_skills_text}\n\n"
+            
+        if soft_skills:
+            soft_skills_text = "\n".join([f"• {skill}" for skill in soft_skills])
+            analysis_prompt += f"SOFT SKILLS REQUIRED:\n{soft_skills_text}\n\n"
+            
+        if ideal_candidate:
+            analysis_prompt += f"IDEAL CANDIDATE DESCRIPTION:\n{ideal_candidate}\n\n"
+    
+    # Log analysis data usage
+    if has_analysis:
+        logger.info("Including AI analysis data in tailoring prompts")
+    else:
+        logger.info("No AI analysis data available for tailoring")
+    
+    # Tailor each section
+    tailored_sections = {}
+    
+    # Define the sections to tailor
+    sections_to_tailor = ['summary', 'experience', 'education', 'skills', 'projects', 'additional']
+    
+    # Copy sections that should not be modified
+    for section, content in resume_sections.items():
+        if section not in sections_to_tailor:
+            tailored_sections[section] = content
+            logger.info(f"Copied section '{section}' without modification")
+    
+    # Tailor the resume summary
+    if 'summary' in resume_sections and resume_sections['summary']:
+        summary_prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor a resume summary to make it more appealing for a specific job.
+
+ORIGINAL RESUME SUMMARY:
+{resume_sections['summary']}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Please rewrite the resume summary to better match the job requirements. Make significant improvements that highlight relevant experience and skills. 
+Don't just make minor word changes - make bold improvements that will help the candidate stand out.
+Keep the length similar to the original, but make it more impactful and targeted to this specific position.
+Focus on emphasizing experience and skills that match the job requirements.
+"""
+        try:
+            tailored_summary = client.tailor_resume_content(summary_prompt, "summary")
+            tailored_sections['summary'] = tailored_summary
+            logger.info(f"Tailored 'summary' section - Original: {len(resume_sections['summary'])} chars, Tailored: {len(tailored_summary)} chars")
+        except Exception as e:
+            logger.error(f"Error tailoring summary: {str(e)}")
+            tailored_sections['summary'] = resume_sections['summary']
+    else:
+        tailored_sections['summary'] = resume_sections.get('summary', '')
+        logger.info("No 'summary' section to tailor or section is empty")
+    
+    # Tailor the experience section
+    if 'experience' in resume_sections and resume_sections['experience']:
+        experience_prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the professional experience section to make it more appealing for a specific job.
+
+ORIGINAL EXPERIENCE SECTION:
+{resume_sections['experience']}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Please rewrite the experience section to better match the job requirements. Make significant improvements that highlight relevant experience and skills.
+Don't just make minor word changes - make bold improvements by:
+1. Enhancing bullet points to emphasize achievements relevant to this job
+2. Adding quantifiable metrics where possible (estimates are acceptable if they sound realistic)
+3. Using strong action verbs and industry terminology from the job description
+4. Prioritizing experiences that match the job requirements
+5. Highlighting transferable skills for any experience that isn't directly related
+
+Keep approximately the same number of bullet points, but make them more impactful and targeted to this specific position.
+Maintain the same job titles, companies, and dates - only modify the descriptions and bullet points.
+"""
+        try:
+            tailored_experience = client.tailor_resume_content(experience_prompt, "experience")
+            tailored_sections['experience'] = tailored_experience
+            logger.info(f"Tailored 'experience' section - Original: {len(resume_sections['experience'])} chars, Tailored: {len(tailored_experience)} chars")
+        except Exception as e:
+            logger.error(f"Error tailoring experience: {str(e)}")
+            tailored_sections['experience'] = resume_sections['experience']
+    else:
+        tailored_sections['experience'] = resume_sections.get('experience', '')
+        logger.info("No 'experience' section to tailor or section is empty")
+    
+    # Tailor the education section
+    if 'education' in resume_sections and resume_sections['education']:
+        education_prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the education section to make it more appealing for a specific job.
+
+ORIGINAL EDUCATION SECTION:
+{resume_sections['education']}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Please rewrite the education section to better match the job requirements. Focus on:
+1. Highlighting relevant coursework, projects, or achievements that match the job requirements
+2. Emphasizing academic accomplishments that demonstrate skills needed for this position
+3. Formatting in a way that emphasizes the most relevant educational experiences
+4. Including any certifications or training that matches required skills
+
+Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
+Be concise and impactful, focusing on qualifications that match the job requirements.
+"""
+        try:
+            tailored_education = client.tailor_resume_content(education_prompt, "education")
+            tailored_sections['education'] = tailored_education
+            logger.info(f"Tailored 'education' section - Original: {len(resume_sections['education'])} chars, Tailored: {len(tailored_education)} chars")
+        except Exception as e:
+            logger.error(f"Error tailoring education: {str(e)}")
+            tailored_sections['education'] = resume_sections['education']
+    else:
+        tailored_sections['education'] = resume_sections.get('education', '')
+        logger.info("No 'education' section to tailor or section is empty")
+    
+    # Tailor the skills section
+    if 'skills' in resume_sections and resume_sections['skills']:
+        skills_prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the skills section to make it more appealing for a specific job.
+
+ORIGINAL SKILLS SECTION:
+{resume_sections['skills']}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Please rewrite the skills section to better match the job requirements. Focus on:
+1. Reordering skills to prioritize those mentioned in the job description
+2. Adding any missing skills that the candidate likely has based on their experience (must be reasonable to infer from other sections)
+3. Grouping skills into relevant categories that align with the job posting
+4. Rephrasing skills using the exact terminology from the job description
+5. Removing skills that are irrelevant to this position if the list is very long
+
+Only include skills that are authentic to the candidate based on their resume.
+Format the skills section clearly and concisely for easy scanning.
+"""
+        try:
+            tailored_skills = client.tailor_resume_content(skills_prompt, "skills")
+            tailored_sections['skills'] = tailored_skills
+            logger.info(f"Tailored 'skills' section - Original: {len(resume_sections['skills'])} chars, Tailored: {len(tailored_skills)} chars")
+        except Exception as e:
+            logger.error(f"Error tailoring skills: {str(e)}")
+            tailored_sections['skills'] = resume_sections['skills']
+    else:
+        tailored_sections['skills'] = resume_sections.get('skills', '')
+        logger.info("No 'skills' section to tailor or section is empty")
+    
+    # Tailor the projects section if it exists
+    if 'projects' in resume_sections and resume_sections['projects']:
+        projects_prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the projects section to make it more appealing for a specific job.
+
+ORIGINAL PROJECTS SECTION:
+{resume_sections['projects']}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Please rewrite the projects section to better match the job requirements. Focus on:
+1. Highlighting projects that demonstrate skills required for this job
+2. Emphasizing tools, technologies, and methodologies that match the job description
+3. Quantifying project outcomes and impacts where possible
+4. Rephrasing project descriptions to use terminology from the job posting
+5. Focusing on the candidate's specific contributions and leadership roles
+
+Keep the project titles and timelines the same, but enhance descriptions to better align with the job requirements.
+Be concise and impactful, prioritizing projects most relevant to this position.
+"""
+        try:
+            tailored_projects = client.tailor_resume_content(projects_prompt, "projects")
+            tailored_sections['projects'] = tailored_projects
+            logger.info(f"Tailored 'projects' section - Original: {len(resume_sections['projects'])} chars, Tailored: {len(tailored_projects)} chars")
+        except Exception as e:
+            logger.error(f"Error tailoring projects: {str(e)}")
+            tailored_sections['projects'] = resume_sections['projects']
+    else:
+        tailored_sections['projects'] = resume_sections.get('projects', '')
+        logger.info("No 'projects' section to tailor or section is empty")
+    
+    # Tailor additional information if it exists
+    if 'additional' in resume_sections and resume_sections['additional']:
+        additional_prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the additional information section to make it more appealing for a specific job.
+
+ORIGINAL ADDITIONAL INFORMATION:
+{resume_sections['additional']}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Please rewrite the additional information to better match the job requirements. Focus on:
+1. Highlighting relevant certifications, awards, or accomplishments
+2. Including language skills, volunteer work, or other information that relates to the job
+3. Emphasizing professional memberships or activities relevant to this position
+4. Keeping only the most relevant points that add value to your application
+
+Be concise and selective, only including information that strengthens the application for this specific position.
+"""
+        try:
+            tailored_additional = client.tailor_resume_content(additional_prompt, "additional")
+            tailored_sections['additional'] = tailored_additional
+            logger.info(f"Tailored 'additional' section - Original: {len(resume_sections['additional'])} chars, Tailored: {len(tailored_additional)} chars")
+        except Exception as e:
+            logger.error(f"Error tailoring additional information: {str(e)}")
+            tailored_sections['additional'] = resume_sections['additional']
+    else:
+        tailored_sections['additional'] = resume_sections.get('additional', '')
+        logger.info("No 'additional' section to tailor or section is empty")
+    
+    return tailored_sections
+
 def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = 'openai', api_url: str = None) -> Tuple[str, str]:
     """Tailor a resume using an LLM API (Claude or OpenAI)"""
     global last_llm_client
@@ -600,152 +950,80 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
         # Store the client for preview generation
         last_llm_client = llm_client
         
-        # Create a new document based on the template
-        template_path = os.path.join(os.path.dirname(__file__), 'static', 'template_resume.docx')
-        if not os.path.exists(template_path):
-            template_path = os.path.join('static', 'template_resume.docx')
-            
-        if not os.path.exists(template_path):
-            # Copy original as template
-            template_path = resume_path
-            
-        logger.info(f"Using template: {template_path}")
-        
-        doc = Document(template_path)
-        
-        # Clear the document content
-        for para in list(doc.paragraphs):
-            p = para._element
-            if p.getparent() is not None:
-                p.getparent().remove(p)
+        # Dictionary to store tailored sections
+        tailored_sections = {}
         
         # Add contact information (not tailored)
-        if resume_sections.get('contact'):
-            contact_para = doc.add_paragraph()
-            contact_para.add_run("Contact Information").bold = True
-            contact_para.style = 'Heading 1'
-            doc.add_paragraph(resume_sections.get('contact', ''))
+        tailored_sections['contact'] = resume_sections.get('contact', '')
         
         # Tailor the professional summary
         if resume_sections.get('summary'):
-            summary_para = doc.add_paragraph()
-            summary_para.add_run("Professional Summary").bold = True
-            summary_para.style = 'Heading 1'
-            
-            tailored_summary = llm_client.tailor_resume_content(
+            tailored_sections['summary'] = llm_client.tailor_resume_content(
                 'summary', 
                 resume_sections.get('summary', ''),
                 job_data
             )
-            doc.add_paragraph(tailored_summary)
         
         # Tailor the work experience
         if resume_sections.get('experience'):
-            exp_para = doc.add_paragraph()
-            exp_para.add_run("Work Experience").bold = True
-            exp_para.style = 'Heading 1'
-            
-            tailored_experience = llm_client.tailor_resume_content(
+            tailored_sections['experience'] = llm_client.tailor_resume_content(
                 'experience', 
                 resume_sections.get('experience', ''),
                 job_data
             )
-            
-            # Process experience content with bullet points
-            for line in tailored_experience.split('\n'):
-                if line.strip():
-                    if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
-                        # Add as bullet point
-                        p = doc.add_paragraph(line.strip()[1:].strip(), style='List Bullet')
-                    else:
-                        # Add as regular paragraph
-                        doc.add_paragraph(line.strip())
         
-        # Add education section (typically not heavily tailored)
+        # Tailor education section
         if resume_sections.get('education'):
-            edu_para = doc.add_paragraph()
-            edu_para.add_run("Education").bold = True
-            edu_para.style = 'Heading 1'
-            
-            tailored_education = llm_client.tailor_resume_content(
+            tailored_sections['education'] = llm_client.tailor_resume_content(
                 'education',
                 resume_sections.get('education', ''),
                 job_data
             )
-            
-            for line in tailored_education.split('\n'):
-                if line.strip():
-                    doc.add_paragraph(line.strip())
         
         # Tailor the skills section
         if resume_sections.get('skills'):
-            skills_para = doc.add_paragraph()
-            skills_para.add_run("Skills").bold = True
-            skills_para.style = 'Heading 1'
-            
-            tailored_skills = llm_client.tailor_resume_content(
+            tailored_sections['skills'] = llm_client.tailor_resume_content(
                 'skills', 
                 resume_sections.get('skills', ''),
                 job_data
             )
-            
-            # Process skills with bullet points
-            for line in tailored_skills.split('\n'):
-                if line.strip():
-                    if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
-                        # Add as bullet point
-                        p = doc.add_paragraph(line.strip()[1:].strip(), style='List Bullet')
-                    else:
-                        # Add as regular paragraph
-                        doc.add_paragraph(line.strip())
         
-        # Add projects section
+        # Tailor projects section
         if resume_sections.get('projects'):
-            proj_para = doc.add_paragraph()
-            proj_para.add_run("Projects").bold = True
-            proj_para.style = 'Heading 1'
-            
-            tailored_projects = llm_client.tailor_resume_content(
+            tailored_sections['projects'] = llm_client.tailor_resume_content(
                 'projects',
                 resume_sections.get('projects', ''),
                 job_data
             )
-            
-            for line in tailored_projects.split('\n'):
-                if line.strip():
-                    if line.strip().startswith('•') or line.strip().startswith('-') or line.strip().startswith('*'):
-                        # Add as bullet point
-                        p = doc.add_paragraph(line.strip()[1:].strip(), style='List Bullet')
-                    else:
-                        # Add as regular paragraph
-                        doc.add_paragraph(line.strip())
         
-        # Add additional information
+        # Tailor additional information
         if resume_sections.get('additional'):
-            add_para = doc.add_paragraph()
-            add_para.add_run("Additional Information").bold = True
-            add_para.style = 'Heading 1'
-            
-            tailored_additional = llm_client.tailor_resume_content(
+            tailored_sections['additional'] = llm_client.tailor_resume_content(
                 'additional',
                 resume_sections.get('additional', ''),
                 job_data
             )
-            
-            for line in tailored_additional.split('\n'):
-                if line.strip():
-                    doc.add_paragraph(line.strip())
         
-        # Save the tailored resume
+        # Create output path for tailored resume
         filename_parts = os.path.splitext(os.path.basename(resume_path))
         tailored_filename = f"{filename_parts[0]}_tailored_{provider}{filename_parts[1]}"
-        
-        # Determine the directory for the tailored resume
         uploads_dir = os.path.dirname(resume_path)
         tailored_path = os.path.join(uploads_dir, tailored_filename)
         
-        # Save the document
-        doc.save(tailored_path)
+        # Import the resume styler module
+        from resume_styler import create_resume_document
+        
+        # Generate the tailored resume with modern styling
+        tailored_path = create_resume_document(
+            contact=tailored_sections.get('contact', ''),
+            summary=tailored_sections.get('summary', ''),
+            experience=tailored_sections.get('experience', ''),
+            education=tailored_sections.get('education', ''),
+            skills=tailored_sections.get('skills', ''),
+            projects=tailored_sections.get('projects', ''),
+            additional=tailored_sections.get('additional', ''),
+            output_path=tailored_path
+        )
         
         logger.info(f"Tailored resume saved to: {tailored_path}")
         
@@ -755,3 +1033,46 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
         logger.error(f"Error tailoring resume with {provider.upper()}: {str(e)}")
         logger.error(traceback.format_exc())
         raise Exception(f"Error tailoring resume with {provider.upper()}: {str(e)}")
+
+def generate_tailored_document(resume_path, tailored_sections):
+    """Generate a tailored resume document using YC/Eddie style
+
+    Args:
+        resume_path (str): Path to the original resume
+        tailored_sections (dict): Dictionary containing tailored resume sections
+
+    Returns:
+        str: Path to the new tailored resume
+    """
+    try:
+        logger.info(f"Generating tailored document from {resume_path}")
+        
+        # Create output path for tailored resume
+        filename = os.path.basename(resume_path)
+        base_name, ext = os.path.splitext(filename)
+        
+        # Use modern style for the output
+        output_path = os.path.join(os.path.dirname(resume_path), f"{base_name}_tailored_modern.docx")
+        
+        # Import the resume styler module
+        from resume_styler import create_resume_document
+        
+        # Generate tailored resume with modern style
+        output_path = create_resume_document(
+            contact=tailored_sections.get('contact', ''),
+            summary=tailored_sections.get('summary', ''),
+            experience=tailored_sections.get('experience', ''),
+            education=tailored_sections.get('education', ''),
+            skills=tailored_sections.get('skills', ''),
+            projects=tailored_sections.get('projects', ''),
+            additional=tailored_sections.get('additional', ''),
+            output_path=output_path
+        )
+        
+        logger.info(f"Successfully generated tailored document at {output_path}")
+        return output_path
+        
+    except Exception as e:
+        logger.error(f"Error generating tailored document: {str(e)}")
+        logger.error(traceback.format_exc())
+        return None
