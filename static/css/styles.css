@@ -9,6 +9,8 @@
   --danger-color: #dc3545;
   --light-color: #f8f9fa;
   --dark-color: #343a40;
+  --ai-color: #8a2be2;
+  --ai-light-color: #f3eafa;
 }
 
 body {
@@ -249,4 +251,46 @@ header {
 
 .custom-file-upload:hover {
   background-color: #e9ecef;
+}
+
+/* AI Analysis Styling */
+.ai-analysis-section {
+  background-color: var(--ai-light-color);
+  border-left: 3px solid var(--ai-color);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(138, 43, 226, 0.15);
+}
+
+.ai-analysis-section .job-section-title {
+  color: var(--ai-color);
+  border-bottom: 1px solid var(--ai-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ai-analysis-section h5 {
+  color: var(--ai-color);
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.ai-analysis-section .badge {
+  font-size: 0.7rem;
+  background-color: var(--ai-color) !important;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+
+.ai-analysis-section .requirement-list {
+  margin-left: 0;
+  padding-left: 1.2rem;
+}
+
+.ai-analysis-section .requirement-item {
+  background-color: white;
+  border-left: 2px solid var(--ai-color);
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.8rem;
 }

@@ -17,12 +17,15 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Integrate LLM parsing into initial resume upload process
 - [x] Add configurable LLM provider selection (Claude/OpenAI)
 - [x] Create JSON caching for parsed resume data
+- [x] Improve job parser to extract complete job text for LLM processing
+- [x] Update job parser UI to display complete job description
+- [x] Implement LLM-based job posting analysis
+- [x] Enhance UI to better display tailored sections with AI analysis highlights
 
 ## In Progress Tasks
 
 - [ ] Create resume format validator to help prepare optimal resumes
 - [ ] Add visual diff feature to highlight tailoring changes
-- [ ] Enhance UI to better display tailored sections
 - [ ] Add confidence scores to LLM parsing results
 
 ## Future Tasks
@@ -60,6 +63,20 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - Scrapes job listings from LinkedIn and other URLs
    - Extracts requirements, skills, and job details
    - Formats job data for AI processing
+   
+   **Enhanced LLM-based Job Analysis:**
+   - Integrate LLM (Claude/OpenAI) to intelligently analyze job postings
+   - Send the complete job text to LLM with a prompt to extract structured insights
+   - Have the LLM identify:
+     - Candidate profile: What type of candidates the position is targeting
+     - Hard skills: Technical and job-specific skills required
+     - Soft skills: Personal and interpersonal skills valued
+     - Ideal candidate: Comprehensive description of the perfect match
+   - Return the analysis in structured JSON format for frontend consumption
+   - Cache the LLM analysis results to avoid repeated API calls
+   - Implement fallback to regex-based parsing if LLM analysis fails
+   - Add logging for the analysis process and results
+   - Add a configurable toggle to enable/disable LLM job analysis
 
 3. AI-powered tailoring:
    - Uses Claude AI through Anthropic API or OpenAI API
@@ -96,6 +113,43 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - Low temperature (0.1) for deterministic, precise output
    - Explicit handling of each resume section type
 
+## LLM Job Analysis Implementation Details
+
+1. **Analyzer Integration:**
+   - Created new `llm_job_analyzer.py` module with job analysis functions
+   - Added a prompt template designed to extract structured insights from job postings
+   - Integrated analysis into the job parsing workflow through `job_parser.py`
+   - Modified `job_parser_handler.py` to include LLM analysis in the response
+
+2. **Data Flow:**
+   - Job URL submission → Traditional parsing → Complete text extraction → LLM analysis → UI display
+   - LLM analysis failures gracefully fall back to traditional parsing
+   - Analyzed job data cached as JSON files to avoid repeated API calls
+   - Analysis results displayed in UI alongside other job information
+
+3. **Configuration Options:**
+   - `USE_LLM_JOB_ANALYSIS` - Enable/disable LLM job analysis (default: true)
+   - `LLM_JOB_ANALYZER_PROVIDER` - Select LLM provider (auto, claude, openai)
+   - Auto-detection of available API keys when provider is set to "auto"
+
+4. **LLM Prompt Design:**
+   - Clear instructions for extracting specific insights from job postings
+   - Structured output format with sections for different aspects of analysis
+   - Low temperature (0.1) for deterministic, precise output
+   - Consistent JSON output structure for frontend consumption
+
+5. **UI Integration:**
+   - Added a dedicated "AI Analysis" section at the top of job requirements
+   - Used purple color theme to distinguish AI insights from regular content
+   - Created visual components for candidate profile, hard skills, soft skills, and ideal candidate
+   - Enhanced the tailoring process to use the AI analysis for better matching
+
+6. **Provider Support:**
+   - Added support for both Claude and OpenAI as analysis providers
+   - Implemented configuration settings for provider selection
+   - Added fallback logic when using "auto" provider selection
+   - Prioritized OpenAI for job analysis when both providers are available
+
 ## Results
 
 The LLM-based resume parsing significantly improves the accuracy of section extraction compared to traditional methods:
@@ -115,3 +169,24 @@ The LLM-based resume parsing significantly improves the accuracy of section extr
    - OpenAI gpt-4o parses a resume in ~3-5 seconds
    - Claude parsing has similar performance characteristics
    - Both providers extract sections with high accuracy 
+
+The LLM-based job analysis provides deeper insights compared to regex-based extraction:
+
+1. **Enhanced Analysis Benefits:**
+   - More nuanced understanding of the job requirements
+   - Better identification of implicit skills and qualifications
+   - Improved matching between resume content and job requirements
+   - Enhanced tailoring quality through better job understanding
+   - More targeted suggestions for resume improvements
+
+2. **Analysis Results:**
+   - Comprehensive candidate profile describing experience level and role focus
+   - Structured lists of both hard technical skills and soft interpersonal skills
+   - Detailed ideal candidate description for more effective resume targeting
+   - AI insights help users better understand what employers are looking for
+
+3. **User Experience:**
+   - Visual distinction of AI-generated insights in the UI
+   - Clear organization of analysis results by category
+   - Seamless integration with the existing tailoring workflow
+   - Improved resume tailoring through more detailed job understanding 
