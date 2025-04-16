@@ -48,30 +48,11 @@ def setup_tailoring_routes(app):
             
             # Check if this is a formatted resume, if not, use the original
             if not resume_filename.endswith('_formatted.docx'):
-                formatted_filename = resume_filename.replace('.docx', '_formatted.docx')
-                formatted_path = os.path.join(current_app.config['UPLOAD_FOLDER'], formatted_filename)
-                
-                # If formatted version doesn't exist, format it now
-                if not os.path.exists(formatted_path):
-                    try:
-                        logger.info(f"Formatting resume: {resume_filename}")
-                        from resume_formatter import create_formatted_resume
-                        formatted_filename = create_formatted_resume(
-                            resume_filename, 
-                            current_app.config['UPLOAD_FOLDER']
-                        )
-                        formatted_path = os.path.join(current_app.config['UPLOAD_FOLDER'], formatted_filename)
-                        logger.info(f"Resume formatted successfully: {formatted_filename}")
-                    except Exception as e:
-                        logger.error(f"Error formatting resume: {str(e)}")
-                        return jsonify({
-                            'success': False, 
-                            'error': f'Error formatting resume: {str(e)}'
-                        }), 400
-                    
-                resume_filename = formatted_filename
-            
-            resume_path = os.path.join(current_app.config['UPLOAD_FOLDER'], resume_filename)
+                # We no longer need to format the resume since we're using 
+                # YC-Eddie style directly without templates
+                resume_path = os.path.join(current_app.config['UPLOAD_FOLDER'], resume_filename)
+            else:
+                resume_path = os.path.join(current_app.config['UPLOAD_FOLDER'], resume_filename)
             
             # Verify the resume file exists
             if not os.path.exists(resume_path):

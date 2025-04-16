@@ -1,0 +1,39 @@
+[Cursor] Fix critical resume section parsing issues
+
+Significantly improved resume section extraction with multiple detection strategies:
+- Enhanced regex patterns to detect various section naming conventions
+- Added detailed logging of potential section headers for easier debugging
+- Implemented fallback mechanism for documents with non-standard formatting
+- Fixed default section from "header" to "contact" for better initial categorization
+- Added error handling to return structured responses even when extraction fails
+- Improved JavaScript to correctly display tailored resume content
+
+This fix ensures the application can successfully extract content from resumes
+regardless of their formatting, allowing Claude AI to properly tailor each
+section to the job requirements.
+
+[Cursor] Implement LLM-based job posting analysis
+
+This commit adds LLM-based job analysis functionality to the resume tailoring application:
+
+- Created llm_job_analyzer.py module for comprehensive job analysis
+- Added extraction of candidate profile, hard/soft skills, and ideal candidate
+- Enhanced UI with dedicated AI Analysis section using purple styling
+- Implemented support for both Claude and OpenAI providers
+- Added cache mechanism to avoid repeated API calls
+- Updated job_parser and job_parser_handler to integrate analysis
+- Modified tailoring process to use analysis results for better matching
+- Added support for OpenAI-only mode when Claude is unavailable
+- Enhanced error handling and logging for API interactions
+
+The new job analysis feature provides deeper insights into job requirements, leading
+to more effective resume tailoring by better understanding what employers are looking for.
+
+[Cursor] Remove template_resume.docx dependency
+
+Fix the resume tailoring process to eliminate dependency on template_resume.docx:
+- Modified tailoring_handler.py to skip the formatting step
+- Now using the YC-Eddie style directly for resume generation
+- This resolves the deployment error on PythonAnywhere where the template file was missing
+
+This change simplifies the tailoring workflow and makes it more robust across different environments. 
