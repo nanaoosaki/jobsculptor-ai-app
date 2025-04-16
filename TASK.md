@@ -22,6 +22,7 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Implement LLM-based job posting analysis
 - [x] Enhance UI to better display tailored sections with AI analysis highlights
 - [x] Implement YC-Eddie Style resume format in document generation
+- [x] Enhance resume styling with modern box borders and arrow bullet points
 
 ## In Progress Tasks
 
@@ -177,15 +178,16 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - **Section Headers**:
      - Font: Calibri, 14pt, bold
      - Color: Dark blue (RGB: 0, 0, 102)
-     - Bottom border: Single line, 1pt, matching header color
+     - Centered alignment with full box border (all four sides)
      - Spacing: 6pt after header
+     - Added spacing before each section
    - **Contact Information**:
      - Font: Calibri, 12pt
      - Alignment: Center
      - Include name, email, phone, and optional LinkedIn/website
    - **Bullet Points**:
      - Indentation: 0.25" left indent, -0.25" first line (hanging indent)
-     - Bullet character: • (Unicode bullet)
+     - Arrow character (▸) instead of standard bullet (•)
      - Spacing: 6pt after each bullet point
      - Consistent formatting across all sections
 
@@ -194,7 +196,8 @@ The resume tailoring application uses a Flask backend with a simple frontend int
      - Setting document properties (margins, default styling)
      - Creating and applying section styles (headers, content, bullets)
      - Processing each section with appropriate formatting
-     - Handling bullet points consistently
+     - `add_box_border` method for adding borders to section headers
+     - `add_bullet_point` method for consistent arrow-style bullets
    - Modify `generate_tailored_resume_document` to:
      - Create a new blank document instead of using original template
      - Apply YC-Eddie styling through the styler class
@@ -263,12 +266,26 @@ The LLM-based job analysis provides deeper insights compared to regex-based extr
    - Seamless integration with the existing tailoring workflow
    - Improved resume tailoring through more detailed job understanding
 
-The YC-Eddie Style implementation will produce consistently high-quality resume outputs:
+The YC-Eddie Style implementation produces consistently high-quality resume outputs:
 
-1. **Expected Benefits:**
-   - Professional, polished document appearance
+1. **Style Improvements:**
+   - Professional, polished document appearance with clean, modern styling
+   - Centered section headers with full box borders for better visual separation
+   - Arrow bullet points (▸) instead of standard bullets for improved readability 
+   - Consistent spacing and alignment throughout the document
+   - Matching styling in both Word documents and HTML previews
+   - Clean document generation without reliance on templates
+
+2. **Content Quality:**
    - Achievement-focused content with metrics and results
    - Clear, concise language that highlights candidate value
    - Consistent formatting across all resume sections
    - Better alignment with recruiter expectations and ATS requirements
-   - Higher-quality tailored content through optimized prompting 
+   - Higher-quality tailored content through optimized prompting
+
+3. **Technical Implementation:**
+   - Complete rewrite of document generation for better control
+   - Dedicated styling methods for each document element
+   - Proper XML manipulation for advanced formatting features
+   - Consistent HTML/CSS styling for preview generation
+   - Graceful fallbacks for error conditions 

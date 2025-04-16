@@ -60,13 +60,14 @@ class YCEddieStyler:
         contact_style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         contact_style.paragraph_format.space_after = Pt(6)
         
-        # Section header style - ensuring NO BACKGROUND COLOR
+        # Section header style - centered with box border
         header_style = self.document.styles.add_style('SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
         font = header_style.font
         font.name = 'Calibri'
         font.size = Pt(14)
         font.bold = True
         font.color.rgb = RGBColor(0, 0, 102)  # Dark blue TEXT ONLY
+        header_style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         header_style.paragraph_format.space_after = Pt(6)
         
         # IMPORTANT: DO NOT set background shading for headers
@@ -99,21 +100,28 @@ class YCEddieStyler:
         
         print("DEBUG: All document styles created successfully")
         
-    def add_bottom_border(self, paragraph):
-        """Add a bottom border to a paragraph (used for section headers)"""
+    def add_box_border(self, paragraph):
+        """Add a box border (all four sides) to a paragraph"""
         p = paragraph._p  # Get the paragraph XML element
         pPr = p.get_or_add_pPr()  # Get the paragraph properties element
         pBdr = OxmlElement('w:pBdr')  # Create paragraph borders element
         
-        # Add bottom border
-        bottom = OxmlElement('w:bottom')
-        bottom.set(qn('w:val'), 'single')
-        bottom.set(qn('w:sz'), '4')  # 1pt
-        bottom.set(qn('w:space'), '0')
-        bottom.set(qn('w:color'), '000066')  # Dark blue
-        pBdr.append(bottom)
+        # Add all four borders (top, right, bottom, left)
+        for border_position in ['top', 'right', 'bottom', 'left']:
+            border = OxmlElement(f'w:{border_position}')
+            border.set(qn('w:val'), 'single')
+            border.set(qn('w:sz'), '4')  # 1pt
+            border.set(qn('w:space'), '0')
+            border.set(qn('w:color'), '000000')  # Black border
+            pBdr.append(border)
         
         pPr.append(pBdr)
+        
+    def add_bullet_point(self, paragraph, text):
+        """Add a bullet point with an arrow character instead of a regular bullet"""
+        run = paragraph.add_run('▸ ')  # Arrow character
+        paragraph.add_run(text.strip())
+        return paragraph
         
     def add_contact_section(self, contact_info: str):
         """Add the contact information section to the document"""
@@ -139,6 +147,9 @@ class YCEddieStyler:
         """Add a section header with proper styling"""
         print(f"DEBUG: Adding section header: {title}")
         
+        # Add some spacing before section
+        self.document.add_paragraph().add_run()
+        
         # Create a new paragraph with the SectionHeader style
         header_para = self.document.add_paragraph(style='SectionHeader')
         
@@ -151,10 +162,10 @@ class YCEddieStyler:
         run.font.bold = True
         run.font.color.rgb = RGBColor(0, 0, 102)  # Dark blue
         
-        # Add the bottom border
-        self.add_bottom_border(header_para)
+        # Add the box border
+        self.add_box_border(header_para)
         
-        print(f"DEBUG: Finished adding section header with underline (no background)")
+        print(f"DEBUG: Finished adding section header with box border")
         
     def add_summary_section(self, summary_content: str):
         """Add the summary section to the document"""
@@ -188,7 +199,7 @@ class YCEddieStyler:
             # Add bullet points
             for bullet in exp.get('bullets', []):
                 bullet_para = self.document.add_paragraph(style='BulletPoint')
-                bullet_para.add_run('• ' + bullet.strip())
+                self.add_bullet_point(bullet_para, bullet.strip())
     
     def add_education_section(self, education_content: str):
         """Add the education section to the document"""
@@ -214,7 +225,7 @@ class YCEddieStyler:
             # Add details or achievements
             for detail in edu.get('details', []):
                 detail_para = self.document.add_paragraph(style='BulletPoint')
-                detail_para.add_run('• ' + detail.strip())
+                self.add_bullet_point(detail_para, detail.strip())
                 
     def add_skills_section(self, skills_content: str):
         """Add the skills section to the document"""
@@ -236,7 +247,7 @@ class YCEddieStyler:
                 skill_para = self.document.add_paragraph(style='BulletPoint')
                 # Ensure consistent bullet style regardless of original marker
                 clean_line = line.lstrip('•-* \t')
-                skill_para.add_run('• ' + clean_line)
+                self.add_bullet_point(skill_para, clean_line)
             else:
                 # If not a bullet, check if it seems like a category with skills
                 if ':' in line:
@@ -256,32 +267,33 @@ class YCEddieStyler:
         if not projects_content:
             return
             
-        # Split project entries and format each one
+        # Split the projects section by project entries
         projects = self._parse_projects(projects_content)
         
         for project in projects:
             # Add project name
             if project.get('project_name'):
-                proj_para = self.document.add_paragraph(style='CompanyRole')
-                proj_para.add_run(project['project_name'].strip())
+                project_para = self.document.add_paragraph(style='CompanyRole')
+                project_para.add_run(project['project_name'].strip())
                 
-            # Add technologies or date range if available
-            if project.get('tech_or_date'):
-                tech_para = self.document.add_paragraph(style='DateRange')
-                tech_para.add_run(project['tech_or_date'].strip())
+            # Add date range if available
+            if project.get('date_range'):
+                date_para = self.document.add_paragraph(style='DateRange')
+                date_para.add_run(project['date_range'].strip())
                 
-            # Add bullet points with details
-            for detail in project.get('details', []):
-                detail_para = self.document.add_paragraph(style='BulletPoint')
-                detail_para.add_run('• ' + detail.strip())
+            # Add bullet points
+            for bullet in project.get('bullets', []):
+                bullet_para = self.document.add_paragraph(style='BulletPoint')
+                self.add_bullet_point(bullet_para, bullet.strip())
                 
     def add_additional_section(self, additional_content: str, section_title: str = "ADDITIONAL INFORMATION"):
-        """Add an additional custom section to the document"""
+        """Add an additional information section to the document"""
+        self.add_section_header(section_title)
+        
         if not additional_content:
             return
             
-        self.add_section_header(section_title)
-        
+        # Split the content by lines
         lines = additional_content.strip().split('\n')
         
         for line in lines:
@@ -293,15 +305,16 @@ class YCEddieStyler:
             if line.startswith('•') or line.startswith('-') or line.startswith('*'):
                 para = self.document.add_paragraph(style='BulletPoint')
                 clean_line = line.lstrip('•-* \t')
-                para.add_run('• ' + clean_line)
+                self.add_bullet_point(para, clean_line)
             else:
+                # Regular paragraph
                 para = self.document.add_paragraph(style='Normal')
                 para.add_run(line)
     
     def _parse_experiences(self, experience_content: str) -> List[Dict[str, Union[str, List[str]]]]:
-        """Parse experience content into structured data with company, role, dates, and bullets"""
+        """Parse experience content into structured data with company/role, date range, and bullets"""
         result = []
-        current_exp = {}
+        current_experience = {}
         current_bullets = []
         
         lines = experience_content.strip().split('\n')
@@ -315,24 +328,24 @@ class YCEddieStyler:
                 continue
                 
             if state == "company_role":
-                current_exp = {'company_role': line}
+                current_experience = {'company_role': line}
                 state = "date_range"
                 
             elif state == "date_range":
-                current_exp['date_range'] = line
+                current_experience['date_range'] = line
                 current_bullets = []
                 state = "bullets"
                 
             elif state == "bullets":
-                # Check if this line looks like a new company/role (no bullet point marker)
+                # Check if this line looks like a new company
                 if not (line.startswith('•') or line.startswith('-') or line.startswith('*')):
                     # Save the previous experience entry
-                    if current_exp:
-                        current_exp['bullets'] = current_bullets
-                        result.append(current_exp)
+                    if current_experience:
+                        current_experience['bullets'] = current_bullets
+                        result.append(current_experience)
                     
                     # Start a new experience entry
-                    current_exp = {'company_role': line}
+                    current_experience = {'company_role': line}
                     state = "date_range"
                 else:
                     # Add bullet point
@@ -340,16 +353,16 @@ class YCEddieStyler:
                     current_bullets.append(clean_line)
         
         # Add the last experience entry
-        if current_exp:
-            current_exp['bullets'] = current_bullets
-            result.append(current_exp)
+        if current_experience:
+            current_experience['bullets'] = current_bullets
+            result.append(current_experience)
             
         return result
     
     def _parse_education(self, education_content: str) -> List[Dict[str, Union[str, List[str]]]]:
-        """Parse education content into structured data with institution, degree, dates, and details"""
+        """Parse education content into structured data with institution/degree, date range, and details"""
         result = []
-        current_edu = {}
+        current_education = {}
         current_details = []
         
         lines = education_content.strip().split('\n')
@@ -363,24 +376,24 @@ class YCEddieStyler:
                 continue
                 
             if state == "institution_degree":
-                current_edu = {'institution_degree': line}
+                current_education = {'institution_degree': line}
                 state = "date_range"
                 
             elif state == "date_range":
-                current_edu['date_range'] = line
+                current_education['date_range'] = line
                 current_details = []
                 state = "details"
                 
             elif state == "details":
-                # Check if this line looks like a new institution/degree
+                # Check if this line looks like a new institution
                 if not (line.startswith('•') or line.startswith('-') or line.startswith('*')):
                     # Save the previous education entry
-                    if current_edu:
-                        current_edu['details'] = current_details
-                        result.append(current_edu)
+                    if current_education:
+                        current_education['details'] = current_details
+                        result.append(current_education)
                     
                     # Start a new education entry
-                    current_edu = {'institution_degree': line}
+                    current_education = {'institution_degree': line}
                     state = "date_range"
                 else:
                     # Add detail
@@ -388,17 +401,17 @@ class YCEddieStyler:
                     current_details.append(clean_line)
         
         # Add the last education entry
-        if current_edu:
-            current_edu['details'] = current_details
-            result.append(current_edu)
+        if current_education:
+            current_education['details'] = current_details
+            result.append(current_education)
             
         return result
     
     def _parse_projects(self, projects_content: str) -> List[Dict[str, Union[str, List[str]]]]:
-        """Parse projects content into structured data with project name, tech/date, and details"""
+        """Parse projects content into structured data with project name, date range, and bullet points"""
         result = []
         current_project = {}
-        current_details = []
+        current_bullets = []
         
         lines = projects_content.strip().split('\n')
         
@@ -412,32 +425,32 @@ class YCEddieStyler:
                 
             if state == "project_name":
                 current_project = {'project_name': line}
-                state = "tech_or_date"
+                state = "date_range"
                 
-            elif state == "tech_or_date":
-                current_project['tech_or_date'] = line
-                current_details = []
-                state = "details"
+            elif state == "date_range":
+                current_project['date_range'] = line
+                current_bullets = []
+                state = "bullets"
                 
-            elif state == "details":
+            elif state == "bullets":
                 # Check if this line looks like a new project
                 if not (line.startswith('•') or line.startswith('-') or line.startswith('*')):
                     # Save the previous project entry
                     if current_project:
-                        current_project['details'] = current_details
+                        current_project['bullets'] = current_bullets
                         result.append(current_project)
                     
                     # Start a new project entry
                     current_project = {'project_name': line}
-                    state = "tech_or_date"
+                    state = "date_range"
                 else:
-                    # Add detail
+                    # Add bullet point
                     clean_line = line.lstrip('•-* \t')
-                    current_details.append(clean_line)
+                    current_bullets.append(clean_line)
         
         # Add the last project entry
         if current_project:
-            current_project['details'] = current_details
+            current_project['bullets'] = current_bullets
             result.append(current_project)
             
         return result

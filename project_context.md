@@ -18,8 +18,8 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 1. **Resume Parsing**: LLM-based resume parsing with traditional fallback
 2. **Job Analysis**: Extracts requirements, skills, and candidate profiles from job listings
 3. **Resume Tailoring**: Customizes each resume section based on job requirements
-4. **YC-Eddie Style Formatting**: Creates clean, professional resume documents
-5. **Preview Generation**: Shows HTML preview of tailored resumes
+4. **YC-Eddie Style Formatting**: Creates clean, professional resume documents with modern styling (centered headers with box borders and arrow bullet points)
+5. **Preview Generation**: Shows HTML preview of tailored resumes with consistent styling
 6. **Multi-Provider Support**: Works with both OpenAI and Claude APIs
 
 ## Technologies and APIs
@@ -37,6 +37,8 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 3. **LLM Resume Parsing**: Added sophisticated document parsing with LLMs
 4. **Deployment Optimized**: Modified for PythonAnywhere free tier constraints
 5. **Job Analysis Enhanced**: Added comprehensive job requirement extraction
+6. **Modern Resume Styling**: Updated document formatting with centered box headers and arrow bullet points
+7. **HTML Preview Alignment**: Ensured consistent styling between Word documents and HTML previews
 
 ## Current Limitations
 1. **PythonAnywhere Constraints**: 

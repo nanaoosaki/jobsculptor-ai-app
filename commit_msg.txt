@@ -36,4 +36,16 @@ Fix the resume tailoring process to eliminate dependency on template_resume.docx
 - Now using the YC-Eddie style directly for resume generation
 - This resolves the deployment error on PythonAnywhere where the template file was missing
 
-This change simplifies the tailoring workflow and makes it more robust across different environments. 
+This change simplifies the tailoring workflow and makes it more robust across different environments.
+
+[Cursor] Enhance resume styling with modern box borders and arrow bullets
+
+- Updated resume_styler.py to use centered section headers with box borders
+- Replaced standard bullet points with arrow characters (▸)
+- Updated HTML preview generation to match the new styling
+- Modified both Word documents and HTML previews for consistent look
+- Added proper spacing between sections for better readability
+- Updated documentation in TASK.md and project_context.md
+
+This change improves the visual appearance of generated resumes with a more
+modern, distinctive design that enhances section separation and readability. 
