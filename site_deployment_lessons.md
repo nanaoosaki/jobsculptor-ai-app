@@ -19,25 +19,25 @@ PythonAnywhere is a platform that provides:
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/nanaoosaki/manus_resume_site.git
+# Use a shallow clone to save disk space (free tier has 512MB limit)
+git clone --depth=1 https://github.com/nanaoosaki/manus_resume_site.git
 cd manus_resume_site
 ```
 
 **Note:** For private repositories, you'll need a GitHub Personal Access Token with 'repo' scope.
 
-### 3. Set Up Virtual Environment
+### 3. Package Installation (No Virtual Environment)
+For free tier accounts, it's recommended to skip virtual environments and use PythonAnywhere's system Python:
+
 ```bash
-python -m venv venv
-source venv/bin/activate
+# Install only essential packages directly to your user account
+pip install --user flask python-dotenv requests beautifulsoup4 python-docx werkzeug docx2txt flask-cors anthropic openai
 ```
 
-### 4. Install Dependencies
+### 4. Create Uploads Directory
 ```bash
-pip install flask gunicorn python-dotenv openai python-docx requests beautifulsoup4
+mkdir -p ~/manus_resume_site/static/uploads
 ```
-
-**Challenge:** PythonAnywhere free tier has a 512MB storage limit, which can be exceeded when installing all dependencies.
-**Solution:** Install only essential packages and remove unnecessary files (like .git) to save space.
 
 ### 5. Create Web Application
 - Go to the Web tab in PythonAnywhere dashboard
@@ -48,10 +48,7 @@ pip install flask gunicorn python-dotenv openai python-docx requests beautifulso
 ### 6. Configure Web App
 - Source code directory: `/home/yourusername/manus_resume_site`
 - Working directory: `/home/yourusername`
-- Virtualenv: `/home/yourusername/manus_resume_site/venv`
-
-**Challenge:** Mismatch between virtualenv Python version and web app Python version.
-**Solution:** Ensure both are using the same Python version (modify web app to match virtualenv or recreate virtualenv).
+- **Important:** Delete any virtualenv setting (click the "×" button next to it) to use the system Python
 
 ### 7. Configure WSGI File
 - The WSGI file is at `/var/www/yourusername_pythonanywhere_com_wsgi.py`
@@ -86,16 +83,11 @@ from app import app as application
   - URL: `/static/`
   - Directory: `/home/yourusername/manus_resume_site/static/`
 
-### 9. Create Uploads Directory
-```bash
-mkdir -p ~/manus_resume_site/static/uploads
-```
-
-### 10. Security Settings
+### 9. Security Settings
 - Enable HTTPS (should be automatic)
 - Password protection is optional (disabled by default)
 
-### 11. Reload Web App
+### 10. Reload Web App
 - Click the green "Reload" button on the Web tab
 - Check the Error log if the site doesn't work
 
@@ -111,19 +103,36 @@ mkdir -p ~/manus_resume_site/static/uploads
 - Install only essential packages
 - Remove .git directory to save space
 - Delete unnecessary files
+- Use `git clone --depth=1` for a shallow clone to save space
+- Consider skipping virtual environments entirely (see below)
 
-### 3. Import Errors
+### 3. Virtual Environment Issues
+**Problem:** Virtual environments consume significant disk space on the free tier and can lead to "Disk quota exceeded" errors.
+**Solution:**
+- **Skip virtual environments entirely** on the free tier and use PythonAnywhere's system Python
+- Remove the virtualenv setting in the Web tab (click the "×" delete button next to the virtualenv path)
+- Install packages with `pip install --user` which installs to your user directory
+- Add all environment variables directly to the WSGI file
+
+### 4. Alternative Virtual Environment Strategy for Free Tier
+If you must use a virtual environment:
+- Use `--without-pip` to create a minimal venv: `python -m venv venv --without-pip`
+- Install only the absolute minimum packages needed
+- Regularly clean up cache files: `find . -name "__pycache__" -type d -exec rm -rf {} +`
+- Remove all development and test dependencies
+
+### 5. Import Errors
 **Problem:** Application not importing correctly.
 **Solution:**
 - Check the error logs
 - Ensure WSGI file has the correct path and import statement
 - Verify that virtualenv is activated and has all dependencies
 
-### 4. Missing Environment Variables
+### 6. Missing Environment Variables
 **Problem:** OpenAI API key and other environment variables not available.
 **Solution:** Add them directly to the WSGI file as shown above.
 
-### 5. Python Version Mismatch
+### 7. Python Version Mismatch
 **Problem:** Virtualenv Python version doesn't match web app Python version.
 **Solution:** Adjust web app Python version or recreate virtualenv with matching version.
 
