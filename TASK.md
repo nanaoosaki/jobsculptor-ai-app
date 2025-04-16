@@ -24,6 +24,8 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 
 ## In Progress Tasks
 
+- [ ] Implement YC-Eddie Style resume format in document generation
+- [ ] Optimize tailoring prompts for high-quality, achievement-focused content
 - [ ] Create resume format validator to help prepare optimal resumes
 - [ ] Add visual diff feature to highlight tailoring changes
 - [ ] Add confidence scores to LLM parsing results
@@ -150,6 +152,43 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - Added fallback logic when using "auto" provider selection
    - Prioritized OpenAI for job analysis when both providers are available
 
+## YC-Eddie Style Implementation Details
+
+1. **YC-Eddie Style Resume Format:**
+   - Implement a single, high-quality resume format based on YC and Eddie's best practices
+   - Create consistent document styling with professional fonts, spacing, and margins
+   - Define structured formatting for headers, section titles, and content
+   - Apply uniform bullet point styling and paragraph formatting
+   - Ensure ATS compatibility while maintaining professional appearance
+
+2. **Document Generation Enhancements:**
+   - Modify `claude_integration.py` to apply YC-Eddie Style when generating documents
+   - Implement helper functions for consistent styling across all sections
+   - Define precise formatting specifications (fonts, sizes, margins, spacing)
+   - Create proper heading hierarchies with consistent styling
+   - Standardize bullet point formatting for experience and skills sections
+
+3. **Prompt Optimization (Priority):**
+   - Research and document effective resume content patterns from YC and Eddie
+   - Enhance system prompts with specific guidance for high-quality resume content
+   - Implement section-specific prompts with targeted instructions:
+     - **Summary**: Concise, impactful summaries positioning the candidate for the role
+     - **Experience**: Achievement-focused content with metrics and strong action verbs
+     - **Skills**: Prioritized skills aligned with job requirements
+     - **Education/Projects**: Consistent formatting with relevant highlights
+
+4. **Implementation Approach:**
+   - Create improved base prompts focusing on:
+     - Quantifying achievements with specific metrics
+     - Using strong action verbs at the beginning of bullet points
+     - Focusing on outcomes and impact rather than responsibilities
+     - Removing generic or irrelevant information
+     - Highlighting experience relevant to the job requirements
+     - Maintaining concise, impactful language throughout
+   - Add example formats and phrasings for few-shot learning
+   - Implement enhanced document styling in the generation process
+   - Test outputs against original content to measure improvements
+
 ## Results
 
 The LLM-based resume parsing significantly improves the accuracy of section extraction compared to traditional methods:
@@ -189,4 +228,14 @@ The LLM-based job analysis provides deeper insights compared to regex-based extr
    - Visual distinction of AI-generated insights in the UI
    - Clear organization of analysis results by category
    - Seamless integration with the existing tailoring workflow
-   - Improved resume tailoring through more detailed job understanding 
+   - Improved resume tailoring through more detailed job understanding
+
+The YC-Eddie Style implementation will produce consistently high-quality resume outputs:
+
+1. **Expected Benefits:**
+   - Professional, polished document appearance
+   - Achievement-focused content with metrics and results
+   - Clear, concise language that highlights candidate value
+   - Consistent formatting across all resume sections
+   - Better alignment with recruiter expectations and ATS requirements
+   - Higher-quality tailored content through optimized prompting 
