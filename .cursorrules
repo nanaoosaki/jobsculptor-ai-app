@@ -444,3 +444,40 @@ Next steps:
 - Add confidence scores to LLM parsing results
 - Enhance UI with more professional styling
 - Implement few-shot learning with example resumes
+
+## PythonAnywhere Deployment - April 17, 2025
+
+[X] Successfully deployed the application on PythonAnywhere
+  - Created a PythonAnywhere account and set up a web application
+  - Cloned the repository using GitHub Personal Access Token
+  - Configured the virtual environment with essential packages
+  - Set up WSGI file with proper environment variables and app import
+  - Added static file mappings for CSS, JavaScript, and uploads
+  - Created uploads directory for file storage
+  - Enabled HTTPS by default
+
+[X] Troubleshooted common deployment issues
+  - Resolved GitHub authentication using Personal Access Token
+  - Addressed disk quota limitations by installing only essential packages
+  - Fixed Python version mismatch between virtualenv and web app
+  - Added environment variables directly to WSGI file
+  - Replaced default Hello World WSGI file with proper configuration
+
+[X] Documented the deployment process
+  - Created comprehensive site_deployment_lessons.md guide
+  - Documented all steps required to deploy on PythonAnywhere
+  - Added troubleshooting tips for common issues
+  - Included instructions for custom domain setup
+  - Added performance and security considerations
+
+[X] Created domain setup for jobsculptor.ai
+  - Added domain in PythonAnywhere web app configuration
+  - Prepared DNS configuration instructions
+  - Documented steps for connecting custom domain
+
+Next steps:
+- Monitor application performance on PythonAnywhere
+- Consider upgrading to paid tier if CPU quota becomes limiting
+- Implement secure environment variable storage
+- Set up periodic backups of uploaded resumes
+- Add analytics to track usage patterns
