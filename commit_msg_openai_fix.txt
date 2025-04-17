@@ -1,0 +1,20 @@
+[Cursor] Fix OpenAI API key integration and job parsing
+
+Implemented fixes to properly use OpenAI API for resume parsing and job analysis:
+
+- Updated job_parser_handler.py to use available API keys more robustly
+- Modified the JavaScript frontend to explicitly request OpenAI for job analysis
+- Fixed .env file format to properly load API keys
+- Updated config.py to include JOB_ANALYSIS_CACHE_DIR setting
+- Set default providers to OpenAI in configuration
+- Improved error handling for cases when API keys are not available
+
+These changes ensure the application works correctly with OpenAI API even
+when Claude API is not properly configured, providing a more robust fallback
+system for API integrations.
+
+Related files:
+- job_parser_handler.py
+- static/js/main.js
+- .env
+- config.py 

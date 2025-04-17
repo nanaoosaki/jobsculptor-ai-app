@@ -1,0 +1,15 @@
+[Cursor] Add comprehensive project context document
+
+Create a detailed project context document for AI assistants:
+
+- Project overview and repository details
+- Current deployment status on PythonAnywhere
+- Key features and technologies implemented
+- Recent changes and fixes applied to the system
+- Current limitations and development status
+- File structure overview
+- Guide for future conversations with AI assistants
+
+This document serves as a quick reference to bring AI assistants
+up to speed in future conversations, providing all necessary context
+about the project's current state and development history. 

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Tailor - Job Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="py-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1>Resume Tailor - Job Analyzer</h1>
+                    <p class="lead">Analyze job postings with AI to extract key requirements and skills</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="/" class="btn btn-outline-primary">Back to Resume Tailor</a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title">Job URL Analysis</h2>
+                    <p>Enter a job posting URL to analyze the requirements and get insights.</p>
+                    
+                    <form id="jobAnalysisForm" class="mb-3">
+                        <div class="mb-3">
+                            <label for="jobUrl" class="form-label">Job Posting URL</label>
+                            <input type="url" class="form-control" id="jobUrl" placeholder="https://www.linkedin.com/jobs/view/123456789" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="providerSelect" class="form-label">AI Provider</label>
+                            <select class="form-select" id="providerSelect">
+                                <option value="auto" selected>Auto (Use available provider)</option>
+                                <option value="claude">Claude (Anthropic)</option>
+                                <option value="openai">GPT-4o (OpenAI)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="analyzeJobBtn">Analyze Job</button>
+                    </form>
+                    
+                    <div id="analysisStatus" class="alert alert-info d-none">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Analyzing job posting... Please wait.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4" id="resultsContainer" style="display: none;">
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-light">
+                            <h3 class="card-title mb-0">Job Details</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 id="jobTitle">Job Title</h4>
+                            <h5 id="company">Company</h5>
+                            <div class="mt-4">
+                                <h5>Sections</h5>
+                                <div id="jobSections"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-light">
+                            <h3 class="card-title mb-0">AI Analysis</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <h5>Candidate Profile</h5>
+                                <p id="candidateProfile"></p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Hard Skills</h5>
+                                <div id="hardSkills" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Soft Skills</h5>
+                                <div id="softSkills" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Ideal Candidate</h5>
+                                <p id="idealCandidate"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h3 class="card-title mb-0">Requirements</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul id="requirementsList" class="list-group"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center py-4 text-muted">
+            <p>&copy; 2025 Resume Tailor</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobAnalysisForm = document.getElementById('jobAnalysisForm');
+            const analyzeJobBtn = document.getElementById('analyzeJobBtn');
+            const analysisStatus = document.getElementById('analysisStatus');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            jobAnalysisForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const jobUrl = document.getElementById('jobUrl').value;
+                const provider = document.getElementById('providerSelect').value;
+                
+                // Show loading indicator
+                analysisStatus.classList.remove('d-none');
+                analyzeJobBtn.disabled = true;
+                resultsContainer.style.display = 'none';
+                
+                // Make API request
+                fetch('/api/analyze-job', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: jobUrl,
+                        provider: provider
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loading indicator
+                    analysisStatus.classList.add('d-none');
+                    analyzeJobBtn.disabled = false;
+                    
+                    // Display results
+                    displayResults(data);
+                    resultsContainer.style.display = 'flex';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    analysisStatus.classList.add('d-none');
+                    analysisStatus.classList.add('alert-danger');
+                    analysisStatus.innerHTML = `Error analyzing job: ${error.message}`;
+                    analyzeJobBtn.disabled = false;
+                });
+            });
+            
+            function displayResults(data) {
+                // Set job details
+                document.getElementById('jobTitle').textContent = data.job_title;
+                document.getElementById('company').textContent = data.company;
+                
+                // Set AI analysis
+                document.getElementById('candidateProfile').textContent = data.analysis.candidate_profile;
+                document.getElementById('idealCandidate').textContent = data.analysis.ideal_candidate;
+                
+                // Create skill badges
+                const hardSkillsContainer = document.getElementById('hardSkills');
+                hardSkillsContainer.innerHTML = '';
+                data.analysis.hard_skills.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-primary';
+                    badge.textContent = skill;
+                    hardSkillsContainer.appendChild(badge);
+                });
+                
+                const softSkillsContainer = document.getElementById('softSkills');
+                softSkillsContainer.innerHTML = '';
+                data.analysis.soft_skills.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success';
+                    badge.textContent = skill;
+                    softSkillsContainer.appendChild(badge);
+                });
+                
+                // Create requirements list
+                const requirementsList = document.getElementById('requirementsList');
+                requirementsList.innerHTML = '';
+                data.requirements.forEach(req => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = req;
+                    requirementsList.appendChild(li);
+                });
+                
+                // Create job sections
+                const jobSections = document.getElementById('jobSections');
+                jobSections.innerHTML = '';
+                
+                if (data.sections) {
+                    const accordion = document.createElement('div');
+                    accordion.className = 'accordion';
+                    accordion.id = 'jobSectionsAccordion';
+                    
+                    let index = 0;
+                    for (const [key, value] of Object.entries(data.sections)) {
+                        if (!value) continue;
+                        
+                        // Format section name
+                        const sectionName = key.replace(/_/g, ' ')
+                            .split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ');
+                        
+                        const accordionItem = document.createElement('div');
+                        accordionItem.className = 'accordion-item';
+                        
+                        const headerId = `heading${index}`;
+                        const collapseId = `collapse${index}`;
+                        
+                        accordionItem.innerHTML = `
+                            <h2 class="accordion-header" id="${headerId}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                                    ${sectionName}
+                                </button>
+                            </h2>
+                            <div id="${collapseId}" class="accordion-collapse collapse" 
+                                 aria-labelledby="${headerId}" data-bs-parent="#jobSectionsAccordion">
+                                <div class="accordion-body">
+                                    ${value.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        `;
+                        
+                        accordion.appendChild(accordionItem);
+                        index++;
+                    }
+                    
+                    jobSections.appendChild(accordion);
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

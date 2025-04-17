@@ -97,10 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                url: jobUrl,
-                provider: 'openai' // Explicitly use OpenAI instead of auto
-            })
+            body: JSON.stringify({ url: jobUrl })
         })
         .then(response => response.json())
         .then(data => {

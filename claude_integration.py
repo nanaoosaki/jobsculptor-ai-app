@@ -74,10 +74,18 @@ class ClaudeClient(LLMClient):
             
             # Create the system prompt
             system_prompt = (
-                "You are an expert resume writer helping customize a resume for a specific job posting. "
-                "Your task is to rewrite and enhance the provided resume section to better align with the "
-                "job requirements while maintaining truthfulness. Make impactful improvements that highlight "
-                "relevant experience and skills. Be concise and impactful."
+                "You are an expert resume writer specializing in crafting powerful, achievement-focused bullet points "
+                "while preserving the original structure of resume sections. "
+                "Your task is to rewrite ONLY the bullet points while maintaining all structural elements like "
+                "company names, job titles, dates, education institutions, degrees, and section headings. "
+                "Transform each bullet point into a concise statement that follows: "
+                "[Action verb] + [What you did] + [How you did it] + [The result or measurable impact]. "
+                "Each bullet point MUST be 85-100 characters to ensure it fits on a single line. "
+                "Focus on bullet points that are most relevant to the target position.\n\n"
+                "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
+                "DO NOT include any job requirements, job descriptions, expected skills, or any other "
+                "information from the job posting in your response. Your output should look exactly like "
+                "a resume section with no trace of the job requirements used to tailor it."
             )
             
             # Format requirements and skills as bullet points for clearer prompting
@@ -109,10 +117,10 @@ class ClaudeClient(LLMClient):
             
             # Create the user prompt
             user_prompt = f"""
-            # Job Requirements
+            # Job Requirements (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
             {requirements_text}
 
-            # Desired Skills
+            # Desired Skills (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
             {skills_text}
             
             {ai_analysis_text}
@@ -120,12 +128,71 @@ class ClaudeClient(LLMClient):
             # Current Resume Section: {section_name}
             {content}
 
-            Please rewrite and enhance the "{section_name}" section to better align with the job requirements and analysis. 
-            Make specific, tailored improvements while maintaining factual accuracy.
+            # Strong Action Verbs for Impact
+            Achievement: Achieved, Attained, Completed, Established, Exceeded, Improved, Pioneered, Reduced, Resolved, Succeeded
+            Leadership: Administered, Coordinated, Delegated, Directed, Executed, Led, Managed, Orchestrated, Oversaw, Supervised
+            Communication: Authored, Collaborated, Consulted, Influenced, Negotiated, Persuaded, Presented, Promoted, Represented
+            Analysis: Analyzed, Assessed, Calculated, Evaluated, Examined, Identified, Investigated, Researched, Studied, Tested
+            Development: Architected, Created, Designed, Developed, Engineered, Formulated, Implemented, Integrated, Programmed
+            Efficiency: Accelerated, Automated, Enhanced, Leveraged, Maximized, Optimized, Streamlined, Transformed, Upgraded
+
+            # Example Bullet Points (properly formatted)
+            • Managed cross-functional team of 8 engineers by implementing agile methods, reducing delivery time by 30%
+            • Developed scalable API architecture using microservices pattern, increasing system throughput by 45%
+            • Analyzed customer feedback data through sentiment analysis, identifying 5 key improvement areas
+
+            # IMPORTANT STRUCTURAL INSTRUCTIONS:
+            1. PRESERVE ALL structural elements of the original content - company names, job titles, dates, education details
+            2. DO NOT alter any headers, company names, job titles, dates, or educational institution names
+            3. ONLY rewrite the bullet points for experience/project descriptions
+            4. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
+            5. For lines that already follow the format [Company/Title] and [Date Range], preserve them exactly as is
+            6. If a line isn't a bullet point, preserve it exactly as written
+
+            ## Section-Specific Structure Guidelines:
             
-            For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
+            ### For EXPERIENCE sections:
+            - First line is typically the company name or role - PRESERVE EXACTLY
+            - Second line often has dates and location - PRESERVE EXACTLY
+            - Only enhance the bullet points that describe responsibilities and achievements
+            - Example:
+              Senior Data Scientist, ABC Company
+              January 2018 - Present, San Francisco, CA
+              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
+              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
             
-            Return ONLY the enhanced content, maintaining the original format with bullet points if present.
+            ### For EDUCATION sections:
+            - School name, degree, graduation date should remain UNCHANGED
+            - Only enhance descriptions of academic achievements or relevant coursework
+            - Example:
+              Stanford University
+              BS in Computer Science, May 2017
+              • [REWRITE ONLY IF THIS IS A BULLET DESCRIBING ACADEMIC ACHIEVEMENT]
+            
+            ### For SKILLS sections:
+            - You may reorganize skills to prioritize those matching job requirements
+            - Keep all original skills but put most relevant ones first
+            - Use original wording for technical skills, tools, and programming languages
+            
+            ### For SUMMARY sections:
+            - Maintain paragraph structure but enhance language
+            - Keep same length but make more impactful and relevant to this position
+            
+            # IMPORTANT WARNING
+            # DO NOT include any of the job requirements or desired skills in your output.
+            # Your output MUST contain ONLY resume content, not job listings or requirements.
+            # NEVER return job requirements text in your response.
+            
+            Rewrite ONLY the bullet points in the "{section_name}" section following these requirements:
+            1. Follow this EXACT structure for each bullet point: [Action verb] + [What you did] + [How you did it] + [The result/impact]
+            2. Ensure each bullet point is 85-100 characters ONLY - this is critical for single-line display
+            3. Focus ONLY on factual information from the original resume - do not invent achievements
+            4. Prioritize experiences and skills that are MOST RELEVANT to the target position requirements
+            5. Use strong action verbs from the list above that reflect the level of responsibility
+            6. Quantify results and impact whenever possible with specific metrics and percentages
+            
+            Format your response with the exact same structure as the input, maintaining all headings, company names, 
+            titles and dates exactly as they appear in the original, only replacing the bullet points with enhanced ones.
             """
             
             # Make the API request
@@ -190,10 +257,18 @@ class OpenAIClient(LLMClient):
             
             # Create the system prompt
             system_prompt = (
-                "You are an expert resume writer helping customize a resume for a specific job posting. "
-                "Your task is to rewrite and enhance the provided resume section to better align with the "
-                "job requirements while maintaining truthfulness. Make impactful improvements that highlight "
-                "relevant experience and skills. Be concise and impactful."
+                "You are an expert resume writer specializing in crafting powerful, achievement-focused bullet points "
+                "while preserving the original structure of resume sections. "
+                "Your task is to rewrite ONLY the bullet points while maintaining all structural elements like "
+                "company names, job titles, dates, education institutions, degrees, and section headings. "
+                "Transform each bullet point into a concise statement that follows: "
+                "[Action verb] + [What you did] + [How you did it] + [The result or measurable impact]. "
+                "Each bullet point MUST be 85-100 characters to ensure it fits on a single line. "
+                "Focus on bullet points that are most relevant to the target position.\n\n"
+                "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
+                "DO NOT include any job requirements, job descriptions, expected skills, or any other "
+                "information from the job posting in your response. Your output should look exactly like "
+                "a resume section with no trace of the job requirements used to tailor it."
             )
             
             # Format requirements and skills as bullet points for clearer prompting
@@ -225,10 +300,10 @@ class OpenAIClient(LLMClient):
             
             # Create the user prompt
             user_prompt = f"""
-            # Job Requirements
+            # Job Requirements (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
             {requirements_text}
 
-            # Desired Skills
+            # Desired Skills (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
             {skills_text}
             
             {ai_analysis_text}
@@ -236,12 +311,71 @@ class OpenAIClient(LLMClient):
             # Current Resume Section: {section_name}
             {content}
 
-            Please rewrite and enhance the "{section_name}" section to better align with the job requirements and analysis. 
-            Make specific, tailored improvements while maintaining factual accuracy.
+            # Strong Action Verbs for Impact
+            Achievement: Achieved, Attained, Completed, Established, Exceeded, Improved, Pioneered, Reduced, Resolved, Succeeded
+            Leadership: Administered, Coordinated, Delegated, Directed, Executed, Led, Managed, Orchestrated, Oversaw, Supervised
+            Communication: Authored, Collaborated, Consulted, Influenced, Negotiated, Persuaded, Presented, Promoted, Represented
+            Analysis: Analyzed, Assessed, Calculated, Evaluated, Examined, Identified, Investigated, Researched, Studied, Tested
+            Development: Architected, Created, Designed, Developed, Engineered, Formulated, Implemented, Integrated, Programmed
+            Efficiency: Accelerated, Automated, Enhanced, Leveraged, Maximized, Optimized, Streamlined, Transformed, Upgraded
+
+            # Example Bullet Points (properly formatted)
+            • Managed cross-functional team of 8 engineers by implementing agile methods, reducing delivery time by 30%
+            • Developed scalable API architecture using microservices pattern, increasing system throughput by 45%
+            • Analyzed customer feedback data through sentiment analysis, identifying 5 key improvement areas
+
+            # IMPORTANT STRUCTURAL INSTRUCTIONS:
+            1. PRESERVE ALL structural elements of the original content - company names, job titles, dates, education details
+            2. DO NOT alter any headers, company names, job titles, dates, or educational institution names
+            3. ONLY rewrite the bullet points for experience/project descriptions
+            4. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
+            5. For lines that already follow the format [Company/Title] and [Date Range], preserve them exactly as is
+            6. If a line isn't a bullet point, preserve it exactly as written
+
+            ## Section-Specific Structure Guidelines:
             
-            For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
+            ### For EXPERIENCE sections:
+            - First line is typically the company name or role - PRESERVE EXACTLY
+            - Second line often has dates and location - PRESERVE EXACTLY
+            - Only enhance the bullet points that describe responsibilities and achievements
+            - Example:
+              Senior Data Scientist, ABC Company
+              January 2018 - Present, San Francisco, CA
+              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
+              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
             
-            Return ONLY the enhanced content, maintaining the original format with bullet points if present.
+            ### For EDUCATION sections:
+            - School name, degree, graduation date should remain UNCHANGED
+            - Only enhance descriptions of academic achievements or relevant coursework
+            - Example:
+              Stanford University
+              BS in Computer Science, May 2017
+              • [REWRITE ONLY IF THIS IS A BULLET DESCRIBING ACADEMIC ACHIEVEMENT]
+            
+            ### For SKILLS sections:
+            - You may reorganize skills to prioritize those matching job requirements
+            - Keep all original skills but put most relevant ones first
+            - Use original wording for technical skills, tools, and programming languages
+            
+            ### For SUMMARY sections:
+            - Maintain paragraph structure but enhance language
+            - Keep same length but make more impactful and relevant to this position
+            
+            # IMPORTANT WARNING
+            # DO NOT include any of the job requirements or desired skills in your output.
+            # Your output MUST contain ONLY resume content, not job listings or requirements.
+            # NEVER return job requirements text in your response.
+            
+            Rewrite ONLY the bullet points in the "{section_name}" section following these requirements:
+            1. Follow this EXACT structure for each bullet point: [Action verb] + [What you did] + [How you did it] + [The result/impact]
+            2. Ensure each bullet point is 85-100 characters ONLY - this is critical for single-line display
+            3. Focus ONLY on factual information from the original resume - do not invent achievements
+            4. Prioritize experiences and skills that are MOST RELEVANT to the target position requirements
+            5. Use strong action verbs from the list above that reflect the level of responsibility
+            6. Quantify results and impact whenever possible with specific metrics and percentages
+            
+            Format your response with the exact same structure as the input, maintaining all headings, company names, 
+            titles and dates exactly as they appear in the original, only replacing the bullet points with enhanced ones.
             """
             
             # Make the API request
@@ -279,6 +413,49 @@ def format_section_content(content: str) -> str:
     
     # Remove markdown bold formatting (don't convert to HTML bold)
     content = re.sub(r'\*\*(.*?)\*\*', r'\1', content)
+    
+    # Filter out job requirements that might be included by the LLM
+    filtered_lines = []
+    
+    # Check for job requirement phrases and patterns
+    requirement_patterns = [
+        r'job requirement', r'required skill', r'desired skill',
+        r'job description', r'key qualification', r'qualification',
+        r'requirements:', r'skills required:', r'responsibilities:',
+        r'what you\'ll do:', r'what you\'ll need:', r'looking for',
+        r'ideal candidate', r'candidate profile', r'about the job',
+        r'the role requires', r'will be responsible for'
+    ]
+    
+    skip_section = False
+    for line in content.strip().split('\n'):
+        line_lower = line.strip().lower()
+        
+        # Check for job requirements headers or sections
+        if any(pattern in line_lower for pattern in requirement_patterns):
+            skip_section = True
+            continue
+            
+        # Check for numbered list items that might be requirements
+        if re.match(r'^\d+\.\s+', line) and skip_section:
+            continue
+            
+        # Reset after a section break
+        if line.strip() == '' or line.startswith('---') or line.startswith('=='):
+            skip_section = False
+            
+        # Skip sections that look like job requirements
+        if skip_section:
+            continue
+            
+        # Skip LLM note lines or prompt instruction leakage
+        if line.strip().startswith('#') or 'instructions:' in line_lower or 'action verbs' in line_lower:
+            continue
+            
+        filtered_lines.append(line)
+    
+    # Use the filtered content
+    content = '\n'.join(filtered_lines)
     
     # Check if the content has bullet points
     bullet_point_pattern = r'^[\s]*[•\-\*][\s]'
@@ -506,35 +683,50 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
     
     html_parts = []
     
-    # Contact information (usually not tailored)
+    # Contact information at the top (usually not tailored)
     if "contact" in llm_client.tailored_content:
-        contact_html = format_section_content(llm_client.tailored_content["contact"])
-        html_parts.append(f'<div class="resume-section"><h2>Contact Information</h2>{contact_html}<hr class="contact-divider"/></div>')
+        contact_lines = llm_client.tailored_content["contact"].strip().split('\n')
+        contact_html = '<div class="contact-section">'
+        
+        # First line is usually the name
+        if contact_lines:
+            contact_html += f'<p class="name">{contact_lines[0]}</p>'
+            
+            # Add remaining contact lines
+            for line in contact_lines[1:]:
+                if line.strip():
+                    contact_html += f'<p>{line.strip()}</p>'
+        
+        contact_html += '</div><hr class="contact-divider"/>'
+        html_parts.append(contact_html)
     
     # Summary section
     if "summary" in llm_client.tailored_content:
         summary_html = format_section_content(llm_client.tailored_content["summary"])
         html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2>{summary_html}</div>')
     
-    # Experience section
+    # Experience section with improved formatting
     if "experience" in llm_client.tailored_content:
-        experience_html = format_section_content(llm_client.tailored_content["experience"])
-        html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2>{experience_html}</div>')
+        experience_content = llm_client.tailored_content["experience"]
+        formatted_experience = format_experience_content(experience_content)
+        html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2>{formatted_experience}</div>')
     
-    # Education section
+    # Education section with improved formatting
     if "education" in llm_client.tailored_content:
-        education_html = format_section_content(llm_client.tailored_content["education"])
-        html_parts.append(f'<div class="resume-section"><h2>Education</h2>{education_html}</div>')
+        education_content = llm_client.tailored_content["education"]
+        formatted_education = format_education_content(education_content)
+        html_parts.append(f'<div class="resume-section"><h2>Education</h2>{formatted_education}</div>')
     
     # Skills section
     if "skills" in llm_client.tailored_content:
         skills_html = format_section_content(llm_client.tailored_content["skills"])
         html_parts.append(f'<div class="resume-section"><h2>Skills</h2>{skills_html}</div>')
     
-    # Projects section
+    # Projects section with improved formatting
     if "projects" in llm_client.tailored_content:
-        projects_html = format_section_content(llm_client.tailored_content["projects"])
-        html_parts.append(f'<div class="resume-section"><h2>Projects</h2>{projects_html}</div>')
+        projects_content = llm_client.tailored_content["projects"]
+        formatted_projects = format_projects_content(projects_content)
+        html_parts.append(f'<div class="resume-section"><h2>Projects</h2>{formatted_projects}</div>')
     
     # Additional information section
     if "additional" in llm_client.tailored_content:
@@ -937,8 +1129,29 @@ Be concise and selective, only including information that strengthens the applic
     
     return tailored_sections
 
-def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = 'openai', api_url: str = None) -> Tuple[str, str]:
-    """Tailor a resume using an LLM API (Claude or OpenAI)"""
+def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = 'openai', api_url: str = None) -> Tuple[Dict, Union[ClaudeClient, OpenAIClient]]:
+    """
+    Tailor a resume using an LLM API (Claude or OpenAI)
+    
+    The tailoring process preserves the original structure of the resume including:
+    - Company names, job titles, and date ranges
+    - Education institutions and degrees
+    - Section headings and hierarchical structure
+    
+    Only the descriptive bullet points are enhanced to be more targeted for the specific job.
+    Each bullet point is rewritten to follow the format:
+    [Action verb] + [What you did] + [How you did it] + [The result/impact]
+    
+    Args:
+        resume_path: Path to the resume file
+        job_data: Job data including requirements and skills
+        api_key: API key for the LLM provider
+        provider: LLM provider ('claude' or 'openai')
+        api_url: API URL for Claude
+        
+    Returns:
+        Tuple with tailored sections dictionary and LLM client instance
+    """
     global last_llm_client
     
     try:
@@ -1012,30 +1225,10 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
                 job_data
             )
         
-        # Create output path for tailored resume
-        filename_parts = os.path.splitext(os.path.basename(resume_path))
-        tailored_filename = f"{filename_parts[0]}_tailored_{provider}{filename_parts[1]}"
-        uploads_dir = os.path.dirname(resume_path)
-        tailored_path = os.path.join(uploads_dir, tailored_filename)
+        logger.info(f"Resume tailoring completed successfully with {provider.upper()}")
         
-        # Import the resume styler module
-        from resume_styler import create_resume_document
-        
-        # Generate the tailored resume with modern styling
-        tailored_path = create_resume_document(
-            contact=tailored_sections.get('contact', ''),
-            summary=tailored_sections.get('summary', ''),
-            experience=tailored_sections.get('experience', ''),
-            education=tailored_sections.get('education', ''),
-            skills=tailored_sections.get('skills', ''),
-            projects=tailored_sections.get('projects', ''),
-            additional=tailored_sections.get('additional', ''),
-            output_path=tailored_path
-        )
-        
-        logger.info(f"Tailored resume saved to: {tailored_path}")
-        
-        return tailored_filename, tailored_path
+        # Return tailored sections and LLM client
+        return tailored_sections, llm_client
     
     except Exception as e:
         logger.error(f"Error tailoring resume with {provider.upper()}: {str(e)}")
@@ -1084,3 +1277,379 @@ def generate_tailored_document(resume_path, tailored_sections):
         logger.error(f"Error generating tailored document: {str(e)}")
         logger.error(traceback.format_exc())
         return None
+
+def format_job_entry(company, location, position, dates, bullets):
+    """Format a job entry with proper company/location and position/date layout"""
+    html = []
+    
+    # Add company and location in a flex layout
+    html.append('<div class="company-line">')
+    html.append(f'<div class="company-name">{company}</div>')
+    if location:
+        html.append(f'<div class="company-location">{location}</div>')
+    html.append('</div>')
+    
+    # Add position and dates in a flex layout
+    if position:
+        html.append('<div class="position-line">')
+        html.append(f'<div class="position-title">{position}</div>')
+        if dates:
+            html.append(f'<div class="position-date">{dates}</div>')
+        html.append('</div>')
+    
+    # Add bullets if any
+    if bullets:
+        html.append('<ul class="dot-bullets">')
+        for bullet in bullets:
+            html.append(f'<li>{bullet}</li>')
+        html.append('</ul>')
+    
+    return '\n'.join(html)
+
+def format_education_entry(institution, location, degree, dates, bullets):
+    """Format an education entry with proper institution/location and degree/date layout"""
+    html = []
+    
+    # Add institution and location in a flex layout
+    html.append('<div class="company-line">')
+    html.append(f'<div class="company-name">{institution}</div>')
+    if location:
+        html.append(f'<div class="company-location">{location}</div>')
+    html.append('</div>')
+    
+    # Add degree and dates in a flex layout
+    if degree:
+        html.append('<div class="position-line">')
+        html.append(f'<div class="position-title">{degree}</div>')
+        if dates:
+            html.append(f'<div class="position-date">{dates}</div>')
+        html.append('</div>')
+    
+    # Add bullets if any
+    if bullets:
+        html.append('<ul class="dot-bullets">')
+        for bullet in bullets:
+            html.append(f'<li>{bullet}</li>')
+        html.append('</ul>')
+    
+    return '\n'.join(html)
+
+def format_project_entry(project, dates, bullets):
+    """Format a project entry with proper project/date layout"""
+    html = []
+    
+    # Add project and dates in a flex layout
+    html.append('<div class="company-line">')
+    html.append(f'<div class="company-name">{project}</div>')
+    if dates:
+        html.append(f'<div class="company-location">{dates}</div>')
+    html.append('</div>')
+    
+    # Add bullets if any
+    if bullets:
+        html.append('<ul class="dot-bullets">')
+        for bullet in bullets:
+            html.append(f'<li>{bullet}</li>')
+        html.append('</ul>')
+    
+    return '\n'.join(html)
+
+def format_experience_content(content: str) -> str:
+    """Format experience content with company/location and position/date layout"""
+    if not content:
+        return ""
+    
+    # Filter job requirements as in format_section_content
+    filtered_lines = []
+    
+    # Check for job requirement phrases and patterns
+    requirement_patterns = [
+        r'job requirement', r'required skill', r'desired skill',
+        r'job description', r'key qualification', r'qualification',
+        r'requirements:', r'skills required:', r'responsibilities:',
+        r'what you\'ll do:', r'what you\'ll need:', r'looking for',
+        r'ideal candidate', r'candidate profile', r'about the job',
+        r'the role requires', r'will be responsible for'
+    ]
+    
+    skip_section = False
+    for line in content.strip().split('\n'):
+        line_lower = line.strip().lower()
+        
+        # Check for job requirements headers or sections
+        if any(pattern in line_lower for pattern in requirement_patterns):
+            skip_section = True
+            continue
+            
+        # Check for numbered list items that might be requirements
+        if re.match(r'^\d+\.\s+', line) and skip_section:
+            continue
+            
+        # Reset after a section break
+        if line.strip() == '' or line.startswith('---') or line.startswith('=='):
+            skip_section = False
+            
+        # Skip sections that look like job requirements
+        if skip_section:
+            continue
+            
+        # Skip LLM note lines or prompt instruction leakage
+        if line.strip().startswith('#') or 'instructions:' in line_lower or 'action verbs' in line_lower:
+            continue
+            
+        filtered_lines.append(line)
+    
+    # Use the filtered content
+    content = '\n'.join(filtered_lines)
+    
+    # Split into paragraphs for processing
+    paragraphs = content.strip().split('\n\n')
+    if not paragraphs:
+        return ""
+    
+    formatted_parts = []
+    current_company = None
+    current_location = None
+    current_position = None
+    current_dates = None
+    bullets = []
+    
+    for para in paragraphs:
+        lines = para.strip().split('\n')
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if it's a bullet point
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Add bullet to current position
+                bullet_content = re.sub(r'^[•\-\*]\s*', '', line).strip()
+                bullets.append(bullet_content)
+            elif i == 0 and (i == len(lines) - 1 or not any(l.startswith(('•', '-', '*')) for l in lines[1:])):
+                # This is likely a standalone line (like a job title or company)
+                # Check if it has a comma or pipe that might separate company and location
+                if ',' in line or ' | ' in line or ' - ' in line:
+                    # Output previous position if exists
+                    if current_company is not None:
+                        formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
+                        bullets = []
+                    
+                    # Try to split company and location
+                    if ',' in line:
+                        parts = line.split(',', 1)
+                    elif ' | ' in line:
+                        parts = line.split(' | ', 1)
+                    else:
+                        parts = line.split(' - ', 1)
+                    
+                    current_company = parts[0].strip()
+                    current_location = parts[1].strip() if len(parts) > 1 else ""
+                    current_position = None
+                    current_dates = None
+                else:
+                    # Just a company without location or might be a header
+                    # Output previous position if exists
+                    if current_company is not None:
+                        formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
+                        bullets = []
+                    
+                    current_company = line
+                    current_location = ""
+                    current_position = None
+                    current_dates = None
+            elif current_company is not None and current_position is None:
+                # This is likely the position and dates line
+                # Try to identify if it has dates (often in parentheses or after a dash)
+                date_match = re.search(r'\(([^)]+)\)|\s-\s([^-]+)$', line)
+                if date_match:
+                    date_part = date_match.group(1) or date_match.group(2)
+                    position_part = line.replace(f"({date_part})", "").replace(f" - {date_part}", "").strip()
+                    current_position = position_part
+                    current_dates = date_part
+                else:
+                    # No clear date format, assume entire line is position
+                    current_position = line
+                    current_dates = ""
+    
+    # Add the last job entry
+    if current_company is not None:
+        formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
+    
+    # If no structured entries were found, fall back to simple formatting
+    if not formatted_parts and content.strip():
+        return format_section_content(content)
+    
+    return "\n".join(formatted_parts)
+
+def format_education_content(content: str) -> str:
+    """Format education content with institution/location and degree/date layout"""
+    # The education formatting is similar to experience formatting
+    # but with slightly different naming and expectations
+    if not content:
+        return ""
+    
+    # Filter content as in format_experience_content
+    filtered_lines = []
+    for line in content.strip().split('\n'):
+        line_lower = line.strip().lower()
+        if (line.strip().startswith('#') or 
+            'instructions:' in line_lower or 
+            'action verbs' in line_lower):
+            continue
+        filtered_lines.append(line)
+    
+    content = '\n'.join(filtered_lines)
+    
+    # Split into paragraphs for processing
+    paragraphs = content.strip().split('\n\n')
+    if not paragraphs:
+        return ""
+    
+    formatted_parts = []
+    current_institution = None
+    current_location = None
+    current_degree = None
+    current_dates = None
+    bullets = []
+    
+    for para in paragraphs:
+        lines = para.strip().split('\n')
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if it's a bullet point
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Add bullet to current education entry
+                bullet_content = re.sub(r'^[•\-\*]\s*', '', line).strip()
+                bullets.append(bullet_content)
+            elif i == 0 and (i == len(lines) - 1 or not any(l.startswith(('•', '-', '*')) for l in lines[1:])):
+                # This is likely a standalone line (like institution name)
+                # Check if it has a comma or pipe that might separate institution and location
+                if ',' in line or ' | ' in line or ' - ' in line:
+                    # Output previous education if exists
+                    if current_institution is not None:
+                        formatted_parts.append(format_education_entry(current_institution, current_location, current_degree, current_dates, bullets))
+                        bullets = []
+                    
+                    # Try to split institution and location
+                    if ',' in line:
+                        parts = line.split(',', 1)
+                    elif ' | ' in line:
+                        parts = line.split(' | ', 1)
+                    else:
+                        parts = line.split(' - ', 1)
+                    
+                    current_institution = parts[0].strip()
+                    current_location = parts[1].strip() if len(parts) > 1 else ""
+                    current_degree = None
+                    current_dates = None
+                else:
+                    # Just an institution without location
+                    # Output previous education if exists
+                    if current_institution is not None:
+                        formatted_parts.append(format_education_entry(current_institution, current_location, current_degree, current_dates, bullets))
+                        bullets = []
+                    
+                    current_institution = line
+                    current_location = ""
+                    current_degree = None
+                    current_dates = None
+            elif current_institution is not None and current_degree is None:
+                # This is likely the degree and dates line
+                # Try to identify if it has dates
+                date_match = re.search(r'\(([^)]+)\)|\s-\s([^-]+)$|,\s*([^,]+)$', line)
+                if date_match:
+                    date_part = date_match.group(1) or date_match.group(2) or date_match.group(3)
+                    degree_part = line.replace(f"({date_part})", "").replace(f" - {date_part}", "").replace(f", {date_part}", "").strip()
+                    current_degree = degree_part
+                    current_dates = date_part
+                else:
+                    # No clear date format, assume entire line is degree
+                    current_degree = line
+                    current_dates = ""
+    
+    # Add the last education entry
+    if current_institution is not None:
+        formatted_parts.append(format_education_entry(current_institution, current_location, current_degree, current_dates, bullets))
+    
+    # If no structured entries were found, fall back to simple formatting
+    if not formatted_parts and content.strip():
+        return format_section_content(content)
+    
+    return "\n".join(formatted_parts)
+
+def format_projects_content(content: str) -> str:
+    """Format projects content with project name/date and description layout"""
+    if not content:
+        return ""
+    
+    # Filter content as in format_experience_content
+    filtered_lines = []
+    for line in content.strip().split('\n'):
+        line_lower = line.strip().lower()
+        if (line.strip().startswith('#') or 
+            'instructions:' in line_lower or 
+            'action verbs' in line_lower):
+            continue
+        filtered_lines.append(line)
+    
+    content = '\n'.join(filtered_lines)
+    
+    # Split into paragraphs for processing
+    paragraphs = content.strip().split('\n\n')
+    if not paragraphs:
+        return ""
+    
+    formatted_parts = []
+    current_project = None
+    current_dates = None
+    bullets = []
+    
+    for para in paragraphs:
+        lines = para.strip().split('\n')
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if it's a bullet point
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                # Add bullet to current project
+                bullet_content = re.sub(r'^[•\-\*]\s*', '', line).strip()
+                bullets.append(bullet_content)
+            elif i == 0:
+                # This is likely a project title, possibly with dates
+                # Check if it has dates
+                date_match = re.search(r'\(([^)]+)\)|\s-\s([^-]+)$', line)
+                if date_match:
+                    # Output previous project if exists
+                    if current_project is not None:
+                        formatted_parts.append(format_project_entry(current_project, current_dates, bullets))
+                        bullets = []
+                    
+                    date_part = date_match.group(1) or date_match.group(2)
+                    project_part = line.replace(f"({date_part})", "").replace(f" - {date_part}", "").strip()
+                    current_project = project_part
+                    current_dates = date_part
+                else:
+                    # No dates, just project name
+                    # Output previous project if exists
+                    if current_project is not None:
+                        formatted_parts.append(format_project_entry(current_project, current_dates, bullets))
+                        bullets = []
+                    
+                    current_project = line
+                    current_dates = ""
+    
+    # Add the last project entry
+    if current_project is not None:
+        formatted_parts.append(format_project_entry(current_project, current_dates, bullets))
+    
+    # If no structured entries were found, fall back to simple formatting
+    if not formatted_parts and content.strip():
+        return format_section_content(content)
+    
+    return "\n".join(formatted_parts)

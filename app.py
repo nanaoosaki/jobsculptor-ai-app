@@ -47,7 +47,24 @@ setup_tailoring_routes(app)
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    """
+    Download a file from the upload folder
+    
+    Handles both DOCX and PDF file downloads with appropriate MIME types
+    """
+    # Determine the MIME type based on file extension
+    mime_type = None
+    if filename.lower().endswith('.pdf'):
+        mime_type = 'application/pdf'
+    elif filename.lower().endswith('.docx'):
+        mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    
+    return send_from_directory(
+        app.config['UPLOAD_FOLDER'], 
+        filename, 
+        as_attachment=True,
+        mimetype=mime_type
+    )
 
 if __name__ == '__main__':
     # Run with HTTP only
