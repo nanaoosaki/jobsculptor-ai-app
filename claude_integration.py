@@ -84,8 +84,9 @@ class ClaudeClient(LLMClient):
                 "Focus on bullet points that are most relevant to the target position.\n\n"
                 "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
                 "DO NOT include any job requirements, job descriptions, expected skills, or any other "
-                "information from the job posting in your response. Your output should look exactly like "
-                "a resume section with no trace of the job requirements used to tailor it."
+                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
+                "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
+                "Output ONLY the tailored resume content with no meta-text, explanations, or job information."
             )
             
             # Format requirements and skills as bullet points for clearer prompting
@@ -267,8 +268,9 @@ class OpenAIClient(LLMClient):
                 "Focus on bullet points that are most relevant to the target position.\n\n"
                 "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
                 "DO NOT include any job requirements, job descriptions, expected skills, or any other "
-                "information from the job posting in your response. Your output should look exactly like "
-                "a resume section with no trace of the job requirements used to tailor it."
+                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
+                "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
+                "Output ONLY the tailored resume content with no meta-text, explanations, or job information."
             )
             
             # Format requirements and skills as bullet points for clearer prompting
@@ -424,7 +426,13 @@ def format_section_content(content: str) -> str:
         r'requirements:', r'skills required:', r'responsibilities:',
         r'what you\'ll do:', r'what you\'ll need:', r'looking for',
         r'ideal candidate', r'candidate profile', r'about the job',
-        r'the role requires', r'will be responsible for'
+        r'the role requires', r'will be responsible for',
+        r'machine learning', r'and deep learning', r'with the ability to tackle',
+        r'complex challenges', r'collaborate with diverse teams',
+        r'candidate should be passionate', r'analytical thinking',
+        r'candidate profile', r'hard skills', r'soft skills', 
+        r'required hard skills', r'required soft skills',
+        r'the employer is looking for', r'the position requires'
     ]
     
     skip_section = False
@@ -1369,7 +1377,13 @@ def format_experience_content(content: str) -> str:
         r'requirements:', r'skills required:', r'responsibilities:',
         r'what you\'ll do:', r'what you\'ll need:', r'looking for',
         r'ideal candidate', r'candidate profile', r'about the job',
-        r'the role requires', r'will be responsible for'
+        r'the role requires', r'will be responsible for',
+        r'machine learning', r'and deep learning', r'with the ability to tackle',
+        r'complex challenges', r'collaborate with diverse teams',
+        r'candidate should be passionate', r'analytical thinking',
+        r'candidate profile', r'hard skills', r'soft skills', 
+        r'required hard skills', r'required soft skills',
+        r'the employer is looking for', r'the position requires'
     ]
     
     skip_section = False
