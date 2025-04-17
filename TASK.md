@@ -30,6 +30,10 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 
 ## In Progress Tasks
 
+- [ ] Switch from Word document generation to PDF export for better consistency
+- [ ] Implement HTML-to-PDF conversion with professional styling
+- [ ] Update download functionality to provide PDF files instead of Word documents
+- [ ] Optimize PDF layout for ATS compatibility and professional appearance
 - [ ] Optimize tailoring prompts for high-quality, achievement-focused content
 - [ ] Create resume format validator to help prepare optimal resumes
 - [ ] Add visual diff feature to highlight tailoring changes
@@ -293,3 +297,46 @@ The YC-Eddie Style implementation produces consistently high-quality resume outp
    - Proper XML manipulation for advanced formatting features
    - Consistent HTML/CSS styling for preview generation
    - Graceful fallbacks for error conditions 
+
+## PDF Export Implementation Details
+
+1. **PDF Generation Approach:**
+   - Replace Word document generation with direct HTML-to-PDF conversion
+   - Leverage existing HTML preview styling for PDF generation
+   - Implement WeasyPrint or wkhtmltopdf for high-quality PDF rendering
+   - Ensure proper fonts, margins, and styling for professional appearance
+
+2. **Technical Implementation:**
+   - Create a new module `pdf_exporter.py` to handle PDF generation
+   - Modify existing tailoring workflow to output PDF instead of DOCX
+   - Update download handlers to serve PDF content type
+   - Add PDF-specific CSS styling for optimal print layout
+   - Implement proper page breaks and headers/footers
+
+3. **PDF Formatting Requirements:**
+   - Maintain consistent styling with current HTML preview
+   - Ensure proper rendering of special characters and bullet points
+   - Add appropriate margins and spacing for print-ready output
+   - Include metadata (title, author) in PDF properties
+   - Optimize for both screen viewing and printing
+
+4. **User Experience Improvements:**
+   - Display PDF preview in browser before download
+   - Provide clear PDF download button with appropriate icon
+   - Add file size and page count information
+   - Ensure consistent cross-browser compatibility
+
+5. **ATS Compatibility Features:**
+   - Implement machine-readable text layer
+   - Avoid complex graphics or backgrounds that might confuse ATS
+   - Use standard fonts that render well across platforms
+   - Include appropriate document structure and tagging
+   - Test with sample ATS systems for compatibility
+
+6. **Implementation Steps:**
+   - Research and select optimal HTML-to-PDF library
+   - Create PDF styling that matches existing resume format
+   - Implement core PDF generation functionality
+   - Update UI/download workflow to support PDF files
+   - Add comprehensive error handling for PDF generation
+   - Test across browsers and devices for consistent rendering 

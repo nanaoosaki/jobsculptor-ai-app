@@ -3,7 +3,8 @@ import json
 import traceback
 import logging
 from flask import request, jsonify, current_app
-from claude_integration import tailor_resume_with_llm, generate_resume_preview
+from claude_integration import tailor_resume_with_llm, generate_resume_preview, generate_preview_from_llm_responses
+from pdf_exporter import create_pdf_from_html
 from dotenv import load_dotenv
 
 # Configure logging
@@ -190,7 +191,8 @@ def setup_tailoring_routes(app):
             # Tailor the resume with the selected provider
             logger.info(f"Using {provider.upper()} API for tailoring")
             try:
-                tailored_filename, tailored_path = tailor_resume_with_llm(
+                # Get tailored content from LLM
+                tailored_content, llm_client = tailor_resume_with_llm(
                     resume_path,
                     job_data,
                     api_key,
@@ -199,17 +201,57 @@ def setup_tailoring_routes(app):
                 )
                 
                 # Generate HTML preview
-                preview_html = generate_resume_preview(tailored_path)
+                preview_html = generate_preview_from_llm_responses(llm_client)
                 
-                logger.info(f"Resume tailored successfully with {provider}: {tailored_filename}")
+                # Get original filename without extension
+                filename_base = os.path.splitext(os.path.basename(resume_path))[0]
                 
-                return jsonify({
-                    'success': True,
-                    'filename': tailored_filename,
-                    'preview': preview_html,
-                    'provider': provider,
-                    'message': f'Resume tailored successfully using {provider.upper()}'
-                }), 200
+                # Create PDF output path
+                pdf_output_path = os.path.join(
+                    current_app.config['UPLOAD_FOLDER'], 
+                    f"{filename_base}_tailored_{provider}.pdf"
+                )
+                
+                try:
+                    # Generate PDF from HTML preview
+                    pdf_path = create_pdf_from_html(
+                        preview_html, 
+                        pdf_output_path,
+                        metadata={
+                            'title': f'Tailored Resume - {provider.capitalize()}',
+                            'author': 'Resume Tailoring App'
+                        }
+                    )
+                    
+                    # Get just the filename part for the response
+                    pdf_filename = os.path.basename(pdf_path)
+                    
+                    logger.info(f"Resume tailored successfully with {provider}: {pdf_filename}")
+                    
+                    return jsonify({
+                        'success': True,
+                        'filename': pdf_filename,
+                        'preview': preview_html,
+                        'provider': provider,
+                        'fileType': 'pdf',  # Indicate this is a PDF file
+                        'message': f'Resume tailored successfully using {provider.upper()}'
+                    }), 200
+                except Exception as pdf_error:
+                    # If PDF generation fails, fallback to DOCX
+                    logger.error(f"PDF generation failed, falling back to DOCX: {str(pdf_error)}")
+                    
+                    # Create DOCX filename
+                    docx_filename = f"{filename_base}_tailored_{provider}.docx"
+                    
+                    return jsonify({
+                        'success': True,
+                        'filename': docx_filename,
+                        'preview': preview_html,
+                        'provider': provider,
+                        'fileType': 'docx',
+                        'message': f'Resume tailored successfully using {provider.upper()} (PDF generation failed, using DOCX format)'
+                    }), 200
+                    
             except Exception as e:
                 logger.error(f"Error tailoring resume with {provider.upper()} API: {str(e)}")
                 logger.error(traceback.format_exc())
