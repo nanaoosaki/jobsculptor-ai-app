@@ -179,7 +179,7 @@ header {
 }
 
 .preview-section {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .preview-section-title {
@@ -197,6 +197,38 @@ header {
 
 .preview-bold {
   font-weight: 600;
+}
+
+.resume-section {
+  margin-bottom: 0.75rem;
+}
+
+.resume-section h2 {
+  margin-bottom: 0.5rem;
+}
+
+/* Contact divider styling */
+.contact-divider {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  border: none;
+  height: 1px;
+  background-color: #000;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Dot bullet styling */
+.dot-bullets {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.dot-bullets li {
+  margin-bottom: 0.25rem;
 }
 
 /* Responsive adjustments */

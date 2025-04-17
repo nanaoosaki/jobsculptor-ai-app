@@ -80,7 +80,7 @@ class YCEddieStyler:
         font.size = Pt(11)
         bullet_style.paragraph_format.left_indent = Inches(0.25)
         bullet_style.paragraph_format.first_line_indent = Inches(-0.25)
-        bullet_style.paragraph_format.space_after = Pt(6)
+        bullet_style.paragraph_format.space_after = Pt(4)  # Reduced from 6pt to 4pt
         
         # Company/role style
         role_style = self.document.styles.add_style('CompanyRole', WD_STYLE_TYPE.PARAGRAPH)
@@ -96,7 +96,7 @@ class YCEddieStyler:
         font.name = 'Calibri'
         font.size = Pt(11)
         font.italic = True
-        date_style.paragraph_format.space_after = Pt(6)
+        date_style.paragraph_format.space_after = Pt(4)  # Reduced from 6pt to 4pt
         
         print("DEBUG: All document styles created successfully")
         
@@ -118,8 +118,8 @@ class YCEddieStyler:
         pPr.append(pBdr)
         
     def add_bullet_point(self, paragraph, text):
-        """Add a bullet point with an arrow character instead of a regular bullet"""
-        run = paragraph.add_run('▸ ')  # Arrow character
+        """Add a bullet point with a dot character instead of an arrow"""
+        run = paragraph.add_run('• ')  # Dot character instead of arrow (▸)
         paragraph.add_run(text.strip())
         return paragraph
         
@@ -140,15 +140,37 @@ class YCEddieStyler:
                     contact_para = self.document.add_paragraph(style='Contact')
                     contact_para.add_run(line.strip())
         
-        # Add a small space after contact section
-        self.document.add_paragraph()
+        # Add horizontal line under contact section
+        self._add_horizontal_line()
+        
+    def _add_horizontal_line(self):
+        """Add a horizontal line to the document"""
+        # Create paragraph for the horizontal line
+        p = self.document.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(6)
+        
+        # Add horizontal line using paragraph border
+        pPr = p._p.get_or_add_pPr()
+        pBdr = OxmlElement('w:pBdr')
+        
+        # Add bottom border only
+        bottom = OxmlElement('w:bottom')
+        bottom.set(qn('w:val'), 'single')
+        bottom.set(qn('w:sz'), '6')  # Border width
+        bottom.set(qn('w:space'), '1')
+        bottom.set(qn('w:color'), '000000')  # Black border
+        pBdr.append(bottom)
+        
+        pPr.append(pBdr)
         
     def add_section_header(self, title: str):
         """Add a section header with proper styling"""
         print(f"DEBUG: Adding section header: {title}")
         
-        # Add some spacing before section
-        self.document.add_paragraph().add_run()
+        # Add some spacing before section but less than before
+        spacing_para = self.document.add_paragraph().add_run()
+        spacing_para.font.size = Pt(4)  # Reduced spacing
         
         # Create a new paragraph with the SectionHeader style
         header_para = self.document.add_paragraph(style='SectionHeader')

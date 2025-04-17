@@ -23,6 +23,10 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Enhance UI to better display tailored sections with AI analysis highlights
 - [x] Implement YC-Eddie Style resume format in document generation
 - [x] Enhance resume styling with modern box borders and arrow bullet points
+- [x] Update resume formatting with dot bullet points instead of arrows
+- [x] Add horizontal line under contact information section
+- [x] Remove bold font formatting from resume sections
+- [x] Reduce line spacing between resume sections for better readability
 
 ## In Progress Tasks
 

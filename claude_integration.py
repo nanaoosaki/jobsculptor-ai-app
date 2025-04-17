@@ -281,8 +281,8 @@ def format_section_content(content: str) -> str:
     if not content:
         return ""
     
-    # Convert markdown bold to HTML bold
-    content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', content)
+    # Remove markdown bold formatting (don't convert to HTML bold)
+    content = re.sub(r'\*\*(.*?)\*\*', r'\1', content)
     
     # Check if the content has bullet points
     bullet_point_pattern = r'^[\s]*[•\-\*][\s]'
@@ -301,7 +301,7 @@ def format_section_content(content: str) -> str:
             # Handle bullet points (•, -, *)
             if re.match(bullet_point_pattern, line):
                 if not is_in_list:
-                    formatted_lines.append("<ul>")
+                    formatted_lines.append("<ul class='dot-bullets'>")
                     is_in_list = True
                 
                 # Remove the bullet and any leading/trailing whitespace
@@ -513,7 +513,7 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
     # Contact information (usually not tailored)
     if "contact" in llm_client.tailored_content:
         contact_html = format_section_content(llm_client.tailored_content["contact"])
-        html_parts.append(f'<div class="resume-section"><h2>Contact Information</h2>{contact_html}</div>')
+        html_parts.append(f'<div class="resume-section"><h2>Contact Information</h2>{contact_html}<hr class="contact-divider"/></div>')
     
     # Summary section
     if "summary" in llm_client.tailored_content:
@@ -578,6 +578,7 @@ def generate_resume_preview(doc_path: str) -> str:
         html_parts = []
         current_section = None
         section_content = []
+        is_contact_section = False
         
         for para in doc.paragraphs:
             text = para.text.strip()
@@ -587,24 +588,31 @@ def generate_resume_preview(doc_path: str) -> str:
                 continue
             
             # Check if this is a heading (section title)
-            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
+            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs) or para.style.name == 'SectionHeader':
                 # Add previous section to HTML
                 if current_section and section_content:
                     section_html = "\n".join(section_content)
-                    html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
+                    if is_contact_section:
+                        html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}<hr class="contact-divider"/></div>')
+                        is_contact_section = False
+                    else:
+                        html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
                     section_content = []
                 
                 # Set new section
                 current_section = text
+                # Check if this is the contact section
+                if current_section.lower().find("contact") >= 0 or len(html_parts) == 0:
+                    is_contact_section = True
                 
             else:
                 # Process content based on if it's a bullet point
-                if text.startswith('•') or text.startswith('-') or text.startswith('*'):
-                    if not section_content or not section_content[-1].startswith('<ul>'):
-                        section_content.append('<ul>')
+                if text.startswith('•') or text.startswith('-') or text.startswith('*') or text.startswith('▸'):
+                    if not section_content or not section_content[-1].startswith('<ul'):
+                        section_content.append('<ul class="dot-bullets">')
                     
                     # Remove the bullet point character and format as list item
-                    item_text = text[1:].strip()
+                    item_text = re.sub(r'^[•\-*▸]\s*', '', text).strip()
                     section_content.append(f'<li>{item_text}</li>')
                     
                     # Check if we need to close the list
@@ -612,7 +620,8 @@ def generate_resume_preview(doc_path: str) -> str:
                     for next_para in doc.paragraphs:
                         if next_para.text.strip() and (next_para.text.strip().startswith('•') or 
                                                       next_para.text.strip().startswith('-') or 
-                                                      next_para.text.strip().startswith('*')):
+                                                      next_para.text.strip().startswith('*') or
+                                                      next_para.text.strip().startswith('▸')):
                             next_is_bullet = True
                             break
                     
@@ -625,7 +634,10 @@ def generate_resume_preview(doc_path: str) -> str:
         # Add last section
         if current_section and section_content:
             section_html = "\n".join(section_content)
-            html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
+            if is_contact_section:
+                html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}<hr class="contact-divider"/></div>')
+            else:
+                html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
         
         # Combine all HTML parts
         preview_html = "\n".join(html_parts)
