@@ -64,6 +64,26 @@ A web application that helps job seekers optimize their resumes for specific job
 
 ## Recent Updates
 
+### Resume Formatting Improvements
+- Added professional YC-Eddie style formatting with consistent styling
+- Updated bullet points to use standard dot bullets for better readability
+- Added horizontal line under contact information for cleaner visual separation
+- Eliminated bold markdown formatting for cleaner document appearance
+- Reduced line spacing between sections for more compact layout
+- Consistent formatting between HTML preview and Word document downloads
+
+### LLM-Based Resume Parsing
+- Implemented intelligent resume parsing using LLM (Claude/OpenAI)
+- Added fallback to traditional parsing for resilience
+- Improved section detection for varied resume formats
+- Added caching to avoid repeated API calls
+
+### LLM-Based Job Analysis
+- Added comprehensive job analysis with AI insights
+- Extraction of candidate profiles, hard/soft skills, and ideal candidate descriptions
+- Enhanced UI with dedicated AI analysis section
+- Support for both Claude and OpenAI as analysis providers
+
 ### Job Parser Enhancements
 - Improved structure detection for job listings
 - Enhanced parsing of "About the job" sections
