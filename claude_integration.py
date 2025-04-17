@@ -125,8 +125,6 @@ class ClaudeClient(LLMClient):
             
             For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
             
-            Bold (using **text**) the most significant changes that directly address job requirements.
-            
             Return ONLY the enhanced content, maintaining the original format with bullet points if present.
             """
             
@@ -242,8 +240,6 @@ class OpenAIClient(LLMClient):
             Make specific, tailored improvements while maintaining factual accuracy.
             
             For experience and skills sections, emphasize relevant experience and use industry keywords from the job posting.
-            
-            Bold (using **text**) the most significant changes that directly address job requirements.
             
             Return ONLY the enhanced content, maintaining the original format with bullet points if present.
             """

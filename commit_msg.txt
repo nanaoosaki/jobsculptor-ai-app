@@ -38,6 +38,22 @@ Fix the resume tailoring process to eliminate dependency on template_resume.docx
 
 This change simplifies the tailoring workflow and makes it more robust across different environments.
 
+[Cursor] Update resume formatting for improved readability
+
+This commit implements several formatting enhancements to the resume output:
+
+1. Changed bullet points from arrows (▸) to standard dot bullets (•) for better readability
+2. Added a horizontal line under the contact information section for cleaner visual separation
+3. Removed bold markdown formatting from resume text elements
+4. Reduced line spacing between sections to create a more compact layout
+
+These changes apply to both the DOCX generated resumes and HTML preview display.
+Changes were made in:
+- resume_styler.py (DOCX generation)
+- claude_integration.py (HTML preview generation)
+- styles.css (CSS styling for HTML preview)
+- TASK.md (updated completed tasks)
+
 [Cursor] Enhance resume styling with modern box borders and arrow bullets
 
 - Updated resume_styler.py to use centered section headers with box borders
@@ -48,4 +64,15 @@ This change simplifies the tailoring workflow and makes it more robust across di
 - Updated documentation in TASK.md and project_context.md
 
 This change improves the visual appearance of generated resumes with a more
-modern, distinctive design that enhances section separation and readability. 
+modern, distinctive design that enhances section separation and readability.
+
+[Cursor] Remove markdown bold formatting instructions from LLM prompts
+
+This commit fixes the inconsistency between the HTML preview and Word document formatting:
+
+1. Removed the instruction "Bold (using **text**) the most significant changes" from the LLM prompts
+2. This ensures that the LLM doesn't add markdown bold formatting (**text**) to the content
+3. The Word document will now correctly match the HTML preview without any bold markdown
+
+The issue was that while we had updated the HTML preview to not convert markdown bold to HTML bold,
+the prompts to the LLM were still instructing it to use markdown bold formatting for significant changes. 
