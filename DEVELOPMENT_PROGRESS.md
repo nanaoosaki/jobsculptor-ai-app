@@ -76,22 +76,28 @@ The code has been successfully pushed to GitHub at https://github.com/nanaoosaki
 
 ## Latest Updates (April 18, 2025)
 
-### PDF Formatting Improvements
+### PDF Layout and Formatting Improvements
 
 Implemented significant formatting improvements to the PDF output:
 
-1. **Section Headers Formatting**
+1. **Left-Aligned Bullet Points**
+   - Modified bullet point styling to align with section headers and company names
+   - Removed excessive indentation that wasted horizontal space
+   - Preserved bullet markers while maximizing content area
+   - Applied changes to both HTML preview and PDF output for consistency
+
+2. **Section Headers Formatting**
    - Modified section headers to extend full-width across the page
    - Previously headers were only 70% width and centered, creating inconsistent visual appearance
    - Updated both pdf_styles.css and styles.css to ensure consistent experience in preview and final output
 
-2. **Professional Summary Alignment**
+3. **Professional Summary Alignment**
    - Fixed professional summary text alignment to be left-aligned instead of center-aligned
    - Added a specific "summary-content" class wrapper to handle this section's unique styling needs
    - Ensures consistent reading experience and professional appearance
    - Modified HTML generation in claude_integration.py to support this styling change
 
-3. **Enhanced Content Filtering**
+4. **Enhanced Content Filtering**
    - Improved job analysis filtering to prevent analysis content from appearing in the tailored resume
    - Added extensive pattern matching to ensure no analytical content appears in the final document
    - Strengthened system prompts to explicitly prevent inclusion of job analysis in resume content
