@@ -935,7 +935,7 @@ def tailor_resume_sections(resume_sections, job_data, api_key, provider='claude'
     # Tailor the resume summary
     if 'summary' in resume_sections and resume_sections['summary']:
         summary_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor a resume summary to make it more appealing for a specific job.
+You are an expert resume tailoring assistant. Your task is to write a compelling professional summary that positions the candidate as an ideal match for the target job.
 
 ORIGINAL RESUME SUMMARY:
 {resume_sections['summary']}
@@ -946,10 +946,20 @@ JOB REQUIREMENTS:
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
 
-Please rewrite the resume summary to better match the job requirements. Make significant improvements that highlight relevant experience and skills. 
-Don't just make minor word changes - make bold improvements that will help the candidate stand out.
-Keep the length similar to the original, but make it more impactful and targeted to this specific position.
-Focus on emphasizing experience and skills that match the job requirements.
+Please write a powerful professional summary following this specific 3-4 sentence structure:
+
+1. Recognition and Impact: Start with key achievements or recognitions that set the candidate apart in their field. Mention promotions, awards, or significant results they've driven.
+
+2. Personal Attributes: Highlight qualities, skills, and strengths that make them effective, focusing on those most relevant to this job posting. Include adaptability, leadership, creativity, analytical ability, or collaboration skills that align with the job requirements.
+
+3. Future Goals: End with a statement of career direction that shows how the candidate wants to make an impact in this specific role and how they want to grow.
+
+The tone should be confident, clear, and forward-looking. Keep the summary to 3-4 sentences total, ensuring each sentence is impactful and directly relevant to the target position.
+
+Example format (adjust to match candidate's experience):
+"[Field] professional with [X years] of experience [specific achievement that increased metrics by X%]. Known for [2-3 key attributes most relevant to job]. Looking to apply this expertise in [specific type of environment] focused on [key aspects of the target role]."
+
+Make bold improvements that will help the candidate stand out for this specific position. Focus on emphasizing experience and skills that directly match the job requirements while maintaining authenticity.
 """
         try:
             tailored_summary = client.tailor_resume_content(summary_prompt, "summary")
