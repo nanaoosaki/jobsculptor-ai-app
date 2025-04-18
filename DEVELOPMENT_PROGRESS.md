@@ -80,7 +80,13 @@ The code has been successfully pushed to GitHub at https://github.com/nanaoosaki
 
 Implemented significant formatting improvements to the PDF output:
 
-1. **Left-Aligned Bullet Points**
+1. **Location Format Improvements**
+   - Fixed location formatting to properly separate city and state
+   - Moved city to appear next to state on the right side of the line
+   - Improved parsing of location information to handle various formats
+   - Previously cities were incorrectly displayed adjacent to company names
+   
+2. **Left-Aligned Bullet Points**
    - Modified bullet point styling to align with section headers and company names
    - Removed excessive indentation that wasted horizontal space
    - Preserved bullet markers while maximizing content area
