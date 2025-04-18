@@ -209,10 +209,15 @@ header {
   font-weight: 600;
   color: var(--primary-color);
   margin-bottom: 1rem;
-  width: 70%;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   padding: 6px 15px;
+}
+
+/* Summary content left-aligned */
+.summary-content {
+  text-align: left;
 }
 
 .job-title {

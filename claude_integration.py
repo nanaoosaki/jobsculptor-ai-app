@@ -715,7 +715,7 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
     # Summary section
     if "summary" in llm_client.tailored_content:
         summary_html = format_section_content(llm_client.tailored_content["summary"])
-        html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2>{summary_html}</div>')
+        html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2><div class="summary-content">{summary_html}</div></div>')
     
     # Experience section with improved formatting
     if "experience" in llm_client.tailored_content:

@@ -54,9 +54,15 @@ body {
   margin-bottom: 0.3cm;
   padding: 0.1cm 0.5cm; /* Reduced padding for smaller box */
   border: 1px solid #000;
-  width: 70%; /* Make the box narrower */
+  width: 100%; /* Make the box full width */
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Professional Summary section - left-aligned instead of center */
+.resume-section h2 + p,
+.summary-content {
+  text-align: left;
 }
 
 /* Contact section at top */
