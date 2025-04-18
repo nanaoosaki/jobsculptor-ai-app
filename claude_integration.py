@@ -1306,11 +1306,25 @@ def format_job_entry(company, location, position, dates, bullets):
     """Format a job entry with proper company/location and position/date layout"""
     html = []
     
+    # Split location into city and state if possible
+    city = ""
+    state = ""
+    if location:
+        # Look for common patterns like "City, State" or "City State"
+        location_parts = re.split(r',\s*|\s+(?=[A-Z]{2}$)', location)
+        if len(location_parts) > 1:
+            city = location_parts[0].strip()
+            state = location_parts[1].strip()
+        else:
+            # If no obvious split, keep everything as state
+            state = location
+    
     # Add company and location in a flex layout
     html.append('<div class="company-line">')
     html.append(f'<div class="company-name">{company}</div>')
-    if location:
-        html.append(f'<div class="company-location">{location}</div>')
+    if city or state:
+        location_text = f"{city + ' ' if city else ''}{state}"
+        html.append(f'<div class="company-location">{location_text}</div>')
     html.append('</div>')
     
     # Add position and dates in a flex layout
@@ -1334,11 +1348,25 @@ def format_education_entry(institution, location, degree, dates, bullets):
     """Format an education entry with proper institution/location and degree/date layout"""
     html = []
     
+    # Split location into city and state if possible
+    city = ""
+    state = ""
+    if location:
+        # Look for common patterns like "City, State" or "City State"
+        location_parts = re.split(r',\s*|\s+(?=[A-Z]{2}$)', location)
+        if len(location_parts) > 1:
+            city = location_parts[0].strip()
+            state = location_parts[1].strip()
+        else:
+            # If no obvious split, keep everything as state
+            state = location
+    
     # Add institution and location in a flex layout
     html.append('<div class="company-line">')
     html.append(f'<div class="company-name">{institution}</div>')
-    if location:
-        html.append(f'<div class="company-location">{location}</div>')
+    if city or state:
+        location_text = f"{city + ' ' if city else ''}{state}"
+        html.append(f'<div class="company-location">{location_text}</div>')
     html.append('</div>')
     
     # Add degree and dates in a flex layout
