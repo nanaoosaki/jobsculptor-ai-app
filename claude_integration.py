@@ -86,7 +86,9 @@ class ClaudeClient(LLMClient):
                 "DO NOT include any job requirements, job descriptions, expected skills, or any other "
                 "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
                 "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
-                "Output ONLY the tailored resume content with no meta-text, explanations, or job information."
+                "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
+                "IMPORTANT FOR SUMMARY SECTION: If you are tailoring the summary section, format it as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. "
+                "If the original summary contains bullet points, convert them into flowing sentences in paragraph form."
             )
             
             # Format requirements and skills as bullet points for clearer prompting
@@ -270,7 +272,9 @@ class OpenAIClient(LLMClient):
                 "DO NOT include any job requirements, job descriptions, expected skills, or any other "
                 "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
                 "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
-                "Output ONLY the tailored resume content with no meta-text, explanations, or job information."
+                "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
+                "IMPORTANT FOR SUMMARY SECTION: If you are tailoring the summary section, format it as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. "
+                "If the original summary contains bullet points, convert them into flowing sentences in paragraph form."
             )
             
             # Format requirements and skills as bullet points for clearer prompting
@@ -946,7 +950,7 @@ JOB REQUIREMENTS:
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
 
-Please write a powerful professional summary following this specific 3-4 sentence structure:
+Please write a powerful professional summary following this specific 3-4 sentence paragraph structure (NOT bullet points):
 
 1. Recognition and Impact: Start with key achievements or recognitions that set the candidate apart in their field. Mention promotions, awards, or significant results they've driven.
 
@@ -954,9 +958,11 @@ Please write a powerful professional summary following this specific 3-4 sentenc
 
 3. Future Goals: End with a statement of career direction that shows how the candidate wants to make an impact in this specific role and how they want to grow.
 
-The tone should be confident, clear, and forward-looking. Keep the summary to 3-4 sentences total, ensuring each sentence is impactful and directly relevant to the target position.
+IMPORTANT: Format your response as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. If the original summary contains bullet points, convert them into flowing sentences that fit the 3-part structure above.
 
-Example format (adjust to match candidate's experience):
+The tone should be confident, clear, and forward-looking. Ensure each sentence is impactful and directly relevant to the target position.
+
+Example of expected format:
 "[Field] professional with [X years] of experience [specific achievement that increased metrics by X%]. Known for [2-3 key attributes most relevant to job]. Looking to apply this expertise in [specific type of environment] focused on [key aspects of the target role]."
 
 Make bold improvements that will help the candidate stand out for this specific position. Focus on emphasizing experience and skills that directly match the job requirements while maintaining authenticity.
