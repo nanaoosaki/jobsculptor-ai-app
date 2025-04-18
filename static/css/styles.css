@@ -261,13 +261,17 @@ header {
 /* Dot bullet styling */
 .dot-bullets {
   list-style-type: disc;
-  padding-left: 1.5rem;
+  padding-left: 0;
   margin-top: 0.25rem;
   margin-bottom: 0.5rem;
+  margin-left: 0;
 }
 
 .dot-bullets li {
   margin-bottom: 0.25rem;
+  padding-left: 0;
+  margin-left: 1em;
+  text-indent: 0;
 }
 
 /* Responsive adjustments */
