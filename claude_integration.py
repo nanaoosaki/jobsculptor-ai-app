@@ -1486,7 +1486,7 @@ def format_experience_content(content: str) -> str:
                 bullets.append(bullet_content)
             elif i == 0 and (i == len(lines) - 1 or not any(l.startswith(('•', '-', '*')) for l in lines[1:])):
                 # This is likely a standalone line (like a job title or company)
-                # Check if it has a comma or pipe that might separate company and location
+                # First, check for explicitly formatted company and location with separators
                 if ',' in line or ' | ' in line or ' - ' in line:
                     # Output previous position if exists
                     if current_company is not None:
@@ -1506,16 +1506,39 @@ def format_experience_content(content: str) -> str:
                     current_position = None
                     current_dates = None
                 else:
-                    # Just a company without location or might be a header
-                    # Output previous position if exists
-                    if current_company is not None:
-                        formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
-                        bullets = []
+                    # Try to detect if the line has a company name followed by a city name
+                    # Common pattern: "COMPANY NAME CITY STATE" or "COMPANY NAME CITY"
+                    # Check for common US city names or try to infer based on spacing
+                    city_pattern = r'(.*?)(\b(?:LOS ANGELES|NEW YORK|CHICAGO|HOUSTON|SAN FRANCISCO|BOSTON|SEATTLE|MIAMI|DENVER|ATLANTA|DALLAS|PHILADELPHIA|PORTLAND|SAN DIEGO|SAN JOSE|WASHINGTON|AUSTIN|NASHVILLE)\b)(.*?)?$'
+                    city_match = re.search(city_pattern, line, re.IGNORECASE)
                     
-                    current_company = line
-                    current_location = ""
-                    current_position = None
-                    current_dates = None
+                    if city_match:
+                        # Output previous position if exists
+                        if current_company is not None:
+                            formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
+                            bullets = []
+                        
+                        # Extract company, city, and state
+                        company = city_match.group(1).strip()
+                        city = city_match.group(2).strip()
+                        state = city_match.group(3).strip() if city_match.group(3) else ""
+                        
+                        # Set the current values
+                        current_company = company
+                        current_location = f"{city}{', ' + state if state else ''}"
+                        current_position = None
+                        current_dates = None
+                    else:
+                        # Just a company without location or might be a header
+                        # Output previous position if exists
+                        if current_company is not None:
+                            formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
+                            bullets = []
+                        
+                        current_company = line
+                        current_location = ""
+                        current_position = None
+                        current_dates = None
             elif current_company is not None and current_position is None:
                 # This is likely the position and dates line
                 # Try to identify if it has dates (often in parentheses or after a dash)
@@ -1585,7 +1608,7 @@ def format_education_content(content: str) -> str:
                 bullets.append(bullet_content)
             elif i == 0 and (i == len(lines) - 1 or not any(l.startswith(('•', '-', '*')) for l in lines[1:])):
                 # This is likely a standalone line (like institution name)
-                # Check if it has a comma or pipe that might separate institution and location
+                # First, check for explicitly formatted institution and location with separators
                 if ',' in line or ' | ' in line or ' - ' in line:
                     # Output previous education if exists
                     if current_institution is not None:
@@ -1605,16 +1628,38 @@ def format_education_content(content: str) -> str:
                     current_degree = None
                     current_dates = None
                 else:
-                    # Just an institution without location
-                    # Output previous education if exists
-                    if current_institution is not None:
-                        formatted_parts.append(format_education_entry(current_institution, current_location, current_degree, current_dates, bullets))
-                        bullets = []
+                    # Try to detect if the line has an institution name followed by a city name
+                    # Common pattern: "UNIVERSITY NAME CITY STATE" or "UNIVERSITY NAME CITY"
+                    city_pattern = r'(.*?)(\b(?:LOS ANGELES|NEW YORK|CHICAGO|HOUSTON|SAN FRANCISCO|BOSTON|SEATTLE|MIAMI|DENVER|ATLANTA|DALLAS|PHILADELPHIA|PORTLAND|SAN DIEGO|SAN JOSE|WASHINGTON|AUSTIN|NASHVILLE)\b)(.*?)?$'
+                    city_match = re.search(city_pattern, line, re.IGNORECASE)
                     
-                    current_institution = line
-                    current_location = ""
-                    current_degree = None
-                    current_dates = None
+                    if city_match:
+                        # Output previous education if exists
+                        if current_institution is not None:
+                            formatted_parts.append(format_education_entry(current_institution, current_location, current_degree, current_dates, bullets))
+                            bullets = []
+                        
+                        # Extract institution, city, and state
+                        institution = city_match.group(1).strip()
+                        city = city_match.group(2).strip()
+                        state = city_match.group(3).strip() if city_match.group(3) else ""
+                        
+                        # Set the current values
+                        current_institution = institution
+                        current_location = f"{city}{', ' + state if state else ''}"
+                        current_degree = None
+                        current_dates = None
+                    else:
+                        # Just an institution without location
+                        # Output previous education if exists
+                        if current_institution is not None:
+                            formatted_parts.append(format_education_entry(current_institution, current_location, current_degree, current_dates, bullets))
+                            bullets = []
+                        
+                        current_institution = line
+                        current_location = ""
+                        current_degree = None
+                        current_dates = None
             elif current_institution is not None and current_degree is None:
                 # This is likely the degree and dates line
                 # Try to identify if it has dates
