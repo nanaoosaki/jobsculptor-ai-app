@@ -212,6 +212,16 @@ Identify and categorize the content into these standard resume sections:
 6. projects: Notable projects
 7. additional: Additional information, interests, volunteer work
 
+IMPORTANT: When parsing company information in the experience section, carefully separate:
+- Company name (e.g., "DIRECTV") from 
+- Location information (e.g., "LOS ANGELES, CA")
+
+If you see patterns like "COMPANY CITY" or "COMPANY CITY STATE", parse them accordingly.
+Common examples include:
+- "DIRECTV LOS ANGELES" → Company: "DIRECTV", Location: "LOS ANGELES"
+- "Amazon Seattle" → Company: "Amazon", Location: "Seattle"
+- "Microsoft Redmond WA" → Company: "Microsoft", Location: "Redmond, WA"
+
 Provide your response as a JSON object with these exact section names as keys, and the full text content of each section as the values.
 Preserve all original text formatting and bullet points where possible (convert to plain text).
 
