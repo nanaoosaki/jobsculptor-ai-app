@@ -99,6 +99,20 @@ A web application that helps job seekers optimize their resumes for specific job
 - Aligned Resume and Job Requirements panels side by side for better comparison
 - Added HTTPS support using self-signed certificates
 
+## Latest Improvements
+
+### PDF Formatting Enhancements (April 2025)
+- Section headers now span full width for better visual consistency
+- Professional summary content is properly left-aligned for improved readability
+- Enhanced content filtering to prevent job analysis content from appearing in tailored output
+- Professional summaries now follow a structured 3-part format (Recognition/Impact, Personal Attributes, Future Goals)
+- Automatic conversion of bullet point summaries into cohesive paragraphs
+
+### PDF Export Implementation
+- Switched from Word document generation to PDF export for better consistency
+- Implemented HTML-to-PDF conversion with professional styling
+- Enhanced resume formatting with standard dot bullets and improved spacing
+
 ## License
 
 MIT 
