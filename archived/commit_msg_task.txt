@@ -1,0 +1,11 @@
+[Cursor] Add YC-Eddie Style resume format plan to TASK.md
+
+This commit adds detailed plans for implementing the YC-Eddie Style resume format:
+- Added two new in-progress tasks for document styling and prompt optimization
+- Created a comprehensive "YC-Eddie Style Implementation Details" section
+- Outlined the approach for enhancing document generation with consistent styling
+- Prioritized prompt optimization for achievement-focused content
+- Added expected benefits of the YC-Eddie Style implementation
+
+The implementation focuses on producing high-quality, consistent resume outputs
+with professionally formatted documents and achievement-oriented content. 

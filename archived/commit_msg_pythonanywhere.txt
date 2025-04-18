@@ -1,0 +1,14 @@
+[Cursor] Update PythonAnywhere deployment guide for free tier
+
+Update the PythonAnywhere deployment documentation with critical lessons:
+
+- Remove virtual environment recommendations for free tier accounts
+- Add instructions to use system Python instead of virtualenvs to save space
+- Update disk quota management strategies for 512MB free tier limit
+- Add shallow git clone instructions to minimize space usage
+- Provide workarounds for common deployment issues
+- Reorganize deployment steps to reflect optimized approach
+- Update troubleshooting section with additional solutions
+
+These changes make the deployment guide more practical for the free tier's
+constraints and help users avoid disk quota exceeded errors. 
