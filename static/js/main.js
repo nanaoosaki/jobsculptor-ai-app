@@ -559,8 +559,9 @@ document.addEventListener('DOMContentLoaded', function() {
         heading.textContent = 'Tailored Resume Preview';
         heading.style.marginBottom = '15px';
         heading.style.color = '#4e2a8e'; // Purple color to indicate AI tailoring
+        heading.style.textAlign = 'center';
         
-        // Add heading and preview content
+        // Add heading to the preview
         resumePreview.appendChild(heading);
         
         // Show a debug message when preview is empty
@@ -573,11 +574,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Create a container for the preview HTML to ensure proper styling
+        // Create a container for the preview HTML with A4 paper styling
         const previewContainer = document.createElement('div');
         previewContainer.className = 'tailored-resume-content';
+        
+        // Add a "paper" effect
+        previewContainer.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        previewContainer.style.backgroundColor = 'white';
+        previewContainer.style.position = 'relative';
+        
+        // Add the HTML content
         previewContainer.innerHTML = preview;
-        resumePreview.appendChild(previewContainer);
+        
+        // Apply paper-specific styles
+        const paperContainer = document.createElement('div');
+        paperContainer.className = 'paper-container';
+        paperContainer.style.margin = '0 auto';
+        paperContainer.style.maxWidth = '100%';
+        paperContainer.style.display = 'flex';
+        paperContainer.style.justifyContent = 'center';
+        
+        // Add preview container to paper container
+        paperContainer.appendChild(previewContainer);
+        
+        // Add paper container to the resume preview
+        resumePreview.appendChild(paperContainer);
+        
+        // Remove any nested scrollable elements
+        removeNestedScrollbars(previewContainer);
         
         // Add a log message to the console
         console.log("Tailored resume preview displayed successfully");

@@ -92,6 +92,8 @@ header {
   background-color: #fff;
   border-radius: 4px;
   border: 1px solid #ddd;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
 }
 
 #jobRequirements, #userResumeParsed {
@@ -215,6 +217,23 @@ header {
   color: var(--dark-color);
   border-bottom: 2px solid var(--primary-color);
   padding-bottom: 0.5rem;
+}
+
+/* A4 Paper Styling for Resume Preview */
+.tailored-resume-content {
+  /* A4 paper width is 210mm, with 1 inch (25.4mm) margins on each side */
+  width: 8.27in; /* A4 width in inches */
+  max-width: 100%; /* Ensure responsiveness */
+  margin: 0 auto;
+  padding: 0 1in; /* 1 inch margins on left and right */
+  box-sizing: border-box; /* Include padding in width calculation */
+  overflow-y: auto;
+  min-height: 10in; /* Approximate A4 height with some space for scrolling */
+  background-color: white;
+  line-height: 1.5;
+  color: #333;
+  font-family: 'Calibri', Arial, sans-serif;
+  font-size: 11pt;
 }
 
 .resume-preview-content {

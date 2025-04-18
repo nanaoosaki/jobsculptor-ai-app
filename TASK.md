@@ -391,33 +391,36 @@ The YC-Eddie Style implementation produces consistently high-quality resume outp
 
 The LLM-based resume parsing significantly improves the accuracy of section extraction compared to traditional methods: 
 
-# Task Breakdown: Fix Nested Scroll Bars in User Resume Parsed Component
+# Task Breakdown: HTML Preview A4 Paper Format Implementation
 
 ## Problem Description
-The "User Resume Parsed" panel in the Resume Tailor application was displaying nested scroll bars. This created a poor user experience where users had to navigate multiple scrollbars to view their complete resume content.
+The HTML preview of the tailored resume did not match the dimensions and appearance of the PDF output, leading to inconsistent user experience. The preview needed to be styled to match an A4 paper format with 1-inch margins on both sides.
 
 ## Solution Implemented
-We have implemented a comprehensive solution to eliminate nested scroll bars in the User Resume Parsed component:
+We have implemented a comprehensive solution to make the HTML preview appear like a standard A4 paper document:
 
 1. **CSS Updates**:
-   - Enhanced the `.user-resume-content` selector to apply more aggressive styling (overflow: visible, max-height: none, etc.)
-   - Added specific selectors targeting all child elements within the resume content to prevent any nested scrollable containers
-   - Added styling for specific HTML elements (div, p, h1-h6, ul, li) to ensure consistent non-scrollable behavior
-   - Ensured only the main container (`#userResumeParsed`) has scrolling capabilities
+   - Set the width of the preview content to match A4 paper (8.27 inches)
+   - Added 1-inch margins on both left and right sides using padding
+   - Applied proper box-sizing to ensure correct width calculations
+   - Used the same font family and size as the PDF output (Calibri, 11pt)
+   - Applied appropriate line height and text color for readability
+   - Added a subtle shadow effect to create a "paper" appearance
 
 2. **JavaScript Improvements**:
-   - Rewritten the `displayUserResumePreview()` function to create a cleaner DOM structure
-   - Added code to programmatically remove scrollbar-causing properties from all nested elements
-   - Replaced setTimeout-based solution with direct DOM manipulation
-   - Added improved error handling and logging
-   - Fixed property reference from incorrect `data.html_preview` to correct `data.preview` to match API response format
+   - Updated the `displayResumePreview()` function to create a paper-like container
+   - Added a centered container to properly position the A4 paper representation
+   - Applied consistent styling between the HTML preview and PDF output
+   - Ensured proper removal of nested scrollbars in the preview content
+   - Added text alignment for the header to match the PDF output
 
 ## Testing
-The changes have been tested with various resume formats and content lengths to ensure:
-- Only a single scrollbar appears in the User Resume Parsed panel
-- All content remains visible and properly formatted
-- No content is cut off or hidden due to the removal of nested scrollbars
-- The layout remains responsive across different screen sizes
+The changes have been tested to ensure:
+- The HTML preview dimensions match standard A4 paper size
+- The content has 1-inch margins on both sides
+- The appearance is consistent with the downloaded PDF
+- The preview remains responsive and properly scrollable
+- All formatting from the original tailored content is preserved
 
 ## Impact
-This fix improves the user experience by making resume content more accessible and easier to navigate. Users now only need to interact with a single scrollbar to view their parsed resume content. 
+This enhancement improves the user experience by providing a consistent view between what users see in the preview and what they get in the downloaded PDF. The WYSIWYG (What You See Is What You Get) approach helps users better evaluate their tailored resume before downloading it. 
