@@ -76,6 +76,13 @@ The code has been successfully pushed to GitHub at https://github.com/nanaoosaki
 
 ## Latest Updates (April 18, 2025)
 
+### Known Issues Documentation
+
+- Created a KNOWN_ISSUES.md file to track and document unresolved issues for future development
+- Documented the company name/location separation issue that affects resume formatting in certain cases
+- Outlined attempted solutions and proposed future approaches to resolve the issue
+- Prioritized issue as medium importance for inclusion in future development sprints
+
 ### PDF Layout and Formatting Improvements
 
 Implemented significant formatting improvements to the PDF output:
