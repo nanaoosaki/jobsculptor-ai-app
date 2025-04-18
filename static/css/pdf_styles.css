@@ -59,10 +59,31 @@ body {
   margin-right: auto;
 }
 
-/* Professional Summary section - left-aligned instead of center */
-.resume-section h2 + p,
-.summary-content {
+/* Content alignment - ensure all content is left-aligned */
+.resume-section p,
+.resume-section ul,
+.resume-section li,
+.summary-content,
+.experience-content,
+.education-content,
+.skills-content,
+.projects-content,
+.additional-content,
+.company-line,
+.position-line {
   text-align: left;
+}
+
+/* Keep the company name and position title left-aligned */
+.company-name, 
+.position-title {
+  text-align: left;
+}
+
+/* Keep the location and date right-aligned */
+.company-location, 
+.position-date {
+  text-align: right;
 }
 
 /* Contact section at top */
@@ -132,6 +153,7 @@ body {
   margin-top: 0.1cm;
   margin-bottom: 0.2cm;
   margin-left: 0;
+  text-align: left;
 }
 
 .dot-bullets li {
@@ -139,6 +161,7 @@ body {
   padding-left: 0;
   margin-left: 1em;
   text-indent: 0;
+  text-align: left;
 }
 
 /* Regular paragraphs */
@@ -163,9 +186,14 @@ li {
   page-break-before: avoid;
 }
 
-/* Contact information styling */
-.resume-section:first-child {
+/* Only contact information should be centered */
+.contact-section {
   text-align: center;
+}
+
+/* Fix for previous rule that was causing all content to be centered */
+.resume-section:first-child > div {
+  text-align: left;
 }
 
 /* Handle page breaks between sections better */

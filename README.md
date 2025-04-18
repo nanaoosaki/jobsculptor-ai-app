@@ -99,8 +99,6 @@ A web application that helps job seekers optimize their resumes for specific job
 - Aligned Resume and Job Requirements panels side by side for better comparison
 - Added HTTPS support using self-signed certificates
 
-## Latest Improvements
-
 ### PDF Formatting Enhancements (April 2025)
 - Section headers now span full width for better visual consistency
 - Professional summary content is properly left-aligned for improved readability
@@ -112,6 +110,12 @@ A web application that helps job seekers optimize their resumes for specific job
 - Switched from Word document generation to PDF export for better consistency
 - Implemented HTML-to-PDF conversion with professional styling
 - Enhanced resume formatting with standard dot bullets and improved spacing
+
+### Fixed PDF Formatting Issue
+- Fixed PDF formatting issue that caused content to be incorrectly center-aligned in PDF outputs generated from PDF inputs
+- Added PDF upload support, allowing users to upload and process PDF resume files
+- Improved job parsing accuracy with enhanced LLM-based analysis
+- Updated resume styling for better ATS compatibility
 
 ## License
 

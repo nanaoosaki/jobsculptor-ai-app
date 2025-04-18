@@ -280,6 +280,50 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - Improved security with read-only document format
    - ATS compatibility with properly structured content
 
+7. **PDF Formatting Issue Resolution:**
+   - **Issue**: Content being incorrectly center-aligned in PDF output for PDF input files
+   - **Root Cause**: CSS specificity conflict where `.resume-section:first-child { text-align: center; }` (meant for contact section) was affecting all content in PDF-sourced resumes
+   - **Analysis**: When processing PDF files, the HTML structure differs from DOCX files since we can't detect formatting details, causing different CSS inheritance behavior
+   - **Solution Implemented**:
+     - Added explicit content wrapper classes to all sections (`experience-content`, `education-content`, etc.)
+     - Applied inline styles with `!important` directly to content elements to override any inheritance issues
+     - Added explicit text-align properties to all HTML elements during generation
+     - Modified CSS selectors to be more specific about which elements should be centered vs. left-aligned
+     - Added inline styles in the HTML head to enforce alignment rules regardless of source document type
+   - **Impact**: This ensures consistent formatting across both DOCX and PDF input files, maintaining centered headers while keeping all content properly left-aligned
+
+8. **Resume Format Structure Issue:**
+   - **Issue**: In the tailored resume output, job details (company name, position, dates, location) are placed on separate lines instead of being properly aligned as in the original resume
+   - **Root Cause**: 
+     - The LLM is not preserving the exact format structure when tailoring the content
+     - The format_experience_content function is not properly identifying and structuring company/position/date information
+     - PDF parsing doesn't maintain the structured layout of flex containers and positioning
+   - **Analysis**:
+     - When the LLM tailors the resume content, it may not maintain the exact same line structure
+     - The parsing logic in format_experience_content has limitations in detecting formatting patterns
+     - The detection of company/location and position/date pairs needs to be more robust
+   - **Solution Plan**:
+     1. **Enhance LLM Prompting**:
+        - Update the system and user prompts to emphasize maintaining exact formatting
+        - Add specific examples showing the expected output format with proper alignment
+        - Include explicit instructions to preserve the line-by-line structure
+     2. **Improve Format Detection**:
+        - Enhance company/location detection patterns to better identify when they appear on the same line
+        - Add more sophisticated regex patterns to detect position/date pairs
+        - Recognize common formatting patterns in different resume styles
+     3. **Strengthen HTML Structure**:
+        - Ensure flex layouts are consistently applied to company/location and position/date pairs
+        - Add explicit wrapper divs with proper flex styling
+        - Apply consistent CSS properties to maintain alignment
+     4. **Add Format Validation**:
+        - Implement a post-processing step to verify the formatted output matches expected patterns
+        - Add structure validation to ensure company/location and position/date are paired properly
+        - Provide fallback formatting when the structure is unclear
+   - **Expected Impact**:
+     - Consistent formatting between original and tailored resumes
+     - Proper alignment of job details with company/location and position/date on respective single lines
+     - Improved visual consistency across different resume formats and sources
+
 ## Results
 
 The LLM-based resume parsing significantly improves the accuracy of section extraction compared to traditional methods:

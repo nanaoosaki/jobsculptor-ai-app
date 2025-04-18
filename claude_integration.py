@@ -87,6 +87,9 @@ class ClaudeClient(LLMClient):
                 "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
                 "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
                 "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
+                "EXTREMELY IMPORTANT: Preserve the EXACT structure and format of the original content. If two distinct pieces of information "
+                "appear on the same line in the original (such as 'Company Name' and 'City, State' or 'Position Title' and 'Date Range'), "
+                "they MUST remain on the same line in your output. DO NOT separate information that appears on a single line in the original.\n\n"
                 "IMPORTANT FOR SUMMARY SECTION: If you are tailoring the summary section, format it as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. "
                 "If the original summary contains bullet points, convert them into flowing sentences in paragraph form."
             )
@@ -139,38 +142,51 @@ class ClaudeClient(LLMClient):
             Development: Architected, Created, Designed, Developed, Engineered, Formulated, Implemented, Integrated, Programmed
             Efficiency: Accelerated, Automated, Enhanced, Leveraged, Maximized, Optimized, Streamlined, Transformed, Upgraded
 
-            # Example Bullet Points (properly formatted)
-            • Managed cross-functional team of 8 engineers by implementing agile methods, reducing delivery time by 30%
-            • Developed scalable API architecture using microservices pattern, increasing system throughput by 45%
-            • Analyzed customer feedback data through sentiment analysis, identifying 5 key improvement areas
-
             # IMPORTANT STRUCTURAL INSTRUCTIONS:
-            1. PRESERVE ALL structural elements of the original content - company names, job titles, dates, education details
-            2. DO NOT alter any headers, company names, job titles, dates, or educational institution names
-            3. ONLY rewrite the bullet points for experience/project descriptions
-            4. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
-            5. For lines that already follow the format [Company/Title] and [Date Range], preserve them exactly as is
-            6. If a line isn't a bullet point, preserve it exactly as written
+            1. PRESERVE EXACT FORMATTING AND LINE STRUCTURE from the original content
+            2. If two pieces of information appear on the same line, KEEP THEM ON THE SAME LINE
+            3. DO NOT ALTER any headers, company names, job titles, dates, or educational institution names
+            4. DO NOT add or remove line breaks from the original structure
+            5. ONLY modify the content of bullet points - not their positioning or structure
+            6. If the original has "Company Name" and "Location" on the same line, keep them together
+            7. If the original has "Position Title" and "Date Range" on the same line, keep them together
+            8. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
+
+            # Example of Proper Format Preservation:
+
+            ORIGINAL:
+            ```
+            Senior Data Scientist                                Jun 2021-Present
+            Pinterest Inc                                        San Francisco, CA
+            • Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.
+            ```
+
+            CORRECTLY TAILORED (maintains exact line structure):
+            ```
+            Senior Data Scientist                                Jun 2021-Present
+            Pinterest Inc                                        San Francisco, CA
+            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            ```
+
+            INCORRECT (breaks the structure by splitting information onto separate lines):
+            ```
+            Senior Data Scientist
+            Jun 2021-Present
+            Pinterest Inc
+            San Francisco, CA
+            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            ```
 
             ## Section-Specific Structure Guidelines:
             
             ### For EXPERIENCE sections:
-            - First line is typically the company name or role - PRESERVE EXACTLY
-            - Second line often has dates and location - PRESERVE EXACTLY
+            - First line often has position and dates on the same line - KEEP THEM TOGETHER
+            - Second line often has company and location on the same line - KEEP THEM TOGETHER
             - Only enhance the bullet points that describe responsibilities and achievements
-            - Example:
-              Senior Data Scientist, ABC Company
-              January 2018 - Present, San Francisco, CA
-              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
-              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
             
             ### For EDUCATION sections:
-            - School name, degree, graduation date should remain UNCHANGED
+            - School name, degree, graduation date should remain UNCHANGED and maintain SAME LINE positioning
             - Only enhance descriptions of academic achievements or relevant coursework
-            - Example:
-              Stanford University
-              BS in Computer Science, May 2017
-              • [REWRITE ONLY IF THIS IS A BULLET DESCRIBING ACADEMIC ACHIEVEMENT]
             
             ### For SKILLS sections:
             - You may reorganize skills to prioritize those matching job requirements
@@ -273,6 +289,9 @@ class OpenAIClient(LLMClient):
                 "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
                 "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
                 "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
+                "EXTREMELY IMPORTANT: Preserve the EXACT structure and format of the original content. If two distinct pieces of information "
+                "appear on the same line in the original (such as 'Company Name' and 'City, State' or 'Position Title' and 'Date Range'), "
+                "they MUST remain on the same line in your output. DO NOT separate information that appears on a single line in the original.\n\n"
                 "IMPORTANT FOR SUMMARY SECTION: If you are tailoring the summary section, format it as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. "
                 "If the original summary contains bullet points, convert them into flowing sentences in paragraph form."
             )
@@ -325,38 +344,51 @@ class OpenAIClient(LLMClient):
             Development: Architected, Created, Designed, Developed, Engineered, Formulated, Implemented, Integrated, Programmed
             Efficiency: Accelerated, Automated, Enhanced, Leveraged, Maximized, Optimized, Streamlined, Transformed, Upgraded
 
-            # Example Bullet Points (properly formatted)
-            • Managed cross-functional team of 8 engineers by implementing agile methods, reducing delivery time by 30%
-            • Developed scalable API architecture using microservices pattern, increasing system throughput by 45%
-            • Analyzed customer feedback data through sentiment analysis, identifying 5 key improvement areas
-
             # IMPORTANT STRUCTURAL INSTRUCTIONS:
-            1. PRESERVE ALL structural elements of the original content - company names, job titles, dates, education details
-            2. DO NOT alter any headers, company names, job titles, dates, or educational institution names
-            3. ONLY rewrite the bullet points for experience/project descriptions
-            4. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
-            5. For lines that already follow the format [Company/Title] and [Date Range], preserve them exactly as is
-            6. If a line isn't a bullet point, preserve it exactly as written
+            1. PRESERVE EXACT FORMATTING AND LINE STRUCTURE from the original content
+            2. If two pieces of information appear on the same line, KEEP THEM ON THE SAME LINE
+            3. DO NOT ALTER any headers, company names, job titles, dates, or educational institution names
+            4. DO NOT add or remove line breaks from the original structure
+            5. ONLY modify the content of bullet points - not their positioning or structure
+            6. If the original has "Company Name" and "Location" on the same line, keep them together
+            7. If the original has "Position Title" and "Date Range" on the same line, keep them together
+            8. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
+
+            # Example of Proper Format Preservation:
+
+            ORIGINAL:
+            ```
+            Senior Data Scientist                                Jun 2021-Present
+            Pinterest Inc                                        San Francisco, CA
+            • Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.
+            ```
+
+            CORRECTLY TAILORED (maintains exact line structure):
+            ```
+            Senior Data Scientist                                Jun 2021-Present
+            Pinterest Inc                                        San Francisco, CA
+            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            ```
+
+            INCORRECT (breaks the structure by splitting information onto separate lines):
+            ```
+            Senior Data Scientist
+            Jun 2021-Present
+            Pinterest Inc
+            San Francisco, CA
+            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            ```
 
             ## Section-Specific Structure Guidelines:
             
             ### For EXPERIENCE sections:
-            - First line is typically the company name or role - PRESERVE EXACTLY
-            - Second line often has dates and location - PRESERVE EXACTLY
+            - First line often has position and dates on the same line - KEEP THEM TOGETHER
+            - Second line often has company and location on the same line - KEEP THEM TOGETHER
             - Only enhance the bullet points that describe responsibilities and achievements
-            - Example:
-              Senior Data Scientist, ABC Company
-              January 2018 - Present, San Francisco, CA
-              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
-              • [REWRITE THIS BULLET WITH ACTION VERB + IMPACT]
             
             ### For EDUCATION sections:
-            - School name, degree, graduation date should remain UNCHANGED
+            - School name, degree, graduation date should remain UNCHANGED and maintain SAME LINE positioning
             - Only enhance descriptions of academic achievements or relevant coursework
-            - Example:
-              Stanford University
-              BS in Computer Science, May 2017
-              • [REWRITE ONLY IF THIS IS A BULLET DESCRIBING ACADEMIC ACHIEVEMENT]
             
             ### For SKILLS sections:
             - You may reorganize skills to prioritize those matching job requirements
@@ -486,17 +518,17 @@ def format_section_content(content: str) -> str:
             # Handle bullet points (•, -, *)
             if re.match(bullet_point_pattern, line):
                 if not is_in_list:
-                    formatted_lines.append("<ul class='dot-bullets'>")
+                    formatted_lines.append("<ul class='dot-bullets' style='text-align: left;'>")
                     is_in_list = True
                 
                 # Remove the bullet and any leading/trailing whitespace
                 bullet_content = re.sub(r'^[\s]*[•\-\*][\s]*', '', line).strip()
-                formatted_lines.append(f"<li>{bullet_content}</li>")
+                formatted_lines.append(f"<li style='text-align: left;'>{bullet_content}</li>")
             else:
                 if is_in_list:
                     formatted_lines.append("</ul>")
                     is_in_list = False
-                formatted_lines.append(f"<p>{line}</p>")
+                formatted_lines.append(f"<p style='text-align: left;'>{line}</p>")
         
         # Close any open list
         if is_in_list:
@@ -506,7 +538,7 @@ def format_section_content(content: str) -> str:
     else:
         # Regular paragraph text
         paragraphs = [p.strip() for p in content.split('\n') if p.strip()]
-        return "\n".join([f"<p>{p}</p>" for p in paragraphs])
+        return "\n".join([f"<p style='text-align: left;'>{p}</p>" for p in paragraphs])
 
 def extract_resume_sections(doc_path: str) -> Dict[str, str]:
     """Extract sections from a resume document"""
@@ -717,38 +749,131 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
         summary_html = format_section_content(llm_client.tailored_content["summary"])
         html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2><div class="summary-content">{summary_html}</div></div>')
     
-    # Experience section with improved formatting
+    # Experience section with improved formatting using format_job_entry
     if "experience" in llm_client.tailored_content:
         experience_content = llm_client.tailored_content["experience"]
-        formatted_experience = format_experience_content(experience_content)
-        html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2>{formatted_experience}</div>')
+        
+        # Process the experience content to extract job entries
+        experience_entries = []
+        current_entry = {}
+        current_bullets = []
+        
+        # Split content into lines for processing
+        lines = experience_content.strip().split('\n')
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                i += 1
+                continue
+                
+            # Check if this is a company line (often in all caps or bold)
+            if line.isupper() or (i == 0) or (i > 0 and not lines[i-1].strip()):
+                # If we have a current entry, add it to our list
+                if current_entry and 'company' in current_entry:
+                    # Add bullets to current entry
+                    if current_bullets:
+                        current_entry['content'] = current_bullets
+                    
+                    # Add entry to our list
+                    experience_entries.append(current_entry)
+                    
+                # Start a new entry
+                current_entry = {}
+                current_bullets = []
+                
+                # Try to split company and location
+                company_parts = re.split(r'\s*[,|-]\s*|\s{2,}', line, 1)
+                if len(company_parts) > 1:
+                    current_entry['company'] = company_parts[0].strip()
+                    current_entry['location'] = company_parts[1].strip()
+                else:
+                    current_entry['company'] = line
+                    current_entry['location'] = ""
+                    
+            # Check if this is a position and date line
+            elif 'company' in current_entry and 'position' not in current_entry:
+                # Try to identify position and dates
+                date_match = re.search(r'\d{4}\s*[-–—]\s*(?:\d{4}|Present|Current|Now)', line, re.IGNORECASE)
+                
+                if date_match:
+                    # Get the position and dates
+                    date_part = line[date_match.start():date_match.end()]
+                    position_part = line[:date_match.start()].strip()
+                    
+                    # Clean up extra characters
+                    position_part = re.sub(r'[|,]\s*$', '', position_part).strip()
+                    date_part = date_part.strip()
+                    
+                    current_entry['position'] = position_part
+                    current_entry['dates'] = date_part
+                else:
+                    # Just use the whole line as position
+                    current_entry['position'] = line
+                    current_entry['dates'] = ""
+            
+            # Bullet points or description
+            elif 'position' in current_entry and line:
+                # Check if it's a bullet point
+                if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                    bullet_content = re.sub(r'^[•\-*]\s*', '', line).strip()
+                    current_bullets.append(bullet_content)
+                else:
+                    # Regular text, just add as a bullet for now
+                    current_bullets.append(line)
+            
+            i += 1
+        
+        # Add the last entry if we have one
+        if current_entry and 'company' in current_entry:
+            if current_bullets:
+                current_entry['content'] = current_bullets
+            experience_entries.append(current_entry)
+        
+        # Now format each entry using format_job_entry
+        formatted_entries = []
+        for entry in experience_entries:
+            company = entry.get('company', '')
+            location = entry.get('location', '')
+            position = entry.get('position', '')
+            dates = entry.get('dates', '')
+            content = entry.get('content', [])
+            
+            formatted_entries.append(format_job_entry(company, location, position, dates, content))
+        
+        # Combine all formatted entries
+        formatted_experience = "\n".join(formatted_entries)
+        html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2><div class="experience-content">{formatted_experience}</div></div>')
     
     # Education section with improved formatting
     if "education" in llm_client.tailored_content:
         education_content = llm_client.tailored_content["education"]
         formatted_education = format_education_content(education_content)
-        html_parts.append(f'<div class="resume-section"><h2>Education</h2>{formatted_education}</div>')
+        html_parts.append(f'<div class="resume-section"><h2>Education</h2><div class="education-content">{formatted_education}</div></div>')
     
     # Skills section
     if "skills" in llm_client.tailored_content:
         skills_html = format_section_content(llm_client.tailored_content["skills"])
-        html_parts.append(f'<div class="resume-section"><h2>Skills</h2>{skills_html}</div>')
+        html_parts.append(f'<div class="resume-section"><h2>Skills</h2><div class="skills-content">{skills_html}</div></div>')
     
     # Projects section with improved formatting
     if "projects" in llm_client.tailored_content:
         projects_content = llm_client.tailored_content["projects"]
         formatted_projects = format_projects_content(projects_content)
-        html_parts.append(f'<div class="resume-section"><h2>Projects</h2>{formatted_projects}</div>')
+        html_parts.append(f'<div class="resume-section"><h2>Projects</h2><div class="projects-content">{formatted_projects}</div></div>')
     
     # Additional information section
     if "additional" in llm_client.tailored_content:
         additional_html = format_section_content(llm_client.tailored_content["additional"])
-        html_parts.append(f'<div class="resume-section"><h2>Additional Information</h2>{additional_html}</div>')
+        html_parts.append(f'<div class="resume-section"><h2>Additional Information</h2><div class="additional-content">{additional_html}</div></div>')
     
     # Combine all HTML parts
     preview_html = "\n".join(html_parts)
     
     logger.info(f"Generated tailored resume preview HTML from direct LLM responses: {len(preview_html)} characters")
+    
+    # Debug output - log the first 500 characters of the generated HTML
+    logger.debug(f"HTML Preview first 500 chars: {preview_html[:500]}")
     
     return preview_html
 
@@ -1302,47 +1427,53 @@ def generate_tailored_document(resume_path, tailored_sections):
         logger.error(traceback.format_exc())
         return None
 
-def format_job_entry(company, location, position, dates, bullets):
-    """Format a job entry with proper company/location and position/date layout"""
-    html = []
+def format_job_entry(company, location, position, dates, content):
+    """Format a job entry for the resume in HTML
     
-    # Split location into city and state if possible
-    city = ""
-    state = ""
-    if location:
-        # Look for common patterns like "City, State" or "City State"
-        location_parts = re.split(r',\s*|\s+(?=[A-Z]{2}$)', location)
-        if len(location_parts) > 1:
-            city = location_parts[0].strip()
-            state = location_parts[1].strip()
-        else:
-            # If no obvious split, keep everything as state
-            state = location
+    Args:
+        company (str): Company name
+        location (str): Location of the company
+        position (str): Job title/position
+        dates (str): Employment dates
+        content (list): Bullet points for the job
+        
+    Returns:
+        str: Formatted HTML for the job entry
+    """
+    # Format company and location with flex display
+    company_line = f"""
+    <div class="company-line" style="display: flex; justify-content: space-between; margin-top: 0.2cm; margin-bottom: 0.1cm;">
+        <div class="company-name" style="font-weight: bold; text-align: left;">{company}</div>
+        <div class="company-location" style="text-align: right;">{location}</div>
+    </div>
+    """
     
-    # Add company and location in a flex layout
-    html.append('<div class="company-line">')
-    html.append(f'<div class="company-name">{company}</div>')
-    if city or state:
-        location_text = f"{city + ' ' if city else ''}{state}"
-        html.append(f'<div class="company-location">{location_text}</div>')
-    html.append('</div>')
+    # Format position and dates with flex display
+    position_line = f"""
+    <div class="position-line" style="display: flex; justify-content: space-between; margin-bottom: 0.2cm;">
+        <div class="position-title" style="font-style: italic; text-align: left;">{position}</div>
+        <div class="position-date" style="text-align: right;">{dates}</div>
+    </div>
+    """
     
-    # Add position and dates in a flex layout
-    if position:
-        html.append('<div class="position-line">')
-        html.append(f'<div class="position-title">{position}</div>')
-        if dates:
-            html.append(f'<div class="position-date">{dates}</div>')
-        html.append('</div>')
+    # Format bullet points
+    bullets_html = ""
+    if content and len(content) > 0:
+        bullets_html = '<ul class="dot-bullets" style="list-style-type: disc; padding-left: 0; margin-top: 0.1cm; margin-bottom: 0.2cm; margin-left: 0; text-align: left;">'
+        for bullet in content:
+            bullets_html += f'<li style="margin-bottom: 0.1cm; padding-left: 0; margin-left: 1em; text-indent: 0; text-align: left;">{bullet}</li>'
+        bullets_html += '</ul>'
     
-    # Add bullets if any
-    if bullets:
-        html.append('<ul class="dot-bullets">')
-        for bullet in bullets:
-            html.append(f'<li>{bullet}</li>')
-        html.append('</ul>')
+    # Combine all components into a job entry
+    job_entry = f"""
+    <div class="job-entry" style="margin-bottom: 15px; page-break-inside: avoid;">
+        {company_line}
+        {position_line}
+        {bullets_html}
+    </div>
+    """
     
-    return '\n'.join(html)
+    return job_entry
 
 def format_education_entry(institution, location, degree, dates, bullets):
     """Format an education entry with proper institution/location and degree/date layout"""
@@ -1361,27 +1492,27 @@ def format_education_entry(institution, location, degree, dates, bullets):
             # If no obvious split, keep everything as state
             state = location
     
-    # Add institution and location in a flex layout
+    # Add institution and location in a flex layout with explicit text-align
     html.append('<div class="company-line">')
-    html.append(f'<div class="company-name">{institution}</div>')
+    html.append(f'<div class="company-name" style="text-align: left;">{institution}</div>')
     if city or state:
         location_text = f"{city + ' ' if city else ''}{state}"
-        html.append(f'<div class="company-location">{location_text}</div>')
+        html.append(f'<div class="company-location" style="text-align: right;">{location_text}</div>')
     html.append('</div>')
     
-    # Add degree and dates in a flex layout
+    # Add degree and dates in a flex layout with explicit text-align
     if degree:
         html.append('<div class="position-line">')
-        html.append(f'<div class="position-title">{degree}</div>')
+        html.append(f'<div class="position-title" style="text-align: left;">{degree}</div>')
         if dates:
-            html.append(f'<div class="position-date">{dates}</div>')
+            html.append(f'<div class="position-date" style="text-align: right;">{dates}</div>')
         html.append('</div>')
     
-    # Add bullets if any
+    # Add bullets if any with explicit text-align
     if bullets:
-        html.append('<ul class="dot-bullets">')
+        html.append('<ul class="dot-bullets" style="text-align: left;">')
         for bullet in bullets:
-            html.append(f'<li>{bullet}</li>')
+            html.append(f'<li style="text-align: left;">{bullet}</li>')
         html.append('</ul>')
     
     return '\n'.join(html)
@@ -1406,162 +1537,41 @@ def format_project_entry(project, dates, bullets):
     
     return '\n'.join(html)
 
-def format_experience_content(content: str) -> str:
-    """Format experience content with company/location and position/date layout"""
+def format_experience_content(content):
+    """
+    Format the experience content, which may include bullet points.
+    """
     if not content:
         return ""
     
-    # Filter job requirements as in format_section_content
-    filtered_lines = []
-    
-    # Check for job requirement phrases and patterns
-    requirement_patterns = [
-        r'job requirement', r'required skill', r'desired skill',
-        r'job description', r'key qualification', r'qualification',
-        r'requirements:', r'skills required:', r'responsibilities:',
-        r'what you\'ll do:', r'what you\'ll need:', r'looking for',
-        r'ideal candidate', r'candidate profile', r'about the job',
-        r'the role requires', r'will be responsible for',
-        r'machine learning', r'and deep learning', r'with the ability to tackle',
-        r'complex challenges', r'collaborate with diverse teams',
-        r'candidate should be passionate', r'analytical thinking',
-        r'candidate profile', r'hard skills', r'soft skills', 
-        r'required hard skills', r'required soft skills',
-        r'the employer is looking for', r'the position requires'
-    ]
-    
-    skip_section = False
-    for line in content.strip().split('\n'):
-        line_lower = line.strip().lower()
+    # Check if content is a list of bullet points
+    if isinstance(content, list):
+        bullets = content
+        formatted_bullets = []
+        for bullet in bullets:
+            if bullet.strip():  # Only add non-empty bullets
+                formatted_bullets.append(f'<li style="text-align: left !important; margin-bottom: 3px !important;">{bullet.strip()}</li>')
         
-        # Check for job requirements headers or sections
-        if any(pattern in line_lower for pattern in requirement_patterns):
-            skip_section = True
-            continue
-            
-        # Check for numbered list items that might be requirements
-        if re.match(r'^\d+\.\s+', line) and skip_section:
-            continue
-            
-        # Reset after a section break
-        if line.strip() == '' or line.startswith('---') or line.startswith('=='):
-            skip_section = False
-            
-        # Skip sections that look like job requirements
-        if skip_section:
-            continue
-            
-        # Skip LLM note lines or prompt instruction leakage
-        if line.strip().startswith('#') or 'instructions:' in line_lower or 'action verbs' in line_lower:
-            continue
-            
-        filtered_lines.append(line)
-    
-    # Use the filtered content
-    content = '\n'.join(filtered_lines)
-    
-    # Split into paragraphs for processing
-    paragraphs = content.strip().split('\n\n')
-    if not paragraphs:
+        if formatted_bullets:
+            return f"""
+            <ul class="experience-bullets" style="margin-top: 5px !important; margin-bottom: 0px !important; padding-left: 20px !important;">
+                {''.join(formatted_bullets)}
+            </ul>
+            """
         return ""
     
-    formatted_parts = []
-    current_company = None
-    current_location = None
-    current_position = None
-    current_dates = None
-    bullets = []
+    # If content is a string, assume it's paragraph format
+    elif isinstance(content, str) and content.strip():
+        paragraphs = content.split('\n')
+        formatted_paragraphs = []
+        
+        for p in paragraphs:
+            if p.strip():
+                formatted_paragraphs.append(f'<p style="margin-bottom: 5px !important; text-align: left !important;">{p.strip()}</p>')
+        
+        return ''.join(formatted_paragraphs)
     
-    for para in paragraphs:
-        lines = para.strip().split('\n')
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if not line:
-                continue
-                
-            # Check if it's a bullet point
-            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
-                # Add bullet to current position
-                bullet_content = re.sub(r'^[•\-\*]\s*', '', line).strip()
-                bullets.append(bullet_content)
-            elif i == 0 and (i == len(lines) - 1 or not any(l.startswith(('•', '-', '*')) for l in lines[1:])):
-                # This is likely a standalone line (like a job title or company)
-                # First, check for explicitly formatted company and location with separators
-                if ',' in line or ' | ' in line or ' - ' in line:
-                    # Output previous position if exists
-                    if current_company is not None:
-                        formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
-                        bullets = []
-                    
-                    # Try to split company and location
-                    if ',' in line:
-                        parts = line.split(',', 1)
-                    elif ' | ' in line:
-                        parts = line.split(' | ', 1)
-                    else:
-                        parts = line.split(' - ', 1)
-                    
-                    current_company = parts[0].strip()
-                    current_location = parts[1].strip() if len(parts) > 1 else ""
-                    current_position = None
-                    current_dates = None
-                else:
-                    # Try to detect if the line has a company name followed by a city name
-                    # Common pattern: "COMPANY NAME CITY STATE" or "COMPANY NAME CITY"
-                    # Check for common US city names or try to infer based on spacing
-                    city_pattern = r'(.*?)(\b(?:LOS ANGELES|NEW YORK|CHICAGO|HOUSTON|SAN FRANCISCO|BOSTON|SEATTLE|MIAMI|DENVER|ATLANTA|DALLAS|PHILADELPHIA|PORTLAND|SAN DIEGO|SAN JOSE|WASHINGTON|AUSTIN|NASHVILLE)\b)(.*?)?$'
-                    city_match = re.search(city_pattern, line, re.IGNORECASE)
-                    
-                    if city_match:
-                        # Output previous position if exists
-                        if current_company is not None:
-                            formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
-                            bullets = []
-                        
-                        # Extract company, city, and state
-                        company = city_match.group(1).strip()
-                        city = city_match.group(2).strip()
-                        state = city_match.group(3).strip() if city_match.group(3) else ""
-                        
-                        # Set the current values
-                        current_company = company
-                        current_location = f"{city}{', ' + state if state else ''}"
-                        current_position = None
-                        current_dates = None
-                    else:
-                        # Just a company without location or might be a header
-                        # Output previous position if exists
-                        if current_company is not None:
-                            formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
-                            bullets = []
-                        
-                        current_company = line
-                        current_location = ""
-                        current_position = None
-                        current_dates = None
-            elif current_company is not None and current_position is None:
-                # This is likely the position and dates line
-                # Try to identify if it has dates (often in parentheses or after a dash)
-                date_match = re.search(r'\(([^)]+)\)|\s-\s([^-]+)$', line)
-                if date_match:
-                    date_part = date_match.group(1) or date_match.group(2)
-                    position_part = line.replace(f"({date_part})", "").replace(f" - {date_part}", "").strip()
-                    current_position = position_part
-                    current_dates = date_part
-                else:
-                    # No clear date format, assume entire line is position
-                    current_position = line
-                    current_dates = ""
-    
-    # Add the last job entry
-    if current_company is not None:
-        formatted_parts.append(format_job_entry(current_company, current_location, current_position, current_dates, bullets))
-    
-    # If no structured entries were found, fall back to simple formatting
-    if not formatted_parts and content.strip():
-        return format_section_content(content)
-    
-    return "\n".join(formatted_parts)
+    return ""
 
 def format_education_content(content: str) -> str:
     """Format education content with institution/location and degree/date layout"""

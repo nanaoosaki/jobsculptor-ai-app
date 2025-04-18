@@ -92,6 +92,25 @@ class PDFExporter:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{metadata.get('title', 'Tailored Resume') if metadata else 'Tailored Resume'}</title>
+    <style>
+        /* Ensure content is left-aligned while headers remain centered */
+        .resume-section h2 {{ text-align: center; }}
+        .resume-section p, 
+        .resume-section ul, 
+        .resume-section li,
+        .company-name, 
+        .position-title,
+        .dot-bullets,
+        .dot-bullets li,
+        .experience-content,
+        .education-content,
+        .skills-content,
+        .projects-content,
+        .additional-content {{ text-align: left !important; }}
+        .company-location, 
+        .position-date {{ text-align: right !important; }}
+        .contact-section {{ text-align: center; }}
+    </style>
 </head>
 <body class="resume-document">
     <main class="resume-content">
