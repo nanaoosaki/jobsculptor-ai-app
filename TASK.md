@@ -424,3 +424,43 @@ The changes have been tested to ensure:
 
 ## Impact
 This enhancement improves the user experience by providing a consistent view between what users see in the preview and what they get in the downloaded PDF. The WYSIWYG (What You See Is What You Get) approach helps users better evaluate their tailored resume before downloading it. 
+
+# Task Breakdown: Preserve Contact Information in Tailored Resume Output
+
+## Problem Description
+The contact information from the original resume was not being included in the tailored resume output. This critical section was missing entirely, making the tailored resume incomplete and unusable for job applications.
+
+## Root Cause Analysis
+1. The contact information was being correctly parsed from the original resume
+2. However, it was not being consistently included in the final HTML preview generation
+3. The `generate_preview_from_llm_responses` function only included contact information if it was explicitly present in the LLM tailored content
+4. Since contact information doesn't need tailoring (it should be preserved as-is), it wasn't always being included in the LLM response
+
+## Solution Implemented
+We've implemented a comprehensive solution to ensure contact information always appears in the tailored resume:
+
+1. **LLM Resume Parser Enhancements**:
+   - Added a global caching mechanism to store the most recently parsed resume data
+   - Implemented a `get_cached_parsed_resume()` function to retrieve contact information without re-parsing
+   - Enhanced the caching system to make it more robust and accessible across modules
+
+2. **Preview Generation Improvements**:
+   - Modified the `generate_preview_from_llm_responses` function to check multiple sources for contact information
+   - Added a fallback system that tries first the LLM tailored content, then cached resume data
+   - Added proper error handling to ensure the process continues even if contact retrieval fails
+   - Ensured contact information appears at the top of the resume with appropriate formatting
+
+3. **Code Integration**:
+   - Updated imports to access cached resume data when needed
+   - Added logging to track the source of contact information
+   - Maintained backward compatibility with existing code
+
+## Testing
+The changes have been tested to ensure:
+- Contact information consistently appears in tailored resumes
+- The original format and content of contact details are preserved
+- The system works with both PDF and DOCX resume formats
+- Fallback mechanisms work properly when primary sources are unavailable
+
+## Impact
+This enhancement significantly improves the usability of tailored resumes by ensuring they always include the essential contact information needed for job applications. Users no longer need to manually add this information after tailoring. 

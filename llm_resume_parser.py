@@ -24,6 +24,21 @@ except ImportError:
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Global variable to store the most recently cached resume data
+_LAST_CACHED_RESUME = None
+
+def get_cached_parsed_resume() -> Dict:
+    """
+    Retrieve the most recently cached parsed resume data.
+    This function is used to access contact information when generating 
+    the HTML preview without re-parsing the entire resume.
+    
+    Returns:
+        Dict: The cached resume data or None if not available
+    """
+    global _LAST_CACHED_RESUME
+    return _LAST_CACHED_RESUME
+
 class LLMResumeParser:
     """Use LLM to parse resume content into structured sections"""
     
@@ -309,39 +324,74 @@ If a section is not present in the resume, include it with an empty string value
 # Helper function to use in the main code
 def parse_resume_with_llm(doc_path: str, llm_provider: str = "claude") -> Dict[str, str]:
     """
-    Parse a resume with LLM and fall back to traditional parsing if needed
+    Main function to parse a resume document using LLM
     
     Args:
         doc_path: Path to the resume document
-        llm_provider: LLM provider to use ("claude" or "openai")
+        llm_provider: LLM provider to use ('claude', 'openai', or 'auto')
         
     Returns:
-        Dictionary of parsed sections
+        Dictionary of parsed resume sections
     """
-    parser = LLMResumeParser(llm_provider=llm_provider)
-    sections, metadata, success = parser.parse_resume(doc_path)
-    
-    # Log metadata
-    if metadata:
-        logger.info(f"LLM parsing metadata: {json.dumps(metadata)}")
+    try:
+        global _LAST_CACHED_RESUME
         
-    # If LLM parsing succeeded, return the sections
-    if success and sections:
-        # Create a cache file to avoid repeated parsing
-        cache_id = str(uuid.uuid4())
-        cache_path = os.path.join(os.path.dirname(doc_path), f"{cache_id}_llm_parsed.json")
-        
-        try:
-            with open(cache_path, 'w') as f:
-                json.dump({
-                    "sections": sections,
-                    "metadata": metadata
-                }, f, indent=2)
-            logger.info(f"LLM parsing cached to: {cache_path}")
-        except Exception as e:
-            logger.error(f"Error caching LLM parsing results: {str(e)}")
+        # First, check if we have a cached version of this file
+        cache_filename = None
+        if doc_path:
+            basename = os.path.basename(doc_path)
+            name, ext = os.path.splitext(basename)
+            uploads_dir = os.path.dirname(doc_path)
             
-        return sections
-    
-    # Otherwise, return empty dict to trigger fallback
-    return {} 
+            # Generate a deterministic cache filename based on the original file
+            cache_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, name)).split('-')[0]
+            cache_filename = os.path.join(uploads_dir, f"{cache_id}_llm_parsed.json")
+        
+        # Check if cache exists and is recent (less than 1 hour old)
+        cached_result = None
+        if cache_filename and os.path.exists(cache_filename):
+            file_age = time.time() - os.path.getmtime(cache_filename)
+            if file_age < 3600:  # 1 hour in seconds
+                try:
+                    with open(cache_filename, 'r') as f:
+                        cached_data = json.load(f)
+                        if "sections" in cached_data:
+                            cached_result = cached_data["sections"]
+                            logger.info(f"Using cached LLM parsing result for {basename}")
+                            # Store the cached result in the global variable
+                            _LAST_CACHED_RESUME = cached_result
+                            return cached_result
+                except Exception as e:
+                    logger.warning(f"Error reading cache file: {str(e)}")
+        
+        # If no valid cache, do the parsing
+        parser = LLMResumeParser(llm_provider=llm_provider)
+        sections, metadata, success = parser.parse_resume(doc_path)
+        
+        if success:
+            # Cache the result for future use
+            if cache_filename:
+                try:
+                    cache_data = {
+                        "sections": sections,
+                        "metadata": metadata,
+                        "doc_path": doc_path,
+                        "timestamp": time.time()
+                    }
+                    with open(cache_filename, 'w') as f:
+                        json.dump(cache_data, f, indent=2)
+                    logger.info(f"LLM parsing cached to: {cache_filename}")
+                except Exception as e:
+                    logger.warning(f"Error writing cache file: {str(e)}")
+            
+            # Store the parsed result in the global variable
+            _LAST_CACHED_RESUME = sections
+            return sections
+        else:
+            logger.warning("LLM parsing failed or was not possible")
+            return {}
+            
+    except Exception as e:
+        logger.error(f"Error in parse_resume_with_llm: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {} 

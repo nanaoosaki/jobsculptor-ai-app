@@ -901,8 +901,33 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
     html_parts = []
     
     # Contact information at the top (usually not tailored)
-    if "contact" in llm_client.tailored_content:
-        contact_lines = llm_client.tailored_content["contact"].strip().split('\n')
+    # Always include contact information from the original resume
+    from resume_processor import extract_resume_sections as extract_original_sections
+    
+    # First try to get contact from the LLM responses
+    if "contact" in llm_client.tailored_content and llm_client.tailored_content["contact"]:
+        contact_text = llm_client.tailored_content["contact"].strip()
+    else:
+        # If contact info wasn't included in LLM responses, try to get it from the original parsed resume
+        try:
+            # Since we don't have direct access to the original resume path here,
+            # we'll use the cached data from when we last parsed the resume
+            from llm_resume_parser import get_cached_parsed_resume
+            cached_resume = get_cached_parsed_resume()
+            if cached_resume and "contact_info" in cached_resume:
+                contact_text = cached_resume["contact_info"]
+                logger.info("Using contact information from cached resume parsing")
+            else:
+                # Fallback: Use empty contact section
+                contact_text = ""
+                logger.warning("No contact information found in cached resume or LLM responses")
+        except Exception as e:
+            logger.error(f"Error retrieving contact information: {str(e)}")
+            contact_text = ""
+    
+    # Format contact section if we have content
+    if contact_text:
+        contact_lines = contact_text.strip().split('\n')
         contact_html = '<div class="contact-section">'
         
         # First line is usually the name
