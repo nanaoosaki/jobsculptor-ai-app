@@ -467,36 +467,83 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to display the user's original resume preview
     function displayUserResumePreview(data) {
-        // Get the userResumeParsed container
-        const userResumeParsed = document.getElementById('userResumeParsed');
+        console.log("Displaying user resume preview...");
         
-        // Clear existing content
-        userResumeParsed.innerHTML = '';
-        
-        // Create heading for the parsed content
-        const heading = document.createElement('h4');
-        heading.textContent = 'Your Resume (Parsed by AI)';
-        heading.style.marginBottom = '10px';
-        
-        // Add heading
-        userResumeParsed.appendChild(heading);
-        
-        // Check if we have preview data
-        if (data.preview) {
-            // Create a container for the preview HTML
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'user-resume-content';
-            previewContainer.innerHTML = data.preview;
-            userResumeParsed.appendChild(previewContainer);
-            
-            console.log("User resume preview displayed in userResumeParsed section");
-        } else {
-            // Display message if no preview
-            const noPreview = document.createElement('p');
-            noPreview.className = 'text-muted';
-            noPreview.textContent = 'No preview available for this resume.';
-            userResumeParsed.appendChild(noPreview);
+        const userResumeContainer = document.getElementById('userResumeParsed');
+        if (!userResumeContainer) {
+            console.error("User resume container not found");
+            return;
         }
+        
+        // Clear any previous content
+        userResumeContainer.innerHTML = '';
+        
+        // Add section header
+        const sectionHeader = document.createElement('h6');
+        sectionHeader.className = 'text-primary mb-3';
+        sectionHeader.textContent = 'User Resume Parsed (LLM)';
+        userResumeContainer.appendChild(sectionHeader);
+        
+        // Create content container with proper class
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'user-resume-content';
+        contentContainer.style.overflow = 'visible';
+        contentContainer.style.maxHeight = 'none';
+        contentContainer.style.border = 'none';
+        
+        // Add the HTML content from the server
+        if (data && data.preview) {
+            contentContainer.innerHTML = data.preview;
+            
+            // Remove any potential nested scrollable elements
+            const allElements = contentContainer.querySelectorAll('*');
+            allElements.forEach(element => {
+                element.style.overflow = 'visible';
+                element.style.maxHeight = 'none';
+                if (element.tagName === 'DIV' || element.tagName === 'SECTION') {
+                    element.style.height = 'auto';
+                }
+                element.style.border = 'none';
+                element.style.boxShadow = 'none';
+            });
+            
+            userResumeContainer.appendChild(contentContainer);
+            
+            // Enable the tailor button if both resume and job data are available
+            checkEnableTailorButton();
+        } else {
+            // Handle case where no content was extracted
+            const noContentMessage = document.createElement('p');
+            noContentMessage.textContent = 'No content could be extracted from the resume. Please try a different file.';
+            noContentMessage.className = 'text-danger';
+            userResumeContainer.appendChild(noContentMessage);
+        }
+    }
+    
+    /**
+     * Recursively removes scrollbar-causing properties from all elements
+     * @param {HTMLElement} element - The parent element to start with
+     */
+    function removeNestedScrollbars(element) {
+        if (!element) return;
+        
+        // Apply to the element itself
+        element.style.overflow = 'visible';
+        element.style.maxHeight = 'none';
+        element.style.border = 'none';
+        
+        // Apply to all child elements
+        Array.from(element.children).forEach(child => {
+            // Apply same styles to direct children
+            child.style.overflow = 'visible';
+            child.style.maxHeight = 'none';
+            child.style.border = 'none';
+            
+            // Recursively apply to grandchildren
+            if (child.children.length > 0) {
+                removeNestedScrollbars(child);
+            }
+        });
     }
     
     // Helper function to display the tailored resume preview

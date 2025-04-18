@@ -29,6 +29,93 @@ last_llm_client = None
 # Import our YC Resume Generator
 from yc_resume_generator import YCResumeGenerator
 
+def clean_bullet_points(text: str) -> str:
+    """
+    Removes bullet point markers from text to prevent duplicate bullet points.
+    
+    Handles various bullet point formats:
+    - Unicode bullets (•, ◦, ▪, ▫, etc.)
+    - ASCII bullets (*, -, +, o)
+    - Numbered bullets (1., 1), (1), etc.)
+    
+    Args:
+        text (str): Text containing bullet points to clean
+        
+    Returns:
+        str: Cleaned text with bullet point markers removed
+    """
+    if not text:
+        return ""
+    
+    logger.info(f"Cleaning bullet points from text ({len(text)} chars)")
+    
+    # Split into lines to process each line individually
+    lines = text.split('\n')
+    cleaned_lines = []
+    bullet_count = 0
+    
+    # Define comprehensive bullet point patterns
+    # Unicode bullet symbols
+    unicode_bullets = [
+        '•', '◦', '▪', '▫', '■', '□', '▸', '►', '▹', '▻', '▷', '▶', '→', '⇒', '⟹', '⟶',
+        '⇢', '⇨', '⟾', '➔', '➜', '➙', '➛', '➝', '➞', '➟', '➠', '➡', '➢', '➣', '➤', '➥', 
+        '➦', '➧', '➨', '➩', '➪', '➫', '➬', '➭', '➮', '➯', '➱', '➲', '➳', '➵', '➸', '➼',
+        '⦿', '⦾', '⧫', '⧮', '⧠', '⧔', '∙', '◆', '◇', '◈'
+    ]
+    
+    # ASCII/common bullet symbols for regex
+    ascii_bullets = r'[\*\-\+o~=#>]'
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        
+        # Skip empty lines
+        if not line:
+            cleaned_lines.append('')
+            continue
+        
+        # Check for Unicode bullet symbols at the beginning
+        if line and line[0] in unicode_bullets:
+            # Find where the content starts after the bullet and any spaces
+            content_start = 1
+            while content_start < len(line) and line[content_start].isspace():
+                content_start += 1
+                
+            # Extract just the content, removing the bullet and leading spaces
+            if content_start < len(line):
+                cleaned_line = line[content_start:]
+                cleaned_lines.append(cleaned_line)
+                bullet_count += 1
+                continue
+        
+        # Check for ASCII bullet symbols (*, -, +, etc.) at the beginning
+        ascii_bullet_match = re.match(f'^\s*{ascii_bullets}\s+', line)
+        if ascii_bullet_match:
+            cleaned_line = line[ascii_bullet_match.end():]
+            cleaned_lines.append(cleaned_line)
+            bullet_count += 1
+            continue
+            
+        # Check for numbered bullets like "1.", "1)", "(1)", etc.
+        numbered_match = re.match(r'^\s*(?:\(?\d+[\.\)\]]\s+|\d+[\.\)\]]\s+|\[\d+\]\s+)', line)
+        if numbered_match:
+            cleaned_line = line[numbered_match.end():]
+            cleaned_lines.append(cleaned_line)
+            bullet_count += 1
+            continue
+            
+        # No bullet point found, keep the line as is
+        cleaned_lines.append(line)
+    
+    # Join the cleaned lines back into a single string
+    cleaned_text = '\n'.join(cleaned_lines)
+    
+    # Validate the cleaning
+    if bullet_count > 0:
+        logger.info(f"Removed {bullet_count} bullet point markers from text")
+    
+    return cleaned_text
+
 class LLMClient:
     """Base class for LLM API clients"""
     
@@ -501,44 +588,81 @@ def format_section_content(content: str) -> str:
     # Use the filtered content
     content = '\n'.join(filtered_lines)
     
-    # Check if the content has bullet points
-    bullet_point_pattern = r'^[\s]*[•\-\*][\s]'
+    # The following patterns are used to identify if lines were originally bullet points
+    # before clean_bullet_points was applied
+    # Check for short phrases that likely were bullet points originally
     lines = content.strip().split('\n')
     
-    # If content contains bullet points, format as a list
-    if any(re.match(bullet_point_pattern, line) for line in lines):
-        formatted_lines = []
-        is_in_list = False
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-                
-            # Handle bullet points (•, -, *)
-            if re.match(bullet_point_pattern, line):
-                if not is_in_list:
-                    formatted_lines.append("<ul class='dot-bullets' style='text-align: left;'>")
-                    is_in_list = True
-                
-                # Remove the bullet and any leading/trailing whitespace
-                bullet_content = re.sub(r'^[\s]*[•\-\*][\s]*', '', line).strip()
-                formatted_lines.append(f"<li style='text-align: left;'>{bullet_content}</li>")
-            else:
-                if is_in_list:
-                    formatted_lines.append("</ul>")
-                    is_in_list = False
-                formatted_lines.append(f"<p style='text-align: left;'>{line}</p>")
-        
-        # Close any open list
-        if is_in_list:
-            formatted_lines.append("</ul>")
+    # Characteristics that suggest a line was originally a bullet point:
+    # 1. Starts with a capital letter and ends with a period (sentence format)
+    # 2. Short to medium length (typical for bullet points)
+    # 3. Starts with an action verb (common in resume bullet points)
+    
+    # Common action verbs in resumes
+    action_verbs = [
+        'developed', 'created', 'implemented', 'designed', 'built', 'managed',
+        'led', 'coordinated', 'established', 'initiated', 'launched', 'conducted',
+        'generated', 'produced', 'architected', 'engineered', 'integrated',
+        'optimized', 'enhanced', 'improved', 'increased', 'reduced', 'secured',
+        'utilized', 'analyzed', 'researched'
+    ]
+    
+    # Check if lines have bullet point characteristics
+    should_be_bullets = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            should_be_bullets.append(False)
+            continue
             
-        return "\n".join(formatted_lines)
-    else:
-        # Regular paragraph text
-        paragraphs = [p.strip() for p in content.split('\n') if p.strip()]
-        return "\n".join([f"<p style='text-align: left;'>{p}</p>" for p in paragraphs])
+        # Check for actual bullet characters (these should already be removed, but check anyway)
+        if re.match(r'^[\s]*[•\-\*][\s]', line):
+            should_be_bullets.append(True)
+            continue
+            
+        # Check for sentence format and reasonable length for bullet points
+        is_sentence_format = (line[0].isupper() if line else False) and (line.endswith('.') or line.endswith('!') or line.endswith(':'))
+        reasonable_length = 10 <= len(line) <= 200  # Typical bullet point length in characters
+        
+        # Check for action verbs at the beginning
+        starts_with_action_verb = any(line.lower().startswith(verb) for verb in action_verbs)
+        
+        # Check for integration phrases (common in tech experience bullet points)
+        contains_integration_terms = any(term in line.lower() for term in ['aws', 'api', 'integrated', 'using', 'leveraging', 'utilizing'])
+        
+        # If several characteristics match, likely it was a bullet point
+        if (starts_with_action_verb or is_sentence_format) and (reasonable_length or contains_integration_terms):
+            should_be_bullets.append(True)
+        else:
+            should_be_bullets.append(False)
+    
+    # Format content based on our analysis
+    formatted_lines = []
+    is_in_list = False
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            continue
+            
+        if should_be_bullets[i]:
+            if not is_in_list:
+                formatted_lines.append("<ul class='dot-bullets' style='text-align: left;'>")
+                is_in_list = True
+                
+            # Proper content without bullet character (already cleaned)
+            formatted_lines.append(f"<li style='text-align: left;'>{line}</li>")
+        else:
+            if is_in_list:
+                formatted_lines.append("</ul>")
+                is_in_list = False
+            formatted_lines.append(f"<p style='text-align: left;'>{line}</p>")
+    
+    # Close any open list
+    if is_in_list:
+        formatted_lines.append("</ul>")
+        
+    return "\n".join(formatted_lines)
 
 def extract_resume_sections(doc_path: str) -> Dict[str, str]:
     """Extract sections from a resume document"""
@@ -572,18 +696,27 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                 logger.info(f"Attempting to parse resume with LLM ({llm_provider})...")
                 llm_sections = parse_resume_with_llm(doc_path, llm_provider)
                 
-                # If LLM parsing succeeded, return the results
+                # If LLM parsing succeeded, clean bullet points from each section
                 if llm_sections and any(content for content in llm_sections.values()):
-                    logger.info("LLM parsing successful. Using LLM-parsed sections.")
+                    logger.info("LLM parsing successful. Cleaning bullet points from LLM-parsed sections.")
                     
-                    # Log extraction results from LLM
+                    # Clean bullet points from each section
+                    cleaned_sections = {}
                     for section, content in llm_sections.items():
                         if content:
-                            logger.info(f"LLM extracted {section} section: {len(content)} chars")
+                            cleaned_content = clean_bullet_points(content)
+                            cleaned_sections[section] = cleaned_content
+                            logger.info(f"LLM extracted and cleaned {section} section: {len(cleaned_content)} chars")
                         else:
+                            cleaned_sections[section] = ""
                             logger.info(f"LLM found no content for {section} section")
                     
-                    return llm_sections
+                    # Validate the cleaning was successful
+                    validation_success = validate_bullet_point_cleaning(cleaned_sections)
+                    if not validation_success:
+                        logger.warning("Bullet point cleaning validation failed. There may still be bullet markers in the text.")
+                    
+                    return cleaned_sections
                 else:
                     logger.warning("LLM parsing did not return usable results. Falling back to traditional parsing.")
             except (ImportError, Exception) as e:
@@ -693,14 +826,22 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                     sections["experience"] = all_content
                     logger.info(f"Fallback: Added {len(all_content)} chars to experience section")
         
-        # Log extraction results
+        # Clean bullet points from traditional parsing results
+        cleaned_sections = {}
         for section, content in sections.items():
             if content:
-                logger.info(f"Final extracted {section} section: {len(content)} chars")
+                cleaned_content = clean_bullet_points(content)
+                cleaned_sections[section] = cleaned_content
+                logger.info(f"Traditional parsing: cleaned {section} section: {len(cleaned_content)} chars")
             else:
-                logger.info(f"No content found for {section} section")
+                cleaned_sections[section] = ""
         
-        return sections
+        # Validate the cleaning was successful
+        validation_success = validate_bullet_point_cleaning(cleaned_sections)
+        if not validation_success:
+            logger.warning("Bullet point cleaning validation failed. There may still be bullet markers in the text.")
+        
+        return cleaned_sections
     
     except Exception as e:
         logger.error(f"Error extracting resume sections: {str(e)}")
@@ -716,6 +857,38 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
             "projects": "",
             "additional": ""
         }
+
+def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
+    """
+    Validates that bullet points have been properly cleaned from resume sections.
+    
+    Args:
+        sections (Dict[str, str]): Dictionary of resume sections
+        
+    Returns:
+        bool: True if validation passed, False if bullet points were found
+    """
+    bullet_patterns = [
+        # Unicode bullets
+        r'^[•◦▪▫■□▸►▹▻▷▶→⇒⟹⟶⇢⇨⟾➔➜➙➛➝➞➟➠➡➢➣➤➥➦➧➨➩➪➫➬➭➮➯➱➲➳➵➸➼⦿⦾⧫⧮⧠⧔∙◆◇◈]',
+        # ASCII bullets at beginning of line (after any whitespace)
+        r'^\s*[\*\-\+o~=#>]\s+',
+        # Numbered bullets
+        r'^\s*(?:\(?\d+[\.\)\]]\s+|\d+[\.\)\]]\s+|\[\d+\]\s+)'
+    ]
+    
+    for section, content in sections.items():
+        if not content:
+            continue
+            
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            for pattern in bullet_patterns:
+                if re.search(pattern, line):
+                    logger.warning(f"Validation found bullet marker in {section} section, line {i+1}: '{line[:30]}...'")
+                    return False
+    
+    return True
 
 def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAIClient]) -> str:
     """Generate HTML preview directly from LLM API responses"""

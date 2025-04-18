@@ -24,6 +24,30 @@ In the PDF output, city names may appear directly adjacent to company names inst
 
 **Priority**: Medium
 
+### Bullet Point Duplication in Resume Output
+**Status**: Partially Resolved (April 18, 2025)
+
+**Description**:  
+Some sections of the tailored resume output show duplicate bullet point symbols. The issue occurs inconsistently, with some bullets correctly formatted while others show duplicated bullet symbols (e.g., "• • Integrated AWS QuickSight..."). The problem appears to be related to the different formatting paths used for different types of content.
+
+**Attempted Solutions**:
+1. Added a `clean_bullet_points` function to remove bullet point symbols from parsed content
+2. Enhanced bullet point detection logic in `format_section_content` to identify content that should be formatted as bullets based on content characteristics rather than just bullet symbols
+3. Added validation to ensure bullet points are properly cleaned during parsing
+4. Modified regex patterns to better detect various bullet point formats
+
+**Impact**:  
+In the PDF and HTML output, some bullet points appear with duplicate bullet symbols, affecting the visual presentation and professionalism of the resume.
+
+**Possible Future Solutions**:
+1. Refactor the content formatting pipeline to use a consistent approach for all bullet points regardless of section type
+2. Implement a post-processing step specifically to check for and remove duplicate bullet symbols in the HTML output
+3. Create a more comprehensive bullet point detection system that doesn't rely on simple pattern matching
+4. Provide configuration options to customize bullet point styles and formats
+5. Add special handling for content from PDF source documents which may have different formatting characteristics
+
+**Priority**: Medium
+
 ---
 
 ## Other Issues 

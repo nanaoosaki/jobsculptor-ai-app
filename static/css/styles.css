@@ -128,6 +128,51 @@ header {
   border-radius: 4px;
 }
 
+/* User resume content - no scrollbar needed inside the already scrollable container */
+.user-resume-content {
+  overflow: visible !important; /* Override any other styles to ensure no scrolling */
+  max-height: none !important; /* Remove any height limitations */
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* Remove all inner scrollbars from user resume content */
+.user-resume-content *,
+#userResumeParsed * {
+  overflow: visible !important;
+  max-height: none !important;
+  border: none !important;
+}
+
+/* Fix for specific containers within user resume */
+#userResumeParsed > div,
+#userResumeParsed .user-resume-parsed-llm,
+#userResumeParsed .resume-section,
+#userResumeParsed div,
+#userResumeParsed p,
+#userResumeParsed h1,
+#userResumeParsed h2,
+#userResumeParsed h3,
+#userResumeParsed h4,
+#userResumeParsed h5,
+#userResumeParsed h6,
+#userResumeParsed ul,
+#userResumeParsed li {
+  overflow: visible !important;
+  max-height: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Only the outer container should have a scrollbar */
+#userResumeParsed {
+  height: auto;
+  max-height: 300px;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
 /* Top row cards styling */
 .row.mb-4 .card {
   margin-bottom: 0;
