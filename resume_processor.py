@@ -3,6 +3,13 @@ import docx
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import uuid
+import logging
+
+# Import the PDF parser module
+from pdf_parser import read_pdf_file
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 def create_upload_directory(upload_folder):
     """Ensure upload directory exists"""
@@ -11,7 +18,15 @@ def create_upload_directory(upload_folder):
 
 def save_uploaded_file(file, upload_folder):
     """Save uploaded file with unique filename and return the path"""
-    filename = str(uuid.uuid4()) + '.docx'
+    # Determine file extension from original file
+    original_extension = os.path.splitext(file.filename)[1].lower()
+    
+    # Check if it's a supported file type
+    if original_extension not in ['.docx', '.pdf']:
+        raise ValueError(f"Unsupported file type: {original_extension}")
+    
+    # Generate a unique filename with the correct extension
+    filename = str(uuid.uuid4()) + original_extension
     filepath = os.path.join(upload_folder, filename)
     file.save(filepath)
     return filename, filepath
@@ -90,7 +105,19 @@ def extract_resume_sections(content):
 
 def analyze_resume(filepath):
     """Analyze resume content and structure"""
-    content = read_docx_file(filepath)
+    # Determine file type based on extension
+    file_ext = os.path.splitext(filepath)[1].lower()
+    
+    if file_ext == '.docx':
+        logger.info(f"Processing DOCX file: {filepath}")
+        content = read_docx_file(filepath)
+    elif file_ext == '.pdf':
+        logger.info(f"Processing PDF file: {filepath}")
+        content = read_pdf_file(filepath)
+    else:
+        logger.error(f"Unsupported file format: {file_ext}")
+        raise ValueError(f"Unsupported file format: {file_ext}")
+    
     sections = extract_resume_sections(content)
     
     # Basic analysis

@@ -1,62 +1,70 @@
-import json
-import logging
 import os
+import json
 import time
 import uuid
-import docx2txt
-from typing import Dict, Tuple, Optional
+import logging
 import traceback
+from typing import Dict, Tuple
+import docx2txt
 
-from anthropic import Anthropic
-from openai import OpenAI
+# Import PDF parser functions
+from pdf_parser import read_pdf_file
+
+# Initialize optional API clients
+try:
+    from anthropic import Anthropic
+except ImportError:
+    Anthropic = None
+
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class LLMResumeParser:
     """Use LLM to parse resume content into structured sections"""
     
     def __init__(self, llm_provider="claude"):
-        """Initialize LLM parser with specified provider"""
+        """Initialize the resume parser with the specified LLM provider"""
         self.llm_provider = llm_provider
         self.anthropic_client = None
         self.openai_client = None
         
-        # Initialize the appropriate client based on provider
-        if llm_provider == "claude":
+        # Initialize API clients based on available keys
+        if llm_provider == "claude" or llm_provider == "auto":
             self._init_claude_client()
-        elif llm_provider == "openai":
+            
+        if llm_provider == "openai" or llm_provider == "auto":
             self._init_openai_client()
     
     def _init_claude_client(self):
         """Initialize Claude API client"""
-        try:
-            api_key = os.environ.get("CLAUDE_API_KEY")
-            if not api_key:
-                logger.warning("Claude API key not found in environment variables")
-                return None
-                
-            self.anthropic_client = Anthropic(api_key=api_key)
-            logger.info("Claude API client initialized successfully")
-            return self.anthropic_client
-        except Exception as e:
-            logger.error(f"Error initializing Claude API client: {str(e)}")
-            return None
+        claude_api_key = os.environ.get("CLAUDE_API_KEY")
+        
+        if claude_api_key and Anthropic:
+            try:
+                self.anthropic_client = Anthropic(api_key=claude_api_key)
+                logger.info("Claude API client initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize Claude API client: {str(e)}")
+        else:
+            logger.warning("Claude API key not found or Anthropic package not installed")
     
     def _init_openai_client(self):
         """Initialize OpenAI API client"""
-        try:
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                logger.warning("OpenAI API key not found in environment variables")
-                return None
-                
-            self.openai_client = OpenAI(api_key=api_key)
-            logger.info(f"OpenAI client initialized successfully")
-            return self.openai_client
-        except Exception as e:
-            logger.error(f"Error initializing OpenAI API client: {str(e)}")
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+        
+        if openai_api_key and OpenAI:
+            try:
+                self.openai_client = OpenAI(api_key=openai_api_key)
+                logger.info("OpenAI API client initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI API client: {str(e)}")
+        else:
+            logger.warning("OpenAI API key not found or OpenAI package not installed")
             return None
     
     def parse_resume(self, doc_path: str) -> Tuple[Dict[str, str], Dict, bool]:
@@ -75,8 +83,22 @@ class LLMResumeParser:
         logger.info(f"Parsing resume with LLM: {doc_path}")
         
         try:
-            # Extract text from resume
-            resume_text = docx2txt.process(doc_path)
+            # Extract text from resume based on file type
+            file_ext = os.path.splitext(doc_path)[1].lower()
+            
+            if file_ext == '.docx':
+                resume_text = docx2txt.process(doc_path)
+            elif file_ext == '.pdf':
+                # Extract text from PDF using pdfminer through our parser module
+                pdf_content = read_pdf_file(doc_path)
+                
+                # Combine paragraphs into a single text
+                resume_text = ""
+                for para in pdf_content.get('paragraphs', []):
+                    resume_text += para.get('text', '') + "\n\n"
+            else:
+                logger.error(f"Unsupported file format: {file_ext}")
+                return {}, {}, False
             
             # Skip LLM parsing if text is too short
             if len(resume_text.strip()) < 50:

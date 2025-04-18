@@ -34,8 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (!file.name.endsWith('.docx')) {
-            showStatus(uploadStatus, 'Only DOCX files are supported.', 'error');
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        if (fileExt !== 'docx' && fileExt !== 'pdf') {
+            showStatus(uploadStatus, 'Only DOCX and PDF files are supported.', 'error');
             return;
         }
         
