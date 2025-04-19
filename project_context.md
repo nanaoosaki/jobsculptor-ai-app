@@ -23,6 +23,7 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 6. **Multi-Provider Support**: Works with both OpenAI and Claude APIs
 7. **PDF Export**: Generates professionally formatted PDF documents instead of Word documents
 8. **A4 Paper Format**: Implemented A4 paper format for HTML preview matching PDF output
+9. **Error Resilience**: Robust error handling for LLM responses with fallback mechanisms
 
 ## Technologies and APIs
 - **Backend**: Flask (Python)
@@ -43,7 +44,9 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 7. **HTML Preview Alignment**: Ensured consistent styling between documents and HTML previews
 8. **PDF Export**: Switched from Word document generation to PDF export for better consistency
 9. **A4 Paper Format**: Implemented proper A4 paper dimensions with 1-inch margins for HTML preview
-10. **Contact Information Fix**: Attempted to ensure contact information is preserved in tailored resumes
+10. **Contact Information Fix**: Ensured contact information is preserved in tailored resumes
+11. **LLM Response Handling**: Improved error recovery for malformed API responses
+12. **Syntax Issue Resolution**: Fixed regex patterns and indentation errors in backend code
 
 ## Current Limitations and Known Issues
 1. **PythonAnywhere Constraints**: 
@@ -51,9 +54,9 @@ The Resume Tailor is an AI-powered application that helps users customize their 
    - CPU time limitations (100 seconds/day)
 2. **Large Resume Handling**: Very large resumes (>20 pages) may exceed token limits
 3. **Custom Formatting**: Limited support for highly customized resume formats
-4. **Contact Information Missing**: Contact information may not be preserved in tailored resume output
-5. **Company/Location Separation**: Difficulty separating company names from locations in some formats
-6. **Bullet Point Duplication**: Some bullet points appear duplicated in the final output
+4. **Company/Location Separation**: Difficulty separating company names from locations in some formats
+5. **Bullet Point Duplication**: Some bullet points appear duplicated in the final output
+6. **PDF Performance**: PDF generation may be slower on systems without GTK dependencies
 
 ## File Structure and I/O Details
 
@@ -102,6 +105,12 @@ The Resume Tailor is an AI-powered application that helps users customize their 
   - **Input**: Resume sections, job details, API keys
   - **Output**: Tailored resume content
   - **Used by**: tailoring_handler.py, app.py
+  - **Recent Fixes**: 
+    - Improved regex patterns with raw string syntax
+    - Fixed indentation errors in key functions
+    - Enhanced JSON response processing with fallbacks
+    - Added explicit module imports where needed
+    - Improved variable scope handling
 
 - **tailoring_handler.py**: 
   - Orchestrates the tailoring process
@@ -132,6 +141,10 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 - **static/css/styles.css**: 
   - Main stylesheet for UI
   - **Used by**: index.html
+  - **Recent Updates**: 
+    - Added A4 paper-like formatting for HTML preview
+    - Fixed nested scrollbar issues
+    - Improved content alignment consistency
 
 - **static/css/pdf_styles.css**: 
   - Styles specific to PDF output
@@ -143,6 +156,10 @@ The Resume Tailor is an AI-powered application that helps users customize their 
   - **Input**: User actions, server responses
   - **Output**: DOM updates
   - **Used by**: index.html
+  - **Recent Updates**:
+    - Improved preview container setup
+    - Added A4 paper styling
+    - Fixed nested scrollbar issues
 
 ## Application Workflow
 
@@ -181,8 +198,9 @@ The Resume Tailor is an AI-powered application that helps users customize their 
    - Each section sent to Claude/OpenAI with specific prompts
    - Content optimized for job requirements
    - Contact information preserved without changes
+   - Multiple fallback mechanisms for error recovery
 5. `generate_preview_from_llm_responses` creates HTML preview
-6. HTML preview displayed to user in the UI
+6. HTML preview displayed to user in the UI (formatted as A4 paper)
 7. When download requested, `pdf_exporter.py` converts HTML to PDF
 
 ### 4. PDF Export Process
@@ -195,11 +213,76 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 4. PDF file is sent to user's browser for download
 
 ## Current Development Focus
-1. **Contact Information Preservation**: Fixing issues with contact details in tailored resumes
-2. **HTML Preview Enhancement**: Ensuring HTML preview precisely matches PDF output
-3. **Bullet Point Formatting**: Resolving inconsistencies in bullet point display
-4. **Company/Location Separation**: Improving the accuracy of entity recognition
-5. **PDF Format Optimization**: Fine-tuning A4 paper layout and margins
+1. **LLM Response Reliability**: Enhancing error recovery and response processing
+2. **Contact Information Preservation**: Fixing issues with contact details in tailored resumes
+3. **HTML Preview Enhancement**: Ensuring HTML preview precisely matches PDF output
+4. **Bullet Point Formatting**: Resolving inconsistencies in bullet point display
+5. **Company/Location Separation**: Improving the accuracy of entity recognition
+6. **PDF Format Optimization**: Fine-tuning A4 paper layout and margins
+
+## Version Control and Commit Management
+
+### Git Repository Structure
+- **Main Branch**: Production-ready code with stable dependencies
+- **Feature Branches**: Used for developing new features before merging to main
+- **Commit Standards**: Use descriptive messages that reference affected modules
+
+### Accessing Previous Versions
+To access a specific version of the codebase:
+```bash
+# View commit history with dates
+git log --date=short --pretty=format:"%h %ad %s"
+
+# Check out a specific commit (will be in detached HEAD state)
+git checkout [commit-hash]
+
+# Create a temporary branch if you need to work on that version
+git checkout -b temp-branch-name [commit-hash]
+
+# Return to the latest version
+git checkout main
+```
+
+### Safe Dependency Handling in Git Workflow
+1. **Before Committing Changes**:
+   - Run the dependency validation process described in `file-dependencies.md`
+   - Include all interdependent files in the same commit when possible
+   - Document any dependency changes in commit messages
+
+2. **When Making Breaking Changes**:
+   - Create a feature branch: `git checkout -b feature-name`
+   - Implement and test changes extensively
+   - Update documentation to reflect new dependencies
+   - Create a detailed merge request documenting all dependency changes
+
+3. **When Incorporating External Changes**:
+   - Use `git pull --rebase` to minimize merge conflicts
+   - Test the application thoroughly after pulling changes
+   - If dependencies break, use `git bisect` to identify problematic commits
+
+4. **Temporary Files to Exclude**:
+   - Use `.gitignore` for runtime artifacts
+   - Avoid committing large binary files or credentials
+   - Exclude `commit_msg.txt` and other temporary commit-related files
+
+### Commit Message Guidelines
+For dependency-related changes, structure commit messages as:
+```
+[Module Name]: [Action] - [Brief Description]
+
+- List of specific changes
+- Impact on dependencies
+- Testing performed
+```
+
+Example:
+```
+Resume Parser: Refactor PDF handling - Move PDF parsing to separate module
+
+- Moved PDF parsing logic from resume_processor.py to new pdf_parser.py
+- Updated import statements in resume_processor.py and llm_resume_parser.py
+- All tests passing for PDF upload and parsing
+```
 
 ## Future Roadmap
 1. **Visual Diff Feature**: Highlight changes between original and tailored resume

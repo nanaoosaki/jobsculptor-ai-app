@@ -10,6 +10,7 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import docx2txt
 from typing import Dict, List, Tuple, Optional, Any, Union
+import datetime
 
 # Third-party imports for Claude
 from anthropic import Anthropic, RateLimitError
@@ -89,7 +90,7 @@ def clean_bullet_points(text: str) -> str:
                 continue
         
         # Check for ASCII bullet symbols (*, -, +, etc.) at the beginning
-        ascii_bullet_match = re.match(f'^\s*{ascii_bullets}\s+', line)
+        ascii_bullet_match = re.match(fr'^\s*{ascii_bullets}\s+', line)
         if ascii_bullet_match:
             cleaned_line = line[ascii_bullet_match.end():]
             cleaned_lines.append(cleaned_line)
@@ -169,11 +170,9 @@ class ClaudeClient(LLMClient):
                 "[Action verb] + [What you did] + [How you did it] + [The result or measurable impact]. "
                 "Each bullet point MUST be 85-100 characters to ensure it fits on a single line. "
                 "Focus on bullet points that are most relevant to the target position.\n\n"
-                "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
+                "CRITICAL: Your response MUST be returned as structured JSON in the format specified below. "
                 "DO NOT include any job requirements, job descriptions, expected skills, or any other "
-                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
-                "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
-                "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
+                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output.\n\n"
                 "EXTREMELY IMPORTANT: Preserve the EXACT structure and format of the original content. If two distinct pieces of information "
                 "appear on the same line in the original (such as 'Company Name' and 'City, State' or 'Position Title' and 'Date Range'), "
                 "they MUST remain on the same line in your output. DO NOT separate information that appears on a single line in the original.\n\n"
@@ -248,108 +247,159 @@ class ClaudeClient(LLMClient):
             • Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.
             ```
 
-            CORRECTLY TAILORED (maintains exact line structure):
+            TAILORED (maintains same format with enhanced bullet point):
             ```
             Senior Data Scientist                                Jun 2021-Present
             Pinterest Inc                                        San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            • Developed ML evaluation workflow, reducing model iteration time by 90% and saving $75k+ annually.
             ```
 
-            INCORRECT (breaks the structure by splitting information onto separate lines):
-            ```
-            Senior Data Scientist
-            Jun 2021-Present
-            Pinterest Inc
-            San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            # JSON FORMAT RESPONSE INSTRUCTIONS
+            You MUST format your response as a JSON object with two fields:
+            1. "tailored_content" - The enhanced version of the resume section with improved bullet points
+            2. "enhancements" - An array of objects, where each object represents an enhancement you made:
+               - "original" - The original bullet point or text
+               - "enhanced" - Your improved version
+               - "reasoning" - Why this enhancement better targets the job requirements (keep short)
+            
+            Example JSON response format:
+            ```json
+            {{
+                "tailored_content": "Senior Data Scientist                                Jun 2021-Present\\nPinterest Inc                                        San Francisco, CA\\n• Developed ML evaluation workflow, reducing model iteration time by 90% and saving $75k+ annually.",
+                "enhancements": [
+                    {{
+                        "original": "Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.",
+                        "enhanced": "Developed ML evaluation workflow, reducing model iteration time by 90% and saving $75k+ annually.",
+                        "reasoning": "Added ML specificity and clarified impact on model development process"
+                    }}
+                ]
+            }}
             ```
 
-            ## Section-Specific Structure Guidelines:
-            
-            ### For EXPERIENCE sections:
-            - First line often has position and dates on the same line - KEEP THEM TOGETHER
-            - Second line often has company and location on the same line - KEEP THEM TOGETHER
-            - Only enhance the bullet points that describe responsibilities and achievements
-            
-            ### For EDUCATION sections:
-            - School name, degree, graduation date should remain UNCHANGED and maintain SAME LINE positioning
-            - Only enhance descriptions of academic achievements or relevant coursework
-            
-            ### For SKILLS sections:
-            - You may reorganize skills to prioritize those matching job requirements
-            - Keep all original skills but put most relevant ones first
-            - Use original wording for technical skills, tools, and programming languages
-            
-            ### For SUMMARY sections:
-            - Maintain paragraph structure but enhance language
-            - Keep same length but make more impactful and relevant to this position
-            
-            # IMPORTANT WARNING
-            # DO NOT include any of the job requirements or desired skills in your output.
-            # Your output MUST contain ONLY resume content, not job listings or requirements.
-            # NEVER return job requirements text in your response.
-            
-            Rewrite ONLY the bullet points in the "{section_name}" section following these requirements:
-            1. Follow this EXACT structure for each bullet point: [Action verb] + [What you did] + [How you did it] + [The result/impact]
-            2. Ensure each bullet point is 85-100 characters ONLY - this is critical for single-line display
-            3. Focus ONLY on factual information from the original resume - do not invent achievements
-            4. Prioritize experiences and skills that are MOST RELEVANT to the target position requirements
-            5. Use strong action verbs from the list above that reflect the level of responsibility
-            6. Quantify results and impact whenever possible with specific metrics and percentages
-            
-            Format your response with the exact same structure as the input, maintaining all headings, company names, 
-            titles and dates exactly as they appear in the original, only replacing the bullet points with enhanced ones.
+            Now, please tailor the {section_name} section by enhancing the bullet points to be more relevant to the job requirements while preserving the exact format and structure. Return your response in the required JSON format.
             """
             
+            # For section-specific instructions
+            if section_name.lower() == 'skills':
+                user_prompt += """
+                For the skills section specifically:
+                1. Reorder skills to prioritize those mentioned in the job description first
+                2. Keep all skills that match the job requirements
+                3. Group similar skills together
+                4. Use the exact terminology from the job description where applicable
+                """
+            elif section_name.lower() == 'summary':
+                user_prompt += """
+                For the summary section specifically:
+                1. Create a cohesive paragraph (not bullet points)
+                2. Target the specific job role and company
+                3. Highlight 2-3 most relevant qualifications that match the job
+                4. Keep to 3-4 sentences total (85-100 characters each)
+                """
+            
             # Make the API request
-            response = self.client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=4000,
-                temperature=0.7,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ]
-            )
+            max_retries = 3
+            retry_count = 0
+            success = False
             
-            # Log token usage
-            logger.info(f"Claude API response for {section_name}: {len(response.content[0].text)} chars")
-            logger.info(f"Input tokens: {response.usage.input_tokens}, Output tokens: {response.usage.output_tokens}")
+            while not success and retry_count < max_retries:
+                try:
+                    with api_logger.start_capture() as captured:
+                        # Make the API request
+                        response = self.client.messages.create(
+                            model="claude-3-opus-20240229",
+                            max_tokens=4096,
+                            temperature=0.6,
+                            system=system_prompt,
+                            messages=[
+                                {"role": "user", "content": user_prompt}
+                            ]
+                        )
+                        
+                    # Log the captured traffic
+                    logger.info(f"Claude API Request: {captured.formatted_request()}")
+                    logger.info(f"Claude API Response: {captured.formatted_response()}")
+                    success = True
+                    
+                except RateLimitError as e:
+                    retry_count += 1
+                    wait_time = min(2 ** retry_count, 60)  # Exponential backoff capped at 60 seconds
+                    logger.warning(f"Rate limit hit. Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                    
+                except Exception as e:
+                    logger.error(f"Error in Claude API request: {str(e)}")
+                    raise
             
-            # Store the tailored content for direct HTML generation
-            self.tailored_content[section_name] = response.content[0].text.strip()
+            # Extract the response content
+            output_text = response.content[0].text
             
-            return response.content[0].text.strip()
-            
+            # Try to parse the JSON response
+            try:
+                response_json = json.loads(output_text)
+                # Add validation for expected JSON structure
+                if "tailored_content" not in response_json:
+                    logger.warning(f"Missing 'tailored_content' field in Claude response. Response keys: {list(response_json.keys())}")
+                    # If we can't find tailored_content, check if the entire response is the content
+                    if len(response_json) == 1 and isinstance(next(iter(response_json.values())), str):
+                        # Single key with string value, use as tailored content
+                        self.tailored_content[section_name] = next(iter(response_json.values())).strip()
+                        return self.tailored_content[section_name]
+                    else:
+                        raise ValueError("Missing 'tailored_content' field in LLM response")
+                        
+                # Store the tailored content for direct HTML generation
+                self.tailored_content[section_name] = response_json["tailored_content"].strip()
+                # Return just the tailored content string (for backward compatibility)
+                return response_json["tailored_content"].strip()
+            except json.JSONDecodeError:
+                # Improved logging and handling
+                logger.warning(f"Failed to parse JSON response from {self.__class__.__name__}. Using raw text output.")
+                # Check if output_text contains JSON-like content but malformed
+                if '{' in output_text and '}' in output_text:
+                    # Attempt to extract just the tailored_content using regex
+                    import re
+                    match = re.search(r'"tailored_content"\s*:\s*"(.*?)"', output_text)
+                    if match:
+                        extracted_content = match.group(1)
+                        logger.info(f"Extracted tailored content from malformed JSON using regex")
+                        self.tailored_content[section_name] = extracted_content
+                        return extracted_content
+                
+                # Fallback to raw text
+                self.tailored_content[section_name] = output_text.strip()
+                return output_text.strip()
+            except Exception as e:
+                logger.error(f"Error tailoring {section_name} with {self.__class__.__name__}: {str(e)}")
+                logger.error(traceback.format_exc())
+                # Still add whatever we got to the tailored content
+                self.tailored_content[section_name] = output_text.strip()
+                return output_text.strip()
+                
         except Exception as e:
-            logger.error(f"Error tailoring {section_name} with Claude API: {str(e)}")
+            logger.error(f"Error tailoring {section_name} with Claude: {str(e)}")
             logger.error(traceback.format_exc())
-            # Partial key for debugging
-            api_key_prefix = self.api_key[:8] + "..." if self.api_key else "None"
-            logger.error(f"Claude API key prefix: {api_key_prefix}, API URL: {self.api_url}")
-            raise Exception(f"Claude API error: {str(e)}")
+            # Return original content on error
+            return content
 
 class OpenAIClient(LLMClient):
     """Client for interacting with OpenAI API"""
     
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.client = None
         
-        # Validate API key format
-        if not api_key or not api_key.startswith('sk-'):
-            print(f"WARNING: Invalid OpenAI API key format. Key starts with: {api_key[:6] if api_key else 'None'}")
-            print(f"API key length: {len(api_key) if api_key else 0} characters")
-            raise ValueError("OpenAI API key must start with 'sk-'")
+        # Validate API key 
+        if not api_key:
+            print("WARNING: Missing OpenAI API key")
+            raise ValueError("OpenAI API key is required")
             
-        print(f"Initializing OpenAI client with API key starting with: {api_key[:8]}...")
+        print(f"Initializing OpenAI client with API key starting with: {api_key[:7]}...")
         print(f"API key length: {len(api_key)} characters")
         
         # Initialize OpenAI client
         try:
             print("Testing OpenAI API connection...")
             self.client = OpenAI(api_key=api_key)
-            # No API call validation - just initialize the client
             print("OpenAI client initialized successfully")
         except Exception as e:
             print(f"Error initializing OpenAI client: {str(e)}")
@@ -371,11 +421,9 @@ class OpenAIClient(LLMClient):
                 "[Action verb] + [What you did] + [How you did it] + [The result or measurable impact]. "
                 "Each bullet point MUST be 85-100 characters to ensure it fits on a single line. "
                 "Focus on bullet points that are most relevant to the target position.\n\n"
-                "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
+                "CRITICAL: Your response MUST be returned as structured JSON in the format specified below. "
                 "DO NOT include any job requirements, job descriptions, expected skills, or any other "
-                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
-                "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
-                "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
+                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output.\n\n"
                 "EXTREMELY IMPORTANT: Preserve the EXACT structure and format of the original content. If two distinct pieces of information "
                 "appear on the same line in the original (such as 'Company Name' and 'City, State' or 'Position Title' and 'Date Range'), "
                 "they MUST remain on the same line in your output. DO NOT separate information that appears on a single line in the original.\n\n"
@@ -450,86 +498,134 @@ class OpenAIClient(LLMClient):
             • Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.
             ```
 
-            CORRECTLY TAILORED (maintains exact line structure):
+            TAILORED (maintains same format with enhanced bullet point):
             ```
             Senior Data Scientist                                Jun 2021-Present
             Pinterest Inc                                        San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            • Developed ML evaluation workflow, reducing model iteration time by 90% and saving $75k+ annually.
             ```
 
-            INCORRECT (breaks the structure by splitting information onto separate lines):
-            ```
-            Senior Data Scientist
-            Jun 2021-Present
-            Pinterest Inc
-            San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
+            # JSON FORMAT RESPONSE INSTRUCTIONS
+            You MUST format your response as a JSON object with two fields:
+            1. "tailored_content" - The enhanced version of the resume section with improved bullet points
+            2. "enhancements" - An array of objects, where each object represents an enhancement you made:
+               - "original" - The original bullet point or text
+               - "enhanced" - Your improved version
+               - "reasoning" - Why this enhancement better targets the job requirements (keep short)
+            
+            Example JSON response format:
+            ```json
+            {{
+                "tailored_content": "Senior Data Scientist                                Jun 2021-Present\\nPinterest Inc                                        San Francisco, CA\\n• Developed ML evaluation workflow, reducing model iteration time by 90% and saving $75k+ annually.",
+                "enhancements": [
+                    {{
+                        "original": "Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.",
+                        "enhanced": "Developed ML evaluation workflow, reducing model iteration time by 90% and saving $75k+ annually.",
+                        "reasoning": "Added ML specificity and clarified impact on model development process"
+                    }}
+                ]
+            }}
             ```
 
-            ## Section-Specific Structure Guidelines:
-            
-            ### For EXPERIENCE sections:
-            - First line often has position and dates on the same line - KEEP THEM TOGETHER
-            - Second line often has company and location on the same line - KEEP THEM TOGETHER
-            - Only enhance the bullet points that describe responsibilities and achievements
-            
-            ### For EDUCATION sections:
-            - School name, degree, graduation date should remain UNCHANGED and maintain SAME LINE positioning
-            - Only enhance descriptions of academic achievements or relevant coursework
-            
-            ### For SKILLS sections:
-            - You may reorganize skills to prioritize those matching job requirements
-            - Keep all original skills but put most relevant ones first
-            - Use original wording for technical skills, tools, and programming languages
-            
-            ### For SUMMARY sections:
-            - Maintain paragraph structure but enhance language
-            - Keep same length but make more impactful and relevant to this position
-            
-            # IMPORTANT WARNING
-            # DO NOT include any of the job requirements or desired skills in your output.
-            # Your output MUST contain ONLY resume content, not job listings or requirements.
-            # NEVER return job requirements text in your response.
-            
-            Rewrite ONLY the bullet points in the "{section_name}" section following these requirements:
-            1. Follow this EXACT structure for each bullet point: [Action verb] + [What you did] + [How you did it] + [The result/impact]
-            2. Ensure each bullet point is 85-100 characters ONLY - this is critical for single-line display
-            3. Focus ONLY on factual information from the original resume - do not invent achievements
-            4. Prioritize experiences and skills that are MOST RELEVANT to the target position requirements
-            5. Use strong action verbs from the list above that reflect the level of responsibility
-            6. Quantify results and impact whenever possible with specific metrics and percentages
-            
-            Format your response with the exact same structure as the input, maintaining all headings, company names, 
-            titles and dates exactly as they appear in the original, only replacing the bullet points with enhanced ones.
+            Now, please tailor the {section_name} section by enhancing the bullet points to be more relevant to the job requirements while preserving the exact format and structure. Return your response in the required JSON format.
             """
             
+            # For section-specific instructions
+            if section_name.lower() == 'skills':
+                user_prompt += """
+                For the skills section specifically:
+                1. Reorder skills to prioritize those mentioned in the job description first
+                2. Keep all skills that match the job requirements
+                3. Group similar skills together
+                4. Use the exact terminology from the job description where applicable
+                """
+            elif section_name.lower() == 'summary':
+                user_prompt += """
+                For the summary section specifically:
+                1. Create a cohesive paragraph (not bullet points)
+                2. Target the specific job role and company
+                3. Highlight 2-3 most relevant qualifications that match the job
+                4. Keep to 3-4 sentences total (85-100 characters each)
+                """
+            
             # Make the API request
-            response = self.client.chat.completions.create(
-                model="gpt-4o",
-                temperature=0.7,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ]
-            )
+            max_retries = 3
+            retry_count = 0
+            success = False
             
-            # Log token usage
+            while not success and retry_count < max_retries:
+                try:
+                    # Make the API request
+                    response = self.client.chat.completions.create(
+                        model="gpt-4o",
+                        temperature=0.7,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ]
+                    )
+                    success = True
+                    
+                except openai.RateLimitError as e:
+                    retry_count += 1
+                    wait_time = min(2 ** retry_count, 60)  # Exponential backoff capped at 60 seconds
+                    logger.warning(f"Rate limit hit. Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                    
+                except Exception as e:
+                    logger.error(f"Error in OpenAI API request: {str(e)}")
+                    raise
+            
+            # Extract the response content
             output_text = response.choices[0].message.content
-            logger.info(f"OpenAI API response for {section_name}: {len(output_text)} chars")
-            logger.info(f"Completion tokens: {response.usage.completion_tokens}, Prompt tokens: {response.usage.prompt_tokens}")
             
-            # Store the tailored content for direct HTML generation
-            self.tailored_content[section_name] = output_text.strip()
-            
-            return output_text.strip()
+            # Try to parse the JSON response
+            try:
+                response_json = json.loads(output_text)
+                # Add validation for expected JSON structure
+                if "tailored_content" not in response_json:
+                    logger.warning(f"Missing 'tailored_content' field in OpenAI response. Response keys: {list(response_json.keys())}")
+                    # If we can't find tailored_content, check if the entire response is the content
+                    if len(response_json) == 1 and isinstance(next(iter(response_json.values())), str):
+                        # Single key with string value, use as tailored content
+                        self.tailored_content[section_name] = next(iter(response_json.values())).strip()
+                        return self.tailored_content[section_name]
+                    else:
+                        raise ValueError("Missing 'tailored_content' field in LLM response")
+                    
+                # Store the tailored content for direct HTML generation
+                self.tailored_content[section_name] = response_json["tailored_content"].strip()
+                # Return just the tailored content string (for backward compatibility)
+                return response_json["tailored_content"].strip()
+            except json.JSONDecodeError:
+                # Improved logging and handling
+                logger.warning(f"Failed to parse JSON response from {self.__class__.__name__}. Using raw text output.")
+                # Check if output_text contains JSON-like content but malformed
+                if '{' in output_text and '}' in output_text:
+                    # Attempt to extract just the tailored_content using regex
+                    import re
+                    match = re.search(r'"tailored_content"\s*:\s*"(.*?)"', output_text)
+                    if match:
+                        extracted_content = match.group(1)
+                        logger.info(f"Extracted tailored content from malformed JSON using regex")
+                        self.tailored_content[section_name] = extracted_content
+                        return extracted_content
+                
+                # Fallback to raw text
+                self.tailored_content[section_name] = output_text.strip()
+                return output_text.strip()
+            except Exception as e:
+                logger.error(f"Error tailoring {section_name} with {self.__class__.__name__}: {str(e)}")
+                logger.error(traceback.format_exc())
+                # Still add whatever we got to the tailored content
+                self.tailored_content[section_name] = output_text.strip()
+                return output_text.strip()
                 
         except Exception as e:
-            logger.error(f"Error tailoring {section_name} with OpenAI API: {str(e)}")
+            logger.error(f"Error tailoring {section_name} with OpenAI: {str(e)}")
             logger.error(traceback.format_exc())
-            # Partial key for debugging
-            api_key_prefix = self.api_key[:8] + "..." if self.api_key else "None"
-            logger.error(f"OpenAI API key prefix: {api_key_prefix}")
-            raise Exception(f"OpenAI API error: {str(e)}")
+            # Return original content on error
+            return content
 
 def format_section_content(content: str) -> str:
     """Format section content for HTML display, handling bullet points and markdown"""
@@ -717,26 +813,18 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                         logger.warning("Bullet point cleaning validation failed. There may still be bullet markers in the text.")
                     
                     return cleaned_sections
-                else:
-                    logger.warning("LLM parsing did not return usable results. Falling back to traditional parsing.")
-            except (ImportError, Exception) as e:
-                logger.warning(f"LLM parsing unavailable or failed: {str(e)}. Using traditional parsing.")
-        else:
-            logger.info("LLM parsing is disabled by configuration. Using traditional parsing.")
+            except ImportError as e:
+                logger.warning(f"LLM resume parsing not available: {str(e)}. Using traditional parsing.")
+            except Exception as e:
+                logger.warning(f"Error during LLM resume parsing: {str(e)}. Falling back to traditional parsing.")
         
-        # If LLM parsing failed, is unavailable, or is disabled, fall back to traditional parsing
-        logger.info("Using traditional resume section extraction...")
-        print(f"DEBUG: fallback to traditional parsing - will examine document: {doc_path}")
+        # If LLM parsing is not enabled or failed, use traditional parsing
+        logger.info("Using traditional resume section parsing...")
         
-        # Extract plain text content from the DOCX file
-        text = docx2txt.process(doc_path)
-        
-        # Parse the document into sections
-        print(f"DEBUG: About to create Document object from: {doc_path}")
+        # Load the document
         doc = Document(doc_path)
-        print(f"DEBUG: Document object created successfully - examining sections")
         
-        # Initialize standard resume sections
+        # Initialize sections dictionary
         sections = {
             "contact": "",
             "summary": "",
@@ -747,59 +835,48 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
             "additional": ""
         }
         
-        # Debug: Count total paragraphs with content
-        total_paragraphs = sum(1 for para in doc.paragraphs if para.text.strip())
-        logger.info(f"Total paragraphs with content: {total_paragraphs}")
-        
-        # Extract sections based on heading style
-        current_section = "contact"  # Default to contact for initial content
+        # Track current section and its content
+        current_section = "contact"  # Default to contact for the first section
         section_content = []
+        total_paragraphs = 0
         
-        # Log all potential section headers for debugging
-        logger.info("Scanning document for potential section headers...")
-        for i, para in enumerate(doc.paragraphs):
-            text = para.text.strip()
-            
-            # Skip empty paragraphs
-            if not text:
-                continue
-            
-            # Debug potential headers
-            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
-                logger.info(f"Potential header found at para {i}: '{text}' (Style: {para.style.name}, Bold: {any(p.bold for p in para.runs)})")
-        
-        # First pass - try to extract based on formatting
+        # Iterate through paragraphs and assign to appropriate sections
         for para in doc.paragraphs:
             text = para.text.strip()
+            total_paragraphs += 1
             
             # Skip empty paragraphs
             if not text:
                 continue
-            
-            # Check if this is a heading (section title)
-            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs):
-                # Store previous section content
+                
+            # Check if this is a heading (likely a section title)
+            if (para.style.name.startswith('Heading') or 
+                para.style.name == 'Title' or
+                any(p.bold for p in para.runs) or
+                text.isupper() or
+                len(text) < 30 and not text.startswith('•') and not text.startswith('-')):
+                
+                # Add content to previous section
                 if section_content:
                     sections[current_section] = "\n".join(section_content)
                     section_content = []
                 
-                # Determine new section type based on heading text
-                if re.search(r'contact|info|email|phone|address', text.lower()):
+                # Determine which section this heading belongs to
+                text_lower = text.lower()
+                if any(term in text_lower for term in ['contact', 'phone', 'email', 'address', 'github']):
                     current_section = "contact"
-                elif re.search(r'summary|objective|profile|about', text.lower()):
+                elif any(term in text_lower for term in ['summary', 'profile', 'objective', 'about']):
                     current_section = "summary"
-                elif re.search(r'experience|work|employment|job|career|professional', text.lower()):
+                elif any(term in text_lower for term in ['experience', 'employment', 'work', 'career', 'job']):
                     current_section = "experience"
-                elif re.search(r'education|degree|university|college|school|academic', text.lower()):
+                elif any(term in text_lower for term in ['education', 'university', 'college', 'school', 'degree']):
                     current_section = "education"
-                elif re.search(r'skills|expertise|technologies|competencies|qualification|proficiencies', text.lower()):
+                elif any(term in text_lower for term in ['skill', 'expertise', 'proficiency', 'technology', 'competency']):
                     current_section = "skills"
-                elif re.search(r'projects|portfolio|works', text.lower()):
+                elif any(term in text_lower for term in ['project', 'portfolio', 'application']):
                     current_section = "projects"
-                elif re.search(r'additional|interests|activities|volunteer|certification|awards|achievements', text.lower()):
-                    current_section = "additional"
                 else:
-                    # Default to additional for unknown headings
+                    # If we can't categorize, put in additional
                     current_section = "additional"
                 
                 logger.info(f"Section header detected: '{text}' -> categorized as '{current_section}'")
@@ -892,11 +969,45 @@ def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
 
 def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAIClient]) -> str:
     """Generate HTML preview directly from LLM API responses"""
+    import re  # Ensure re is available in this scope
+    
     if not llm_client or not llm_client.tailored_content:
         logger.warning("No direct LLM responses available for preview generation")
         return None
         
     logger.info(f"Generating preview from direct LLM responses: {len(llm_client.tailored_content)} sections")
+    
+    # Sanitize tailored content to ensure no raw JSON is present
+    for section_name in llm_client.tailored_content:
+        content = llm_client.tailored_content[section_name]
+        # Skip empty content
+        if not content:
+            continue
+            
+        # Check if content looks like raw JSON
+        if content.strip().startswith('{') and content.strip().endswith('}'):
+            try:
+                # Try to parse it as JSON
+                parsed = json.loads(content)
+                if 'tailored_content' in parsed:
+                    # Extract just the tailored content
+                    logger.info(f"Extracted tailored_content from JSON in {section_name} section")
+                    llm_client.tailored_content[section_name] = parsed['tailored_content']
+            except json.JSONDecodeError:
+                # If it's not valid JSON but looks like it, do some cleanup
+                if '"tailored_content"' in content:
+                    logger.warning(f"Found invalid JSON in {section_name} section, attempting to clean up")
+                    # Try to extract tailored_content with regex
+                    match = re.search(r'"tailored_content"\s*:\s*"(.*?)"', content)
+                    if match:
+                        extracted_content = match.group(1)
+                        logger.info(f"Extracted tailored content from malformed JSON using regex")
+                        llm_client.tailored_content[section_name] = extracted_content
+                    else:
+                        # Basic cleanup: remove JSON artifacts
+                        cleaned = re.sub(r'[\{\}"\[\]]', '', content)
+                        cleaned = re.sub(r'tailored_content:', '', cleaned).strip()
+                        llm_client.tailored_content[section_name] = cleaned
     
     html_parts = []
     
@@ -1573,6 +1684,34 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
             )
         
         logger.info(f"Resume tailoring completed successfully with {provider.upper()}")
+        
+        # Save tailored sections to a JSON file for debugging
+        try:
+            # Create a filename for the JSON file
+            filename_base = os.path.splitext(os.path.basename(resume_path))[0]
+            json_output_path = os.path.join(
+                os.path.dirname(resume_path),
+                f"{filename_base}_tailored_sections_{provider}.json"
+            )
+            
+            # Add timestamp and metadata
+            output_data = {
+                "tailored_sections": tailored_sections,
+                "metadata": {
+                    "provider": provider,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "resume_path": resume_path
+                }
+            }
+            
+            # Write to file
+            with open(json_output_path, 'w', encoding='utf-8') as f:
+                json.dump(output_data, f, indent=2, ensure_ascii=False)
+                
+            logger.info(f"Saved tailored sections to {json_output_path}")
+        except Exception as e:
+            logger.error(f"Error saving tailored sections to JSON: {str(e)}")
+            # Continue even if saving fails - don't block the main process
         
         # Return tailored sections and LLM client
         return tailored_sections, llm_client
