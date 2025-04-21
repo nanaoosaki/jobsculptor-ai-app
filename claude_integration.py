@@ -174,8 +174,8 @@ class ClaudeClient(LLMClient):
         Returns:
             Tailored content as string
         """
-        logger.info(f"Tailoring {section_name} with Claude API")
-        
+            logger.info(f"Tailoring {section_name} with Claude API")
+            
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
             return ""
@@ -208,7 +208,7 @@ class ClaudeClient(LLMClient):
                 if 'hard_skills' in analysis and analysis['hard_skills']:
                     hard_skills = ", ".join(analysis['hard_skills'])
                     analysis_prompt += f"\n\nKEY HARD SKILLS:\n{hard_skills}"
-                
+                    
                 # Add soft skills if available
                 if 'soft_skills' in analysis and analysis['soft_skills']:
                     soft_skills = ", ".join(analysis['soft_skills'])
@@ -227,7 +227,7 @@ ORIGINAL EXPERIENCE SECTION:
 {content}
 
 JOB REQUIREMENTS:
-{requirements_text}
+            {requirements_text}
 
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
@@ -266,7 +266,7 @@ Do not add any fictional experiences or embellish beyond what is reasonable base
 You are an expert resume tailoring assistant. Your task is to tailor the education section to better match the requirements for a {job_title} position at {company}.
 
 ORIGINAL EDUCATION SECTION:
-{content}
+            {content}
 
 JOB REQUIREMENTS:
 {requirements_text}
@@ -473,6 +473,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             dates = job.get('dates', '')
             achievements = job.get('achievements', [])
             
+            # Filter out empty or whitespace-only achievements
+            if achievements:
+                achievements = [a for a in achievements if a and a.strip()]
+            
             # Add job header
             company_location = f"{company}, {location}" if location else company
             formatted_text += f"<p class='job-header'><strong>{position}</strong> | {company_location} | {dates}</p>\n"
@@ -501,6 +505,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             dates = edu.get('dates', '')
             highlights = edu.get('highlights', [])
             
+            # Filter out empty or whitespace-only highlights
+            if highlights:
+                highlights = [h for h in highlights if h and h.strip()]
+            
             # Add education header
             institution_location = f"{institution}, {location}" if location else institution
             formatted_text += f"<p class='education-header'><strong>{degree}</strong> | {institution_location} | {dates}</p>\n"
@@ -525,21 +533,30 @@ Focus on emphasizing elements most relevant to this job opportunity.
         
         # Process technical skills
         if 'technical' in skills_data and skills_data['technical']:
-            formatted_text += "<p><strong>Technical Skills:</strong> "
-            formatted_text += ", ".join(skills_data['technical'])
-            formatted_text += "</p>\n"
+            # Filter out empty or whitespace-only skills
+            technical_skills = [s for s in skills_data['technical'] if s and s.strip()]
+            if technical_skills:
+                formatted_text += "<p><strong>Technical Skills:</strong> "
+                formatted_text += ", ".join(technical_skills)
+                formatted_text += "</p>\n"
             
         # Process soft skills
         if 'soft' in skills_data and skills_data['soft']:
-            formatted_text += "<p><strong>Soft Skills:</strong> "
-            formatted_text += ", ".join(skills_data['soft'])
-            formatted_text += "</p>\n"
+            # Filter out empty or whitespace-only skills
+            soft_skills = [s for s in skills_data['soft'] if s and s.strip()]
+            if soft_skills:
+                formatted_text += "<p><strong>Soft Skills:</strong> "
+                formatted_text += ", ".join(soft_skills)
+                formatted_text += "</p>\n"
             
         # Process other skills
         if 'other' in skills_data and skills_data['other']:
-            formatted_text += "<p><strong>Other Skills:</strong> "
-            formatted_text += ", ".join(skills_data['other'])
-            formatted_text += "</p>\n"
+            # Filter out empty or whitespace-only skills
+            other_skills = [s for s in skills_data['other'] if s and s.strip()]
+            if other_skills:
+                formatted_text += "<p><strong>Other Skills:</strong> "
+                formatted_text += ", ".join(other_skills)
+                formatted_text += "</p>\n"
         
         # Store formatted content for preview generation
         self.tailored_content["skills"] = formatted_text
@@ -555,6 +572,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             title = project.get('title', '')
             dates = project.get('dates', '')
             details = project.get('details', [])
+            
+            # Filter out empty or whitespace-only details
+            if details:
+                details = [d for d in details if d and d.strip()]
             
             # Add project header
             formatted_text += f"<p class='project-header'><strong>{title}</strong>"
@@ -602,7 +623,7 @@ class OpenAIClient(LLMClient):
             print(f"Error initializing OpenAI client: {str(e)}")
             self.client = None
             raise
-
+    
     def tailor_resume_content(self, section_name: str, content: str, job_data: Dict) -> str:
         """
         Tailor resume content using OpenAI API
@@ -615,8 +636,8 @@ class OpenAIClient(LLMClient):
         Returns:
             Tailored content as string
         """
-        logger.info(f"Tailoring {section_name} with OpenAI API")
-        
+            logger.info(f"Tailoring {section_name} with OpenAI API")
+            
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
             return ""
@@ -649,7 +670,7 @@ class OpenAIClient(LLMClient):
                 if 'hard_skills' in analysis and analysis['hard_skills']:
                     hard_skills = ", ".join(analysis['hard_skills'])
                     analysis_prompt += f"\n\nKEY HARD SKILLS:\n{hard_skills}"
-                
+                    
                 # Add soft skills if available
                 if 'soft_skills' in analysis and analysis['soft_skills']:
                     soft_skills = ", ".join(analysis['soft_skills'])
@@ -699,6 +720,12 @@ Please restructure the experience section to better match the job requirements b
 4. Using terminology from the job description where appropriate
 5. Maintaining the original company names, job titles, and dates
 
+IMPORTANT:
+1. Do not include empty strings or whitespace-only strings in any arrays
+2. Every achievement must contain meaningful content
+3. Do not split single achievements into multiple entries
+4. Make sure each bullet point contains complete, meaningful content
+
 Do not add any fictional experiences or embellish beyond what is reasonable based on the original content.
 """
 
@@ -740,6 +767,13 @@ Please rewrite the education section to better match the job requirements. Focus
 3. Formatting in a way that emphasizes the most relevant educational experiences
 4. Including any certifications or training that matches required skills
 
+IMPORTANT:
+1. Do not include empty strings or whitespace-only strings in any arrays
+2. Every highlight must contain meaningful content
+3. Do not split single highlights into multiple entries
+4. Make sure each bullet point contains complete, meaningful content
+5. Ensure all education entries from the original resume are preserved
+
 Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
 """
 
@@ -775,7 +809,11 @@ Please rewrite the skills section to better match the job requirements. Focus on
 4. Rephrasing skills using the exact terminology from the job description
 5. Removing skills that are irrelevant to this position if the list is very long
 
-Only include skills that are authentic to the candidate based on their resume.
+IMPORTANT:
+1. Do not include empty strings or whitespace-only strings in any arrays
+2. Every skill must contain meaningful content
+3. Do not create duplicate skills
+4. Skills should be concise - typically one to three words each
 """
 
             elif section_name == "projects":
@@ -798,7 +836,7 @@ Return your response as a structured JSON object with the following format:
   "projects": [
     {{
       "title": "Project Name",
-      "dates": "Time Period",
+      "dates": "Time Period (optional)",
       "details": [
         "Detail 1",
         "Detail 2"
@@ -809,13 +847,19 @@ Return your response as a structured JSON object with the following format:
 ```
 
 Please rewrite the projects section to better match the job requirements. Focus on:
-1. Highlighting projects that demonstrate skills required for this job
-2. Emphasizing tools, technologies, and methodologies that match the job description
-3. Quantifying project outcomes and impacts where possible
-4. Rephrasing project descriptions to use terminology from the job posting
-5. Focusing on the candidate's specific contributions and leadership roles
+1. Highlighting projects that demonstrate skills relevant to this position
+2. Emphasizing technical achievements and technologies that align with the job description
+3. Quantifying impact and results wherever possible
+4. Using terminology from the job description where appropriate
 
-Keep the project titles and timelines the same, but enhance descriptions to better align with the job requirements.
+IMPORTANT:
+1. Do not include empty strings or whitespace-only strings in any arrays
+2. Every detail must contain meaningful content
+3. Do not split single project descriptions into multiple entries
+4. Make sure each bullet point contains complete, meaningful content
+5. Ensure all project entries from the original resume are preserved
+
+Maintain the original project names and dates - only enhance descriptions to make them more relevant.
 """
 
             else:
@@ -932,7 +976,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
             else:
                 logger.warning(f"JSON response missing expected '{section_name}' key")
                 return content
-            
+                
         except Exception as e:
             logger.error(f"Error in OpenAI API call: {str(e)}")
             return content
@@ -949,6 +993,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             position = job.get('position', '')
             dates = job.get('dates', '')
             achievements = job.get('achievements', [])
+            
+            # Filter out empty or whitespace-only achievements
+            if achievements:
+                achievements = [a for a in achievements if a and a.strip()]
             
             # Add job header
             company_location = f"{company}, {location}" if location else company
@@ -978,6 +1026,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             dates = edu.get('dates', '')
             highlights = edu.get('highlights', [])
             
+            # Filter out empty or whitespace-only highlights
+            if highlights:
+                highlights = [h for h in highlights if h and h.strip()]
+            
             # Add education header
             institution_location = f"{institution}, {location}" if location else institution
             formatted_text += f"<p class='education-header'><strong>{degree}</strong> | {institution_location} | {dates}</p>\n"
@@ -1002,21 +1054,30 @@ Focus on emphasizing elements most relevant to this job opportunity.
         
         # Process technical skills
         if 'technical' in skills_data and skills_data['technical']:
-            formatted_text += "<p><strong>Technical Skills:</strong> "
-            formatted_text += ", ".join(skills_data['technical'])
-            formatted_text += "</p>\n"
+            # Filter out empty or whitespace-only skills
+            technical_skills = [s for s in skills_data['technical'] if s and s.strip()]
+            if technical_skills:
+                formatted_text += "<p><strong>Technical Skills:</strong> "
+                formatted_text += ", ".join(technical_skills)
+                formatted_text += "</p>\n"
             
         # Process soft skills
         if 'soft' in skills_data and skills_data['soft']:
-            formatted_text += "<p><strong>Soft Skills:</strong> "
-            formatted_text += ", ".join(skills_data['soft'])
-            formatted_text += "</p>\n"
+            # Filter out empty or whitespace-only skills
+            soft_skills = [s for s in skills_data['soft'] if s and s.strip()]
+            if soft_skills:
+                formatted_text += "<p><strong>Soft Skills:</strong> "
+                formatted_text += ", ".join(soft_skills)
+                formatted_text += "</p>\n"
             
         # Process other skills
         if 'other' in skills_data and skills_data['other']:
-            formatted_text += "<p><strong>Other Skills:</strong> "
-            formatted_text += ", ".join(skills_data['other'])
-            formatted_text += "</p>\n"
+            # Filter out empty or whitespace-only skills
+            other_skills = [s for s in skills_data['other'] if s and s.strip()]
+            if other_skills:
+                formatted_text += "<p><strong>Other Skills:</strong> "
+                formatted_text += ", ".join(other_skills)
+                formatted_text += "</p>\n"
         
         # Store formatted content for preview generation
         self.tailored_content["skills"] = formatted_text
@@ -1032,6 +1093,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             title = project.get('title', '')
             dates = project.get('dates', '')
             details = project.get('details', [])
+            
+            # Filter out empty or whitespace-only details
+            if details:
+                details = [d for d in details if d and d.strip()]
             
             # Add project header
             formatted_text += f"<p class='project-header'><strong>{title}</strong>"
@@ -1434,6 +1499,19 @@ def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
     
     return True
 
+def validate_html_content(html_content: str) -> str:
+    """Remove any empty bullet points from HTML content"""
+    if not html_content:
+        return ""
+    
+    # Replace empty list items with nothing
+    html_content = re.sub(r'<li>\s*</li>\n?', '', html_content)
+    
+    # Remove empty unordered lists (lists with no items)
+    html_content = re.sub(r'<ul>\s*</ul>\n?', '', html_content)
+    
+    return html_content
+
 def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAIClient]) -> str:
     """Generate HTML preview directly from LLM API responses"""
     if not llm_client or not llm_client.tailored_content:
@@ -1489,11 +1567,14 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
     # Summary section
     if "summary" in llm_client.tailored_content:
         summary_html = format_section_content(llm_client.tailored_content["summary"])
-        html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2><div class="summary-content">{summary_html}</div></div>')
+        summary_html = validate_html_content(summary_html)  # Remove empty bullet points
+        if summary_html.strip():
+            html_parts.append(f'<div class="resume-section"><h2>Professional Summary</h2><div class="summary-content">{summary_html}</div></div>')
     
     # Experience section with improved formatting using format_job_entry
     if "experience" in llm_client.tailored_content:
         experience_content = llm_client.tailored_content["experience"]
+        experience_content = validate_html_content(experience_content)  # Remove empty bullet points
         
         # Process the experience content to extract job entries
         experience_entries = []
@@ -1559,10 +1640,12 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
                 # Check if it's a bullet point
                 if line.startswith('•') or line.startswith('-') or line.startswith('*'):
                     bullet_content = re.sub(r'^[•\-*]\s*', '', line).strip()
-                    current_bullets.append(bullet_content)
+                    if bullet_content:  # Only add non-empty bullet points
+                        current_bullets.append(bullet_content)
                 else:
-                    # Regular text, just add as a bullet for now
-                    current_bullets.append(line)
+                    # Regular text, just add as a bullet for now if it's not empty
+                    if line.strip():
+                        current_bullets.append(line)
             
             i += 1
         
@@ -1581,36 +1664,52 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
             dates = entry.get('dates', '')
             content = entry.get('content', [])
             
-            formatted_entries.append(format_job_entry(company, location, position, dates, content))
+            # Filter out empty content items
+            content = [c for c in content if c and c.strip()]
+            
+            if content:  # Only add entries with actual content
+                formatted_entries.append(format_job_entry(company, location, position, dates, content))
         
         # Combine all formatted entries
         formatted_experience = "\n".join(formatted_entries)
-        html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2><div class="experience-content">{formatted_experience}</div></div>')
+        if formatted_experience.strip():
+            html_parts.append(f'<div class="resume-section"><h2>Work Experience</h2><div class="experience-content">{formatted_experience}</div></div>')
     
     # Education section with improved formatting
     if "education" in llm_client.tailored_content:
         education_content = llm_client.tailored_content["education"]
-        formatted_education = format_education_content(education_content)
-        html_parts.append(f'<div class="resume-section"><h2>Education</h2><div class="education-content">{formatted_education}</div></div>')
+        education_content = validate_html_content(education_content)  # Remove empty bullet points
+        if education_content.strip():
+            formatted_education = format_education_content(education_content)
+            html_parts.append(f'<div class="resume-section"><h2>Education</h2><div class="education-content">{formatted_education}</div></div>')
     
     # Skills section
     if "skills" in llm_client.tailored_content:
         skills_html = format_section_content(llm_client.tailored_content["skills"])
-        html_parts.append(f'<div class="resume-section"><h2>Skills</h2><div class="skills-content">{skills_html}</div></div>')
+        skills_html = validate_html_content(skills_html)  # Remove empty bullet points
+        if skills_html.strip():
+            html_parts.append(f'<div class="resume-section"><h2>Skills</h2><div class="skills-content">{skills_html}</div></div>')
     
     # Projects section with improved formatting
     if "projects" in llm_client.tailored_content:
         projects_content = llm_client.tailored_content["projects"]
-        formatted_projects = format_projects_content(projects_content)
-        html_parts.append(f'<div class="resume-section"><h2>Projects</h2><div class="projects-content">{formatted_projects}</div></div>')
+        projects_content = validate_html_content(projects_content)  # Remove empty bullet points
+        if projects_content.strip():
+            formatted_projects = format_projects_content(projects_content)
+            html_parts.append(f'<div class="resume-section"><h2>Projects</h2><div class="projects-content">{formatted_projects}</div></div>')
     
     # Additional information section
     if "additional" in llm_client.tailored_content:
         additional_html = format_section_content(llm_client.tailored_content["additional"])
-        html_parts.append(f'<div class="resume-section"><h2>Additional Information</h2><div class="additional-content">{additional_html}</div></div>')
+        additional_html = validate_html_content(additional_html)  # Remove empty bullet points
+        if additional_html.strip():
+            html_parts.append(f'<div class="resume-section"><h2>Additional Information</h2><div class="additional-content">{additional_html}</div></div>')
     
     # Combine all HTML parts
     preview_html = "\n".join(html_parts)
+    
+    # Final validation to remove any remaining empty bullet points
+    preview_html = validate_html_content(preview_html)
     
     logger.info(f"Generated tailored resume preview HTML from direct LLM responses: {len(preview_html)} characters")
     
@@ -1618,707 +1717,6 @@ def generate_preview_from_llm_responses(llm_client: Union[ClaudeClient, OpenAICl
     logger.debug(f"HTML Preview first 500 chars: {preview_html[:500]}")
     
     return preview_html
-
-def generate_resume_preview(doc_path: str) -> str:
-    """Generate HTML preview of the resume document"""
-    global last_llm_client
-    
-    print(f"DEBUG: generate_resume_preview called for doc_path: {doc_path}")
-    
-    # Try to generate preview from direct LLM responses if available
-    if last_llm_client:
-        preview_html = generate_preview_from_llm_responses(last_llm_client)
-        if preview_html:
-            logger.info("Using direct LLM responses for preview")
-            return preview_html
-    
-    logger.info("No direct LLM responses available, generating preview from DOCX file")
-    print(f"DEBUG: Will now process DOCX file for preview: {doc_path}")
-    
-    try:
-        # Extract plain text from the document
-        text = docx2txt.process(doc_path)
-        
-        # Parse the document object
-        doc = Document(doc_path)
-        
-        html_parts = []
-        current_section = None
-        section_content = []
-        is_contact_section = False
-        
-        for para in doc.paragraphs:
-            text = para.text.strip()
-            
-            # Skip empty paragraphs
-            if not text:
-                continue
-            
-            # Check if this is a heading (section title)
-            if para.style.name.startswith('Heading') or any(p.bold for p in para.runs) or para.style.name == 'SectionHeader':
-                # Add previous section to HTML
-                if current_section and section_content:
-                    section_html = "\n".join(section_content)
-                    if is_contact_section:
-                        html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}<hr class="contact-divider"/></div>')
-                        is_contact_section = False
-                    else:
-                        html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
-                    section_content = []
-                
-                # Set new section
-                current_section = text
-                # Check if this is the contact section
-                if current_section.lower().find("contact") >= 0 or len(html_parts) == 0:
-                    is_contact_section = True
-                
-            else:
-                # Process content based on if it's a bullet point
-                if text.startswith('•') or text.startswith('-') or text.startswith('*') or text.startswith('▸'):
-                    if not section_content or not section_content[-1].startswith('<ul'):
-                        section_content.append('<ul class="dot-bullets">')
-                    
-                    # Remove the bullet point character and format as list item
-                    item_text = re.sub(r'^[•\-*▸]\s*', '', text).strip()
-                    section_content.append(f'<li>{item_text}</li>')
-                    
-                    # Check if we need to close the list
-                    next_is_bullet = False
-                    for next_para in doc.paragraphs:
-                        if next_para.text.strip() and (next_para.text.strip().startswith('•') or 
-                                                      next_para.text.strip().startswith('-') or 
-                                                      next_para.text.strip().startswith('*') or
-                                                      next_para.text.strip().startswith('▸')):
-                            next_is_bullet = True
-                            break
-                    
-                    if not next_is_bullet:
-                        section_content.append('</ul>')
-                else:
-                    # Regular paragraph
-                    section_content.append(f'<p>{text}</p>')
-        
-        # Add last section
-        if current_section and section_content:
-            section_html = "\n".join(section_content)
-            if is_contact_section:
-                html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}<hr class="contact-divider"/></div>')
-            else:
-                html_parts.append(f'<div class="resume-section"><h2>{current_section}</h2>{section_html}</div>')
-        
-        # Combine all HTML parts
-        preview_html = "\n".join(html_parts)
-        
-        logger.info(f"Generated tailored resume preview HTML from DOCX: {len(preview_html)} characters")
-        
-        return preview_html
-    
-    except Exception as e:
-        logger.error(f"Error generating resume preview: {str(e)}")
-        return f"<p>Error generating preview: {str(e)}</p>"
-
-def tailor_resume_sections(resume_sections, job_data, api_key, provider='claude', api_url=None):
-    """
-    Tailor each section of the resume based on job requirements.
-    Uses the specified LLM provider (claude or openai).
-    
-    Args:
-        resume_sections (dict): Dictionary of resume sections
-        job_data (dict): Job data including requirements and skills
-        api_key (str): API key for the LLM service
-        provider (str): LLM provider to use ('claude' or 'openai')
-        api_url (str, optional): API URL for Claude API
-        
-    Returns:
-        dict: Dictionary containing tailored resume sections
-    """
-    logger.info(f"Tailoring resume sections using {provider}")
-    
-    if not api_key:
-        logger.error("No API key provided for tailoring resume")
-        raise ValueError(f"Missing API key for {provider}")
-    
-    # Create the client for the chosen provider
-    if provider.lower() == 'claude':
-        client = ClaudeClient(api_key, api_url)
-        logger.info("Created Claude client for tailoring")
-    elif provider.lower() == 'openai':
-        client = OpenAIClient(api_key)
-        logger.info("Created OpenAI client for tailoring")
-    else:
-        logger.error(f"Unsupported provider: {provider}")
-        raise ValueError(f"Unsupported provider: {provider}")
-    
-    # Extract job requirements
-    requirements = job_data.get('requirements', [])
-    skills = job_data.get('skills', [])
-    
-    # Get AI analysis data if available
-    analysis_data = job_data.get('analysis', {})
-    candidate_profile = analysis_data.get('candidate_profile', '')
-    hard_skills = analysis_data.get('hard_skills', [])
-    soft_skills = analysis_data.get('soft_skills', [])
-    ideal_candidate = analysis_data.get('ideal_candidate', '')
-    
-    # Convert lists to string for easier handling in prompts
-    requirements_text = "\n".join([f"• {req}" for req in requirements]) if requirements else "No specific requirements provided."
-    skills_text = "\n".join([f"• {skill}" for skill in skills]) if skills else "No specific skills provided."
-    
-    # Format AI analysis data for prompt inclusion
-    has_analysis = bool(candidate_profile or hard_skills or soft_skills or ideal_candidate)
-    
-    analysis_prompt = ""
-    if has_analysis:
-        analysis_prompt += "\n\n=== AI ANALYSIS OF THE JOB POSTING ===\n\n"
-        
-        if candidate_profile:
-            analysis_prompt += f"CANDIDATE PROFILE:\n{candidate_profile}\n\n"
-            
-        if hard_skills:
-            hard_skills_text = "\n".join([f"• {skill}" for skill in hard_skills])
-            analysis_prompt += f"HARD SKILLS REQUIRED:\n{hard_skills_text}\n\n"
-            
-        if soft_skills:
-            soft_skills_text = "\n".join([f"• {skill}" for skill in soft_skills])
-            analysis_prompt += f"SOFT SKILLS REQUIRED:\n{soft_skills_text}\n\n"
-            
-        if ideal_candidate:
-            analysis_prompt += f"IDEAL CANDIDATE DESCRIPTION:\n{ideal_candidate}\n\n"
-    
-    # Log analysis data usage
-    if has_analysis:
-        logger.info("Including AI analysis data in tailoring prompts")
-    else:
-        logger.info("No AI analysis data available for tailoring")
-    
-    # Tailor each section
-    tailored_sections = {}
-    
-    # Define the sections to tailor
-    sections_to_tailor = ['summary', 'experience', 'education', 'skills', 'projects', 'additional']
-    
-    # Copy sections that should not be modified
-    for section, content in resume_sections.items():
-        if section not in sections_to_tailor:
-            tailored_sections[section] = content
-            logger.info(f"Copied section '{section}' without modification")
-    
-    # Tailor the resume summary
-    if 'summary' in resume_sections and resume_sections['summary']:
-        summary_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to write a compelling professional summary that positions the candidate as an ideal match for the target job.
-
-ORIGINAL RESUME SUMMARY:
-{resume_sections['summary']}
-
-JOB REQUIREMENTS:
-{requirements_text}
-
-REQUIRED SKILLS:
-{skills_text}{analysis_prompt}
-
-Please write a powerful professional summary following this specific 3-4 sentence paragraph structure (NOT bullet points):
-
-1. Recognition and Impact: Start with key achievements or recognitions that set the candidate apart in their field. Mention promotions, awards, or significant results they've driven.
-
-2. Personal Attributes: Highlight qualities, skills, and strengths that make them effective, focusing on those most relevant to this job posting. Include adaptability, leadership, creativity, analytical ability, or collaboration skills that align with the job requirements.
-
-3. Future Goals: End with a statement of career direction that shows how the candidate wants to make an impact in this specific role and how they want to grow.
-
-IMPORTANT: Format your response as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. If the original summary contains bullet points, convert them into flowing sentences that fit the 3-part structure above.
-
-The tone should be confident, clear, and forward-looking. Ensure each sentence is impactful and directly relevant to the target position.
-
-Example of expected format:
-"[Field] professional with [X years] of experience [specific achievement that increased metrics by X%]. Known for [2-3 key attributes most relevant to job]. Looking to apply this expertise in [specific type of environment] focused on [key aspects of the target role]."
-
-Make bold improvements that will help the candidate stand out for this specific position. Focus on emphasizing experience and skills that directly match the job requirements while maintaining authenticity.
-"""
-        try:
-            tailored_summary = client.tailor_resume_content(summary_prompt, "summary")
-            tailored_sections['summary'] = tailored_summary
-            logger.info(f"Tailored 'summary' section - Original: {len(resume_sections['summary'])} chars, Tailored: {len(tailored_summary)} chars")
-        except Exception as e:
-            logger.error(f"Error tailoring summary: {str(e)}")
-            tailored_sections['summary'] = resume_sections['summary']
-    else:
-        tailored_sections['summary'] = resume_sections.get('summary', '')
-        logger.info("No 'summary' section to tailor or section is empty")
-    
-    # Tailor the experience section
-    if 'experience' in resume_sections and resume_sections['experience']:
-        experience_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the professional experience section to make it more appealing for a specific job.
-
-ORIGINAL EXPERIENCE SECTION:
-{resume_sections['experience']}
-
-JOB REQUIREMENTS:
-{requirements_text}
-
-REQUIRED SKILLS:
-{skills_text}{analysis_prompt}
-
-Please rewrite the experience section to better match the job requirements. Make significant improvements that highlight relevant experience and skills.
-Don't just make minor word changes - make bold improvements by:
-1. Enhancing bullet points to emphasize achievements relevant to this job
-2. Adding quantifiable metrics where possible (estimates are acceptable if they sound realistic)
-3. Using strong action verbs and industry terminology from the job description
-4. Prioritizing experiences that match the job requirements
-5. Highlighting transferable skills for any experience that isn't directly related
-
-Keep approximately the same number of bullet points, but make them more impactful and targeted to this specific position.
-Maintain the same job titles, companies, and dates - only modify the descriptions and bullet points.
-"""
-        try:
-            tailored_experience = client.tailor_resume_content(experience_prompt, "experience")
-            tailored_sections['experience'] = tailored_experience
-            logger.info(f"Tailored 'experience' section - Original: {len(resume_sections['experience'])} chars, Tailored: {len(tailored_experience)} chars")
-        except Exception as e:
-            logger.error(f"Error tailoring experience: {str(e)}")
-            tailored_sections['experience'] = resume_sections['experience']
-    else:
-        tailored_sections['experience'] = resume_sections.get('experience', '')
-        logger.info("No 'experience' section to tailor or section is empty")
-    
-    # Tailor the education section
-    if 'education' in resume_sections and resume_sections['education']:
-        education_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the education section to make it more appealing for a specific job.
-
-ORIGINAL EDUCATION SECTION:
-{resume_sections['education']}
-
-JOB REQUIREMENTS:
-{requirements_text}
-
-REQUIRED SKILLS:
-{skills_text}{analysis_prompt}
-
-Please rewrite the education section to better match the job requirements. Focus on:
-1. Highlighting relevant coursework, projects, or achievements that match the job requirements
-2. Emphasizing academic accomplishments that demonstrate skills needed for this position
-3. Formatting in a way that emphasizes the most relevant educational experiences
-4. Including any certifications or training that matches required skills
-
-Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
-Be concise and impactful, focusing on qualifications that match the job requirements.
-"""
-        try:
-            tailored_education = client.tailor_resume_content(education_prompt, "education")
-            tailored_sections['education'] = tailored_education
-            logger.info(f"Tailored 'education' section - Original: {len(resume_sections['education'])} chars, Tailored: {len(tailored_education)} chars")
-        except Exception as e:
-            logger.error(f"Error tailoring education: {str(e)}")
-            tailored_sections['education'] = resume_sections['education']
-    else:
-        tailored_sections['education'] = resume_sections.get('education', '')
-        logger.info("No 'education' section to tailor or section is empty")
-    
-    # Tailor the skills section
-    if 'skills' in resume_sections and resume_sections['skills']:
-        skills_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the skills section to make it more appealing for a specific job.
-
-ORIGINAL SKILLS SECTION:
-{resume_sections['skills']}
-
-JOB REQUIREMENTS:
-{requirements_text}
-
-REQUIRED SKILLS:
-{skills_text}{analysis_prompt}
-
-Please rewrite the skills section to better match the job requirements. Focus on:
-1. Reordering skills to prioritize those mentioned in the job description
-2. Adding any missing skills that the candidate likely has based on their experience (must be reasonable to infer from other sections)
-3. Grouping skills into relevant categories that align with the job posting
-4. Rephrasing skills using the exact terminology from the job description
-5. Removing skills that are irrelevant to this position if the list is very long
-
-Only include skills that are authentic to the candidate based on their resume.
-Format the skills section clearly and concisely for easy scanning.
-"""
-        try:
-            tailored_skills = client.tailor_resume_content(skills_prompt, "skills")
-            tailored_sections['skills'] = tailored_skills
-            logger.info(f"Tailored 'skills' section - Original: {len(resume_sections['skills'])} chars, Tailored: {len(tailored_skills)} chars")
-        except Exception as e:
-            logger.error(f"Error tailoring skills: {str(e)}")
-            tailored_sections['skills'] = resume_sections['skills']
-    else:
-        tailored_sections['skills'] = resume_sections.get('skills', '')
-        logger.info("No 'skills' section to tailor or section is empty")
-    
-    # Tailor the projects section if it exists
-    if 'projects' in resume_sections and resume_sections['projects']:
-        projects_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the projects section to make it more appealing for a specific job.
-
-ORIGINAL PROJECTS SECTION:
-{resume_sections['projects']}
-
-JOB REQUIREMENTS:
-{requirements_text}
-
-REQUIRED SKILLS:
-{skills_text}{analysis_prompt}
-
-Please rewrite the projects section to better match the job requirements. Focus on:
-1. Highlighting projects that demonstrate skills required for this job
-2. Emphasizing tools, technologies, and methodologies that match the job description
-3. Quantifying project outcomes and impacts where possible
-4. Rephrasing project descriptions to use terminology from the job posting
-5. Focusing on the candidate's specific contributions and leadership roles
-
-Keep the project titles and timelines the same, but enhance descriptions to better align with the job requirements.
-Be concise and impactful, prioritizing projects most relevant to this position.
-"""
-        try:
-            tailored_projects = client.tailor_resume_content(projects_prompt, "projects")
-            tailored_sections['projects'] = tailored_projects
-            logger.info(f"Tailored 'projects' section - Original: {len(resume_sections['projects'])} chars, Tailored: {len(tailored_projects)} chars")
-        except Exception as e:
-            logger.error(f"Error tailoring projects: {str(e)}")
-            tailored_sections['projects'] = resume_sections['projects']
-    else:
-        tailored_sections['projects'] = resume_sections.get('projects', '')
-        logger.info("No 'projects' section to tailor or section is empty")
-    
-    # Tailor additional information if it exists
-    if 'additional' in resume_sections and resume_sections['additional']:
-        additional_prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the additional information section to make it more appealing for a specific job.
-
-ORIGINAL ADDITIONAL INFORMATION:
-{resume_sections['additional']}
-
-JOB REQUIREMENTS:
-{requirements_text}
-
-REQUIRED SKILLS:
-{skills_text}{analysis_prompt}
-
-Please rewrite the additional information to better match the job requirements. Focus on:
-1. Highlighting relevant certifications, awards, or accomplishments
-2. Including language skills, volunteer work, or other information that relates to the job
-3. Emphasizing professional memberships or activities relevant to this position
-4. Keeping only the most relevant points that add value to your application
-
-Be concise and selective, only including information that strengthens the application for this specific position.
-"""
-        try:
-            tailored_additional = client.tailor_resume_content(additional_prompt, "additional")
-            tailored_sections['additional'] = tailored_additional
-            logger.info(f"Tailored 'additional' section - Original: {len(resume_sections['additional'])} chars, Tailored: {len(tailored_additional)} chars")
-        except Exception as e:
-            logger.error(f"Error tailoring additional information: {str(e)}")
-            tailored_sections['additional'] = resume_sections['additional']
-    else:
-        tailored_sections['additional'] = resume_sections.get('additional', '')
-        logger.info("No 'additional' section to tailor or section is empty")
-    
-    return tailored_sections
-
-def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = 'openai', api_url: str = None) -> Tuple[Dict, Union[ClaudeClient, OpenAIClient]]:
-    """
-    Tailor a resume using an LLM API (Claude or OpenAI)
-    
-    The tailoring process preserves the original structure of the resume including:
-    - Company names, job titles, and date ranges
-    - Education institutions and degrees
-    - Section headings and hierarchical structure
-    
-    Only the descriptive bullet points are enhanced to be more targeted for the specific job.
-    Each bullet point is rewritten to follow the format:
-    [Action verb] + [What you did] + [How you did it] + [The result/impact]
-    
-    Args:
-        resume_path: Path to the resume file
-        job_data: Job data including requirements and skills
-        api_key: API key for the LLM provider
-        provider: LLM provider ('claude' or 'openai')
-        api_url: API URL for Claude
-        
-    Returns:
-        Tuple with tailored sections dictionary and LLM client instance
-    """
-    global last_llm_client
-    
-    try:
-        logger.info(f"Tailoring resume with {provider.upper()} API: {resume_path}")
-        
-        # Extract resume sections
-        resume_sections = extract_resume_sections(resume_path)
-        
-        # Initialize the appropriate LLM client based on provider
-        if provider.lower() == 'claude':
-            llm_client = ClaudeClient(api_key, api_url)
-        elif provider.lower() == 'openai':
-            llm_client = OpenAIClient(api_key)
-        else:
-            raise ValueError(f"Unsupported LLM provider: {provider}. Please use 'claude' or 'openai'.")
-            
-        # Store the client for preview generation
-        last_llm_client = llm_client
-        
-        # Dictionary to store tailored sections
-        tailored_sections = {}
-        
-        # Add contact information (not tailored)
-        tailored_sections['contact'] = resume_sections.get('contact', '')
-        
-        # Tailor the professional summary
-        if resume_sections.get('summary'):
-            tailored_sections['summary'] = llm_client.tailor_resume_content(
-                'summary', 
-                resume_sections.get('summary', ''),
-                job_data
-            )
-        
-        # Tailor the work experience
-        if resume_sections.get('experience'):
-            tailored_sections['experience'] = llm_client.tailor_resume_content(
-                'experience', 
-                resume_sections.get('experience', ''),
-                job_data
-            )
-        
-        # Tailor education section
-        if resume_sections.get('education'):
-            tailored_sections['education'] = llm_client.tailor_resume_content(
-                'education',
-                resume_sections.get('education', ''),
-                job_data
-            )
-        
-        # Tailor the skills section
-        if resume_sections.get('skills'):
-            tailored_sections['skills'] = llm_client.tailor_resume_content(
-                'skills', 
-                resume_sections.get('skills', ''),
-                job_data
-            )
-        
-        # Tailor projects section
-        if resume_sections.get('projects'):
-            tailored_sections['projects'] = llm_client.tailor_resume_content(
-                'projects',
-                resume_sections.get('projects', ''),
-                job_data
-            )
-        
-        # Tailor additional information
-        if resume_sections.get('additional'):
-            tailored_sections['additional'] = llm_client.tailor_resume_content(
-                'additional',
-                resume_sections.get('additional', ''),
-                job_data
-            )
-        
-        # Save all raw responses if using OpenAI
-        if provider.lower() == 'openai' and hasattr(llm_client, 'save_all_raw_responses'):
-            all_responses_path = llm_client.save_all_raw_responses(resume_path)
-            logger.info(f"All raw OpenAI responses saved to {all_responses_path}")
-        
-        logger.info(f"Resume tailoring completed successfully with {provider.upper()}")
-        
-        # Return tailored sections and LLM client
-        return tailored_sections, llm_client
-    
-    except Exception as e:
-        logger.error(f"Error tailoring resume with {provider.upper()}: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise Exception(f"Error tailoring resume with {provider.upper()}: {str(e)}")
-
-def generate_tailored_document(resume_path, tailored_sections):
-    """Generate a tailored resume document using YC/Eddie style
-
-    Args:
-        resume_path (str): Path to the original resume
-        tailored_sections (dict): Dictionary containing tailored resume sections
-
-    Returns:
-        str: Path to the new tailored resume
-    """
-    try:
-        logger.info(f"Generating tailored document from {resume_path}")
-        
-        # Create output path for tailored resume
-        filename = os.path.basename(resume_path)
-        base_name, ext = os.path.splitext(filename)
-        
-        # Use modern style for the output
-        output_path = os.path.join(os.path.dirname(resume_path), f"{base_name}_tailored_modern.docx")
-        
-        # Import the resume styler module
-        from resume_styler import create_resume_document
-        
-        # Generate tailored resume with modern style
-        output_path = create_resume_document(
-            contact=tailored_sections.get('contact', ''),
-            summary=tailored_sections.get('summary', ''),
-            experience=tailored_sections.get('experience', ''),
-            education=tailored_sections.get('education', ''),
-            skills=tailored_sections.get('skills', ''),
-            projects=tailored_sections.get('projects', ''),
-            additional=tailored_sections.get('additional', ''),
-            output_path=output_path
-        )
-        
-        logger.info(f"Successfully generated tailored document at {output_path}")
-        return output_path
-        
-    except Exception as e:
-        logger.error(f"Error generating tailored document: {str(e)}")
-        logger.error(traceback.format_exc())
-        return None
-
-def format_job_entry(company, location, position, dates, content):
-    """Format a job entry for the resume in HTML
-    
-    Args:
-        company (str): Company name
-        location (str): Location of the company
-        position (str): Job title/position
-        dates (str): Employment dates
-        content (list): Bullet points for the job
-        
-    Returns:
-        str: Formatted HTML for the job entry
-    """
-    # Format company and location with flex display
-    company_line = f"""
-    <div class="company-line" style="display: flex; justify-content: space-between; margin-top: 0.2cm; margin-bottom: 0.1cm;">
-        <div class="company-name" style="font-weight: bold; text-align: left;">{company}</div>
-        <div class="company-location" style="text-align: right;">{location}</div>
-    </div>
-    """
-    
-    # Format position and dates with flex display
-    position_line = f"""
-    <div class="position-line" style="display: flex; justify-content: space-between; margin-bottom: 0.2cm;">
-        <div class="position-title" style="font-style: italic; text-align: left;">{position}</div>
-        <div class="position-date" style="text-align: right;">{dates}</div>
-    </div>
-    """
-    
-    # Format bullet points
-    bullets_html = ""
-    if content and len(content) > 0:
-        bullets_html = '<ul class="dot-bullets" style="list-style-type: disc; padding-left: 0; margin-top: 0.1cm; margin-bottom: 0.2cm; margin-left: 0; text-align: left;">'
-        for bullet in content:
-            bullets_html += f'<li style="margin-bottom: 0.1cm; padding-left: 0; margin-left: 1em; text-indent: 0; text-align: left;">{bullet}</li>'
-        bullets_html += '</ul>'
-    
-    # Combine all components into a job entry
-    job_entry = f"""
-    <div class="job-entry" style="margin-bottom: 15px; page-break-inside: avoid;">
-        {company_line}
-        {position_line}
-        {bullets_html}
-    </div>
-    """
-    
-    return job_entry
-
-def format_education_entry(institution, location, degree, dates, bullets):
-    """Format an education entry with proper institution/location and degree/date layout"""
-    html = []
-    
-    # Split location into city and state if possible
-    city = ""
-    state = ""
-    if location:
-        # Look for common patterns like "City, State" or "City State"
-        location_parts = re.split(r',\s*|\s+(?=[A-Z]{2}$)', location)
-        if len(location_parts) > 1:
-            city = location_parts[0].strip()
-            state = location_parts[1].strip()
-        else:
-            # If no obvious split, keep everything as state
-            state = location
-    
-    # Add institution and location in a flex layout with explicit text-align
-    html.append('<div class="company-line">')
-    html.append(f'<div class="company-name" style="text-align: left;">{institution}</div>')
-    if city or state:
-        location_text = f"{city + ' ' if city else ''}{state}"
-        html.append(f'<div class="company-location" style="text-align: right;">{location_text}</div>')
-    html.append('</div>')
-    
-    # Add degree and dates in a flex layout with explicit text-align
-    if degree:
-        html.append('<div class="position-line">')
-        html.append(f'<div class="position-title" style="text-align: left;">{degree}</div>')
-        if dates:
-            html.append(f'<div class="position-date" style="text-align: right;">{dates}</div>')
-        html.append('</div>')
-    
-    # Add bullets if any with explicit text-align
-    if bullets:
-        html.append('<ul class="dot-bullets" style="text-align: left;">')
-        for bullet in bullets:
-            html.append(f'<li style="text-align: left;">{bullet}</li>')
-        html.append('</ul>')
-    
-    return '\n'.join(html)
-
-def format_project_entry(project, dates, bullets):
-    """Format a project entry with proper project/date layout"""
-    html = []
-    
-    # Add project and dates in a flex layout
-    html.append('<div class="company-line">')
-    html.append(f'<div class="company-name">{project}</div>')
-    if dates:
-        html.append(f'<div class="company-location">{dates}</div>')
-    html.append('</div>')
-    
-    # Add bullets if any
-    if bullets:
-        html.append('<ul class="dot-bullets">')
-        for bullet in bullets:
-            html.append(f'<li>{bullet}</li>')
-        html.append('</ul>')
-    
-    return '\n'.join(html)
-
-def format_experience_content(content):
-    """
-    Format the experience content, which may include bullet points.
-    """
-    if not content:
-        return ""
-    
-    # Check if content is a list of bullet points
-    if isinstance(content, list):
-        bullets = content
-        formatted_bullets = []
-        for bullet in bullets:
-            if bullet.strip():  # Only add non-empty bullets
-                formatted_bullets.append(f'<li style="text-align: left !important; margin-bottom: 3px !important;">{bullet.strip()}</li>')
-        
-        if formatted_bullets:
-            return f"""
-            <ul class="experience-bullets" style="margin-top: 5px !important; margin-bottom: 0px !important; padding-left: 20px !important;">
-                {''.join(formatted_bullets)}
-            </ul>
-            """
-        return ""
-    
-    # If content is a string, assume it's paragraph format
-    elif isinstance(content, str) and content.strip():
-        paragraphs = content.split('\n')
-        formatted_paragraphs = []
-        
-        for p in paragraphs:
-            if p.strip():
-                formatted_paragraphs.append(f'<p style="margin-bottom: 5px !important; text-align: left !important;">{p.strip()}</p>')
-        
-        return ''.join(formatted_paragraphs)
-    
-    return ""
 
 def format_education_content(content: str) -> str:
     """Format education content with institution/location and degree/date layout"""
