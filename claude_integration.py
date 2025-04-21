@@ -131,405 +131,877 @@ class ClaudeClient(LLMClient):
     """Client for interacting with Claude API"""
     
     def __init__(self, api_key: str, api_url: str = None):
+        """Initialize the Claude API client"""
         super().__init__(api_key)
+        self.api_key = api_key
         self.api_url = api_url
         self.client = None
+        self.tailored_content = {}
         
-        # Validate API key format
-        if not api_key or not api_key.startswith('sk-ant'):
-            print(f"WARNING: Invalid Claude API key format. Key starts with: {api_key[:6] if api_key else 'None'}")
-            print(f"API key length: {len(api_key) if api_key else 0} characters")
-            raise ValueError("Claude API key must start with 'sk-ant'")
-            
-        print(f"Initializing Claude client with API key starting with: {api_key[:8]}...")
-        print(f"API key length: {len(api_key)} characters")
-        
-        # Initialize Anthropic client
         try:
-            print("Testing Claude API connection...")
+            # Validate API key format for Claude
+            if not api_key:
+                raise ValueError("Claude API key is missing")
+                
+            # Import anthropic library (lazy import to handle missing dependency)
+            try:
+                from anthropic import Anthropic
+                logger.info("Using anthropic SDK for Claude API")
+            except ImportError:
+                logger.error("Failed to import anthropic SDK. Make sure it's installed with 'pip install anthropic'")
+                raise
+                
+            # Initialize Claude client
             self.client = Anthropic(api_key=api_key)
-            print("Claude client initialized successfully")
+            logger.info(f"Claude API client initialized successfully")
+        
         except Exception as e:
-            print(f"Error initializing Claude client: {str(e)}")
-            print(traceback.format_exc())
+            logger.error(f"Error initializing Claude API client: {str(e)}")
+            logger.error(traceback.format_exc())
             raise ValueError(f"Failed to initialize Claude client: {str(e)}")
     
     def tailor_resume_content(self, section_name: str, content: str, job_data: Dict) -> str:
-        """Tailor resume content using Claude API"""
+        """
+        Tailor resume content using Claude API
+        
+        Args:
+            section_name: Name of the section to tailor
+            content: Content of the section
+            job_data: Job data including requirements and skills
+            
+        Returns:
+            Tailored content as string
+        """
+        logger.info(f"Tailoring {section_name} with Claude API")
+        
+        if not content or not content.strip():
+            logger.warning(f"Empty {section_name} content provided, skipping tailoring")
+            return ""
+            
+        if not self.client:
+            logger.error("Claude client not initialized")
+            return content
+            
         try:
-            logger.info(f"Tailoring {section_name} with Claude API")
+            # Extract job data
+            job_title = job_data.get('job_title', 'the position')
+            company = job_data.get('company', 'the company')
+            requirements = job_data.get('requirements', [])
+            skills = job_data.get('skills', [])
+
+            # Prepare requirements and skills text
+            requirements_text = "\n".join([f"- {req}" for req in requirements]) if requirements else "Not specified"
+            skills_text = ", ".join(skills) if skills else "Not specified"
             
-            # Create the system prompt
-            system_prompt = (
-                "You are an expert resume writer specializing in crafting powerful, achievement-focused bullet points "
-                "while preserving the original structure of resume sections. "
-                "Your task is to rewrite ONLY the bullet points while maintaining all structural elements like "
-                "company names, job titles, dates, education institutions, degrees, and section headings. "
-                "Transform each bullet point into a concise statement that follows: "
-                "[Action verb] + [What you did] + [How you did it] + [The result or measurable impact]. "
-                "Each bullet point MUST be 85-100 characters to ensure it fits on a single line. "
-                "Focus on bullet points that are most relevant to the target position.\n\n"
-                "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
-                "DO NOT include any job requirements, job descriptions, expected skills, or any other "
-                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
-                "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
-                "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
-                "EXTREMELY IMPORTANT: Preserve the EXACT structure and format of the original content. If two distinct pieces of information "
-                "appear on the same line in the original (such as 'Company Name' and 'City, State' or 'Position Title' and 'Date Range'), "
-                "they MUST remain on the same line in your output. DO NOT separate information that appears on a single line in the original.\n\n"
-                "IMPORTANT FOR SUMMARY SECTION: If you are tailoring the summary section, format it as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. "
-                "If the original summary contains bullet points, convert them into flowing sentences in paragraph form."
-            )
-            
-            # Format requirements and skills as bullet points for clearer prompting
-            requirements_text = "\n".join([f"• {req}" for req in job_data.get('requirements', [])])
-            skills_text = "\n".join([f"• {skill}" for skill in job_data.get('skills', [])])
-            
-            # Include AI analysis if available
-            ai_analysis_text = ""
+            # Get job analysis if available
+            analysis_prompt = ""
             if 'analysis' in job_data and isinstance(job_data['analysis'], dict):
                 analysis = job_data['analysis']
                 
                 # Add candidate profile if available
                 if 'candidate_profile' in analysis and analysis['candidate_profile']:
-                    ai_analysis_text += f"\n## Candidate Profile\n{analysis['candidate_profile']}\n"
+                    analysis_prompt += f"\n\nCANDIDATE PROFILE:\n{analysis['candidate_profile']}"
                 
                 # Add hard skills if available
                 if 'hard_skills' in analysis and analysis['hard_skills']:
-                    hard_skills = "\n".join([f"• {skill}" for skill in analysis['hard_skills']])
-                    ai_analysis_text += f"\n## Required Hard Skills\n{hard_skills}\n"
-                    
+                    hard_skills = ", ".join(analysis['hard_skills'])
+                    analysis_prompt += f"\n\nKEY HARD SKILLS:\n{hard_skills}"
+                
                 # Add soft skills if available
                 if 'soft_skills' in analysis and analysis['soft_skills']:
-                    soft_skills = "\n".join([f"• {skill}" for skill in analysis['soft_skills']])
-                    ai_analysis_text += f"\n## Required Soft Skills\n{soft_skills}\n"
+                    soft_skills = ", ".join(analysis['soft_skills'])
+                    analysis_prompt += f"\n\nKEY SOFT SKILLS:\n{soft_skills}"
                 
-                # Add ideal candidate description if available
+                # Add ideal candidate if available
                 if 'ideal_candidate' in analysis and analysis['ideal_candidate']:
-                    ai_analysis_text += f"\n## Ideal Candidate\n{analysis['ideal_candidate']}\n"
-            
-            # Create the user prompt
-            user_prompt = f"""
-            # Job Requirements (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
-            {requirements_text}
+                    analysis_prompt += f"\n\nIDEAL CANDIDATE:\n{analysis['ideal_candidate']}"
 
-            # Desired Skills (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
-            {skills_text}
-            
-            {ai_analysis_text}
+            # Build section-specific prompts
+            if section_name == "experience":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the work experience section to better match the requirements for a {job_title} position at {company}.
 
-            # Current Resume Section: {section_name}
-            {content}
+ORIGINAL EXPERIENCE SECTION:
+{content}
 
-            # Strong Action Verbs for Impact
-            Achievement: Achieved, Attained, Completed, Established, Exceeded, Improved, Pioneered, Reduced, Resolved, Succeeded
-            Leadership: Administered, Coordinated, Delegated, Directed, Executed, Led, Managed, Orchestrated, Oversaw, Supervised
-            Communication: Authored, Collaborated, Consulted, Influenced, Negotiated, Persuaded, Presented, Promoted, Represented
-            Analysis: Analyzed, Assessed, Calculated, Evaluated, Examined, Identified, Investigated, Researched, Studied, Tested
-            Development: Architected, Created, Designed, Developed, Engineered, Formulated, Implemented, Integrated, Programmed
-            Efficiency: Accelerated, Automated, Enhanced, Leveraged, Maximized, Optimized, Streamlined, Transformed, Upgraded
+JOB REQUIREMENTS:
+{requirements_text}
 
-            # IMPORTANT STRUCTURAL INSTRUCTIONS:
-            1. PRESERVE EXACT FORMATTING AND LINE STRUCTURE from the original content
-            2. If two pieces of information appear on the same line, KEEP THEM ON THE SAME LINE
-            3. DO NOT ALTER any headers, company names, job titles, dates, or educational institution names
-            4. DO NOT add or remove line breaks from the original structure
-            5. ONLY modify the content of bullet points - not their positioning or structure
-            6. If the original has "Company Name" and "Location" on the same line, keep them together
-            7. If the original has "Position Title" and "Date Range" on the same line, keep them together
-            8. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
 
-            # Example of Proper Format Preservation:
+Return your response as a structured JSON object with the following format:
 
-            ORIGINAL:
-            ```
-            Senior Data Scientist                                Jun 2021-Present
-            Pinterest Inc                                        San Francisco, CA
-            • Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.
-            ```
+```json
+{{
+  "experience": [
+    {{
+      "company": "Company Name",
+      "location": "City, State",
+      "position": "Job Title",
+      "dates": "Time Period",
+      "achievements": [
+        "Achievement 1",
+        "Achievement 2"
+      ]
+    }}
+  ]
+}}
+```
 
-            CORRECTLY TAILORED (maintains exact line structure):
-            ```
-            Senior Data Scientist                                Jun 2021-Present
-            Pinterest Inc                                        San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
-            ```
+Please restructure the experience section to better match the job requirements by:
+1. Highlighting relevant experience that demonstrates skills required for this job
+2. Focusing on achievements and results rather than just responsibilities
+3. Quantifying accomplishments with metrics where possible
+4. Using terminology from the job description where appropriate
+5. Maintaining the original company names, job titles, and dates
 
-            INCORRECT (breaks the structure by splitting information onto separate lines):
-            ```
-            Senior Data Scientist
-            Jun 2021-Present
-            Pinterest Inc
-            San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
-            ```
+Do not add any fictional experiences or embellish beyond what is reasonable based on the original content.
+"""
 
-            ## Section-Specific Structure Guidelines:
-            
-            ### For EXPERIENCE sections:
-            - First line often has position and dates on the same line - KEEP THEM TOGETHER
-            - Second line often has company and location on the same line - KEEP THEM TOGETHER
-            - Only enhance the bullet points that describe responsibilities and achievements
-            
-            ### For EDUCATION sections:
-            - School name, degree, graduation date should remain UNCHANGED and maintain SAME LINE positioning
-            - Only enhance descriptions of academic achievements or relevant coursework
-            
-            ### For SKILLS sections:
-            - You may reorganize skills to prioritize those matching job requirements
-            - Keep all original skills but put most relevant ones first
-            - Use original wording for technical skills, tools, and programming languages
-            
-            ### For SUMMARY sections:
-            - Maintain paragraph structure but enhance language
-            - Keep same length but make more impactful and relevant to this position
-            
-            # IMPORTANT WARNING
-            # DO NOT include any of the job requirements or desired skills in your output.
-            # Your output MUST contain ONLY resume content, not job listings or requirements.
-            # NEVER return job requirements text in your response.
-            
-            Rewrite ONLY the bullet points in the "{section_name}" section following these requirements:
-            1. Follow this EXACT structure for each bullet point: [Action verb] + [What you did] + [How you did it] + [The result/impact]
-            2. Ensure each bullet point is 85-100 characters ONLY - this is critical for single-line display
-            3. Focus ONLY on factual information from the original resume - do not invent achievements
-            4. Prioritize experiences and skills that are MOST RELEVANT to the target position requirements
-            5. Use strong action verbs from the list above that reflect the level of responsibility
-            6. Quantify results and impact whenever possible with specific metrics and percentages
-            
-            Format your response with the exact same structure as the input, maintaining all headings, company names, 
-            titles and dates exactly as they appear in the original, only replacing the bullet points with enhanced ones.
-            """
-            
-            # Make the API request
+            elif section_name == "education":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the education section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL EDUCATION SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "education": [
+    {{
+      "institution": "University Name",
+      "location": "City, State",
+      "degree": "Degree Name",
+      "dates": "Time Period",
+      "highlights": [
+        "Highlight 1",
+        "Highlight 2"
+      ]
+    }}
+  ]
+}}
+```
+
+Please rewrite the education section to better match the job requirements. Focus on:
+1. Highlighting relevant coursework, projects, or achievements that match the job requirements
+2. Emphasizing academic accomplishments that demonstrate skills needed for this position
+3. Including any certifications or training that matches required skills
+
+Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
+"""
+
+            elif section_name == "skills":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the skills section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL SKILLS SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "skills": {{
+    "technical": ["Skill 1", "Skill 2"],
+    "soft": ["Skill 1", "Skill 2"],
+    "other": ["Skill 1", "Skill 2"]
+  }}
+}}
+```
+
+Please rewrite the skills section to better match the job requirements. Focus on:
+1. Reordering skills to prioritize those mentioned in the job description
+2. Adding any missing skills that the candidate likely has based on their experience (must be reasonable to infer from other sections)
+3. Grouping skills into relevant categories that align with the job posting
+4. Rephrasing skills using the exact terminology from the job description
+5. Removing skills that are irrelevant to this position if the list is very long
+
+Only include skills that are authentic to the candidate based on their resume.
+"""
+
+            elif section_name == "projects":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the projects section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL PROJECTS SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "projects": [
+    {{
+      "title": "Project Name",
+      "dates": "Time Period",
+      "details": [
+        "Detail 1",
+        "Detail 2"
+      ]
+    }}
+  ]
+}}
+```
+
+Please rewrite the projects section to better match the job requirements. Focus on:
+1. Highlighting projects that demonstrate skills required for this job
+2. Emphasizing tools, technologies, and methodologies that match the job description
+3. Quantifying project outcomes and impacts where possible
+4. Rephrasing project descriptions to use terminology from the job posting
+5. Focusing on the candidate's specific contributions and leadership roles
+
+Keep the project titles and timelines the same, but enhance descriptions to better align with the job requirements.
+"""
+
+            else:
+                # For other sections, use a generic prompt
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the {section_name} section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "{section_name}": "The tailored content goes here as a single string"
+}}
+```
+
+Please rewrite this section to better match the job requirements while maintaining the same basic structure and information.
+Focus on emphasizing elements most relevant to this job opportunity.
+"""
+
+            # Make the API call
             response = self.client.messages.create(
                 model="claude-3-sonnet-20240229",
                 max_tokens=4000,
                 temperature=0.7,
-                system=system_prompt,
                 messages=[
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": "You are an expert resume tailor. Return only valid JSON responses in the specified format."},
+                    {"role": "user", "content": prompt}
                 ]
             )
             
-            # Log token usage
-            logger.info(f"Claude API response for {section_name}: {len(response.content[0].text)} chars")
-            logger.info(f"Input tokens: {response.usage.input_tokens}, Output tokens: {response.usage.output_tokens}")
+            # Get the response content
+            response_content = response.content[0].text.strip()
+            logger.info(f"Claude API response for {section_name}: {len(response_content)} chars")
             
-            # Store the tailored content for direct HTML generation
-            self.tailored_content[section_name] = response.content[0].text.strip()
-            
-            return response.content[0].text.strip()
+            # Parse JSON response
+            try:
+                # First try to extract JSON if not properly formatted
+                json_str = response_content
+                if not json_str.startswith('{'):
+                    # Try to extract JSON from text
+                    json_start = response_content.find('{')
+                    json_end = response_content.rfind('}') + 1
+                    if json_start >= 0 and json_end > json_start:
+                        json_str = response_content[json_start:json_end]
+                
+                json_response = json.loads(json_str)
+                
+                # Process JSON based on section type
+                if section_name == "experience" and "experience" in json_response:
+                    return self._format_experience_json(json_response["experience"])
+                elif section_name == "education" and "education" in json_response:
+                    return self._format_education_json(json_response["education"])
+                elif section_name == "skills" and "skills" in json_response:
+                    return self._format_skills_json(json_response["skills"])
+                elif section_name == "projects" and "projects" in json_response:
+                    return self._format_projects_json(json_response["projects"])
+                elif section_name in json_response:
+                    # For other sections, just return the string content
+                    return json_response[section_name]
+                else:
+                    logger.warning(f"JSON response missing expected '{section_name}' key")
+                    return content
+                    
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse JSON from Claude response: {response_content[:100]}...")
+                # Store as raw text for fallback
+                self.tailored_content[section_name] = response_content
+                return response_content
             
         except Exception as e:
-            logger.error(f"Error tailoring {section_name} with Claude API: {str(e)}")
-            logger.error(traceback.format_exc())
-            # Partial key for debugging
-            api_key_prefix = self.api_key[:8] + "..." if self.api_key else "None"
-            logger.error(f"Claude API key prefix: {api_key_prefix}, API URL: {self.api_url}")
-            raise Exception(f"Claude API error: {str(e)}")
+            logger.error(f"Error in Claude API call: {str(e)}")
+            return content
+    
+    def _format_experience_json(self, experience_data: list) -> str:
+        """Format experience JSON data into text with proper formatting"""
+        result = []
+        
+        for job in experience_data:
+            company = job.get("company", "")
+            location = job.get("location", "")
+            position = job.get("position", "")
+            dates = job.get("dates", "")
+            achievements = job.get("achievements", [])
+            
+            # Add company and position line
+            if company and location:
+                result.append(f"{company} {location}")
+            elif company:
+                result.append(company)
+                
+            if position and dates:
+                result.append(f"{position} {dates}")
+            elif position:
+                result.append(position)
+                
+            # Add achievements as bullet points
+            for achievement in achievements:
+                if achievement:
+                    result.append(f"• {achievement}")
+            
+            # Add a blank line between jobs
+            result.append("")
+            
+        return "\n".join(result)
+        
+    def _format_education_json(self, education_data: list) -> str:
+        """Format education JSON data into text with proper formatting"""
+        result = []
+        
+        for edu in education_data:
+            institution = edu.get("institution", "")
+            location = edu.get("location", "")
+            degree = edu.get("degree", "")
+            dates = edu.get("dates", "")
+            highlights = edu.get("highlights", [])
+            
+            # Add institution and location
+            if institution and location:
+                result.append(f"{institution} {location}")
+            elif institution:
+                result.append(institution)
+                
+            # Add degree and dates
+            if degree and dates:
+                result.append(f"{degree} {dates}")
+            elif degree:
+                result.append(degree)
+                
+            # Add highlights as bullet points
+            for highlight in highlights:
+                if highlight:
+                    result.append(f"• {highlight}")
+            
+            # Add a blank line between education entries
+            result.append("")
+            
+        return "\n".join(result)
+        
+    def _format_skills_json(self, skills_data: dict) -> str:
+        """Format skills JSON data into text with proper formatting"""
+        result = []
+        
+        # Process technical skills
+        if "technical" in skills_data and skills_data["technical"]:
+            result.append("Technical Skills:")
+            for skill in skills_data["technical"]:
+                result.append(f"• {skill}")
+            result.append("")
+            
+        # Process soft skills
+        if "soft" in skills_data and skills_data["soft"]:
+            result.append("Soft Skills:")
+            for skill in skills_data["soft"]:
+                result.append(f"• {skill}")
+            result.append("")
+            
+        # Process other skills
+        if "other" in skills_data and skills_data["other"]:
+            result.append("Other Skills:")
+            for skill in skills_data["other"]:
+                result.append(f"• {skill}")
+        
+        return "\n".join(result)
+        
+    def _format_projects_json(self, projects_data: list) -> str:
+        """Format projects JSON data into text with proper formatting"""
+        result = []
+        
+        for project in projects_data:
+            title = project.get("title", "")
+            dates = project.get("dates", "")
+            details = project.get("details", [])
+            
+            # Add title and dates
+            if title and dates:
+                result.append(f"{title} {dates}")
+            elif title:
+                result.append(title)
+                
+            # Add details as bullet points
+            for detail in details:
+                if detail:
+                    result.append(f"• {detail}")
+            
+            # Add a blank line between projects
+            result.append("")
+            
+        return "\n".join(result)
 
 class OpenAIClient(LLMClient):
-    """Client for interacting with OpenAI API"""
+    """OpenAI API client for resume tailoring"""
     
     def __init__(self, api_key: str):
+        """Initialize the OpenAI API client"""
         super().__init__(api_key)
+        self.api_key = api_key
         self.client = None
-        
-        # Validate API key format
-        if not api_key or not api_key.startswith('sk-'):
-            print(f"WARNING: Invalid OpenAI API key format. Key starts with: {api_key[:6] if api_key else 'None'}")
-            print(f"API key length: {len(api_key) if api_key else 0} characters")
-            raise ValueError("OpenAI API key must start with 'sk-'")
-            
-        print(f"Initializing OpenAI client with API key starting with: {api_key[:8]}...")
-        print(f"API key length: {len(api_key)} characters")
-        
-        # Initialize OpenAI client
+        self.initialize_client()
+
+    def initialize_client(self):
+        """Initialize the OpenAI client"""
         try:
+            print(f"Initializing OpenAI client with API key starting with: {self.api_key[:8]}...")
+            print(f"API key length: {len(self.api_key)} characters")
             print("Testing OpenAI API connection...")
-            self.client = OpenAI(api_key=api_key)
-            # No API call validation - just initialize the client
+            
+            from openai import OpenAI
+            self.client = OpenAI(api_key=self.api_key)
+            
+            # Test connection with a simple request
+            self.client.models.list(limit=1)
             print("OpenAI client initialized successfully")
+            
         except Exception as e:
             print(f"Error initializing OpenAI client: {str(e)}")
-            print(traceback.format_exc())
-            raise ValueError(f"Failed to initialize OpenAI client: {str(e)}")
-    
+            self.client = None
+            raise
+
     def tailor_resume_content(self, section_name: str, content: str, job_data: Dict) -> str:
-        """Tailor resume content using OpenAI API"""
+        """
+        Tailor resume content using OpenAI API
+        
+        Args:
+            section_name: Name of the section to tailor
+            content: Content of the section
+            job_data: Job data including requirements and skills
+            
+        Returns:
+            Tailored content as string
+        """
+        logger.info(f"Tailoring {section_name} with OpenAI API")
+        
+        if not content or not content.strip():
+            logger.warning(f"Empty {section_name} content provided, skipping tailoring")
+            return ""
+            
+        if not self.client:
+            logger.error("OpenAI client not initialized")
+            return content
+        
         try:
-            logger.info(f"Tailoring {section_name} with OpenAI API")
+            # Extract job data
+            job_title = job_data.get('job_title', 'the position')
+            company = job_data.get('company', 'the company')
+            requirements = job_data.get('requirements', [])
+            skills = job_data.get('skills', [])
+
+            # Prepare requirements and skills text
+            requirements_text = "\n".join([f"- {req}" for req in requirements]) if requirements else "Not specified"
+            skills_text = ", ".join(skills) if skills else "Not specified"
             
-            # Create the system prompt
-            system_prompt = (
-                "You are an expert resume writer specializing in crafting powerful, achievement-focused bullet points "
-                "while preserving the original structure of resume sections. "
-                "Your task is to rewrite ONLY the bullet points while maintaining all structural elements like "
-                "company names, job titles, dates, education institutions, degrees, and section headings. "
-                "Transform each bullet point into a concise statement that follows: "
-                "[Action verb] + [What you did] + [How you did it] + [The result or measurable impact]. "
-                "Each bullet point MUST be 85-100 characters to ensure it fits on a single line. "
-                "Focus on bullet points that are most relevant to the target position.\n\n"
-                "CRITICAL: Your response MUST contain ONLY the tailored resume content. "
-                "DO NOT include any job requirements, job descriptions, expected skills, or any other "
-                "information from the job posting in your response. NEVER include job analysis text or candidate profiles in your output. "
-                "Your output should look exactly like a resume section with no trace of the job requirements or analysis used to tailor it. "
-                "Output ONLY the tailored resume content with no meta-text, explanations, or job information.\n\n"
-                "EXTREMELY IMPORTANT: Preserve the EXACT structure and format of the original content. If two distinct pieces of information "
-                "appear on the same line in the original (such as 'Company Name' and 'City, State' or 'Position Title' and 'Date Range'), "
-                "they MUST remain on the same line in your output. DO NOT separate information that appears on a single line in the original.\n\n"
-                "IMPORTANT FOR SUMMARY SECTION: If you are tailoring the summary section, format it as a SINGLE COHESIVE PARAGRAPH (3-4 sentences total), not as bullet points. "
-                "If the original summary contains bullet points, convert them into flowing sentences in paragraph form."
-            )
-            
-            # Format requirements and skills as bullet points for clearer prompting
-            requirements_text = "\n".join([f"• {req}" for req in job_data.get('requirements', [])])
-            skills_text = "\n".join([f"• {skill}" for skill in job_data.get('skills', [])])
-            
-            # Include AI analysis if available
-            ai_analysis_text = ""
+            # Get job analysis if available
+            analysis_prompt = ""
             if 'analysis' in job_data and isinstance(job_data['analysis'], dict):
                 analysis = job_data['analysis']
                 
                 # Add candidate profile if available
                 if 'candidate_profile' in analysis and analysis['candidate_profile']:
-                    ai_analysis_text += f"\n## Candidate Profile\n{analysis['candidate_profile']}\n"
+                    analysis_prompt += f"\n\nCANDIDATE PROFILE:\n{analysis['candidate_profile']}"
                 
                 # Add hard skills if available
                 if 'hard_skills' in analysis and analysis['hard_skills']:
-                    hard_skills = "\n".join([f"• {skill}" for skill in analysis['hard_skills']])
-                    ai_analysis_text += f"\n## Required Hard Skills\n{hard_skills}\n"
-                    
+                    hard_skills = ", ".join(analysis['hard_skills'])
+                    analysis_prompt += f"\n\nKEY HARD SKILLS:\n{hard_skills}"
+                
                 # Add soft skills if available
                 if 'soft_skills' in analysis and analysis['soft_skills']:
-                    soft_skills = "\n".join([f"• {skill}" for skill in analysis['soft_skills']])
-                    ai_analysis_text += f"\n## Required Soft Skills\n{soft_skills}\n"
+                    soft_skills = ", ".join(analysis['soft_skills'])
+                    analysis_prompt += f"\n\nKEY SOFT SKILLS:\n{soft_skills}"
                 
-                # Add ideal candidate description if available
+                # Add ideal candidate if available
                 if 'ideal_candidate' in analysis and analysis['ideal_candidate']:
-                    ai_analysis_text += f"\n## Ideal Candidate\n{analysis['ideal_candidate']}\n"
-            
-            # Create the user prompt
-            user_prompt = f"""
-            # Job Requirements (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
-            {requirements_text}
+                    analysis_prompt += f"\n\nIDEAL CANDIDATE:\n{analysis['ideal_candidate']}"
 
-            # Desired Skills (REFERENCE ONLY - DO NOT INCLUDE IN YOUR RESPONSE)
-            {skills_text}
-            
-            {ai_analysis_text}
+            # Build section-specific prompts
+            if section_name == "experience":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the work experience section to better match the requirements for a {job_title} position at {company}.
 
-            # Current Resume Section: {section_name}
-            {content}
+ORIGINAL EXPERIENCE SECTION:
+{content}
 
-            # Strong Action Verbs for Impact
-            Achievement: Achieved, Attained, Completed, Established, Exceeded, Improved, Pioneered, Reduced, Resolved, Succeeded
-            Leadership: Administered, Coordinated, Delegated, Directed, Executed, Led, Managed, Orchestrated, Oversaw, Supervised
-            Communication: Authored, Collaborated, Consulted, Influenced, Negotiated, Persuaded, Presented, Promoted, Represented
-            Analysis: Analyzed, Assessed, Calculated, Evaluated, Examined, Identified, Investigated, Researched, Studied, Tested
-            Development: Architected, Created, Designed, Developed, Engineered, Formulated, Implemented, Integrated, Programmed
-            Efficiency: Accelerated, Automated, Enhanced, Leveraged, Maximized, Optimized, Streamlined, Transformed, Upgraded
+JOB REQUIREMENTS:
+{requirements_text}
 
-            # IMPORTANT STRUCTURAL INSTRUCTIONS:
-            1. PRESERVE EXACT FORMATTING AND LINE STRUCTURE from the original content
-            2. If two pieces of information appear on the same line, KEEP THEM ON THE SAME LINE
-            3. DO NOT ALTER any headers, company names, job titles, dates, or educational institution names
-            4. DO NOT add or remove line breaks from the original structure
-            5. ONLY modify the content of bullet points - not their positioning or structure
-            6. If the original has "Company Name" and "Location" on the same line, keep them together
-            7. If the original has "Position Title" and "Date Range" on the same line, keep them together
-            8. Keep the document structure IDENTICAL to the original - maintain all sections, headings, and hierarchy
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
 
-            # Example of Proper Format Preservation:
+Return your response as a structured JSON object with the following format:
 
-            ORIGINAL:
-            ```
-            Senior Data Scientist                                Jun 2021-Present
-            Pinterest Inc                                        San Francisco, CA
-            • Implemented evaluation workflow, reducing cycle time by 90%, saving $75k+ annually.
-            ```
+```json
+{{
+  "experience": [
+    {{
+      "company": "Company Name",
+      "location": "City, State",
+      "position": "Job Title",
+      "dates": "Time Period",
+      "achievements": [
+        "Achievement 1",
+        "Achievement 2"
+      ]
+    }}
+  ]
+}}
+```
 
-            CORRECTLY TAILORED (maintains exact line structure):
-            ```
-            Senior Data Scientist                                Jun 2021-Present
-            Pinterest Inc                                        San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
-            ```
+Please restructure the experience section to better match the job requirements by:
+1. Highlighting relevant experience that demonstrates skills required for this job
+2. Focusing on achievements and results rather than just responsibilities
+3. Quantifying accomplishments with metrics where possible
+4. Using terminology from the job description where appropriate
+5. Maintaining the original company names, job titles, and dates
 
-            INCORRECT (breaks the structure by splitting information onto separate lines):
-            ```
-            Senior Data Scientist
-            Jun 2021-Present
-            Pinterest Inc
-            San Francisco, CA
-            • Optimized ML evaluation pipeline, reducing cycle time by 90% and saving $75k annually.
-            ```
+Do not add any fictional experiences or embellish beyond what is reasonable based on the original content.
+"""
 
-            ## Section-Specific Structure Guidelines:
-            
-            ### For EXPERIENCE sections:
-            - First line often has position and dates on the same line - KEEP THEM TOGETHER
-            - Second line often has company and location on the same line - KEEP THEM TOGETHER
-            - Only enhance the bullet points that describe responsibilities and achievements
-            
-            ### For EDUCATION sections:
-            - School name, degree, graduation date should remain UNCHANGED and maintain SAME LINE positioning
-            - Only enhance descriptions of academic achievements or relevant coursework
-            
-            ### For SKILLS sections:
-            - You may reorganize skills to prioritize those matching job requirements
-            - Keep all original skills but put most relevant ones first
-            - Use original wording for technical skills, tools, and programming languages
-            
-            ### For SUMMARY sections:
-            - Maintain paragraph structure but enhance language
-            - Keep same length but make more impactful and relevant to this position
-            
-            # IMPORTANT WARNING
-            # DO NOT include any of the job requirements or desired skills in your output.
-            # Your output MUST contain ONLY resume content, not job listings or requirements.
-            # NEVER return job requirements text in your response.
-            
-            Rewrite ONLY the bullet points in the "{section_name}" section following these requirements:
-            1. Follow this EXACT structure for each bullet point: [Action verb] + [What you did] + [How you did it] + [The result/impact]
-            2. Ensure each bullet point is 85-100 characters ONLY - this is critical for single-line display
-            3. Focus ONLY on factual information from the original resume - do not invent achievements
-            4. Prioritize experiences and skills that are MOST RELEVANT to the target position requirements
-            5. Use strong action verbs from the list above that reflect the level of responsibility
-            6. Quantify results and impact whenever possible with specific metrics and percentages
-            
-            Format your response with the exact same structure as the input, maintaining all headings, company names, 
-            titles and dates exactly as they appear in the original, only replacing the bullet points with enhanced ones.
-            """
-            
-            # Make the API request
+            elif section_name == "education":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the education section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL EDUCATION SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "education": [
+    {{
+      "institution": "University Name",
+      "location": "City, State",
+      "degree": "Degree Name",
+      "dates": "Time Period",
+      "highlights": [
+        "Highlight 1",
+        "Highlight 2"
+      ]
+    }}
+  ]
+}}
+```
+
+Please rewrite the education section to better match the job requirements. Focus on:
+1. Highlighting relevant coursework, projects, or achievements that match the job requirements
+2. Emphasizing academic accomplishments that demonstrate skills needed for this position
+3. Formatting in a way that emphasizes the most relevant educational experiences
+4. Including any certifications or training that matches required skills
+
+Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
+"""
+
+            elif section_name == "skills":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the skills section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL SKILLS SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "skills": {{
+    "technical": ["Skill 1", "Skill 2"],
+    "soft": ["Skill 1", "Skill 2"],
+    "other": ["Skill 1", "Skill 2"]
+  }}
+}}
+```
+
+Please rewrite the skills section to better match the job requirements. Focus on:
+1. Reordering skills to prioritize those mentioned in the job description
+2. Adding any missing skills that the candidate likely has based on their experience (must be reasonable to infer from other sections)
+3. Grouping skills into relevant categories that align with the job posting
+4. Rephrasing skills using the exact terminology from the job description
+5. Removing skills that are irrelevant to this position if the list is very long
+
+Only include skills that are authentic to the candidate based on their resume.
+"""
+
+            elif section_name == "projects":
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the projects section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL PROJECTS SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "projects": [
+    {{
+      "title": "Project Name",
+      "dates": "Time Period",
+      "details": [
+        "Detail 1",
+        "Detail 2"
+      ]
+    }}
+  ]
+}}
+```
+
+Please rewrite the projects section to better match the job requirements. Focus on:
+1. Highlighting projects that demonstrate skills required for this job
+2. Emphasizing tools, technologies, and methodologies that match the job description
+3. Quantifying project outcomes and impacts where possible
+4. Rephrasing project descriptions to use terminology from the job posting
+5. Focusing on the candidate's specific contributions and leadership roles
+
+Keep the project titles and timelines the same, but enhance descriptions to better align with the job requirements.
+"""
+
+            else:
+                # For other sections, use a generic prompt
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the {section_name} section to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL SECTION:
+{content}
+
+JOB REQUIREMENTS:
+{requirements_text}
+
+REQUIRED SKILLS:
+{skills_text}{analysis_prompt}
+
+Return your response as a structured JSON object with the following format:
+
+```json
+{{
+  "{section_name}": "The tailored content goes here as a single string"
+}}
+```
+
+Please rewrite this section to better match the job requirements while maintaining the same basic structure and information.
+Focus on emphasizing elements most relevant to this job opportunity.
+"""
+
+            # Make the API call
             response = self.client.chat.completions.create(
                 model="gpt-4o",
+                response_format={"type": "json_object"},
                 temperature=0.7,
                 messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": "You are an expert resume tailor. Return only valid JSON responses in the specified format."},
+                    {"role": "user", "content": prompt}
                 ]
             )
             
+            # Get the model's response
+            response_content = response.choices[0].message.content.strip()
+            logger.info(f"OpenAI API response for {section_name}: {len(response_content)} chars")
+            
             # Log token usage
-            output_text = response.choices[0].message.content
-            logger.info(f"OpenAI API response for {section_name}: {len(output_text)} chars")
-            logger.info(f"Completion tokens: {response.usage.completion_tokens}, Prompt tokens: {response.usage.prompt_tokens}")
+            if hasattr(response, 'usage') and response.usage:
+                logger.info(f"Completion tokens: {response.usage.completion_tokens}, Prompt tokens: {response.usage.prompt_tokens}")
             
-            # Store the tailored content for direct HTML generation
-            self.tailored_content[section_name] = output_text.strip()
-            
-            return output_text.strip()
+            # Parse JSON response
+            try:
+                json_response = json.loads(response_content)
                 
+                # Process JSON based on section type
+                if section_name == "experience" and "experience" in json_response:
+                    return self._format_experience_json(json_response["experience"])
+                elif section_name == "education" and "education" in json_response:
+                    return self._format_education_json(json_response["education"])
+                elif section_name == "skills" and "skills" in json_response:
+                    return self._format_skills_json(json_response["skills"])
+                elif section_name == "projects" and "projects" in json_response:
+                    return self._format_projects_json(json_response["projects"])
+                elif section_name in json_response:
+                    # For other sections, just return the string content
+                    return json_response[section_name]
+                else:
+                    logger.warning(f"JSON response missing expected '{section_name}' key")
+                    return content
+                    
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse JSON from OpenAI response: {response_content[:100]}...")
+                return response_content
+            
         except Exception as e:
-            logger.error(f"Error tailoring {section_name} with OpenAI API: {str(e)}")
-            logger.error(traceback.format_exc())
-            # Partial key for debugging
-            api_key_prefix = self.api_key[:8] + "..." if self.api_key else "None"
-            logger.error(f"OpenAI API key prefix: {api_key_prefix}")
-            raise Exception(f"OpenAI API error: {str(e)}")
+            logger.error(f"Error in OpenAI API call: {str(e)}")
+            return content
+            
+    def _format_experience_json(self, experience_data: list) -> str:
+        """Format experience JSON data into text with proper formatting"""
+        result = []
+        
+        for job in experience_data:
+            company = job.get("company", "")
+            location = job.get("location", "")
+            position = job.get("position", "")
+            dates = job.get("dates", "")
+            achievements = job.get("achievements", [])
+            
+            # Add company and position line
+            if company and location:
+                result.append(f"{company} {location}")
+            elif company:
+                result.append(company)
+                
+            if position and dates:
+                result.append(f"{position} {dates}")
+            elif position:
+                result.append(position)
+                
+            # Add achievements as bullet points
+            for achievement in achievements:
+                if achievement:
+                    result.append(f"• {achievement}")
+            
+            # Add a blank line between jobs
+            result.append("")
+            
+        return "\n".join(result)
+        
+    def _format_education_json(self, education_data: list) -> str:
+        """Format education JSON data into text with proper formatting"""
+        result = []
+        
+        for edu in education_data:
+            institution = edu.get("institution", "")
+            location = edu.get("location", "")
+            degree = edu.get("degree", "")
+            dates = edu.get("dates", "")
+            highlights = edu.get("highlights", [])
+            
+            # Add institution and location
+            if institution and location:
+                result.append(f"{institution} {location}")
+            elif institution:
+                result.append(institution)
+                
+            # Add degree and dates
+            if degree and dates:
+                result.append(f"{degree} {dates}")
+            elif degree:
+                result.append(degree)
+                
+            # Add highlights as bullet points
+            for highlight in highlights:
+                if highlight:
+                    result.append(f"• {highlight}")
+            
+            # Add a blank line between education entries
+            result.append("")
+            
+        return "\n".join(result)
+        
+    def _format_skills_json(self, skills_data: dict) -> str:
+        """Format skills JSON data into text with proper formatting"""
+        result = []
+        
+        # Process technical skills
+        if "technical" in skills_data and skills_data["technical"]:
+            result.append("Technical Skills:")
+            for skill in skills_data["technical"]:
+                result.append(f"• {skill}")
+            result.append("")
+            
+        # Process soft skills
+        if "soft" in skills_data and skills_data["soft"]:
+            result.append("Soft Skills:")
+            for skill in skills_data["soft"]:
+                result.append(f"• {skill}")
+            result.append("")
+            
+        # Process other skills
+        if "other" in skills_data and skills_data["other"]:
+            result.append("Other Skills:")
+            for skill in skills_data["other"]:
+                result.append(f"• {skill}")
+        
+        return "\n".join(result)
+        
+    def _format_projects_json(self, projects_data: list) -> str:
+        """Format projects JSON data into text with proper formatting"""
+        result = []
+        
+        for project in projects_data:
+            title = project.get("title", "")
+            dates = project.get("dates", "")
+            details = project.get("details", [])
+            
+            # Add title and dates
+            if title and dates:
+                result.append(f"{title} {dates}")
+            elif title:
+                result.append(title)
+                
+            # Add details as bullet points
+            for detail in details:
+                if detail:
+                    result.append(f"• {detail}")
+            
+            # Add a blank line between projects
+            result.append("")
+            
+        return "\n".join(result)
 
 def format_section_content(content: str) -> str:
     """Format section content for HTML display, handling bullet points and markdown"""
