@@ -10,6 +10,8 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import docx2txt
 from typing import Dict, List, Tuple, Optional, Any, Union
+from datetime import datetime
+from flask import current_app
 
 # Third-party imports for Claude
 from anthropic import Anthropic, RateLimitError
@@ -294,7 +296,8 @@ Return your response as a structured JSON object with the following format:
 Please rewrite the education section to better match the job requirements. Focus on:
 1. Highlighting relevant coursework, projects, or achievements that match the job requirements
 2. Emphasizing academic accomplishments that demonstrate skills needed for this position
-3. Including any certifications or training that matches required skills
+3. Formatting in a way that emphasizes the most relevant educational experiences
+4. Including any certifications or training that matches required skills
 
 Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
 """
@@ -439,7 +442,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
                     return self._format_projects_json(json_response["projects"])
                 elif section_name in json_response:
                     # For other sections, just return the string content
-                    return json_response[section_name]
+                    formatted_text = json_response[section_name]
+                    # Store for preview generation
+                    self.tailored_content[section_name] = formatted_text
+                    return formatted_text
                 else:
                     logger.warning(f"JSON response missing expected '{section_name}' key")
                     return content
@@ -454,121 +460,118 @@ Focus on emphasizing elements most relevant to this job opportunity.
             logger.error(f"Error in Claude API call: {str(e)}")
             return content
     
-    def _format_experience_json(self, experience_data: list) -> str:
-        """Format experience JSON data into text with proper formatting"""
-        result = []
-        
+    def _format_experience_json(self, experience_data: List[Dict]) -> str:
+        """Format experience JSON data into HTML"""
+        if not experience_data:
+            return ""
+            
+        formatted_text = ""
         for job in experience_data:
-            company = job.get("company", "")
-            location = job.get("location", "")
-            position = job.get("position", "")
-            dates = job.get("dates", "")
-            achievements = job.get("achievements", [])
+            company = job.get('company', '')
+            location = job.get('location', '')
+            position = job.get('position', '')
+            dates = job.get('dates', '')
+            achievements = job.get('achievements', [])
             
-            # Add company and position line
-            if company and location:
-                result.append(f"{company} {location}")
-            elif company:
-                result.append(company)
-                
-            if position and dates:
-                result.append(f"{position} {dates}")
-            elif position:
-                result.append(position)
-                
+            # Add job header
+            company_location = f"{company}, {location}" if location else company
+            formatted_text += f"<p class='job-header'><strong>{position}</strong> | {company_location} | {dates}</p>\n"
+            
             # Add achievements as bullet points
-            for achievement in achievements:
-                if achievement:
-                    result.append(f"• {achievement}")
-            
-            # Add a blank line between jobs
-            result.append("")
-            
-        return "\n".join(result)
+            if achievements:
+                formatted_text += "<ul>\n"
+                for achievement in achievements:
+                    formatted_text += f"<li>{achievement}</li>\n"
+                formatted_text += "</ul>\n"
         
-    def _format_education_json(self, education_data: list) -> str:
-        """Format education JSON data into text with proper formatting"""
-        result = []
+        # Store formatted content for preview generation
+        self.tailored_content["experience"] = formatted_text
+        return formatted_text
         
+    def _format_education_json(self, education_data: List[Dict]) -> str:
+        """Format education JSON data into HTML"""
+        if not education_data:
+            return ""
+            
+        formatted_text = ""
         for edu in education_data:
-            institution = edu.get("institution", "")
-            location = edu.get("location", "")
-            degree = edu.get("degree", "")
-            dates = edu.get("dates", "")
-            highlights = edu.get("highlights", [])
+            institution = edu.get('institution', '')
+            location = edu.get('location', '')
+            degree = edu.get('degree', '')
+            dates = edu.get('dates', '')
+            highlights = edu.get('highlights', [])
             
-            # Add institution and location
-            if institution and location:
-                result.append(f"{institution} {location}")
-            elif institution:
-                result.append(institution)
-                
-            # Add degree and dates
-            if degree and dates:
-                result.append(f"{degree} {dates}")
-            elif degree:
-                result.append(degree)
-                
+            # Add education header
+            institution_location = f"{institution}, {location}" if location else institution
+            formatted_text += f"<p class='education-header'><strong>{degree}</strong> | {institution_location} | {dates}</p>\n"
+            
             # Add highlights as bullet points
-            for highlight in highlights:
-                if highlight:
-                    result.append(f"• {highlight}")
-            
-            # Add a blank line between education entries
-            result.append("")
-            
-        return "\n".join(result)
+            if highlights:
+                formatted_text += "<ul>\n"
+                for highlight in highlights:
+                    formatted_text += f"<li>{highlight}</li>\n"
+                formatted_text += "</ul>\n"
         
-    def _format_skills_json(self, skills_data: dict) -> str:
-        """Format skills JSON data into text with proper formatting"""
-        result = []
+        # Store formatted content for preview generation
+        self.tailored_content["education"] = formatted_text
+        return formatted_text
+        
+    def _format_skills_json(self, skills_data: Dict) -> str:
+        """Format skills JSON data into HTML"""
+        if not skills_data:
+            return ""
+            
+        formatted_text = ""
         
         # Process technical skills
-        if "technical" in skills_data and skills_data["technical"]:
-            result.append("Technical Skills:")
-            for skill in skills_data["technical"]:
-                result.append(f"• {skill}")
-            result.append("")
+        if 'technical' in skills_data and skills_data['technical']:
+            formatted_text += "<p><strong>Technical Skills:</strong> "
+            formatted_text += ", ".join(skills_data['technical'])
+            formatted_text += "</p>\n"
             
         # Process soft skills
-        if "soft" in skills_data and skills_data["soft"]:
-            result.append("Soft Skills:")
-            for skill in skills_data["soft"]:
-                result.append(f"• {skill}")
-            result.append("")
+        if 'soft' in skills_data and skills_data['soft']:
+            formatted_text += "<p><strong>Soft Skills:</strong> "
+            formatted_text += ", ".join(skills_data['soft'])
+            formatted_text += "</p>\n"
             
         # Process other skills
-        if "other" in skills_data and skills_data["other"]:
-            result.append("Other Skills:")
-            for skill in skills_data["other"]:
-                result.append(f"• {skill}")
+        if 'other' in skills_data and skills_data['other']:
+            formatted_text += "<p><strong>Other Skills:</strong> "
+            formatted_text += ", ".join(skills_data['other'])
+            formatted_text += "</p>\n"
         
-        return "\n".join(result)
+        # Store formatted content for preview generation
+        self.tailored_content["skills"] = formatted_text
+        return formatted_text
         
-    def _format_projects_json(self, projects_data: list) -> str:
-        """Format projects JSON data into text with proper formatting"""
-        result = []
-        
+    def _format_projects_json(self, projects_data: List[Dict]) -> str:
+        """Format projects JSON data into HTML"""
+        if not projects_data:
+            return ""
+            
+        formatted_text = ""
         for project in projects_data:
-            title = project.get("title", "")
-            dates = project.get("dates", "")
-            details = project.get("details", [])
+            title = project.get('title', '')
+            dates = project.get('dates', '')
+            details = project.get('details', [])
             
-            # Add title and dates
-            if title and dates:
-                result.append(f"{title} {dates}")
-            elif title:
-                result.append(title)
-                
+            # Add project header
+            formatted_text += f"<p class='project-header'><strong>{title}</strong>"
+            if dates:
+                formatted_text += f" | {dates}"
+            formatted_text += "</p>\n"
+            
             # Add details as bullet points
-            for detail in details:
-                if detail:
-                    result.append(f"• {detail}")
-            
-            # Add a blank line between projects
-            result.append("")
-            
-        return "\n".join(result)
+            if details:
+                formatted_text += "<ul>\n"
+                for detail in details:
+                    formatted_text += f"<li>{detail}</li>\n"
+                formatted_text += "</ul>\n"
+        
+        # Store formatted content for preview generation
+        self.tailored_content["projects"] = formatted_text
+        return formatted_text
 
 class OpenAIClient(LLMClient):
     """OpenAI API client for resume tailoring"""
@@ -578,6 +581,7 @@ class OpenAIClient(LLMClient):
         super().__init__(api_key)
         self.api_key = api_key
         self.client = None
+        self.raw_responses = {}  # Store raw JSON responses from API
         self.initialize_client()
 
     def initialize_client(self):
@@ -590,8 +594,8 @@ class OpenAIClient(LLMClient):
             from openai import OpenAI
             self.client = OpenAI(api_key=self.api_key)
             
-            # Test connection with a simple request
-            self.client.models.list(limit=1)
+            # Test connection with a simple request - removed limit parameter
+            self.client.models.list()
             print("OpenAI client initialized successfully")
             
         except Exception as e:
@@ -840,168 +844,236 @@ Please rewrite this section to better match the job requirements while maintaini
 Focus on emphasizing elements most relevant to this job opportunity.
 """
 
-            # Make the API call
+            # Send the request to OpenAI API
             response = self.client.chat.completions.create(
-                model="gpt-4o",
-                response_format={"type": "json_object"},
-                temperature=0.7,
+                model="gpt-4o" if "4" in os.environ.get('OPENAI_MODEL_NAME', 'gpt-4') else "gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are an expert resume tailor. Return only valid JSON responses in the specified format."},
+                    {"role": "system", "content": "You are an expert resume tailoring assistant."},
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                temperature=0.3,
+                max_tokens=4096,
+                top_p=1.0
             )
             
-            # Get the model's response
-            response_content = response.choices[0].message.content.strip()
-            logger.info(f"OpenAI API response for {section_name}: {len(response_content)} chars")
+            # Get response text and extract JSON
+            response_text = response.choices[0].message.content
+            
+            # Save raw response for debugging
+            self.raw_responses[section_name] = response_text
+            
+            # Save to file
+            try:
+                # Create api_responses directory if it doesn't exist
+                api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
+                if not os.path.exists(api_responses_dir):
+                    os.makedirs(api_responses_dir)
+                
+                # Generate filename with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"{section_name}_response_{timestamp}.json"
+                filepath = os.path.join(api_responses_dir, filename)
+                
+                # Write response to file
+                with open(filepath, 'w') as f:
+                    f.write(response_text)
+                
+                logger.info(f"Saved raw API response for {section_name} to {filepath}")
+            except Exception as e:
+                logger.error(f"Error saving raw API response: {str(e)}")
+            
+            logger.info(f"OpenAI API response for {section_name}: {len(response_text)} chars")
             
             # Log token usage
-            if hasattr(response, 'usage') and response.usage:
-                logger.info(f"Completion tokens: {response.usage.completion_tokens}, Prompt tokens: {response.usage.prompt_tokens}")
+            prompt_tokens = response.usage.prompt_tokens
+            completion_tokens = response.usage.completion_tokens
+            logger.info(f"Completion tokens: {completion_tokens}, Prompt tokens: {prompt_tokens}")
             
-            # Parse JSON response
-            try:
-                json_response = json.loads(response_content)
+            # Extract JSON from the response
+            json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
                 
-                # Process JSON based on section type
-                if section_name == "experience" and "experience" in json_response:
-                    return self._format_experience_json(json_response["experience"])
-                elif section_name == "education" and "education" in json_response:
-                    return self._format_education_json(json_response["education"])
-                elif section_name == "skills" and "skills" in json_response:
-                    return self._format_skills_json(json_response["skills"])
-                elif section_name == "projects" and "projects" in json_response:
-                    return self._format_projects_json(json_response["projects"])
-                elif section_name in json_response:
-                    # For other sections, just return the string content
-                    return json_response[section_name]
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                # If no json code block, try to find JSON object directly
+                json_match = re.search(r'(\{.*\})', response_text, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(1)
                 else:
-                    logger.warning(f"JSON response missing expected '{section_name}' key")
+                    # No JSON found, return the original content
+                    logger.error(f"No JSON found in OpenAI response for {section_name}")
                     return content
-                    
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse JSON from OpenAI response: {response_content[:100]}...")
-                return response_content
+            
+            # Parse the JSON string
+            try:
+                json_response = json.loads(json_str)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON from OpenAI response: {e}")
+                logger.error(f"JSON string: {json_str[:100]}...")
+                # Store the raw response as fallback
+                self.tailored_content[section_name] = response_text
+                return response_text
+
+            # Process JSON based on section type
+            if section_name == "experience" and "experience" in json_response:
+                return self._format_experience_json(json_response["experience"])
+            elif section_name == "education" and "education" in json_response:
+                return self._format_education_json(json_response["education"])
+            elif section_name == "skills" and "skills" in json_response:
+                return self._format_skills_json(json_response["skills"])
+            elif section_name == "projects" and "projects" in json_response:
+                return self._format_projects_json(json_response["projects"])
+            elif section_name in json_response:
+                # For other sections, just return the string content 
+                formatted_text = json_response[section_name]
+                # Store for preview generation
+                self.tailored_content[section_name] = formatted_text
+                return formatted_text
+            else:
+                logger.warning(f"JSON response missing expected '{section_name}' key")
+                return content
             
         except Exception as e:
             logger.error(f"Error in OpenAI API call: {str(e)}")
             return content
             
-    def _format_experience_json(self, experience_data: list) -> str:
-        """Format experience JSON data into text with proper formatting"""
-        result = []
-        
+    def _format_experience_json(self, experience_data: List[Dict]) -> str:
+        """Format experience JSON data into HTML"""
+        if not experience_data:
+            return ""
+            
+        formatted_text = ""
         for job in experience_data:
-            company = job.get("company", "")
-            location = job.get("location", "")
-            position = job.get("position", "")
-            dates = job.get("dates", "")
-            achievements = job.get("achievements", [])
+            company = job.get('company', '')
+            location = job.get('location', '')
+            position = job.get('position', '')
+            dates = job.get('dates', '')
+            achievements = job.get('achievements', [])
             
-            # Add company and position line
-            if company and location:
-                result.append(f"{company} {location}")
-            elif company:
-                result.append(company)
-                
-            if position and dates:
-                result.append(f"{position} {dates}")
-            elif position:
-                result.append(position)
-                
+            # Add job header
+            company_location = f"{company}, {location}" if location else company
+            formatted_text += f"<p class='job-header'><strong>{position}</strong> | {company_location} | {dates}</p>\n"
+            
             # Add achievements as bullet points
-            for achievement in achievements:
-                if achievement:
-                    result.append(f"• {achievement}")
-            
-            # Add a blank line between jobs
-            result.append("")
-            
-        return "\n".join(result)
+            if achievements:
+                formatted_text += "<ul>\n"
+                for achievement in achievements:
+                    formatted_text += f"<li>{achievement}</li>\n"
+                formatted_text += "</ul>\n"
         
-    def _format_education_json(self, education_data: list) -> str:
-        """Format education JSON data into text with proper formatting"""
-        result = []
+        # Store formatted content for preview generation
+        self.tailored_content["experience"] = formatted_text
+        return formatted_text
         
+    def _format_education_json(self, education_data: List[Dict]) -> str:
+        """Format education JSON data into HTML"""
+        if not education_data:
+            return ""
+            
+        formatted_text = ""
         for edu in education_data:
-            institution = edu.get("institution", "")
-            location = edu.get("location", "")
-            degree = edu.get("degree", "")
-            dates = edu.get("dates", "")
-            highlights = edu.get("highlights", [])
+            institution = edu.get('institution', '')
+            location = edu.get('location', '')
+            degree = edu.get('degree', '')
+            dates = edu.get('dates', '')
+            highlights = edu.get('highlights', [])
             
-            # Add institution and location
-            if institution and location:
-                result.append(f"{institution} {location}")
-            elif institution:
-                result.append(institution)
-                
-            # Add degree and dates
-            if degree and dates:
-                result.append(f"{degree} {dates}")
-            elif degree:
-                result.append(degree)
-                
+            # Add education header
+            institution_location = f"{institution}, {location}" if location else institution
+            formatted_text += f"<p class='education-header'><strong>{degree}</strong> | {institution_location} | {dates}</p>\n"
+            
             # Add highlights as bullet points
-            for highlight in highlights:
-                if highlight:
-                    result.append(f"• {highlight}")
-            
-            # Add a blank line between education entries
-            result.append("")
-            
-        return "\n".join(result)
+            if highlights:
+                formatted_text += "<ul>\n"
+                for highlight in highlights:
+                    formatted_text += f"<li>{highlight}</li>\n"
+                formatted_text += "</ul>\n"
         
-    def _format_skills_json(self, skills_data: dict) -> str:
-        """Format skills JSON data into text with proper formatting"""
-        result = []
+        # Store formatted content for preview generation
+        self.tailored_content["education"] = formatted_text
+        return formatted_text
+        
+    def _format_skills_json(self, skills_data: Dict) -> str:
+        """Format skills JSON data into HTML"""
+        if not skills_data:
+            return ""
+            
+        formatted_text = ""
         
         # Process technical skills
-        if "technical" in skills_data and skills_data["technical"]:
-            result.append("Technical Skills:")
-            for skill in skills_data["technical"]:
-                result.append(f"• {skill}")
-            result.append("")
+        if 'technical' in skills_data and skills_data['technical']:
+            formatted_text += "<p><strong>Technical Skills:</strong> "
+            formatted_text += ", ".join(skills_data['technical'])
+            formatted_text += "</p>\n"
             
         # Process soft skills
-        if "soft" in skills_data and skills_data["soft"]:
-            result.append("Soft Skills:")
-            for skill in skills_data["soft"]:
-                result.append(f"• {skill}")
-            result.append("")
+        if 'soft' in skills_data and skills_data['soft']:
+            formatted_text += "<p><strong>Soft Skills:</strong> "
+            formatted_text += ", ".join(skills_data['soft'])
+            formatted_text += "</p>\n"
             
         # Process other skills
-        if "other" in skills_data and skills_data["other"]:
-            result.append("Other Skills:")
-            for skill in skills_data["other"]:
-                result.append(f"• {skill}")
+        if 'other' in skills_data and skills_data['other']:
+            formatted_text += "<p><strong>Other Skills:</strong> "
+            formatted_text += ", ".join(skills_data['other'])
+            formatted_text += "</p>\n"
         
-        return "\n".join(result)
+        # Store formatted content for preview generation
+        self.tailored_content["skills"] = formatted_text
+        return formatted_text
         
-    def _format_projects_json(self, projects_data: list) -> str:
-        """Format projects JSON data into text with proper formatting"""
-        result = []
-        
+    def _format_projects_json(self, projects_data: List[Dict]) -> str:
+        """Format projects JSON data into HTML"""
+        if not projects_data:
+            return ""
+            
+        formatted_text = ""
         for project in projects_data:
-            title = project.get("title", "")
-            dates = project.get("dates", "")
-            details = project.get("details", [])
+            title = project.get('title', '')
+            dates = project.get('dates', '')
+            details = project.get('details', [])
             
-            # Add title and dates
-            if title and dates:
-                result.append(f"{title} {dates}")
-            elif title:
-                result.append(title)
-                
+            # Add project header
+            formatted_text += f"<p class='project-header'><strong>{title}</strong>"
+            if dates:
+                formatted_text += f" | {dates}"
+            formatted_text += "</p>\n"
+            
             # Add details as bullet points
-            for detail in details:
-                if detail:
-                    result.append(f"• {detail}")
+            if details:
+                formatted_text += "<ul>\n"
+                for detail in details:
+                    formatted_text += f"<li>{detail}</li>\n"
+                formatted_text += "</ul>\n"
+        
+        # Store formatted content for preview generation
+        self.tailored_content["projects"] = formatted_text
+        return formatted_text
+
+    # Add a method to save all raw responses to a single file
+    def save_all_raw_responses(self, resume_filename):
+        """Save all raw API responses to a single file"""
+        try:
+            # Create api_responses directory if it doesn't exist
+            api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
+            if not os.path.exists(api_responses_dir):
+                os.makedirs(api_responses_dir)
             
-            # Add a blank line between projects
-            result.append("")
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_name = os.path.splitext(os.path.basename(resume_filename))[0]
+            filename = f"{base_name}_all_responses_{timestamp}.json"
+            filepath = os.path.join(api_responses_dir, filename)
             
-        return "\n".join(result)
+            # Write all responses to file
+            with open(filepath, 'w') as f:
+                json.dump(self.raw_responses, f, indent=2)
+            
+            logger.info(f"Saved all raw API responses to {filepath}")
+            return filepath
+        except Exception as e:
+            logger.error(f"Error saving all raw API responses: {str(e)}")
+            return None
 
 def format_section_content(content: str) -> str:
     """Format section content for HTML display, handling bullet points and markdown"""
@@ -2043,6 +2115,11 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
                 resume_sections.get('additional', ''),
                 job_data
             )
+        
+        # Save all raw responses if using OpenAI
+        if provider.lower() == 'openai' and hasattr(llm_client, 'save_all_raw_responses'):
+            all_responses_path = llm_client.save_all_raw_responses(resume_path)
+            logger.info(f"All raw OpenAI responses saved to {all_responses_path}")
         
         logger.info(f"Resume tailoring completed successfully with {provider.upper()}")
         
