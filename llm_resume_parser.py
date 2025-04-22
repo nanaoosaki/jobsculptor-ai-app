@@ -378,7 +378,7 @@ def parse_resume_with_llm(doc_path: str, llm_provider: str = "claude") -> Dict[s
                         "doc_path": doc_path,
                         "timestamp": time.time()
                     }
-                    with open(cache_filename, 'w') as f:
+                    with open(cache_filename, 'w', encoding='utf-8') as f:
                         json.dump(cache_data, f, indent=2)
                     logger.info(f"LLM parsing cached to: {cache_filename}")
                 except Exception as e:

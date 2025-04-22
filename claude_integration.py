@@ -91,7 +91,7 @@ def clean_bullet_points(text: str) -> str:
                 continue
         
         # Check for ASCII bullet symbols (*, -, +, etc.) at the beginning
-        ascii_bullet_match = re.match(f'^\s*{ascii_bullets}\s+', line)
+        ascii_bullet_match = re.match(r'^\s*[-*•]\s+', line)
         if ascii_bullet_match:
             cleaned_line = line[ascii_bullet_match.end():]
             cleaned_lines.append(cleaned_line)
@@ -174,8 +174,8 @@ class ClaudeClient(LLMClient):
         Returns:
             Tailored content as string
         """
-            logger.info(f"Tailoring {section_name} with Claude API")
-            
+        logger.info(f"Tailoring {section_name} with Claude API")
+        
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
             return ""
@@ -227,7 +227,7 @@ ORIGINAL EXPERIENCE SECTION:
 {content}
 
 JOB REQUIREMENTS:
-            {requirements_text}
+{requirements_text}
 
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
@@ -266,7 +266,7 @@ Do not add any fictional experiences or embellish beyond what is reasonable base
 You are an expert resume tailoring assistant. Your task is to tailor the education section to better match the requirements for a {job_title} position at {company}.
 
 ORIGINAL EDUCATION SECTION:
-            {content}
+{content}
 
 JOB REQUIREMENTS:
 {requirements_text}
@@ -477,9 +477,12 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if achievements:
                 achievements = [a for a in achievements if a and a.strip()]
             
-            # Add job header
-            company_location = f"{company}, {location}" if location else company
-            formatted_text += f"<p class='job-header'><strong>{position}</strong> | {company_location} | {dates}</p>\n"
+            # New format: company/location on first line, position/dates on second line
+            # Company name (left) and location (right)
+            formatted_text += f"<p class='job-header'><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
+            
+            # Position (left) and dates (right)
+            formatted_text += f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
             
             # Add achievements as bullet points
             if achievements:
@@ -509,9 +512,12 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if highlights:
                 highlights = [h for h in highlights if h and h.strip()]
             
-            # Add education header
-            institution_location = f"{institution}, {location}" if location else institution
-            formatted_text += f"<p class='education-header'><strong>{degree}</strong> | {institution_location} | {dates}</p>\n"
+            # New format: institution/location on first line, degree/dates on second line
+            # Institution name (left) and location (right)
+            formatted_text += f"<p class='education-header'><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
+            
+            # Degree (left) and dates (right)
+            formatted_text += f"<p class='education-subheader'><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
             
             # Add highlights as bullet points
             if highlights:
@@ -577,10 +583,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if details:
                 details = [d for d in details if d and d.strip()]
             
-            # Add project header
-            formatted_text += f"<p class='project-header'><strong>{title}</strong>"
+            # New format: project title (left) and dates (right)
+            formatted_text += f"<p class='project-header'><span class='project-title'>{title.upper()}</span>"
             if dates:
-                formatted_text += f" | {dates}"
+                formatted_text += f"<span class='dates'>{dates}</span>"
             formatted_text += "</p>\n"
             
             # Add details as bullet points
@@ -636,7 +642,7 @@ class OpenAIClient(LLMClient):
         Returns:
             Tailored content as string
         """
-            logger.info(f"Tailoring {section_name} with OpenAI API")
+        logger.info(f"Tailoring {section_name} with OpenAI API")
             
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
@@ -919,7 +925,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 filepath = os.path.join(api_responses_dir, filename)
                 
                 # Write response to file
-                with open(filepath, 'w') as f:
+                with open(filepath, 'w', encoding='utf-8') as f:
                     f.write(response_text)
                 
                 logger.info(f"Saved raw API response for {section_name} to {filepath}")
@@ -998,9 +1004,12 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if achievements:
                 achievements = [a for a in achievements if a and a.strip()]
             
-            # Add job header
-            company_location = f"{company}, {location}" if location else company
-            formatted_text += f"<p class='job-header'><strong>{position}</strong> | {company_location} | {dates}</p>\n"
+            # New format: company/location on first line, position/dates on second line
+            # Company name (left) and location (right)
+            formatted_text += f"<p class='job-header'><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
+            
+            # Position (left) and dates (right)
+            formatted_text += f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
             
             # Add achievements as bullet points
             if achievements:
@@ -1030,9 +1039,12 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if highlights:
                 highlights = [h for h in highlights if h and h.strip()]
             
-            # Add education header
-            institution_location = f"{institution}, {location}" if location else institution
-            formatted_text += f"<p class='education-header'><strong>{degree}</strong> | {institution_location} | {dates}</p>\n"
+            # New format: institution/location on first line, degree/dates on second line
+            # Institution name (left) and location (right)
+            formatted_text += f"<p class='education-header'><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
+            
+            # Degree (left) and dates (right)
+            formatted_text += f"<p class='education-subheader'><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
             
             # Add highlights as bullet points
             if highlights:
@@ -1098,10 +1110,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if details:
                 details = [d for d in details if d and d.strip()]
             
-            # Add project header
-            formatted_text += f"<p class='project-header'><strong>{title}</strong>"
+            # New format: project title (left) and dates (right)
+            formatted_text += f"<p class='project-header'><span class='project-title'>{title.upper()}</span>"
             if dates:
-                formatted_text += f" | {dates}"
+                formatted_text += f"<span class='dates'>{dates}</span>"
             formatted_text += "</p>\n"
             
             # Add details as bullet points
@@ -1131,7 +1143,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
             filepath = os.path.join(api_responses_dir, filename)
             
             # Write all responses to file
-            with open(filepath, 'w') as f:
+            with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(self.raw_responses, f, indent=2)
             
             logger.info(f"Saved all raw API responses to {filepath}")
@@ -1911,3 +1923,142 @@ def format_projects_content(content: str) -> str:
         return format_section_content(content)
     
     return "\n".join(formatted_parts)
+
+def format_job_entry(company: str, location: str, position: str, dates: str, content: List[str]) -> str:
+    """Format a job entry with company, location, position, dates, and content"""
+    # Format the header with company (left) and location (right)
+    header = f"<p class='job-header'><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
+    
+    # Format the subheader with position (left) and dates (right)
+    subheader = f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
+    
+    # Format the content as bullet points
+    content_html = ""
+    if content:
+        content_html = "<ul>\n"
+        for item in content:
+            if item and item.strip():
+                content_html += f"<li>{item.strip()}</li>\n"
+        content_html += "</ul>\n"
+    
+    return header + subheader + content_html
+
+def format_education_entry(institution: str, location: str, degree: str, dates: str, highlights: List[str]) -> str:
+    """Format an education entry with institution, location, degree, dates, and highlights"""
+    # Format the header with institution (left) and location (right)
+    header = f"<p class='education-header'><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
+    
+    # Format the subheader with degree (left) and dates (right)
+    subheader = f"<p class='education-subheader'><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
+    
+    # Format the highlights as bullet points
+    content_html = ""
+    if highlights:
+        content_html = "<ul>\n"
+        for item in highlights:
+            if item and item.strip():
+                content_html += f"<li>{item.strip()}</li>\n"
+        content_html += "</ul>\n"
+    
+    return header + subheader + content_html
+
+def format_project_entry(title: str, dates: str, details: List[str]) -> str:
+    """Format a project entry with title, dates, and details"""
+    # Format the header with title (left) and dates (right)
+    header = f"<p class='project-header'><span class='project-title'>{title.upper()}</span>"
+    if dates:
+        header += f"<span class='dates'>{dates}</span>"
+    header += "</p>\n"
+    
+    # Format the details as bullet points
+    content_html = ""
+    if details:
+        content_html = "<ul>\n"
+        for item in details:
+            if item and item.strip():
+                content_html += f"<li>{item.strip()}</li>\n"
+        content_html += "</ul>\n"
+    
+    return header + content_html
+
+def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = "openai", api_url: str = None) -> Tuple[str, str, Union[ClaudeClient, OpenAIClient]]:
+    """
+    Tailor resume with LLM (Claude or OpenAI)
+    
+    Args:
+        resume_path: Path to resume file
+        job_data: Job data including requirements and skills
+        api_key: API key for the LLM provider
+        provider: LLM provider (claude or openai)
+        api_url: Optional API URL for Claude
+        
+    Returns:
+        Tuple of (output_filename, output_path, llm_client)
+    """
+    global last_llm_client
+    
+    logger.info(f"Tailoring resume with {provider} LLM")
+    
+    # Extract resume sections
+    resume_sections = extract_resume_sections(resume_path)
+    
+    # Initialize the appropriate LLM client
+    llm_client = None
+    if provider.lower() == "claude":
+        llm_client = ClaudeClient(api_key, api_url)
+    elif provider.lower() == "openai":
+        llm_client = OpenAIClient(api_key)
+    else:
+        raise ValueError(f"Unsupported LLM provider: {provider}")
+    
+    # Tailor each section
+    for section_name, content in resume_sections.items():
+        if content.strip() and section_name in ["summary", "experience", "education", "skills", "projects"]:
+            logger.info(f"Tailoring {section_name} section")
+            tailored_content = llm_client.tailor_resume_content(section_name, content, job_data)
+            resume_sections[section_name] = tailored_content
+    
+    # Generate output filename
+    resume_filename = os.path.basename(resume_path)
+    base_name = os.path.splitext(resume_filename)[0]
+    output_filename = f"{base_name}_tailored_{provider}.pdf"
+    output_dir = os.path.dirname(resume_path)
+    output_path = os.path.join(output_dir, output_filename)
+    
+    # Store LLM client for preview generation
+    last_llm_client = llm_client
+    
+    # Return info without generating YC-style PDF
+    return output_filename, output_path, llm_client
+
+def generate_resume_preview(resume_path: str) -> str:
+    """
+    Generate HTML preview from resume
+    
+    Args:
+        resume_path: Path to resume file
+        
+    Returns:
+        HTML preview
+    """
+    logger.info(f"Generating resume preview for {resume_path}")
+    
+    # Check if we have direct LLM responses from last tailoring
+    global last_llm_client
+    if last_llm_client:
+        logger.info("Using direct LLM responses for preview generation")
+        preview_html = generate_preview_from_llm_responses(last_llm_client)
+        if preview_html:
+            return preview_html
+    
+    # Otherwise extract sections from file
+    resume_sections = extract_resume_sections(resume_path)
+    
+    # Generate preview HTML
+    preview_html = ""
+    for section_name, content in resume_sections.items():
+        if content.strip():
+            formatted_content = format_section_content(content)
+            preview_html += f'<div class="resume-section"><h2>{section_name.title()}</h2>{formatted_content}</div>'
+    
+    return preview_html

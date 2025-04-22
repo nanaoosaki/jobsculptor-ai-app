@@ -68,22 +68,8 @@ body {
 .education-content,
 .skills-content,
 .projects-content,
-.additional-content,
-.company-line,
-.position-line {
+.additional-content {
   text-align: left;
-}
-
-/* Keep the company name and position title left-aligned */
-.company-name, 
-.position-title {
-  text-align: left;
-}
-
-/* Keep the location and date right-aligned */
-.company-location, 
-.position-date {
-  text-align: right;
 }
 
 /* Contact section at top */
@@ -113,37 +99,46 @@ body {
   width: 90%;
 }
 
-/* Company and location layout */
-.company-line {
+/* New header styles for two-line format */
+.job-header,
+.education-header,
+.project-header {
   display: flex;
   justify-content: space-between;
-  margin-top: 0.2cm;
-  margin-bottom: 0.1cm;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  margin-top: 0.4cm;
 }
 
-.company-name {
-  font-weight: bold;
-  text-align: left;
-}
-
-.company-location {
-  text-align: right;
-}
-
-/* Position and date layout */
-.position-line {
+.job-subheader,
+.education-subheader {
   display: flex;
   justify-content: space-between;
+  margin-top: 0;
+  padding-top: 0;
   margin-bottom: 0.2cm;
 }
 
-.position-title {
-  font-style: italic;
+/* Company/Institution/Project titles */
+.company,
+.institution,
+.project-title {
+  font-weight: bold;
+  text-transform: uppercase;
   text-align: left;
 }
 
-.position-date {
+/* Position/Degree */
+.position,
+.degree {
+  text-align: left;
+}
+
+/* Right-aligned elements */
+.location,
+.dates {
   text-align: right;
+  margin-left: auto;
 }
 
 /* Bullet points */
@@ -170,12 +165,6 @@ p {
   margin-bottom: 0.2cm;
 }
 
-/* Job title styling */
-p.job-title {
-  margin-top: 0.3cm;
-  margin-bottom: 0.1cm;
-}
-
 /* Avoid page breaks inside list items */
 li {
   page-break-inside: avoid;
@@ -196,12 +185,18 @@ li {
   text-align: left;
 }
 
+/* Special handling for job/education/project headers */
+ul {
+  margin-top: 0.2cm;
+}
+
+/* Remove default indentation for list items */
+ul {
+  padding-left: 1.5em;
+}
+
 /* Handle page breaks between sections better */
 @media print {
-  .resume-section {
-    page-break-inside: auto;
-  }
-  
   h2 {
     page-break-after: avoid;
   }

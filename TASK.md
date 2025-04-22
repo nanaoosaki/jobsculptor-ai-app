@@ -27,6 +27,8 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Add horizontal line under contact information section
 - [x] Remove bold font formatting from resume sections
 - [x] Reduce line spacing between resume sections for better readability
+- [x] Fix empty bullet points in tailored resume output
+- [x] Add resume index system for tracking relationships between parsed resumes, LLM responses, and generated PDFs
 
 ## In Progress Tasks
 
@@ -285,182 +287,50 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - **Root Cause**: CSS specificity conflict where `.resume-section:first-child { text-align: center; }` (meant for contact section) was affecting all content in PDF-sourced resumes
    - **Analysis**: When processing PDF files, the HTML structure differs from DOCX files since we can't detect formatting details, causing different CSS inheritance behavior
    - **Solution Implemented**:
-     - Added explicit content wrapper classes to all sections (`experience-content`, `education-content`, etc.)
-     - Applied inline styles with `!important` directly to content elements to override any inheritance issues
-     - Added explicit text-align properties to all HTML elements during generation
-     - Modified CSS selectors to be more specific about which elements should be centered vs. left-aligned
-     - Added inline styles in the HTML head to enforce alignment rules regardless of source document type
-   - **Impact**: This ensures consistent formatting across both DOCX and PDF input files, maintaining centered headers while keeping all content properly left-aligned
+     - Added explicit content wrapper classes to all sections (`
 
-8. **Resume Format Structure Issue:**
-   - **Issue**: In the tailored resume output, job details (company name, position, dates, location) are placed on separate lines instead of being properly aligned as in the original resume
-   - **Root Cause**: 
-     - The LLM is not preserving the exact format structure when tailoring the content
-     - The format_experience_content function is not properly identifying and structuring company/position/date information
-     - PDF parsing doesn't maintain the structured layout of flex containers and positioning
-   - **Analysis**:
-     - When the LLM tailors the resume content, it may not maintain the exact same line structure
-     - The parsing logic in format_experience_content has limitations in detecting formatting patterns
-     - The detection of company/location and position/date pairs needs to be more robust
-   - **Solution Plan**:
-     1. **Enhance LLM Prompting**:
-        - Update the system and user prompts to emphasize maintaining exact formatting
-        - Add specific examples showing the expected output format with proper alignment
-        - Include explicit instructions to preserve the line-by-line structure
-     2. **Improve Format Detection**:
-        - Enhance company/location detection patterns to better identify when they appear on the same line
-        - Add more sophisticated regex patterns to detect position/date pairs
-        - Recognize common formatting patterns in different resume styles
-     3. **Strengthen HTML Structure**:
-        - Ensure flex layouts are consistently applied to company/location and position/date pairs
-        - Add explicit wrapper divs with proper flex styling
-        - Apply consistent CSS properties to maintain alignment
-     4. **Add Format Validation**:
-        - Implement a post-processing step to verify the formatted output matches expected patterns
-        - Add structure validation to ensure company/location and position/date are paired properly
-        - Provide fallback formatting when the structure is unclear
-   - **Expected Impact**:
-     - Consistent formatting between original and tailored resumes
-     - Proper alignment of job details with company/location and position/date on respective single lines
-     - Improved visual consistency across different resume formats and sources
+# Resume Format Enhancement Task
 
-## Results
+## Objective
+Redesign the resume layout to match the specified format below, with company/location on first line and position/dates on second line.
 
-The LLM-based resume parsing significantly improves the accuracy of section extraction compared to traditional methods:
+## Current Format
+```
+<strong>Position</strong> | Company, Location | Dates
+```
 
-1. **Accuracy Improvements:**
-   - Properly identifies and categorizes resume sections regardless of formatting
-   - Maintains the exact content structure from the original resume
-   - Works with a wide variety of resume formats and styles
+## Desired Format
+```
+COMPANY                                        LOCATION
+Position                                       Dates
+```
 
-2. **Processing Flow:**
-   - Initial upload parsing shows "User Resume Parsed (LLM)" when successful
-   - Tailoring process uses the same LLM parser for consistent section extraction
-   - Logs show detailed information about parsing process and results
-   - Fallbacks ensure the application continues working even if LLM is unavailable
+## Key Changes Required
+1. Company name and location on first line:
+   - Company name aligned left
+   - Location aligned right
 
-3. **Performance:**
-   - OpenAI gpt-4o parses a resume in ~3-5 seconds
-   - Claude parsing has similar performance characteristics
-   - Both providers extract sections with high accuracy 
+2. Position and dates on second line:
+   - Position aligned left
+   - Dates aligned right
+   
+3. Remove all vertical bars ("|") from the formatting
 
-The LLM-based job analysis provides deeper insights compared to regex-based extraction:
+4. Update styling to reflect this new format:
+   - Company name in uppercase
+   - No bold formatting for the position
 
-1. **Enhanced Analysis Benefits:**
-   - More nuanced understanding of the job requirements
-   - Better identification of implicit skills and qualifications
-   - Improved matching between resume content and job requirements
-   - Enhanced tailoring quality through better job understanding
-   - More targeted suggestions for resume improvements
+## Implementation Steps
+1. Modify the HTML/CSS structure to support the new layout
+2. Update the `_format_experience_json` method in `claude_integration.py`
+3. Test the changes with different resume types
+4. Apply similar changes to education and project sections
 
-2. **Analysis Results:**
-   - Comprehensive candidate profile describing experience level and role focus
-   - Structured lists of both hard technical skills and soft interpersonal skills
-   - Detailed ideal candidate description for more effective resume targeting
-   - AI insights help users better understand what employers are looking for
+## Benefits
+- Improved readability with clearer hierarchy
+- More professional appearance
+- Better alignment with industry standard resume formats
+- Cleaner visual presentation
 
-3. **User Experience:**
-   - Visual distinction of AI-generated insights in the UI
-   - Clear organization of analysis results by category
-   - Seamless integration with the existing tailoring workflow
-   - Improved resume tailoring through more detailed job understanding
-
-The YC-Eddie Style implementation produces consistently high-quality resume outputs:
-
-1. **Style Improvements:**
-   - Professional, polished document appearance with clean, modern styling
-   - Centered section headers with full box borders for better visual separation
-   - Arrow bullet points (▸) instead of standard bullets for improved readability 
-   - Consistent spacing and alignment throughout the document
-   - Matching styling in both Word documents and HTML previews
-   - Clean document generation without reliance on templates
-
-2. **Content Quality:**
-   - Achievement-focused content with metrics and results
-   - Clear, concise language that highlights candidate value
-   - Consistent formatting across all resume sections
-   - Better alignment with recruiter expectations and ATS requirements
-   - Higher-quality tailored content through optimized prompting
-
-3. **Technical Implementation:**
-   - Complete rewrite of document generation for better control
-   - Dedicated styling methods for each document element
-   - Proper XML manipulation for advanced formatting features
-   - Consistent HTML/CSS styling for preview generation
-   - Graceful fallbacks for error conditions 
-
-The LLM-based resume parsing significantly improves the accuracy of section extraction compared to traditional methods: 
-
-# Task Breakdown: HTML Preview A4 Paper Format Implementation
-
-## Problem Description
-The HTML preview of the tailored resume did not match the dimensions and appearance of the PDF output, leading to inconsistent user experience. The preview needed to be styled to match an A4 paper format with 1-inch margins on both sides.
-
-## Solution Implemented
-We have implemented a comprehensive solution to make the HTML preview appear like a standard A4 paper document:
-
-1. **CSS Updates**:
-   - Set the width of the preview content to match A4 paper (8.27 inches)
-   - Added 1-inch margins on both left and right sides using padding
-   - Applied proper box-sizing to ensure correct width calculations
-   - Used the same font family and size as the PDF output (Calibri, 11pt)
-   - Applied appropriate line height and text color for readability
-   - Added a subtle shadow effect to create a "paper" appearance
-
-2. **JavaScript Improvements**:
-   - Updated the `displayResumePreview()` function to create a paper-like container
-   - Added a centered container to properly position the A4 paper representation
-   - Applied consistent styling between the HTML preview and PDF output
-   - Ensured proper removal of nested scrollbars in the preview content
-   - Added text alignment for the header to match the PDF output
-
-## Testing
-The changes have been tested to ensure:
-- The HTML preview dimensions match standard A4 paper size
-- The content has 1-inch margins on both sides
-- The appearance is consistent with the downloaded PDF
-- The preview remains responsive and properly scrollable
-- All formatting from the original tailored content is preserved
-
-## Impact
-This enhancement improves the user experience by providing a consistent view between what users see in the preview and what they get in the downloaded PDF. The WYSIWYG (What You See Is What You Get) approach helps users better evaluate their tailored resume before downloading it. 
-
-# Task Breakdown: Preserve Contact Information in Tailored Resume Output
-
-## Problem Description
-The contact information from the original resume was not being included in the tailored resume output. This critical section was missing entirely, making the tailored resume incomplete and unusable for job applications.
-
-## Root Cause Analysis
-1. The contact information was being correctly parsed from the original resume
-2. However, it was not being consistently included in the final HTML preview generation
-3. The `generate_preview_from_llm_responses` function only included contact information if it was explicitly present in the LLM tailored content
-4. Since contact information doesn't need tailoring (it should be preserved as-is), it wasn't always being included in the LLM response
-
-## Solution Implemented
-We've implemented a comprehensive solution to ensure contact information always appears in the tailored resume:
-
-1. **LLM Resume Parser Enhancements**:
-   - Added a global caching mechanism to store the most recently parsed resume data
-   - Implemented a `get_cached_parsed_resume()` function to retrieve contact information without re-parsing
-   - Enhanced the caching system to make it more robust and accessible across modules
-
-2. **Preview Generation Improvements**:
-   - Modified the `generate_preview_from_llm_responses` function to check multiple sources for contact information
-   - Added a fallback system that tries first the LLM tailored content, then cached resume data
-   - Added proper error handling to ensure the process continues even if contact retrieval fails
-   - Ensured contact information appears at the top of the resume with appropriate formatting
-
-3. **Code Integration**:
-   - Updated imports to access cached resume data when needed
-   - Added logging to track the source of contact information
-   - Maintained backward compatibility with existing code
-
-## Testing
-The changes have been tested to ensure:
-- Contact information consistently appears in tailored resumes
-- The original format and content of contact details are preserved
-- The system works with both PDF and DOCX resume formats
-- Fallback mechanisms work properly when primary sources are unavailable
-
-## Impact
-This enhancement significantly improves the usability of tailored resumes by ensuring they always include the essential contact information needed for job applications. Users no longer need to manually add this information after tailoring. 
+## Priority
+High - This is a core visual enhancement that affects all generated resumes.

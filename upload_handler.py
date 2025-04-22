@@ -134,7 +134,7 @@ def setup_upload_routes(app):
                         analysis_filename = filename.replace('.docx', '_llm_analysis.json').replace('.pdf', '_llm_analysis.json')
                         analysis_filepath = os.path.join(app.config['UPLOAD_FOLDER'], analysis_filename)
                         
-                        with open(analysis_filepath, 'w') as f:
+                        with open(analysis_filepath, 'w', encoding='utf-8') as f:
                             json.dump(llm_analysis, f, indent=2)
                     else:
                         logger.warning("LLM parsing did not return usable results. Falling back to traditional parsing.")
@@ -167,7 +167,7 @@ def setup_upload_routes(app):
                 analysis_filename = filename.replace('.docx', '_analysis.json').replace('.pdf', '_analysis.json')
                 analysis_filepath = os.path.join(app.config['UPLOAD_FOLDER'], analysis_filename)
                 
-                with open(analysis_filepath, 'w') as f:
+                with open(analysis_filepath, 'w', encoding='utf-8') as f:
                     json.dump(analysis, f, indent=2, default=str)
             
             # Include file type in response

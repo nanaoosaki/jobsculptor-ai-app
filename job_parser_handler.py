@@ -33,7 +33,7 @@ def setup_job_parser_routes(app):
                 job_data_filename = f"job_data_{os.path.basename(job_url).replace('.', '_')}.json"
                 job_data_filepath = os.path.join(app.config['UPLOAD_FOLDER'], job_data_filename)
                 
-                with open(job_data_filepath, 'w') as f:
+                with open(job_data_filepath, 'w', encoding='utf-8') as f:
                     json.dump(result, f, indent=2)
                 
                 # Create standardized response data

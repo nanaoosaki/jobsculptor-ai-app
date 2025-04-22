@@ -48,6 +48,91 @@ In the PDF and HTML output, some bullet points appear with duplicate bullet symb
 
 **Priority**: Medium
 
+### Empty Bullet Points in Tailored Resume
+**Status**: Unresolved (April 21, 2025)
+
+**Description**:  
+The tailored resume output contains empty bullet points that appear as lone bullet symbols with no text content. These empty bullets affect the professional appearance of the document and create confusing spacing in the layout.
+
+**Impact**:  
+Visual inconsistency in the resume presentation, with empty spaces that may appear as formatting errors to potential employers.
+
+**Possible Solutions**:
+1. Add filtering logic to remove any empty bullet points before generating HTML
+2. Update the LLM prompt to explicitly instruct not to generate empty bullet points
+3. Implement a post-processing check to identify and remove list items with no meaningful content
+4. Improve regex patterns to better identify and handle content-less bullet points
+
+**Priority**: High
+
+### Excessive Line Length in Bullet Points
+**Status**: Unresolved (April 21, 2025)
+
+**Description**:  
+The LLM-generated bullet points often extend too far horizontally, causing poor formatting in the PDF output. The prompt needs to be improved to encourage shorter, more concise bullet points that fit appropriately within the resume layout.
+
+**Impact**:  
+Poor visual presentation with text that may extend beyond margins or cause uneven spacing between bullet points.
+
+**Possible Solutions**:
+1. Update the LLM prompt to specify a maximum character length for each bullet point
+2. Implement a post-processing step to break up long bullet points into multiple points
+3. Add a truncation mechanism for bullets that exceed certain length thresholds
+4. Provide guidance to the LLM about optimal resume formatting standards
+
+**Priority**: Medium
+
+### Missing Contact Section in Tailored Resume
+**Status**: Unresolved (April 21, 2025)
+
+**Description**:  
+The contact section from the original resume is not being preserved in the tailored output. The logs show a warning "No contact information found in cached resume or LLM responses", indicating a failure in the contact information preservation process.
+
+**Impact**:  
+Tailored resumes lack essential contact information, making them incomplete for job applications.
+
+**Possible Solutions**:
+1. Modify the `tailor_resume_with_llm` function to always preserve and transfer contact information
+2. Improve caching mechanisms for parsed resume data to ensure contact information is available
+3. Add a fallback mechanism to extract contact information directly from the original document if not available in the cached data
+4. Update the LLM prompt to explicitly extract and preserve contact information
+
+**Priority**: Critical
+
+### Missing Projects Section in Tailored Resume
+**Status**: Unresolved (April 21, 2025)
+
+**Description**:  
+The projects section appears to be missing entirely from the tailored resume output despite being present in the original resume. The logs indicate that project data is being processed, but the content is not appearing in the final document.
+
+**Impact**:  
+Loss of valuable project information that could demonstrate relevant skills to potential employers.
+
+**Possible Solutions**:
+1. Debug the project data flow from parsing to final HTML generation
+2. Verify the JSON formatting of project data from the LLM responses
+3. Check for conditional logic that might be incorrectly filtering out project sections
+4. Ensure project section HTML is properly included in the template generation process
+
+**Priority**: High
+
+### Missing Education Entries in Tailored Resume
+**Status**: Unresolved (April 21, 2025)
+
+**Description**:  
+The tailored resume shows only one education entry when multiple entries exist in the original resume. The second (or subsequent) education entries are being lost during the tailoring process.
+
+**Impact**:  
+Incomplete representation of the candidate's educational background, potentially hiding relevant qualifications.
+
+**Possible Solutions**:
+1. Debug the `_format_education_json` method to ensure it properly handles multiple education entries
+2. Investigate how the LLM is processing multiple education entries in its response
+3. Update the education section prompt to explicitly instruct the LLM to preserve all education entries
+4. Add validation to check if the number of education entries in the output matches the input
+
+**Priority**: High
+
 ---
 
 ## Other Issues 

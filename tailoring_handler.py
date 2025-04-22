@@ -6,6 +6,7 @@ from flask import request, jsonify, current_app
 from claude_integration import tailor_resume_with_llm, generate_resume_preview, generate_preview_from_llm_responses
 from pdf_exporter import create_pdf_from_html
 from dotenv import load_dotenv
+from resume_index import get_resume_index
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -192,7 +193,11 @@ def setup_tailoring_routes(app):
             logger.info(f"Using {provider.upper()} API for tailoring")
             try:
                 # Get tailored content from LLM
-                tailored_content, llm_client = tailor_resume_with_llm(
+                # tailor_resume_with_llm returns: output_filename, output_path, llm_client
+                # - output_filename: The filename of the generated file (e.g., "resume_tailored_openai.pdf")
+                # - output_path: The full path to the generated file
+                # - llm_client: The LLM client instance used for tailoring
+                _, _, llm_client = tailor_resume_with_llm(
                     resume_path,
                     job_data,
                     api_key,
@@ -200,7 +205,7 @@ def setup_tailoring_routes(app):
                     api_url
                 )
                 
-                # Generate HTML preview
+                # Generate HTML preview first
                 preview_html = generate_preview_from_llm_responses(llm_client)
                 
                 # Get original filename without extension
@@ -213,7 +218,7 @@ def setup_tailoring_routes(app):
                 )
                 
                 try:
-                    # Generate PDF from HTML preview
+                    # Generate PDF directly from HTML preview
                     pdf_path = create_pdf_from_html(
                         preview_html, 
                         pdf_output_path,
@@ -228,6 +233,22 @@ def setup_tailoring_routes(app):
                     
                     logger.info(f"Resume tailored successfully with {provider}: {pdf_filename}")
                     
+                    # Get resume ID from filename
+                    resume_id = os.path.splitext(os.path.basename(resume_path))[0]
+                    
+                    # Log in resume index system
+                    try:
+                        resume_index = get_resume_index()
+                        resume_index.add_resume(resume_id, os.path.basename(resume_path))
+                        
+                        # If we get to this point, update the index with job details
+                        job_title = job_data.get('job_title', 'Unknown Position')
+                        company = job_data.get('company', 'Unknown Company')
+                        resume_index.add_note(resume_id, f"Processing for job: {job_title} at {company}")
+                        
+                    except Exception as e:
+                        logger.warning(f"Error updating resume index: {e}")
+                    
                     return jsonify({
                         'success': True,
                         'filename': pdf_filename,
@@ -240,8 +261,12 @@ def setup_tailoring_routes(app):
                     # If PDF generation fails, fallback to DOCX
                     logger.error(f"PDF generation failed, falling back to DOCX: {str(pdf_error)}")
                     
-                    # Create DOCX filename
-                    docx_filename = f"{filename_base}_tailored_{provider}.docx"
+                    # Use the output_filename directly if it's already a DOCX file
+                    if output_filename and output_filename.lower().endswith('.docx'):
+                        docx_filename = output_filename
+                    else:
+                        # Create DOCX filename
+                        docx_filename = f"{filename_base}_tailored_{provider}.docx"
                     
                     return jsonify({
                         'success': True,
