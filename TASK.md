@@ -29,13 +29,16 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Reduce line spacing between resume sections for better readability
 - [x] Fix empty bullet points in tailored resume output
 - [x] Add resume index system for tracking relationships between parsed resumes, LLM responses, and generated PDFs
-
-## In Progress Tasks
-
 - [x] Switch from Word document generation to PDF export for better consistency
 - [x] Implement HTML-to-PDF conversion with professional styling
 - [x] Update download functionality to provide PDF files instead of Word documents
 - [x] Optimize PDF layout for ATS compatibility and professional appearance
+- [x] Refactor `claude_integration.py` into smaller, more focused modules
+
+## In Progress Tasks
+
+- [x] Fix HTML layout shrinking issue after refactoring
+- [ ] Fix empty HTML content issue after refactoring
 - [ ] Optimize tailoring prompts for high-quality, achievement-focused content
 - [ ] Create resume format validator to help prepare optimal resumes
 - [ ] Add visual diff feature to highlight tailoring changes
@@ -289,6 +292,301 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - **Solution Implemented**:
      - Added explicit content wrapper classes to all sections (`
 
+# Session-Based Storage Implementation Plan
+
+## Objective
+Implement a session-based approach for JSON file storage to support multi-user usage of the application and prevent data contamination between different users' resume tailoring sessions.
+
+## Current Issues
+- Non-timestamped JSON files (`experience.json`, `education.json`, etc.) are read by the HTML generator but aren't being correctly created
+- Path inconsistency between where files are saved and where they're read from
+- Risk of data contamination in multi-user environments: users could see each other's resume data
+- Race conditions when multiple users tailor resumes simultaneously
+- Security/privacy concerns with shared file access
+
+## Implementation Phases
+
+### Phase 1: Session Management Framework (Priority: High)
+1. **Frontend Session Creation**:
+   - Generate a unique session ID when a user starts using the application
+   - Add JavaScript to create and store session ID in localStorage on page load
+   - Pass session ID with all form submissions
+
+2. **Backend Session Handling**:
+   - Create a `session_manager.py` module with helper functions
+   - Implement functions to validate, sanitize and manage session IDs
+   - Create consistent path resolution for session-specific directories
+
+3. **Path Consistency**:
+   - Implement a centralized helper function to resolve session paths
+   - Ensure all file read/write operations use the correct base path
+   - Add path normalization to handle OS-specific path formats
+
+### Phase 2: File Operations Update (Priority: High)
+1. **Modify JSON Saving**:
+   - Update `save_tailored_content_to_json` to use session directories
+   - Include session ID in the path for all saved files
+   - Create session directories if they don't exist
+
+2. **Update HTML Generator**:
+   - Modify `generate_preview_from_llm_responses` to use session paths
+   - Update all file read operations to include session ID
+   - Add fallback for backward compatibility with existing files
+
+3. **Update PDF Generator**:
+   - Ensure PDF exporter uses same session-specific paths
+   - Maintain consistent file output locations
+
+### Phase 3: Session Lifecycle Management (Priority: Medium)
+1. **Session Cleanup**:
+   - Implement automated cleanup for sessions older than 24 hours
+   - Add a scheduled task or route to trigger cleanup
+   - Handle cleanup errors gracefully without affecting user experience
+
+2. **Session Validation**:
+   - Add validation for session IDs to prevent directory traversal attacks
+   - Implement a safeguard against invalid session IDs
+   - Create default fallback for missing session IDs
+
+3. **Error Handling**:
+   - Add robust error handling for all session-related operations
+   - Implement logging specifically for session errors
+   - Create user-friendly error messages for session issues
+
+## Technical Implementation Details
+
+### Session ID Generation
+```javascript
+// Frontend implementation in static/js/app.js
+function generateSessionId() {
+    const timestamp = Date.now();
+    const randomPart = Math.random().toString(36).substring(2, 15);
+    return `session_${timestamp}_${randomPart}`;
+}
+
+function initSession() {
+    if (!localStorage.getItem('resumeAppSessionId')) {
+        localStorage.setItem('resumeAppSessionId', generateSessionId());
+    }
+    return localStorage.getItem('resumeAppSessionId');
+}
+
+// Initialize session on page load
+document.addEventListener('DOMContentLoaded', initSession);
+
+// Add session ID to form submissions
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'sessionId';
+        input.value = localStorage.getItem('resumeAppSessionId');
+        this.appendChild(input);
+    });
+});
+```
+
+### Session Manager Implementation
+```python
+# session_manager.py
+import os
+import re
+import time
+import shutil
+import logging
+from flask import current_app
+
+logger = logging.getLogger(__name__)
+
+def sanitize_session_id(session_id):
+    """Sanitize session ID to prevent directory traversal attacks"""
+    if not session_id:
+        return 'default_session'
+        
+    # Only allow alphanumeric, underscore, hyphen, and dot
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', session_id)
+    
+    # Ensure it starts with session_ prefix for consistency
+    if not safe_id.startswith('session_'):
+        safe_id = f'session_{safe_id}'
+        
+    return safe_id
+
+def get_session_dir(session_id):
+    """Get session-specific directory path"""
+    safe_id = sanitize_session_id(session_id)
+    
+    # Determine base directory (handles both test and production environments)
+    if current_app.config.get('TESTING', False):
+        base_dir = 'uploads'
+    else:
+        base_dir = os.path.join('static', 'uploads')
+    
+    # Create session-specific directory
+    session_dir = os.path.join(base_dir, 'api_responses', safe_id)
+    os.makedirs(session_dir, exist_ok=True)
+    
+    return session_dir
+
+def cleanup_old_sessions(max_age_hours=24):
+    """Clean up session directories older than specified hours"""
+    try:
+        # Determine base directory
+        if current_app.config.get('TESTING', False):
+            base_dir = 'uploads'
+        else:
+            base_dir = os.path.join('static', 'uploads')
+        
+        api_responses_dir = os.path.join(base_dir, 'api_responses')
+        if not os.path.exists(api_responses_dir):
+            return 0
+            
+        now = time.time()
+        count = 0
+        
+        for session_dir in os.listdir(api_responses_dir):
+            path = os.path.join(api_responses_dir, session_dir)
+            if os.path.isdir(path) and session_dir.startswith('session_'):
+                # Extract timestamp from session ID
+                try:
+                    created_time = float(session_dir.split('_')[1])
+                    if now - created_time > max_age_hours * 3600:  # Convert hours to seconds
+                        shutil.rmtree(path)
+                        count += 1
+                        logger.info(f"Cleaned up session directory: {session_dir}")
+                except (IndexError, ValueError):
+                    # If timestamp can't be extracted, check directory modification time
+                    mtime = os.path.getmtime(path)
+                    if now - mtime > max_age_hours * 3600:
+                        shutil.rmtree(path)
+                        count += 1
+                        logger.info(f"Cleaned up session directory by mtime: {session_dir}")
+        
+        return count
+    except Exception as e:
+        logger.error(f"Error during session cleanup: {str(e)}")
+        return 0
+```
+
+### Required Code Changes
+
+1. **Update `tailoring_handler.py` to receive session ID**:
+```python
+@app.route('/tailor-resume', methods=['POST'])
+def tailor_resume():
+    # Get session ID from request
+    session_id = request.form.get('sessionId', 'default_session')
+    
+    # Pass session ID to processing functions
+    output_filename, output_path, llm_client = tailor_resume_with_llm(
+        resume_path,
+        job_data,
+        api_key,
+        provider,
+        api_url,
+        session_id  # New parameter
+    )
+```
+
+2. **Update `LLMClient` class to store session ID**:
+```python
+def __init__(self, api_key, session_id=None):
+    self.api_key = api_key
+    self.session_id = session_id or 'default_session'
+```
+
+3. **Modify `save_tailored_content_to_json` method**:
+```python
+def save_tailored_content_to_json(self):
+    """Save tailored content to session-specific JSON files"""
+    try:
+        # Get session-specific directory
+        from session_manager import get_session_dir
+        api_responses_dir = get_session_dir(self.session_id)
+        
+        # Save each section to a separate JSON file
+        sections_saved = 0
+        for section_name, content in self.tailored_content.items():
+            # Skip empty content
+            if not content:
+                continue
+                
+            # Create JSON data structure
+            json_data = self._create_json_data(section_name, content)
+            
+            # Define the output file path
+            filepath = os.path.join(api_responses_dir, f"{section_name}.json")
+            
+            # Write to file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                if isinstance(json_data, str):
+                    f.write(json_data)
+                else:
+                    json.dump(json_data, f, indent=2)
+            
+            sections_saved += 1
+            logger.info(f"Saved {section_name} content to {filepath}")
+        
+        logger.info(f"Saved {sections_saved} sections to session-specific JSON files")
+        return True
+    except Exception as e:
+        logger.error(f"Error saving tailored content to JSON: {str(e)}")
+        return False
+```
+
+4. **Update `html_generator.py` to use session paths**:
+```python
+def generate_preview_from_llm_responses(llm_client) -> str:
+    """Generate HTML preview from LLM responses"""
+    import os
+    import json
+    from datetime import datetime
+    from session_manager import get_session_dir
+    
+    # Get session-specific directory
+    session_id = getattr(llm_client, 'session_id', 'default_session')
+    api_responses_dir = get_session_dir(session_id)
+    
+    # Rest of function remains the same but uses api_responses_dir
+```
+
+## Benefits of Session-Based Approach
+- Prevents data contamination between multiple users
+- Eliminates race conditions when multiple users tailor resumes simultaneously
+- Improves security by isolating user data
+- Makes debugging easier by organizing files logically
+- Provides foundation for future user account integration
+- Enables session history tracking without complex database integration
+- Improves cleanup and resource management
+
+## Implementation Schedule
+- Phase 1: 2 days
+- Phase 2: 2 days
+- Phase 3: 1 day
+- Testing and refinement: 1 day
+- Total estimated time: 6 days
+
+## Risks and Mitigations
+- **Risk**: Session ID spoofing
+  - **Mitigation**: Validate and sanitize all session IDs
+
+- **Risk**: Disk space issues with many simultaneous users
+  - **Mitigation**: Implement regular cleanup of old sessions
+
+- **Risk**: Session persistence across browser restarts
+  - **Mitigation**: Use localStorage for persistent session storage
+
+- **Risk**: Path resolution inconsistencies across operating systems
+  - **Mitigation**: Use os.path functions consistently for path manipulation
+
+## Success Criteria
+- Multiple users can use the system simultaneously without data contamination
+- HTML preview reads from the correct session-specific JSON files
+- PDF generation uses the same files as the HTML preview
+- Old sessions are automatically cleaned up
+- File paths are consistent across the application
+- No security vulnerabilities introduced by session handling
+
 # Resume Format Enhancement Task
 
 ## Objective
@@ -334,3 +632,246 @@ Position                                       Dates
 
 ## Priority
 High - This is a core visual enhancement that affects all generated resumes.
+
+# Code Refactoring Plan
+
+## Objective
+Refactor `claude_integration.py` into smaller, more focused modules to improve maintainability, reduce indentation errors, and make the codebase more robust.
+
+## Current Issues
+- `claude_integration.py` has grown too large (~2000 lines)
+- Multiple indentation errors that are difficult to fix completely
+- High coupling between different functionalities
+- Difficult to test and maintain
+- Mixing of concerns (LLM integration, formatting, parsing, etc.)
+
+## Modularization Strategy
+We'll extract functionality into logical groups, creating new modules for each. The approach will be incremental:
+1. Extract one functional group at a time
+2. Update imports in dependent files
+3. Test thoroughly before proceeding to the next group
+4. Commit changes after each successful extraction
+
+## Proposed Modules
+
+### 1. `llm_client.py` - LLM Client Base and API Integration
+- Base `LLMClient` abstract class
+- `ClaudeClient` implementation
+- `OpenAIClient` implementation
+- Client initialization and API connection code
+
+### 2. `content_formatter.py` - Resume Content Formatting
+- `format_section_content`
+- `format_experience_content`
+- `format_education_content`
+- `format_projects_content` 
+- `format_job_entry`
+- `format_education_entry`
+- `format_project_entry`
+
+### 3. `resume_parser.py` - Resume Section Extraction
+- `extract_resume_sections`
+- `clean_bullet_points`
+- `validate_bullet_point_cleaning`
+
+### 4. `html_generator.py` - HTML Generation for Preview and Export
+- `validate_html_content`
+- `generate_preview_from_llm_responses`
+- `generate_resume_preview`
+
+### 5. `resume_tailoring.py` - Core Tailoring Logic
+- `tailor_resume_with_llm`
+
+## Implementation Plan
+
+### Phase 1: Extract LLM Client Code
+1. Create `llm_client.py` file
+2. Move `LLMClient`, `ClaudeClient`, and `OpenAIClient` classes
+3. Update imports in dependent files:
+   - `tailoring_handler.py`
+   - Other files that directly use these classes
+4. Test application functionality
+5. Commit changes
+
+### Phase 2: Extract Content Formatting Code
+1. Create `content_formatter.py` file
+2. Move all formatting functions
+3. Update imports in dependent files
+4. Test application functionality
+5. Commit changes
+
+### Phase 3: Extract Resume Parser Code
+1. Create `resume_parser.py` file 
+2. Move parsing related functions
+3. Update imports in dependent files
+4. Test application functionality
+5. Commit changes
+
+### Phase 4: Extract HTML Generator Code
+1. Create `html_generator.py` file
+2. Move HTML generation functions
+3. Update imports in dependent files
+4. Test application functionality
+5. Commit changes
+
+### Phase 5: Create Core Tailoring Module
+1. Create `resume_tailoring.py`
+2. Move core tailoring functions
+3. Update imports in all dependent files
+4. Perform comprehensive testing
+5. Commit changes
+
+### Phase 6: Clean up `claude_integration.py`
+1. Convert `claude_integration.py` to a simple facade that imports from new modules
+2. Add appropriate deprecation warnings
+3. Eventually remove once all dependencies are updated
+4. Test application functionality
+5. Commit changes
+
+## Testing Approach
+After each phase:
+1. Start the application
+2. Test the resume upload flow
+3. Test the job parsing flow
+4. Test the resume tailoring flow
+5. Verify HTML preview is generated correctly
+6. Verify PDF download works properly
+
+## Benefits
+- Improved maintainability with smaller, focused files
+- Easier debugging and testing
+- Reduced likelihood of indentation errors
+- Better separation of concerns
+- More intuitive codebase organization
+- Easier onboarding for new developers
+
+## Debug Plan for HTML Shrinking Issue
+
+### Issue Description
+After refactoring `claude_integration.py` into smaller modules including `html_generator.py`, the HTML preview of tailored resumes appears "shrunk" with excessive margins on both sides, creating a narrow column of content instead of utilizing the full width of the preview area.
+
+### Components Involved
+1. **Primary Components**:
+   - `html_generator.py`: Responsible for generating HTML preview content
+   - CSS styles defined within the generated HTML
+   - `tailoring_handler.py`: Orchestrates the preview generation process
+
+2. **Secondary Components**:
+   - `resume_tailoring.py`: Provides content to the HTML generator
+   - `content_formatter.py`: Formats content before HTML generation
+
+### Possible Root Causes
+
+1. **CSS Style Changes**:
+   - Max-width constraints might have been added or modified during refactoring
+   - Body or container element styles might have changed
+   - Missing or modified responsive design elements
+   - Container div classes or IDs might have changed without corresponding CSS updates
+
+2. **HTML Structure Changes**:
+   - Wrapper element structure might have changed
+   - Missing container divs that previously defined the layout
+   - Additional nesting levels creating unexpected style inheritance
+
+3. **Style Inheritance Issues**:
+   - CSS specificity conflicts after refactoring
+   - Missing style reset or base styles
+   - Conflicting styles from multiple sources
+
+4. **Refactoring Artifacts**:
+   - Incomplete function transfers during refactoring
+   - Missed style elements when moving code between files
+   - References to outdated class names or IDs
+
+### Debug Steps
+
+1. **Compare Original vs. Refactored Code**:
+   ```bash
+   # Pull the original file from the main branch
+   git show origin/main:claude_integration.py > claude_integration.original.py
+   
+   # Compare HTML generation functions
+   diff -u claude_integration.original.py html_generator.py > html_diff.txt
+   ```
+
+2. **Analyze HTML Output**:
+   - Generate HTML preview using both original and refactored code
+   - Save both HTML outputs to files for comparison
+   - Use browser dev tools to inspect CSS differences
+   - Identify which CSS rules are causing the narrow display
+
+3. **Inspect CSS in HTML Generator**:
+   - Examine the CSS styles defined in `html_generator.py`
+   - Focus on styles related to:
+     - `body` element
+     - Container divs
+     - Width, max-width, and margin properties
+     - Media queries for responsive design
+
+4. **Verify Template Consistency**:
+   - Check if the HTML template structure changed during refactoring
+   - Ensure all necessary wrapper elements are present
+   - Verify CSS class names match between HTML elements and style definitions
+
+5. **Test CSS Modifications**:
+   - Create a test branch for experimentation
+   - Systematically modify CSS properties to identify which ones affect layout
+   - Test removing max-width constraints
+   - Adjust margin and padding settings
+   - Test with various screen sizes to verify responsive behavior
+
+### Implementation Plan
+
+1. **Analysis Phase** (Day 1):
+   - [ ] Compare original and refactored HTML generation code
+   - [ ] Generate and compare HTML outputs
+   - [ ] Identify specific CSS rules causing the narrow layout
+   - [ ] Document findings in KNOWN_ISSUES.md
+
+2. **Solution Design** (Day 1-2):
+   - [ ] Create targeted CSS fixes based on analysis
+   - [ ] Test fixes in isolation before integration
+   - [ ] Document proposed changes
+
+3. **Implementation** (Day 2):
+   - [ ] Apply changes to `html_generator.py`
+   - [ ] Test with multiple resume formats and screen sizes
+   - [ ] Verify responsive behavior
+
+4. **Verification** (Day 2-3):
+   - [ ] Conduct comprehensive testing with various resume types
+   - [ ] Check for any other layout issues introduced by changes
+   - [ ] Verify that HTML preview matches PDF output layout
+
+5. **Documentation** (Day 3):
+   - [ ] Update FILE_DEPENDENCIES.md with any structural changes
+   - [ ] Document the fix in KNOWN_ISSUES.md
+   - [ ] Create developer notes about the HTML generation process
+
+### Specific Areas to Investigate
+
+1. **CSS Style Blocks**:
+   - Look for `<style>` tags in the HTML output
+   - Check for properties like `max-width`, `margin`, `width` on container elements
+   - Pay attention to `body` styles and top-level containers
+
+2. **Container Structure**:
+   - Inspect the HTML structure around `section` elements
+   - Look for missing or modified wrapper divs
+   - Check class assignments on container elements
+
+3. **Media Queries**:
+   - Verify if responsive design elements are intact
+   - Check if media query breakpoints match between versions
+
+4. **Common Layout Patterns**:
+   - Look for standard layout patterns like:
+     - Centered content with max-width
+     - Flexbox or Grid containers
+     - Responsive adjustments
+
+### Success Criteria
+- HTML preview utilizes appropriate width (similar to original implementation)
+- Content is properly displayed without excessive margins
+- Layout is responsive to different screen sizes
+- PDF output matches the HTML preview layout
