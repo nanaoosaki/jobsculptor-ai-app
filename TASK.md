@@ -43,6 +43,7 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [ ] Create resume format validator to help prepare optimal resumes
 - [ ] Add visual diff feature to highlight tailoring changes
 - [ ] Add confidence scores to LLM parsing results
+- [x] Implement session-based storage for multi-user environment
 
 ## Future Tasks
 
