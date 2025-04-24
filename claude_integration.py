@@ -1686,12 +1686,18 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
     else:
         logger.warning("No contact information found in resume sections")
         
-    # Add summary section directly to tailored_content without tailoring it
+    # Handle summary section - either preserve existing or generate a new one
     if resume_sections.get("summary", "").strip():
-        logger.info(f"Preserving summary section for tailored resume: {len(resume_sections['summary'])} chars")
+        logger.info(f"Preserving existing summary section for tailored resume: {len(resume_sections['summary'])} chars")
         llm_client.tailored_content["summary"] = resume_sections["summary"]
     else:
-        logger.warning("No summary information found in resume sections")
+        logger.warning("No summary information found in resume sections, generating a new summary")
+        generated_summary = generate_professional_summary(resume_sections, job_data, llm_client, provider)
+        if generated_summary:
+            logger.info(f"Generated new professional summary: {len(generated_summary)} chars")
+            llm_client.tailored_content["summary"] = generated_summary
+        else:
+            logger.error("Failed to generate professional summary")
     
     # Tailor each section
     for section_name, content in resume_sections.items():
@@ -1715,6 +1721,170 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
     
     # Return info without generating YC-style PDF
     return output_filename, output_path, llm_client
+
+def generate_professional_summary(resume_sections: Dict[str, str], job_data: Dict, llm_client, provider: str) -> str:
+    """
+    Generate a professional summary based on resume content and job data
+    
+    Args:
+        resume_sections: Dictionary of resume sections
+        job_data: Job data including requirements and skills
+        llm_client: LLM client instance
+        provider: LLM provider name
+        
+    Returns:
+        Generated professional summary or empty string if failed
+    """
+    try:
+        # Collect relevant information from the resume
+        experience = resume_sections.get("experience", "")
+        education = resume_sections.get("education", "")
+        skills = resume_sections.get("skills", "")
+        
+        # Extract key information from job data
+        job_title = job_data.get("title", "")
+        job_requirements = job_data.get("requirements", "")
+        candidate_profile = ""
+        hard_skills = []
+        soft_skills = []
+        
+        # Check if we have LLM-analyzed job data with more structured information
+        job_analysis = job_data.get("analysis", {})
+        if job_analysis:
+            if "candidate_profile" in job_analysis:
+                candidate_profile = job_analysis["candidate_profile"]
+            if "hard_skills" in job_analysis:
+                hard_skills = job_analysis["hard_skills"]
+            if "soft_skills" in job_analysis:
+                soft_skills = job_analysis["soft_skills"]
+        
+        # Create a combined string of skills for the prompt
+        target_skills = ", ".join(hard_skills + soft_skills)
+        
+        # Create a prompt for summary generation
+        prompt = f"""
+Generate a professional summary section for a resume tailored to the following job:
+
+JOB TITLE: {job_title}
+
+CANDIDATE PROFILE:
+{candidate_profile}
+
+TARGET SKILLS:
+{target_skills}
+
+REQUIREMENTS:
+{job_requirements}
+
+Based on the following resume information:
+
+EXPERIENCE:
+{experience[:500]}...
+
+EDUCATION:
+{education[:300]}
+
+SKILLS:
+{skills[:300]}
+
+Create a concise, powerful professional summary (3-5 sentences) that:
+1. Positions the candidate as an ideal fit for this specific role
+2. Highlights relevant experience and skills that match the job requirements
+3. Demonstrates the candidate's unique value proposition
+4. Is written in first person without using "I" statements
+5. Uses strong action verbs and specific, quantifiable achievements where possible
+
+Format the summary as a single paragraph without bullet points.
+"""
+        
+        # Use the appropriate LLM to generate the summary
+        if provider.lower() == "claude":
+            summary = generate_summary_with_claude(prompt, llm_client)
+        else:
+            summary = generate_summary_with_openai(prompt, llm_client)
+        
+        return summary
+        
+    except Exception as e:
+        logger.error(f"Error generating professional summary: {str(e)}")
+        logger.error(traceback.format_exc())
+        return ""
+
+def generate_summary_with_claude(prompt: str, claude_client) -> str:
+    """Generate a summary using Claude API"""
+    try:
+        # Use the Claude client to generate a summary
+        response = claude_client.client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=400,
+            temperature=0.5,
+            system="""You are a professional resume writer specializing in creating concise, 
+            impactful professional summaries. Your summaries highlight a candidate's strengths 
+            and align with job requirements without hyperbole.""",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Extract and clean the summary
+        summary = response.content[0].text
+        
+        # Save the raw response
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        response_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
+        if not os.path.exists(response_dir):
+            os.makedirs(response_dir)
+        
+        with open(os.path.join(response_dir, f"summary_generation_response_{timestamp}.json"), "w") as f:
+            json.dump({"provider": "claude", "prompt": prompt, "response": summary}, f, indent=2)
+        
+        logger.info(f"Generated summary with Claude: {len(summary)} chars")
+        return summary
+    
+    except Exception as e:
+        logger.error(f"Error generating summary with Claude: {str(e)}")
+        return ""
+
+def generate_summary_with_openai(prompt: str, openai_client) -> str:
+    """Generate a summary using OpenAI API"""
+    try:
+        # Use the OpenAI client to generate a summary
+        response = openai_client.client.chat.completions.create(
+            model="gpt-4o",
+            temperature=0.5,
+            messages=[
+                {"role": "system", "content": """You are a professional resume writer specializing in creating concise, 
+                impactful professional summaries. Your summaries highlight a candidate's strengths 
+                and align with job requirements without hyperbole."""},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Extract the summary
+        summary = response.choices[0].message.content
+        
+        # Save the raw response
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        response_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
+        if not os.path.exists(response_dir):
+            os.makedirs(response_dir)
+        
+        with open(os.path.join(response_dir, f"summary_generation_response_{timestamp}.json"), "w") as f:
+            json.dump({
+                "provider": "openai", 
+                "prompt": prompt, 
+                "response": summary,
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }, f, indent=2)
+        
+        logger.info(f"Generated summary with OpenAI: {len(summary)} chars")
+        return summary
+    
+    except Exception as e:
+        logger.error(f"Error generating summary with OpenAI: {str(e)}")
+        return ""
 
 def generate_resume_preview(resume_path: str) -> str:
     """

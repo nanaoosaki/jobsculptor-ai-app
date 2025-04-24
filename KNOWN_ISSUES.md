@@ -123,18 +123,33 @@ The resume lacks a summary, which is crucial for providing an overview of the ca
 1. Modified `tailor_resume_with_llm` in `claude_integration.py` to preserve the summary section by adding it directly to the LLM client's `tailored_content` dictionary without tailoring it.
 2. Added validation and verification in the `save_tailored_content_to_json` method to ensure proper handling of the summary section.
 3. Enhanced error handling in `html_generator.py` with a fallback mechanism to retrieve summary information from the original parsed resume if the summary.json file isn't found.
+4. Implemented automatic summary generation for resumes that don't include a professional summary:
+   - Added `generate_professional_summary`, `generate_summary_with_claude`, and `generate_summary_with_openai` functions.
+   - Created a sophisticated prompt that synthesizes the user's experience, skills, education, and the target job details.
+   - Supported both Claude and OpenAI LLM providers for summary generation.
+   - Added detailed logging and error handling for the generation process.
 
 **Verification**:
-The logs confirm that the summary section is now preserved during the tailoring process:
+The logs confirm that the summary section is now either preserved or generated during the tailoring process:
 ```
-INFO:claude_integration:Preserving summary section for tailored resume: 253 chars
+INFO:claude_integration:Preserving existing summary section for tailored resume: 253 chars
 INFO:claude_integration:Sections available for saving: ['contact', 'summary', 'experience', 'education', 'skills', 'projects']
 INFO:claude_integration:Saved summary content to D:\AI\manus_resume3\static/uploads\api_responses\summary.json
 INFO:claude_integration:Verified summary.json exists at D:\AI\manus_resume3\static/uploads\api_responses\summary.json
 INFO:html_generator:Successfully loaded summary information from summary.json
 ```
 
-The professional summary section now appears correctly in the tailored resume output.
+Or when auto-generating a summary:
+```
+WARNING:claude_integration:No summary information found in resume sections, generating a new summary
+INFO:claude_integration:Generated new professional summary: 389 chars
+INFO:claude_integration:Sections available for saving: ['contact', 'summary', 'experience', 'education', 'skills', 'projects']
+INFO:claude_integration:Saved summary content to D:\AI\manus_resume3\static/uploads\api_responses\summary.json
+INFO:claude_integration:Verified summary.json exists at D:\AI\manus_resume3\static/uploads\api_responses\summary.json
+INFO:html_generator:Successfully loaded summary information from summary.json
+```
+
+The professional summary section now appears correctly in the tailored resume output in all cases, including for resumes that don't originally contain a summary.
 
 **Priority**: High (Resolved)
 

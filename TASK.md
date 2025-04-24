@@ -72,6 +72,19 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
   - **Priority**: High
   - **Implemented**: Added summary section preservation in tailor_resume_with_llm similar to the contact section approach, added validation in save_tailored_content_to_json, and implemented a fallback mechanism in html_generator.py.
 
+- [ ] Add professional summary generator
+  - Implement a feature to generate a professional summary when one isn't found in the user's resume.
+  - Create a prompt that synthesizes the user's experience, skills, education and the target job.
+  - Integrate with both Claude and OpenAI LLM providers.
+  - Ensure the generated summary is properly formatted and tailored to the target position.
+  - **Priority**: High
+  - **Implementation Plan**:
+    - Add summary generation functions to claude_integration.py
+    - Modify tailor_resume_with_llm to generate a summary when none exists
+    - Implement provider-specific generator functions
+    - Add detailed logging for monitoring the generation process
+    - Create appropriate error handling and fallback mechanisms
+
 - [ ] Adjust resume formatting to utilize full A4 page width
   - Adjust the HTML/CSS styling to utilize the full A4 page width.
   - Review and update the PDF generation settings to ensure proper page width.
@@ -168,6 +181,73 @@ With the summary section fix complete, the next issues to address are:
 1. Adjust resume formatting to utilize full A4 page width
 2. Remove frame lines in PDF download
 3. Address other remaining formatting issues in KNOWN_ISSUES.md
+
+## Task Breakdown: Add Professional Summary Generator
+
+### Issue Analysis
+When a user's resume doesn't include a professional summary section, the application currently displays an error and doesn't generate one, resulting in a missing section in the tailored resume. The logs show:
+
+1. `INFO:claude_integration:LLM found no content for summary section` - The LLM parser didn't find a summary in the resume.
+2. `WARNING:claude_integration:No summary information found in resume sections` - The system acknowledges this.
+3. `ERROR:html_generator:Error processing summary section: [Errno 2] No such file or directory: 'D:\\AI\\manus_resume3\\static/uploads\\api_responses\\summary.json'` - The html_generator tries to read a non-existent summary.json file.
+
+Instead of just handling this as an error case, we need to proactively generate a professional summary based on the user's resume content and the target job.
+
+### Implementation Plan
+
+1. **Add Summary Generation Logic**:
+   - Created three new functions in `claude_integration.py`:
+     - `generate_professional_summary`: Main function that collects resume and job data and creates a prompt
+     - `generate_summary_with_claude`: Specialized function for using Claude API to generate a summary
+     - `generate_summary_with_openai`: Specialized function for using OpenAI API to generate a summary
+
+2. **Enhance Summary Section Handling**:
+   - Modified the `tailor_resume_with_llm` function to:
+     - Check if a summary exists in the resume sections
+     - If one exists, preserve it as before
+     - If none exists, call the new `generate_professional_summary` function
+     - Add the generated summary to the `tailored_content` dictionary
+
+3. **Prompt Design**:
+   The summary generation prompt includes:
+   - Job title and requirements from the job posting
+   - Candidate profile and target skills from the job analysis
+   - Excerpts from the user's experience, education, and skills sections
+   - Specific instructions for creating a concise, powerful summary
+   - Guidelines for formatting and writing style
+
+4. **Provider Support**:
+   - Added support for both Claude and OpenAI as summary generators
+   - Created provider-specific functions that handle API differences
+   - Implemented consistent error handling and logging
+   - Added response caching to avoid regenerating summaries
+
+5. **Output Formatting**:
+   - Ensured the generated summary is properly formatted
+   - Added logging to track the generation process
+   - Included validation to verify the quality of the generated summary
+
+### Expected Outcomes
+The implementation should:
+1. Detect when a resume lacks a professional summary
+2. Generate a high-quality, tailored summary based on the user's resume and target job
+3. Save the generated summary to a JSON file for the HTML generator
+4. Display the generated summary in the tailored resume
+5. Log the entire process for monitoring and debugging
+
+### Testing Process
+1. Submit a resume without a professional summary section
+2. Verify that the system correctly identifies the missing section
+3. Confirm that a professional summary is generated and included in the output
+4. Check the logs to ensure proper functioning of all components
+5. Verify that the generated summary is properly formatted and tailored to the target job
+
+### Next Steps
+After implementing the professional summary generator:
+1. Test with a variety of resume formats and job types
+2. Fine-tune the generation prompt based on output quality
+3. Consider adding user customization options for the summary style
+4. Implement caching to avoid regenerating summaries for the same resume-job combination
 
 ## Implementation Plan
 
