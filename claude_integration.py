@@ -1188,11 +1188,20 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if not os.path.exists(api_responses_dir):
                 os.makedirs(api_responses_dir)
                 
+            # Log content of tailored_content for debugging
+            sections_available = list(self.tailored_content.keys())
+            logger.info(f"Sections available for saving: {sections_available}")
+            
+            # Validate that contact section exists
+            if "contact" not in sections_available:
+                logger.warning("Contact section not found in tailored content. This will result in missing contact information in the resume.")
+            
             # Save each section to a separate JSON file without timestamp
             sections_saved = 0
             for section_name, content in self.tailored_content.items():
                 # Skip empty content
                 if not content:
+                    logger.warning(f"Empty content for section {section_name}, skipping")
                     continue
                     
                 # Create a simple JSON structure based on section type
@@ -1205,16 +1214,20 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 elif section_name in ["summary", "contact", "skills"]:
                     # For text sections, use simple content field
                     json_data = {"content": content}
+                    logger.debug(f"Saving {section_name} with {len(content)} chars as simple content field")
                 elif section_name == "education":
                     # For education, convert to proper JSON format (not raw string)
                     # Try to parse education data
                     json_data = {"content": content}
+                    logger.debug(f"Saving {section_name} with {len(content)} chars in structured JSON format")
                 elif section_name == "projects":
                     # For projects, convert to proper JSON format (not raw string)
                     json_data = {"content": content}
+                    logger.debug(f"Saving {section_name} with {len(content)} chars in structured JSON format")
                 else:
                     # For other sections, use simple content field
                     json_data = {"content": content}
+                    logger.debug(f"Saving {section_name} with {len(content)} chars as simple content field")
                 
                 # Define the output file path (non-timestamped)
                 filepath = os.path.join(api_responses_dir, f"{section_name}.json")
@@ -1227,6 +1240,14 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 logger.info(f"Saved {section_name} content to {filepath}")
             
             logger.info(f"Saved {sections_saved} sections to non-timestamped JSON files")
+            
+            # Verify contact.json was created
+            contact_path = os.path.join(api_responses_dir, "contact.json")
+            if os.path.exists(contact_path):
+                logger.info(f"Verified contact.json exists at {contact_path}")
+            else:
+                logger.warning(f"Contact.json was not created at {contact_path}")
+                
             return True
             
         except Exception as e:
@@ -1646,6 +1667,13 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
         llm_client = OpenAIClient(api_key)
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
+    
+    # Add contact section directly to tailored_content without tailoring it
+    if resume_sections.get("contact", "").strip():
+        logger.info(f"Preserving contact section for tailored resume: {len(resume_sections['contact'])} chars")
+        llm_client.tailored_content["contact"] = resume_sections["contact"]
+    else:
+        logger.warning("No contact information found in resume sections")
     
     # Tailor each section
     for section_name, content in resume_sections.items():

@@ -503,9 +503,46 @@ def generate_preview_from_llm_responses(llm_client) -> str:
                             contact_html += f'<p>{line.strip()}</p>'
                 
                 contact_html += '</div><hr class="contact-divider"/>'
+                logger.info("Successfully loaded contact information from contact.json")
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        # Contact file not found or invalid - this is common, not an error
-        pass
+        # Contact file not found or invalid - try fallback methods
+        logger.warning(f"Contact information not found in JSON file: {e}")
+        
+        # Fallback 1: Try to get contact info from the original resume parsing
+        try:
+            # Get the resume file ID from the current context
+            from flask import current_app, g
+            if hasattr(g, 'resume_file_id') and g.resume_file_id:
+                resume_id = g.resume_file_id
+                logger.info(f"Attempting to recover contact from original resume parsing (ID: {resume_id})")
+                
+                # Try to locate the cached parsing result
+                import glob
+                llm_parsed_files = glob.glob(os.path.join(current_app.config['UPLOAD_FOLDER'], f"*{resume_id}*_llm_parsed.json"))
+                
+                if llm_parsed_files:
+                    with open(llm_parsed_files[0], 'r') as f:
+                        cached_data = json.load(f)
+                        if cached_data.get('contact'):
+                            contact_text = cached_data.get('contact', '')
+                            if contact_text:
+                                contact_lines = contact_text.strip().split('\n')
+                                contact_html = '<div class="contact-section">'
+                                
+                                # First line is usually the name
+                                if contact_lines:
+                                    contact_html += f'<p class="name">{contact_lines[0]}</p>'
+                                    
+                                    # Add remaining contact lines
+                                    for line in contact_lines[1:]:
+                                        if line.strip():
+                                            contact_html += f'<p>{line.strip()}</p>'
+                                
+                                contact_html += '</div><hr class="contact-divider"/>'
+                                logger.info("Successfully recovered contact information from cached parsing")
+        except Exception as fallback_error:
+            logger.warning(f"Fallback contact recovery failed: {fallback_error}")
+            # The resume will be generated without contact info
         
     # Add contact section if available
     if contact_html:
