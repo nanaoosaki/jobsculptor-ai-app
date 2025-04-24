@@ -193,8 +193,9 @@ class ClaudeClient(LLMClient):
         """
         logger.info(f"Tailoring {section_name} with Claude API")
             
-        if not content or not content.strip():        logger.warning(
-            f"Empty {section_name} content provided, skipping tailoring")            return ""
+        if not content or not content.strip():
+            logger.warning(f"Empty {section_name} content provided, skipping tailoring")
+            return ""
 
         if not self.client:
             logger.error("Claude client not initialized")
@@ -472,12 +473,11 @@ Focus on emphasizing elements most relevant to this job opportunity.
                     self.tailored_content[section_name] = formatted_text
                     return formatted_text
                 else:
-                logger.warning(
-                    f"JSON response missing expected '{section_name}' key")
+                    logger.warning(f"JSON response missing expected '{section_name}' key")
                     return content
 
-            except json.JSONDecodeError:        logger.error(
-            f"Failed to parse JSON from Claude response: {response_content[:100]}...")
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse JSON from Claude response: {response_content[:100]}...")
                 # Store as raw text for fallback
                 self.tailored_content[section_name] = response_content
                 return response_content
@@ -667,8 +667,9 @@ class OpenAIClient(LLMClient):
         """
         logger.info(f"Tailoring {section_name} with OpenAI API")
             
-        if not content or not content.strip():        logger.warning(
-            f"Empty {section_name} content provided, skipping tailoring")            return ""
+        if not content or not content.strip():
+            logger.warning(f"Empty {section_name} content provided, skipping tailoring")
+            return ""
 
         if not self.client:
             logger.error("OpenAI client not initialized")
@@ -1016,8 +1017,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 self.tailored_content[section_name] = formatted_text
                 return formatted_text
             else:
-                logger.warning(
-                    f"JSON response missing expected '{section_name}' key")
+                logger.warning(f"JSON response missing expected '{section_name}' key")
                 return content
                 
         except Exception as e:
@@ -1206,11 +1206,12 @@ Focus on emphasizing elements most relevant to this job opportunity.
                     # For text sections, use simple content field
                     json_data = {"content": content}
                 elif section_name == "education":
-                    # For education, save as raw content to be parsed later
-                    json_data = content
+                    # For education, convert to proper JSON format (not raw string)
+                    # Try to parse education data
+                    json_data = {"content": content}
                 elif section_name == "projects":
-                    # For projects, save as raw content to be parsed later
-                    json_data = content
+                    # For projects, convert to proper JSON format (not raw string)
+                    json_data = {"content": content}
                 else:
                     # For other sections, use simple content field
                     json_data = {"content": content}
@@ -1220,10 +1221,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 
                 # Write to file
                 with open(filepath, 'w', encoding='utf-8') as f:
-                    if isinstance(json_data, str):
-                        f.write(json_data)  # Write raw string content
-                    else:
-                        json.dump(json_data, f, indent=2)  # Write JSON data
+                    json.dump(json_data, f, indent=2)  # Always use json.dump, not raw strings
                 
                 sections_saved += 1
                 logger.info(f"Saved {section_name} content to {filepath}")
@@ -1340,8 +1338,8 @@ def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
         lines = content.split('\n')
         for i, line in enumerate(lines):
             for pattern in bullet_patterns:
-                if re.search(pattern, line):        logger.warning(
-            f"Validation found bullet marker in {section} section, line {i + 1}: '{line[:30]}...'")
+                if re.search(pattern, line):
+                    logger.warning(f"Validation found bullet marker in {section} section, line {i + 1}: '{line[:30]}...'" )
                     return False
 
     return True
@@ -1456,9 +1454,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                     logger.warning(
                         "LLM parsing did not return usable results. Falling back to traditional parsing.")
             except (ImportError, Exception) as e:
-            logger.warning(
-            f"LLM parsing unavailable or failed: {
-        str(e)}. Using traditional parsing.")
+                logger.warning(f"LLM parsing unavailable or failed: {str(e)}. Using traditional parsing.")
         else:
             logger.info(
                 "LLM parsing is disabled by configuration. Using traditional parsing.")
@@ -1684,7 +1680,7 @@ def generate_resume_preview(resume_path: str) -> str:
     Returns:
         HTML preview
     """
-        logger.info(f"Generating resume preview for {resume_path}")
+    logger.info(f"Generating resume preview for {resume_path}")
     
     # Check if we have direct LLM responses from last tailoring
     global last_llm_client

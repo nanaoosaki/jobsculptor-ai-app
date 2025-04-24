@@ -240,53 +240,98 @@ def format_project_entry(title: str, dates: str, details: List[str]) -> str:
 
 def format_education_content(content: str) -> str:
     """
-    Format education section content from parsed JSON into HTML.
+    Format education content for HTML display.
+    
+    This function parses education content that could be either raw string or JSON,
+    and converts it to HTML.
     """
-    from json import loads
+    import json
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    if not content or content.strip() == "":
+        return "<p>No education information available.</p>"
     
     try:
-        education_data = loads(content)
-        html_parts = []
-        
-        for edu in education_data:
-            institution = edu.get('institution', '')
-            location = edu.get('location', '')
-            degree = edu.get('degree', '')
-            dates = edu.get('dates', '')
-            highlights = edu.get('highlights', [])
-            
-            html_parts.append(
-                format_education_entry(institution, location, degree, dates, highlights)
-            )
-        
-        return ''.join(html_parts)
+        # Try to parse as JSON first
+        if content.strip().startswith('{') or content.strip().startswith('['):
+            try:
+                education_data = json.loads(content)
+                # Process structured JSON data
+                # This would need specific logic based on your data structure
+                if isinstance(education_data, list):
+                    html = ""
+                    for entry in education_data:
+                        institution = entry.get('institution', '')
+                        location = entry.get('location', '')
+                        degree = entry.get('degree', '')
+                        dates = entry.get('dates', '')
+                        highlights = entry.get('highlights', [])
+                        
+                        html += format_education_entry(institution, location, degree, dates, highlights)
+                    return html
+                elif isinstance(education_data, dict):
+                    # Handle single education entry as dictionary
+                    return format_section_content(education_data.get('content', ''))
+                else:
+                    # Use the raw content as fallback
+                    return format_section_content(content)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, treat as raw content
+                logger.debug("Education content not valid JSON, processing as raw text")
+                return format_section_content(content)
+        else:
+            # Treat as raw content
+            return format_section_content(content)
     except Exception as e:
-        logger.error(f"Error formatting education content: {e}")
+        logger.error(f"Error formatting education content: {str(e)}")
         return f"<p>Error formatting education section: {str(e)}</p>"
 
 
 def format_projects_content(content: str) -> str:
     """
-    Format projects section content from parsed JSON into HTML.
+    Format projects content for HTML display.
+    
+    This function parses projects content that could be either raw string or JSON,
+    and converts it to HTML.
     """
-    from json import loads
+    import json
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    if not content or content.strip() == "":
+        return "<p>No projects information available.</p>"
     
     try:
-        projects_data = loads(content)
-        html_parts = []
-        
-        for project in projects_data:
-            title = project.get('title', '')
-            dates = project.get('dates', '')
-            details = project.get('details', [])
-            
-            html_parts.append(
-                format_project_entry(title, dates, details)
-            )
-        
-        return ''.join(html_parts)
+        # Try to parse as JSON first
+        if content.strip().startswith('{') or content.strip().startswith('['):
+            try:
+                projects_data = json.loads(content)
+                # Process structured JSON data
+                if isinstance(projects_data, list):
+                    html = ""
+                    for entry in projects_data:
+                        title = entry.get('title', '')
+                        dates = entry.get('dates', '')
+                        details = entry.get('details', [])
+                        
+                        html += format_project_entry(title, dates, details)
+                    return html
+                elif isinstance(projects_data, dict):
+                    # Handle single project entry or content field
+                    return format_section_content(projects_data.get('content', ''))
+                else:
+                    # Use the raw content as fallback
+                    return format_section_content(content)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, treat as raw content
+                logger.debug("Projects content not valid JSON, processing as raw text")
+                return format_section_content(content)
+        else:
+            # Treat as raw content
+            return format_section_content(content)
     except Exception as e:
-        logger.error(f"Error formatting projects content: {e}")
+        logger.error(f"Error formatting projects content: {str(e)}")
         return f"<p>Error formatting projects section: {str(e)}</p>"
 
 
@@ -300,9 +345,16 @@ def generate_preview_from_llm_responses(llm_client) -> str:
     import os
     import json
     from datetime import datetime
+    from flask import current_app
     
-    # Find the response files directory
-    api_responses_dir = os.path.join('uploads', 'api_responses')
+    # Find the response files directory - use consistent path with claude_integration.py
+    api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
+    logger.info(f"Looking for API responses in: {api_responses_dir}")
+    
+    # Create directory if it doesn't exist
+    if not os.path.exists(api_responses_dir):
+        logger.warning(f"API responses directory not found, creating: {api_responses_dir}")
+        os.makedirs(api_responses_dir)
     
     # Initialize HTML parts
     html_parts = []
