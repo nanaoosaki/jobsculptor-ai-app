@@ -95,92 +95,139 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
   - Ensure the PDF generation process does not include unnecessary borders.
   - **Priority**: Medium
 
-## Task Breakdown: Fix Missing Professional Summary Section
+## Task Breakdown: Adjust Resume Formatting to Utilize Full A4 Page Width (Revised)
 
 ### Issue Analysis
-The professional summary section is missing from the tailored resume output, similar to the previous contact section issue. After analyzing the code:
+After further investigation, the resume's narrow appearance persists despite the initial CSS adjustments. The root cause appears more complex than initially thought.
 
-1. In `claude_integration.py`, the `tailor_resume_with_llm` function was treating the summary section as a section to be tailored:
-```python
-for section_name, content in resume_sections.items():
-    if content.strip() and section_name in ["summary", "experience", "education", "skills", "projects"]:
-        logger.info(f"Tailoring {section_name} section")
-        tailored_content = llm_client.tailor_resume_content(section_name, content, job_data)
-        resume_sections[section_name] = tailored_content
-```
+The examination of the HTML rendering process and CSS application reveals:
 
-2. However, the summary is a critical section that should be preserved in its original form, similar to the contact section.
+1. **Multiple CSS Layer Application**:
+   - Several CSS classes affect the width with cascading/nested containers:
+     - In `html_generator.py`, the `.resume-preview-container` wraps `.tailored-resume-content`
+     - In `static/css/styles.css`, the stylesheet sets similar constraints
+     - In JS (`main.js`), additional styling is applied when displaying the preview
 
-3. The HTML generator was looking for a `summary.json` file in the API responses directory, but it was either not being created or had a different structure than expected.
+2. **Frontend-Backend Mismatch**:
+   - The HTML preview in the browser applies additional JS-based centering in `displayResumePreview()` function
+   - The PDF generation uses `pdf_exporter.py` with WeasyPrint and potentially different CSS application
 
-### Root Cause
-The summary section was being treated as a section to be tailored by the LLM, but in many cases, the LLM might not generate a tailored summary, resulting in the section being missing from the final resume.
+3. **Visual vs Actual Width**:
+   - The resume might be rendered at proper A4 width (8.27 inches) in code, but visually appears narrow due to:
+     - Excessive whitespace in the margins
+     - Nested container constraints
+     - PDF rendering differences from HTML preview
+     - Shadow effects and visual borders creating an illusion of narrowness
 
-### Implemented Fix
+### Root Cause (Refined)
+The issue is not just about CSS width values but the combination of:
+1. **Nested Containers**: Multiple wrapping elements constraining the content
+2. **UI Design Choices**: Visual styling making the content area appear smaller
+3. **Multiple Styling Sources**: CSS applied from different files and JavaScript
+4. **Preview-PDF Inconsistency**: Different rendering processes for preview vs PDF
 
-1. **Modified the `tailor_resume_with_llm` function in `claude_integration.py`**:
-   - Added the summary section directly to the LLM client's `tailored_content` dictionary without tailoring it:
-```python
-# Add summary section directly to tailored_content without tailoring it
-if resume_sections.get("summary", "").strip():
-    logger.info(f"Preserving summary section for tailored resume: {len(resume_sections['summary'])} chars")
-    llm_client.tailored_content["summary"] = resume_sections["summary"]
-else:
-    logger.warning("No summary information found in resume sections")
-```
+### Comprehensive Fix Plan
 
-2. **Enhanced validation in `save_tailored_content_to_json`**:
-   - Added validation to check for the presence of the summary section:
-```python
-# Validate that summary section exists
-if "summary" not in sections_available:
-    logger.warning("Summary section not found in tailored content. This will result in missing professional summary in the resume.")
-```
-   - Added verification to confirm that the summary.json file was created:
-```python
-# Verify summary.json was created
-summary_path = os.path.join(api_responses_dir, "summary.json")
-if os.path.exists(summary_path):
-    logger.info(f"Verified summary.json exists at {summary_path}")
-else:
-    logger.warning(f"Summary.json was not created at {summary_path}")
-```
+1. **Adjust HTML Generator Template**:
+   - Modify the `.resume-preview-container` to use a wider width (95% of parent)
+   - Reduce padding in the container from `1rem` to `0.5rem`
+   - Update `.tailored-resume-content` to reduce horizontal padding:
+   ```css
+   .tailored-resume-content {
+       width: 8.27in; /* Keep A4 width */
+       max-width: 95%; /* Allow more content width */
+       padding: 0 0.5in; /* Reduce from 1in to 0.5in */
+       /* other properties remain */
+   }
+   ```
 
-3. **Added a fallback mechanism in `html_generator.py`**:
-   - Implemented a fallback method to retrieve the summary from the original resume parsing if the summary.json file isn't found:
-```python
-# Fallback: Try to get summary info from the original resume parsing
-try:
-    # Get the resume file ID from the current context
-    from flask import current_app, g
-    if hasattr(g, 'resume_file_id') and g.resume_file_id:
-        resume_id = g.resume_file_id
-        logger.info(f"Attempting to recover summary from original resume parsing (ID: {resume_id})")
-        
-        # Try to locate the cached parsing result
-        import glob
-        llm_parsed_files = glob.glob(os.path.join(current_app.config['UPLOAD_FOLDER'], f"*{resume_id}*_llm_parsed.json"))
-        
-        if llm_parsed_files:
-            with open(llm_parsed_files[0], 'r') as f:
-                cached_data = json.load(f)
-                if cached_data.get('sections') and cached_data['sections'].get('summary'):
-                    summary_text = cached_data['sections'].get('summary', '')
-                    # Add summary section to HTML output
-```
+2. **Update Frontend Display Logic**:
+   - Modify `static/js/main.js` function `displayResumePreview()` to remove width constraints:
+   ```javascript
+   // Remove existing width constraints
+   previewContainer.style.maxWidth = '95%'; // Allow wider content
+   paperContainer.style.maxWidth = '100%';
+   ```
+
+3. **Fix PDF Exporter**:
+   - Update `pdf_exporter.py` wrapping HTML template to ensure wider content:
+   ```html
+   <main class="resume-content" style="width: 95%; max-width: 95%; padding: 0 0.5in;">
+       {resume_html}
+   </main>
+   ```
+   - Add specific CSS overrides in the inline `<style>` section to ensure proper margins
+
+4. **Update PDF Styles**:
+   - Modify @page margins in `static/css/pdf_styles.css`:
+   ```css
+   @page {
+     size: letter portrait;
+     margin: 0.8cm 1.2cm; /* Reduced from 1cm 2cm */
+   }
+   ```
+   - Add explicit !important rules to override potential conflicts:
+   ```css
+   .resume-content {
+     width: 95% !important;
+     max-width: 95% !important;
+     margin: 0 auto !important;
+     padding: 0 0.5in !important;
+   }
+   ```
+
+5. **Fix Visual Styling**:
+   - Update border and shadow effects to create less visual "boxing"
+   - Ensure section headers span the full width effectively
+   - Remove any fixed-width containers that may constrain content
+
+### Implementation Steps (Prioritized)
+
+1. **First Pass: HTML Generator Template and CSS**
+   - Update inline CSS in `html_generator.py` to reduce padding and widen containers
+   - Modify the same classes in `static/css/styles.css` for consistency
+
+2. **Second Pass: PDF Generation**
+   - Update @page margins and other styles in `pdf_styles.css`
+   - Modify the HTML wrapper template in `pdf_exporter.py`
+
+3. **Third Pass: JavaScript Display Logic**
+   - Adjust the `displayResumePreview()` function to ensure proper width rendering
+
+4. **Fourth Pass: Visual Styling**
+   - Fine-tune borders, shadows, and other visual elements affecting perceived width
+
+### Testing Strategy
+1. **Preview Testing**:
+   - Test the HTML preview after each phase of changes
+   - Verify with browser dev tools that the resume width increases correctly
+   - Use screenshots to compare before/after
+
+2. **PDF Testing**:
+   - Generate PDFs after implementing all changes
+   - Measure the actual content width in the generated PDFs
+   - Compare content area utilization before and after changes
+
+3. **Content Flow Testing**:
+   - Test with various resume content types, including long bullet points
+   - Ensure text flows properly and maintains readability
+   - Verify section headers span appropriately
 
 ### Expected Results
-The fix should successfully:
-1. Preserve the original summary section without trying to tailor it
-2. Provide proper validation and verification for the summary.json file
-3. Implement a fallback mechanism to recover the summary from cached parsing results if needed
-4. Display the professional summary section correctly in the tailored resume output
+With this comprehensive approach, we expect:
+1. The resume content to expand and utilize more horizontal space
+2. Consistent appearance between preview and PDF output
+3. Proper visual balance with appropriate margins
+4. Professional appearance matching standard resume formats
 
-### Next Steps
-With the summary section fix complete, the next issues to address are:
-1. Adjust resume formatting to utilize full A4 page width
-2. Remove frame lines in PDF download
-3. Address other remaining formatting issues in KNOWN_ISSUES.md
+### Verification Metrics
+1. Content width increased by at least 25% compared to current state
+2. Ratio of text area to page width increased to at least 80%
+3. Consistent appearance across preview and PDF
+4. Positive user feedback on visual presentation
+
+### Priority
+Medium - This issue affects visual presentation but doesn't prevent core functionality.
 
 ## Task Breakdown: Add Professional Summary Generator
 
@@ -580,3 +627,118 @@ The changes should:
 
 ### Priority
 Medium - This issue affects the visual presentation but doesn't prevent core functionality. 
+
+## Styling Architecture Evaluation and Refactoring Plan
+
+### Current Architecture Assessment
+
+The current styling implementation for the resume tailoring application is fragmented across multiple files and technologies, making it challenging to maintain consistency and implement changes efficiently:
+
+1. **Multiple Style Sources**:
+   - Inline CSS in `html_generator.py` (defines core resume styling)
+   - External CSS in `static/css/styles.css` (web UI styling)
+   - External CSS in `static/css/pdf_styles.css` (PDF-specific styling)
+   - JavaScript-applied styling in `static/js/main.js` (dynamically applies styles)
+   - HTML template in `pdf_exporter.py` (contains additional inline styles)
+
+2. **Coordination Challenges**:
+   - Changes need to be synchronized across multiple files
+   - No single source of truth for styling constants (widths, colors, spacing)
+   - Hard to trace which styles are actually applied and in what order
+   - Difficult to maintain consistency between HTML preview and PDF output
+
+3. **Redundancy and Conflicts**:
+   - Same classes defined in multiple places with slightly different properties
+   - Potential for style conflicts requiring `!important` overrides
+   - Duplicate code for similar styling constructs
+   - Inconsistent naming conventions
+
+### Proposed Refactoring Strategy
+
+To address these issues, we propose a comprehensive styling architecture refactoring:
+
+1. **Centralized Styling System**:
+   - Create a dedicated `resume_styles.py` module to define all styling constants
+   - Implement a `StyleManager` class that generates consistent CSS for all outputs
+   - Use template variables instead of hardcoded values in all HTML/CSS
+   - Define a single source of truth for all measurements, colors, and formatting
+
+2. **Style Separation by Concern**:
+   - `base_styles.css`: Core styling shared by all components
+   - `preview_styles.css`: Specific to UI preview
+   - `print_styles.css`: Specific to PDF generation
+   - Eliminate inline styles in Python code where possible
+
+3. **Consistent Styling API**:
+   - Create helper functions for generating commonly used style blocks
+   - Implement CSS variable system for key values (widths, colors, spacing)
+   - Document all style components and their intended usage
+   - Add validation to ensure styles meet requirements
+
+4. **Implementation Phases**:
+
+   **Phase 1: Style Extraction and Centralization**
+   - Extract all inline styles from Python files into CSS files
+   - Create a style constants module with all measurements and colors
+   - Document all existing style rules and their purposes
+   - Identify and resolve conflicting styles
+
+   **Phase 2: Style Manager Implementation**
+   - Create a `StyleManager` class to generate consistent styles
+   - Add methods for HTML preview and PDF export styling
+   - Implement template system for style application
+   - Add validation to ensure consistent rendering
+
+   **Phase 3: HTML/CSS Refactoring**
+   - Update all HTML generators to use the style manager
+   - Convert hardcoded values to references to style constants
+   - Implement responsive design considerations
+   - Ensure accessibility compliance
+
+   **Phase 4: PDF Generation Integration**
+   - Refactor PDF export to use consistent styling
+   - Ensure perfect match between preview and PDF output
+   - Optimize PDF styling for printing and ATS compatibility
+   - Add configurability for different page sizes and formats
+
+### Expected Benefits
+
+1. **Maintainability**:
+   - Single point of control for all styling changes
+   - Reduced risk of inconsistencies when implementing changes
+   - Better organization of style components
+
+2. **Consistency**:
+   - Unified appearance across preview and generated PDFs
+   - Consistent spacing, colors, and typography
+   - Predictable behavior across different resume content
+
+3. **Extensibility**:
+   - Easier to add new style variants or themes
+   - Better support for different paper sizes and formats
+   - Foundation for future UI/UX improvements
+
+4. **Developer Experience**:
+   - Clear documentation of styling components
+   - Reduced complexity when making style changes
+   - Shorter development cycles for style-related features
+
+### Implementation Considerations
+
+- **Backward Compatibility**: Ensure existing resumes continue to render correctly
+- **Testing Strategy**: Compare before/after rendering to verify visual consistency
+- **Performance Impact**: Evaluate any performance changes from the new architecture
+- **Refactoring Risks**: Plan for incremental changes to minimize disruption
+
+### Priority and Timeline
+
+This is a significant architectural change that should be planned as a medium-priority, high-impact task. The implementation should be phased to allow for ongoing feature development, with each phase taking approximately:
+
+- Phase 1: 3-5 days
+- Phase 2: 5-7 days
+- Phase 3: 3-5 days
+- Phase 4: 3-5 days
+
+Total estimated effort: 2-3 weeks of dedicated development time.
+
+Given the current priorities, this should be scheduled after addressing critical user-facing issues, but before implementing extensive new styling features. 

@@ -188,17 +188,35 @@ Incomplete representation of the candidate's educational background, potentially
 **Priority**: High
 
 ### Narrow Formatting of Resume
-**Status**: Unresolved (April 24, 2025)
+**Status**: Unresolved (April 26, 2025)
 
 **Description**:  
-The tailored resume is formatted narrower than the A4 page width, affecting the visual presentation.
+The tailored resume is formatted narrower than expected for an A4 page, with excessive whitespace on both sides affecting the visual presentation and efficient use of space. The resume content area appears constrained despite having adequate page width available.
 
 **Impact**:  
-The narrow formatting may lead to a cramped appearance and affect readability.
+The narrow formatting creates a visually imbalanced resume that doesn't make optimal use of available space. This can lead to content appearing cramped vertically while horizontal space is underutilized, resulting in a less professional appearance.
+
+**Investigation Findings**:
+1. The issue is caused by multiple layers of CSS constraints:
+   - The `.resume-preview-container` and `.tailored-resume-content` classes have nested width and padding settings
+   - The frontend JavaScript in `main.js` adds additional styling when displaying the preview
+   - There's inconsistency between HTML preview rendering and PDF generation in `pdf_exporter.py`
+   - Visual styling (borders, shadows) creates an illusion of additional narrowness
+
+2. The A4 page width (8.27in) is correctly specified in CSS, but large padding values (0 1in) reduce the effective content area to approximately 6.27 inches.
+
+3. Multiple styling sources (HTML generator, CSS files, JavaScript) affect the final rendering, making the fix more complex than just adjusting a single CSS property.
 
 **Possible Solutions**:
-1. Adjust the HTML/CSS styling to utilize the full A4 page width.
-2. Review and update the PDF generation settings to ensure proper page width.
+1. Implement a coordinated update across multiple files:
+   - Adjust container widths and padding in both `html_generator.py` and `static/css/styles.css`
+   - Update the preview display code in `static/js/main.js`
+   - Modify the HTML template in `pdf_exporter.py`
+   - Adjust page margins in `static/css/pdf_styles.css`
+
+2. Use `!important` CSS rules where needed to override conflicting styles.
+
+3. Address both the actual width constraints and visual styling elements that create the appearance of narrowness.
 
 **Priority**: Medium
 
