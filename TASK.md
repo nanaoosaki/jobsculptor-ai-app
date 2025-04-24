@@ -486,4 +486,97 @@ The resume tailoring application uses a Flask backend with a simple frontend int
    - **Analysis**: When processing PDF files, the HTML structure differs from DOCX files since we can't detect formatting details, causing different CSS inheritance behavior
    - **Solution Implemented**:
      - Added explicit content wrapper classes to all sections (`
-</rewritten_file> 
+
+## Task Breakdown: Adjust Resume Formatting to Utilize Full A4 Page Width
+
+### Issue Analysis
+The current resume formatting does not properly utilize the full A4 page width, resulting in a narrow appearance that affects the visual presentation and readability of the resume. After analyzing the code:
+
+1. The HTML/CSS styling in multiple files controls the width of the resume:
+   - In `html_generator.py`, the inline CSS defines `.tailored-resume-content` with a width of `8.27in` (A4 width) but includes large padding of `0 1in` (1 inch on each side).
+   - In `static/css/styles.css`, there's a similar `.tailored-resume-content` class that sets the same width and padding.
+   - In `static/css/pdf_styles.css`, the width for the resume content is set to `max-width: 100%` but inherits other constraints.
+
+2. The actual content width is being constrained by these excessive margins and padding, reducing the effective content area to approximately 6.27 inches instead of the full 8.27 inches of an A4 page.
+
+3. The PDF generation process uses these same CSS constraints when creating the final document, carrying over the narrow formatting.
+
+### Root Cause
+The root cause appears to be:
+1. Excessive padding/margins in the CSS that leave too much whitespace on the sides
+2. Inconsistent width settings across different CSS files
+3. A possible misunderstanding of box-sizing and how padding factors into width calculations
+
+### Debug Plan
+
+1. **Inspect and modify CSS properties**:
+   - Reduce the horizontal padding in `.tailored-resume-content` from `0 1in` to `0 0.5in` in both `html_generator.py` and `static/css/styles.css`.
+   - Ensure the `box-sizing: border-box` property is consistently applied.
+   - Review and adjust other margin and padding settings that may be affecting the layout.
+
+2. **Update PDF styling**:
+   - Adjust the @page margins in `static/css/pdf_styles.css` to be consistent with the HTML preview.
+   - Currently set to `margin: 1cm 2cm;`, consider reducing to `margin: 1cm 1.5cm;` to allow more horizontal space.
+
+3. **Test content flow**:
+   - After making these changes, test with resumes containing long bullet points to ensure text flows properly.
+   - Verify that line lengths remain readable and don't become too long.
+   - Check for any side effects on mobile responsiveness.
+
+4. **Improve parent container constraints**:
+   - Examine the `.resume-preview-container` class which may be adding additional constraints.
+   - Ensure it allows the resume content to use the full available width.
+
+5. **Address special elements**:
+   - Review the formatting of section headers and ensure they span the full width appropriately.
+   - Check for any fixed-width elements that may need adjustment.
+
+### Implementation Steps
+
+1. **Update HTML Generator Template**:
+   - Modify the inline CSS in `html_generator.py` to reduce padding and ensure proper width calculation.
+   ```css
+   .tailored-resume-content {
+       width: 8.27in; /* A4 width in inches */
+       max-width: 100%; /* Ensure responsiveness */
+       margin: 0 auto;
+       padding: 0 0.5in; /* Reduced from 1in to 0.5in */
+       box-sizing: border-box;
+       /* other properties remain the same */
+   }
+   ```
+
+2. **Update Styles.css**:
+   - Make the same changes to `.tailored-resume-content` in `static/css/styles.css` for consistency.
+   - Review other container classes that might be affecting width.
+
+3. **Update PDF Styles**:
+   - Modify the page margins in `static/css/pdf_styles.css`:
+   ```css
+   @page {
+     size: letter portrait;
+     margin: 1cm 1.5cm; /* Reduced from 2cm to 1.5cm */
+     /* other properties remain the same */
+   }
+   ```
+
+4. **Test the changes**:
+   - Generate previews and PDFs with various resume content.
+   - Verify the appearance on different screen sizes.
+   - Ensure the text remains readable while utilizing more horizontal space.
+
+### Expected Results
+The changes should:
+1. Increase the effective content width of the resume
+2. Maintain proper formatting and readability
+3. Improve the overall visual presentation by using the page space more efficiently
+4. Create a more professional appearance to the generated resumes
+
+### Verification Process
+1. Compare before/after screenshots of the resume preview
+2. Generate PDFs with the new styling and verify proper page width utilization
+3. Test with long bullet points to ensure proper text flow
+4. Verify that mobile responsiveness is maintained
+
+### Priority
+Medium - This issue affects the visual presentation but doesn't prevent core functionality. 
