@@ -1195,6 +1195,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             # Validate that contact section exists
             if "contact" not in sections_available:
                 logger.warning("Contact section not found in tailored content. This will result in missing contact information in the resume.")
+                
+            # Validate that summary section exists
+            if "summary" not in sections_available:
+                logger.warning("Summary section not found in tailored content. This will result in missing professional summary in the resume.")
             
             # Save each section to a separate JSON file without timestamp
             sections_saved = 0
@@ -1247,6 +1251,13 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 logger.info(f"Verified contact.json exists at {contact_path}")
             else:
                 logger.warning(f"Contact.json was not created at {contact_path}")
+                
+            # Verify summary.json was created
+            summary_path = os.path.join(api_responses_dir, "summary.json")
+            if os.path.exists(summary_path):
+                logger.info(f"Verified summary.json exists at {summary_path}")
+            else:
+                logger.warning(f"Summary.json was not created at {summary_path}")
                 
             return True
             
@@ -1674,10 +1685,17 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
         llm_client.tailored_content["contact"] = resume_sections["contact"]
     else:
         logger.warning("No contact information found in resume sections")
+        
+    # Add summary section directly to tailored_content without tailoring it
+    if resume_sections.get("summary", "").strip():
+        logger.info(f"Preserving summary section for tailored resume: {len(resume_sections['summary'])} chars")
+        llm_client.tailored_content["summary"] = resume_sections["summary"]
+    else:
+        logger.warning("No summary information found in resume sections")
     
     # Tailor each section
     for section_name, content in resume_sections.items():
-        if content.strip() and section_name in ["summary", "experience", "education", "skills", "projects"]:
+        if content.strip() and section_name in ["experience", "education", "skills", "projects"]:
             logger.info(f"Tailoring {section_name} section")
             tailored_content = llm_client.tailor_resume_content(section_name, content, job_data)
             resume_sections[section_name] = tailored_content

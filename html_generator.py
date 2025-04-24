@@ -565,6 +565,34 @@ def generate_preview_from_llm_responses(llm_client) -> str:
                 
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error(f"Error processing summary section: {e}")
+            
+            # Fallback: Try to get summary info from the original resume parsing
+            try:
+                # Get the resume file ID from the current context
+                from flask import current_app, g
+                if hasattr(g, 'resume_file_id') and g.resume_file_id:
+                    resume_id = g.resume_file_id
+                    logger.info(f"Attempting to recover summary from original resume parsing (ID: {resume_id})")
+                    
+                    # Try to locate the cached parsing result
+                    import glob
+                    llm_parsed_files = glob.glob(os.path.join(current_app.config['UPLOAD_FOLDER'], f"*{resume_id}*_llm_parsed.json"))
+                    
+                    if llm_parsed_files:
+                        with open(llm_parsed_files[0], 'r') as f:
+                            cached_data = json.load(f)
+                            if cached_data.get('sections') and cached_data['sections'].get('summary'):
+                                summary_text = cached_data['sections'].get('summary', '')
+                                if summary_text.strip():
+                                    html_parts.append('<div class="resume-section">')
+                                    html_parts.append('<h2>Professional Summary</h2>')
+                                    html_parts.append('<div class="summary-content">')
+                                    html_parts.append(format_section_content(summary_text))
+                                    html_parts.append('</div>')
+                                    html_parts.append('</div>')
+                                    logger.info("Successfully recovered summary information from cached parsing")
+            except Exception as fallback_error:
+                logger.warning(f"Fallback summary recovery failed: {fallback_error}")
         
         # Add experience section
         try:

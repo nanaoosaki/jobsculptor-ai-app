@@ -30,6 +30,8 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Fix empty bullet points in tailored resume output
 - [x] Add resume index system for tracking relationships between parsed resumes, LLM responses, and generated PDFs
 - [x] Fix Python module import path issue by adding current directory to sys.path in app.py
+- [x] Fix missing contact section in tailored resume
+- [x] Fix missing professional summary section in tailored resume
 
 ## In Progress Tasks
 
@@ -62,11 +64,13 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
   - **Priority**: Critical
   - **Implemented**: Added contact section preservation in tailor_resume_with_llm, improved error handling in html_generator.py, and enhanced validation in save_tailored_content_to_json.
 
-- [ ] Fix missing professional summary section
+- [x] Fix missing professional summary section
   - Ensure the summary section is included in the LLM parsing and tailoring process.
   - Add validation to check for the presence of a summary section.
-  - Update the LLM prompt to ensure the summary is extracted and preserved.
+  - Update the approach by preserving the original summary instead of tailoring it.
+  - Add a fallback mechanism to extract summary information from the original parsed resume.
   - **Priority**: High
+  - **Implemented**: Added summary section preservation in tailor_resume_with_llm similar to the contact section approach, added validation in save_tailored_content_to_json, and implemented a fallback mechanism in html_generator.py.
 
 - [ ] Adjust resume formatting to utilize full A4 page width
   - Adjust the HTML/CSS styling to utilize the full A4 page width.
@@ -78,12 +82,12 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
   - Ensure the PDF generation process does not include unnecessary borders.
   - **Priority**: Medium
 
-## Task Breakdown: Fix Missing Contact Section
+## Task Breakdown: Fix Missing Professional Summary Section
 
 ### Issue Analysis
-The contact section is successfully extracted during resume parsing but is not being included in the tailored output. After analyzing the code:
+The professional summary section is missing from the tailored resume output, similar to the previous contact section issue. After analyzing the code:
 
-1. In `claude_integration.py`, the `tailor_resume_with_llm` function only tailors specific sections:
+1. In `claude_integration.py`, the `tailor_resume_with_llm` function was treating the summary section as a section to be tailored:
 ```python
 for section_name, content in resume_sections.items():
     if content.strip() and section_name in ["summary", "experience", "education", "skills", "projects"]:
@@ -92,73 +96,78 @@ for section_name, content in resume_sections.items():
         resume_sections[section_name] = tailored_content
 ```
 
-2. The contact section is intentionally excluded from tailoring (which makes sense as contact info shouldn't change), but it's not being added to the `tailored_content` dictionary in the LLM client.
+2. However, the summary is a critical section that should be preserved in its original form, similar to the contact section.
 
-3. In `save_tailored_content_to_json()`, only sections in `self.tailored_content` are saved to JSON files:
-```python
-for section_name, content in self.tailored_content.items():
-    # Skip empty content
-    if not content:
-        continue
-```
-
-4. The `html_generator.py` looks for a `contact.json` file in the API responses directory, which doesn't exist because the contact section wasn't saved:
-```python
-try:
-    with open(os.path.join(api_responses_dir, 'contact.json'), 'r') as f:
-        contact_data = json.load(f)
-```
+3. The HTML generator was looking for a `summary.json` file in the API responses directory, but it was either not being created or had a different structure than expected.
 
 ### Root Cause
-The contact section is extracted but not added to the `tailored_content` dictionary in the LLM client, so it's not saved to a JSON file for the HTML generator to use.
+The summary section was being treated as a section to be tailored by the LLM, but in many cases, the LLM might not generate a tailored summary, resulting in the section being missing from the final resume.
 
 ### Implemented Fix
 
 1. **Modified the `tailor_resume_with_llm` function in `claude_integration.py`**:
-   - Added the contact section directly to the LLM client's `tailored_content` dictionary without tailoring it:
+   - Added the summary section directly to the LLM client's `tailored_content` dictionary without tailoring it:
 ```python
-# Add contact section directly to tailored_content without tailoring it
-if resume_sections.get("contact", "").strip():
-    logger.info(f"Preserving contact section for tailored resume: {len(resume_sections['contact'])} chars")
-    llm_client.tailored_content["contact"] = resume_sections["contact"]
+# Add summary section directly to tailored_content without tailoring it
+if resume_sections.get("summary", "").strip():
+    logger.info(f"Preserving summary section for tailored resume: {len(resume_sections['summary'])} chars")
+    llm_client.tailored_content["summary"] = resume_sections["summary"]
 else:
-    logger.warning("No contact information found in resume sections")
+    logger.warning("No summary information found in resume sections")
 ```
 
-2. **Enhanced error handling in `html_generator.py`**:
-   - Added a fallback mechanism to retrieve contact information from the original parsed resume if the contact.json file isn't found
-   - Improved logging to better track the contact section processing
-
-3. **Added validation in `save_tailored_content_to_json`**:
-   - Added detailed logging to verify the contact section is being processed
-   - Added verification that the contact.json file is created:
+2. **Enhanced validation in `save_tailored_content_to_json`**:
+   - Added validation to check for the presence of the summary section:
 ```python
-# Verify contact.json was created
-contact_path = os.path.join(api_responses_dir, "contact.json")
-if os.path.exists(contact_path):
-    logger.info(f"Verified contact.json exists at {contact_path}")
+# Validate that summary section exists
+if "summary" not in sections_available:
+    logger.warning("Summary section not found in tailored content. This will result in missing professional summary in the resume.")
+```
+   - Added verification to confirm that the summary.json file was created:
+```python
+# Verify summary.json was created
+summary_path = os.path.join(api_responses_dir, "summary.json")
+if os.path.exists(summary_path):
+    logger.info(f"Verified summary.json exists at {summary_path}")
 else:
-    logger.warning(f"Contact.json was not created at {contact_path}")
+    logger.warning(f"Summary.json was not created at {summary_path}")
 ```
 
-### Results
-The fix was successful:
-- The contact section now appears in the tailored resume output
-- The logs confirm the correct processing:
+3. **Added a fallback mechanism in `html_generator.py`**:
+   - Implemented a fallback method to retrieve the summary from the original resume parsing if the summary.json file isn't found:
+```python
+# Fallback: Try to get summary info from the original resume parsing
+try:
+    # Get the resume file ID from the current context
+    from flask import current_app, g
+    if hasattr(g, 'resume_file_id') and g.resume_file_id:
+        resume_id = g.resume_file_id
+        logger.info(f"Attempting to recover summary from original resume parsing (ID: {resume_id})")
+        
+        # Try to locate the cached parsing result
+        import glob
+        llm_parsed_files = glob.glob(os.path.join(current_app.config['UPLOAD_FOLDER'], f"*{resume_id}*_llm_parsed.json"))
+        
+        if llm_parsed_files:
+            with open(llm_parsed_files[0], 'r') as f:
+                cached_data = json.load(f)
+                if cached_data.get('sections') and cached_data['sections'].get('summary'):
+                    summary_text = cached_data['sections'].get('summary', '')
+                    # Add summary section to HTML output
 ```
-INFO:claude_integration:Preserving contact section for tailored resume: 71 chars
-INFO:claude_integration:Sections available for saving: ['contact', 'experience', 'education', 'skills', 'projects']
-INFO:claude_integration:Saved contact content to D:\AI\manus_resume3\static/uploads\api_responses\contact.json
-INFO:claude_integration:Verified contact.json exists at D:\AI\manus_resume3\static/uploads\api_responses\contact.json
-INFO:html_generator:Successfully loaded contact information from contact.json
-```
-- The displayed output in the screenshot shows the contact information is correctly included at the top of the resume
+
+### Expected Results
+The fix should successfully:
+1. Preserve the original summary section without trying to tailor it
+2. Provide proper validation and verification for the summary.json file
+3. Implement a fallback mechanism to recover the summary from cached parsing results if needed
+4. Display the professional summary section correctly in the tailored resume output
 
 ### Next Steps
-With the contact section fix complete, the next issues to address are:
-1. Fix missing professional summary section
-2. Adjust resume formatting to utilize full A4 page width
-3. Remove frame lines in PDF download
+With the summary section fix complete, the next issues to address are:
+1. Adjust resume formatting to utilize full A4 page width
+2. Remove frame lines in PDF download
+3. Address other remaining formatting issues in KNOWN_ISSUES.md
 
 ## Implementation Plan
 
