@@ -205,8 +205,24 @@ def setup_tailoring_routes(app):
                     api_url
                 )
                 
-                # Generate HTML preview first
-                preview_html = generate_preview_from_llm_responses(llm_client)
+                # Generate HTML preview for the screen
+                preview_html_for_screen = generate_preview_from_llm_responses(llm_client, for_screen=True)
+                
+                # Generate clean HTML body content for PDF export
+                html_body_for_pdf = generate_preview_from_llm_responses(llm_client, for_screen=False)
+                
+                # Extract only the content within the <body> tags for PDF generation
+                # This is a simple regex approach, might need refinement
+                import re
+                body_match = re.search(r'<body.*?>(.*?)</body>', html_body_for_pdf, re.DOTALL | re.IGNORECASE)
+                if body_match:
+                    clean_html_body = body_match.group(1).strip()
+                    # Further clean by removing the outer container if it exists
+                    # clean_html_body = re.sub(r'^<div class="resume-preview-container">(.*)</div>$', r'\1', clean_html_body, flags=re.DOTALL).strip()
+                else:
+                    logger.warning("Could not extract body content for PDF generation. Using full HTML.")
+                    clean_html_body = html_body_for_pdf # Fallback, might cause issues
+
                 
                 # Get original filename without extension
                 filename_base = os.path.splitext(os.path.basename(resume_path))[0]
@@ -218,9 +234,9 @@ def setup_tailoring_routes(app):
                 )
                 
                 try:
-                    # Generate PDF directly from HTML preview
+                    # Generate PDF using the clean HTML body content
                     pdf_path = create_pdf_from_html(
-                        preview_html, 
+                        clean_html_body, # Pass only the body content
                         pdf_output_path,
                         metadata={
                             'title': f'Tailored Resume - {provider.capitalize()}',
@@ -252,30 +268,23 @@ def setup_tailoring_routes(app):
                     return jsonify({
                         'success': True,
                         'filename': pdf_filename,
-                        'preview': preview_html,
+                        'preview': preview_html_for_screen, # Return the version for the screen
                         'provider': provider,
                         'fileType': 'pdf',  # Indicate this is a PDF file
                         'message': f'Resume tailored successfully using {provider.upper()}'
                     }), 200
                 except Exception as pdf_error:
-                    # If PDF generation fails, fallback to DOCX
-                    logger.error(f"PDF generation failed, falling back to DOCX: {str(pdf_error)}")
-                    
-                    # Use the output_filename directly if it's already a DOCX file
-                    if output_filename and output_filename.lower().endswith('.docx'):
-                        docx_filename = output_filename
-                    else:
-                        # Create DOCX filename
-                        docx_filename = f"{filename_base}_tailored_{provider}.docx"
-                    
+                    # If PDF generation fails, fallback (potentially remove DOCX fallback)
+                    logger.error(f"PDF generation failed: {str(pdf_error)}")
+                    logger.error(traceback.format_exc())
+                    # Decide on fallback behavior - maybe just return the preview?
+                    # For now, return error
                     return jsonify({
-                        'success': True,
-                        'filename': docx_filename,
-                        'preview': preview_html,
-                        'provider': provider,
-                        'fileType': 'docx',
-                        'message': f'Resume tailored successfully using {provider.upper()} (PDF generation failed, using DOCX format)'
-                    }), 200
+                        'success': False,
+                        'error': f'PDF generation failed: {str(pdf_error)}',
+                        'preview': preview_html_for_screen, # Still return preview
+                        'provider': provider
+                    }), 500
                     
             except Exception as e:
                 logger.error(f"Error tailoring resume with {provider.upper()} API: {str(e)}")

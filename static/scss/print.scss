@@ -1,34 +1,68 @@
-// Styles specific to the PDF output
+// SCSS specifically for PDF generation via WeasyPrint or similar
+@use 'tokens' as *;
+@use 'base';
+@use 'resume';
 
-@import 'base'; // Includes tokens as well
+// Define any variables not in tokens
+$pdf-header-color: $darkColor !default; // Use dark color for PDF headers
+$spacing-xlarge: 2rem !default; // Extra large spacing
+$spacing-large: 1.5rem !default; // Large spacing
+$spacing-medium: 1rem !default; // Medium spacing
+$spacing-small: 0.5rem !default; // Small spacing
+$spacing-xsmall: 0.25rem !default; // Extra small spacing
 
+// Custom set global properties for print media
 @page {
-  size: letter portrait;
-  margin: $page-margin-vertical $page-margin-horizontal;
-  
-  // Optional: Add headers/footers if needed
-  // @top-right {
-  //   content: "Resume";
-  //   font-size: 9pt;
-  //   color: $secondary-color; 
-  // }
-  // @bottom-center {
-  //   content: counter(page);
-  //   font-size: 9pt;
-  //   color: $secondary-color;
-  // }
+  margin: 0; // No margins on the page (we control this in the container)
+  size: letter; // Use letter size (8.5in x 11in)
 }
 
 body {
-  // Base body styles are in _base.scss
+  font-family: $baseFontFamily;
+  font-size: $baseFontSize;
+  line-height: $baseLineHeight;
+  color: $textColor;
+  background-color: white;
+  margin: 0;
+  padding: 0;
 }
 
-.resume-document {
-  // Base styles are in _base.scss
+// Print-specific overrides
+.tailored-resume-content {
+  box-shadow: none; // No shadows in print
+  border: none; // No borders
+  margin: 0; // Override any margins
+  width: 100%; // Use full width
 }
 
-.resume-content {
-  // Base styles are in _base.scss
+// Remove screen-specific effects for print
+.tailored-resume-content {
+    box-shadow: none; // Remove paper shadow for print
+    margin: 0; // Remove extra margins used for screen layout
+    width: 100%; // Use full available width within page margins
+    max-width: 100%;
+    padding: 0; // Page margins handle padding
+}
+
+// Ensure links are printable (optional: show URL)
+// a {
+//   color: $text-color-primary !important; // Force black links for print
+//   text-decoration: none !important;
+//   // Optionally add URL after link text:
+//   // &::after {
+//   //   content: " (" attr(href) ")";
+//   //   font-size: 0.8em;
+//   //   color: $text-color-muted;
+//   // }
+// }
+
+// Control page breaks (optional)
+.resume-section {
+    page-break-inside: avoid;
+}
+
+.job, .education, .project {
+    page-break-inside: avoid;
 }
 
 // Section styling specific to PDF (if any)

@@ -1,11 +1,16 @@
 import os
 # import ssl
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, send_file, redirect, url_for
 from config import Config
 from upload_handler import setup_upload_routes
 from format_handler import setup_formatting_routes
 from job_parser_handler import setup_job_parser_routes
 from tailoring_handler import setup_tailoring_routes
+from werkzeug.utils import secure_filename
+from pdf_exporter import generate_pdf_from_html
+import json
+import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -64,6 +69,61 @@ def download_file(filename):
         filename, 
         as_attachment=True,
         mimetype=mime_type
+    )
+
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    """Generate a PDF from the current tailored resume"""
+    try:
+        # Get resume data from session or request
+        resume_data = session.get('tailored_resume')
+        
+        if not resume_data:
+            # If not in session, try to get from request
+            resume_data = request.json.get('resume')
+            
+        if not resume_data:
+            return jsonify({'error': 'No resume data found'}), 400
+        
+        # Generate unique filename
+        filename = f"resume_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        # Generate PDF in memory
+        pdf_buffer = generate_pdf_from_html(resume_data)
+        
+        # Return PDF for download
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        app.logger.error(f"Error generating PDF: {str(e)}")
+        return jsonify({'error': f'PDF generation failed: {str(e)}'}), 500
+
+@app.route('/download_pdf', methods=['POST'])
+def download_pdf():
+    """Generate and download a PDF version of the tailored resume"""
+    # Get resume data from the request
+    resume_data = request.json
+    
+    if not resume_data:
+        return jsonify({"error": "No resume data provided"}), 400
+    
+    # Generate PDF from resume data
+    pdf_buffer = generate_pdf_from_html(resume_data)
+    
+    # Get file name from the person's name or use a default
+    filename = f"{resume_data.get('name', 'Tailored_Resume').replace(' ', '_')}.pdf"
+    
+    # Send PDF file to the client
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
     )
 
 if __name__ == '__main__':

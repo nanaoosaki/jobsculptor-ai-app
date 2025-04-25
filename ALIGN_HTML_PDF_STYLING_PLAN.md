@@ -138,4 +138,17 @@ class StyleManager:
 1. Refactored SCSS files + `build-css` script.  
 2. Updated `style_manager.py`, `html_generator.py`, and `pdf_exporter.py`.  
 3. CI job to guard compiled CSS.  
-4. Documentation (`ALIGN_HTML_PDF_STYLING_PLAN.md`) describing token→SCSS→outputs flow. 
+4. Documentation (`ALIGN_HTML_PDF_STYLING_PLAN.md`) describing token→SCSS→outputs flow.
+
+## Learnings and Progress
+
+- Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS.
+- Improved maintainability and consistency by removing inline styles and JavaScript hacks.
+- Successfully implemented a single-source styling approach, allowing for easy updates and modifications.
+
+## Solutions Implemented
+
+- Created `design_tokens.json` to store all visual constants, ensuring a single source of truth for styling.
+- Developed a `StyleManager` class to manage and apply styles consistently across different outputs.
+- Refactored CSS into SCSS files, separating concerns and improving maintainability.
+- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance. 

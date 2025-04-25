@@ -1,179 +1,109 @@
-// Base styles shared between preview and print
+// Base styles: resets, variables, typography, utility classes
+@use 'tokens' as *; // Use tokens globally in this file
+@use 'sass:color';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@import 'tokens';
+// --- Define missing variables locally until added to tokens --- 
+$font-weight-bold: 700 !default;
+$text-color-primary: $textColor !default; // Use base textColor from tokens
+$text-color-headings: $darkColor !default; // Use darkColor from tokens
+$background-color-page: $lightColor !default; // Use lightColor from tokens
+$link-color: $primaryColor !default; // Use primaryColor from tokens
+$link-color-hover: color.adjust($primaryColor, $lightness: -15%) !default;
+$border-color-light: #dee2e6 !default; // Standard light border
+
+// Spacing (define simple scale locally)
+$spacing-xsmall: 0.25rem !default;
+$spacing-small: 0.5rem !default;
+$spacing-medium: 1rem !default;
+$spacing-large: 1.5rem !default;
+$spacing-xlarge: 2rem !default;
+
+// Font sizes (define simple scale locally)
+$font-size-h1: 2rem !default;
+$font-size-h2: 1.75rem !default;
+$font-size-h3: 1.5rem !default;
+// $base-font-size is defined in tokens
+// -----------------------------------------------------------
+
+// Basic Reset
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 body {
-  font-family: $base-font-family;
-  font-size: $base-font-size;
-  line-height: $base-line-height;
-  color: $text-color;
-  margin: 0;
-  padding: 0;
+    font-family: $baseFontFamily; // Use camelCase from tokens
+    font-size: $baseFontSize; // Use camelCase from tokens
+    line-height: $baseLineHeight; // Use camelCase from tokens
+    color: $text-color-primary;
+    background-color: $background-color-page;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-// Basic layout container for web preview
-.container {
-  max-width: 1200px; // Keep specific UI layout rules separate if needed
-  margin: 0 auto;
+h1, h2, h3, h4, h5, h6 {
+    font-family: $baseFontFamily; // Use camelCase from tokens
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-medium;
+    color: $text-color-headings;
 }
 
-// Common resume structure elements
-.resume-document {
-  max-width: 100%;
+h2 {
+    font-size: $font-size-h2;
 }
 
-.tailored-resume-content,
-.resume-content { // Used in PDF exporter template
-  width: $content-width;
-  max-width: $content-width; 
-  margin: 0 auto;
-  padding: 0 $content-padding;
-  box-sizing: border-box;
-  background-color: white; // Common background for content area
+h3 {
+    font-size: $font-size-h3;
 }
 
-// Section styling
-.resume-section {
-  margin-bottom: $section-margin-bottom; 
-  page-break-inside: avoid; // Common PDF rule
-
-  h2 {
-    font-size: $header-font-size;
-    font-weight: bold;
-    color: $pdf-header-color; // Using PDF header color for consistency, can be overridden
-    text-align: center;
-    text-transform: uppercase;
-    margin-top: $section-margin-bottom; // Reuse for spacing
-    margin-bottom: 0.3cm; // Specific spacing, consider making a token
-    padding: $pdf-header-padding-vertical $pdf-header-padding-horizontal;
-    border: 1px solid $pdf-border-color;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    page-break-after: avoid; // Common PDF rule
-  }
-  
-  // Prevent orphaned headings in PDF
-  h2 + p, h2 + ul {
-      page-break-before: avoid;
-  }
-  
-  // Ensure content is left-aligned by default
-  p,
-  ul,
-  li,
-  .summary-content,
-  .experience-content,
-  .education-content,
-  .skills-content,
-  .projects-content,
-  .additional-content {
-    text-align: left;
-  }
-}
-
-// Contact section styling
-.contact-section {
-  text-align: center;
-  margin-bottom: $contact-divider-margin-bottom;
-
-  p {
-    margin: 0.05cm 0; // Specific spacing, consider token
-    line-height: 1.3; // Slightly tighter line height
-  }
-
-  .name {
-    font-size: $name-font-size;
-    font-weight: bold;
-    margin-bottom: 0.1cm; // Specific spacing, consider token
-  }
-}
-
-.contact-divider {
-  margin-top: $contact-divider-margin-top;
-  margin-bottom: $contact-divider-margin-bottom;
-  border: none;
-  height: 1px;
-  background-color: $pdf-border-color;
-  width: 90%; // Keep this specific for now
-  margin-left: auto;
-  margin-right: auto;
-}
-
-
-// Job/Education/Project Entry Formatting
-.job-header, 
-.education-header, 
-.project-header, 
-.job-title-line, // from old web styles
-.education-title-line, // from old web styles
-.project-title-line { // from old web styles
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0;
-  padding-bottom: 0;
-  margin-top: 0.4cm; // Specific spacing, consider token
-}
-
-.job-subheader,
-.education-subheader,
-.position-line, // from old web styles
-.degree-line { // from old web styles
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0;
-  padding-top: 0;
-  margin-bottom: 0.2cm; // Specific spacing, consider token
-}
-
-.company, 
-.institution, 
-.project-title,
-.company-name { // from old web styles
-  font-weight: bold;
-  text-transform: uppercase;
-  text-align: left;
-}
-
-.position, 
-.degree,
-.position-title { // from old web styles
-  font-style: italic; // Often italicized
-  text-align: left;
-}
-
-.location, 
-.dates,
-.company-location, // from old web styles
-.position-date { // from old web styles
-  text-align: right;
-  margin-left: auto;
-  color: $secondary-color; // Use secondary color for dates/locations
-}
-
-// Bullet points
-.dot-bullets, // Class used in generated HTML
-ul { // Apply base style to standard ul as well
-  list-style-type: disc;
-  padding-left: 1.5em; // Standard indentation
-  margin-top: $bullet-list-margin-top;
-  margin-bottom: $bullet-list-margin-bottom;
-  margin-left: 0;
-  text-align: left;
-}
-
-.dot-bullets li, 
-ul li { // Apply base style to standard li
-  margin-bottom: $bullet-item-margin-bottom;
-  padding-left: 0;
-  // margin-left: 1em; // Handled by padding-left on ul
-  text-indent: 0;
-  text-align: left;
-  page-break-inside: avoid; // Common PDF rule
-}
-
-// Base paragraph styling
 p {
-  margin-top: 0.1cm; // Minimal spacing, consider token
-  margin-bottom: 0.2cm; // Minimal spacing, consider token
-} 
+    margin-bottom: $spacing-small;
+}
+
+ul,
+ol {
+    margin-bottom: $spacing-medium;
+    padding-left: $spacing-large;
+}
+
+li {
+    margin-bottom: $spacing-xsmall;
+}
+
+a {
+    color: $link-color;
+    text-decoration: none;
+
+    &:hover {
+        color: $link-color-hover;
+        text-decoration: underline;
+    }
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: $border-color-light;
+    margin: $spacing-large 0;
+}
+
+// Utility Classes (Optional)
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.font-bold { font-weight: $font-weight-bold; }
+
+.mb-1 { margin-bottom: $spacing-xsmall; }
+.mb-2 { margin-bottom: $spacing-small; }
+.mb-3 { margin-bottom: $spacing-medium; }
+.mb-4 { margin-bottom: $spacing-large; }
+
+.mt-1 { margin-top: $spacing-xsmall; }
+.mt-2 { margin-top: $spacing-small; }
+.mt-3 { margin-top: $spacing-medium; }
+.mt-4 { margin-top: $spacing-large; }
+
+// End of clean base styles defined in this refactor step. 

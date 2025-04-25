@@ -26,5 +26,18 @@
   "webContainerPadding": "0.5rem",
   "webPreviewTitleMarginBottom": "1rem",
   "webPreviewTitlePaddingBottom": "0.5rem",
-  "webPreviewSectionMarginBottom": "0.75rem"
+  "webPreviewSectionMarginBottom": "0.75rem",
+  "sectionHeaderBorder": "1px solid #0D2B7E",
+  "paper-width-a4": "210mm",
+  "paper-padding-vertical": "1.5cm",
+  "paper-padding-horizontal": "1.5cm",
+  "background-color-paper": "#ffffff",
+  "line-height-tight": 1.2,
+  "contact-divider-width": "90%",
+  "paper-shadow": "0 4px 12px rgba(0, 0, 0, 0.1)",
+  "paper-format": "A4",
+  "font-size-small": "9pt",
+  "text-color-muted": "#6c757d",
+  "text-color-secondary": "#495057",
+  "bullet-glyph": "\"\\u2022\""
 } 

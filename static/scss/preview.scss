@@ -1,23 +1,59 @@
 // Styles specific to the web preview UI
 
-@import 'base'; // Includes tokens as well
+@use 'tokens' as *;
+@use 'sass:color';
+@use 'base';
+@use 'resume';
+
+// Define any variables not in tokens
+$background-color-page: #f8f9fa !default; // Light grey background for the page
+$spacing-xlarge: 2rem !default; // Extra large spacing
+$spacing-large: 1.5rem !default; // Large spacing
+$spacing-medium: 1rem !default; // Medium spacing
+$spacing-small: 0.5rem !default; // Small spacing
+$spacing-xsmall: 0.25rem !default; // Extra small spacing
+$text-color: $darkColor !default; // Default text color (uses the token dark color)
+$light-color: $lightColor !default; // Light color from tokens
+
+// Web preview specific variables
+$web-preview-title-margin-bottom: 1rem !default;
+$web-preview-title-padding-bottom: 0.5rem !default;
+$web-preview-section-margin-bottom: 2rem !default;
+$web-preview-header-padding: 0.5rem !default;
 
 // Import UI-specific color variables (or define here if not in tokens)
 :root {
-  --primary-color: #{$primary-color};
-  --secondary-color: #{$secondary-color};
+  --primary-color: #{$primaryColor};
+  --secondary-color: #{$secondaryColor};
   --success-color: #28a745; // Keep UI colors separate unless needed globally
   --info-color: #17a2b8;
   --warning-color: #ffc107;
   --danger-color: #dc3545;
-  --light-color: #{$light-color};
-  --dark-color: #{$dark-color};
+  --light-color: #{$lightColor};
+  --dark-color: #{$darkColor};
   --ai-color: #8a2be2;
   --ai-light-color: #f3eafa;
 }
 
 body {
-  background-color: var(--light-color);
+  background-color: $background-color-page;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: $baseFontFamily;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: $background-color-page;
+}
+
+.resume-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  background-color: $background-color-page;
 }
 
 header {
@@ -25,10 +61,11 @@ header {
 }
 
 .card {
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: $web-preview-section-margin-bottom;
+  background-color: white;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .card:hover {
@@ -36,8 +73,10 @@ header {
 }
 
 .card-header {
-  border-top-left-radius: 8px !important;
-  border-top-right-radius: 8px !important;
+  padding: $web-preview-header-padding $spacing-medium;
+  background-color: var(--light-color);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 600;
 }
 
 .btn-primary {
@@ -46,15 +85,15 @@ header {
 }
 
 .btn-primary:hover {
-  background-color: darken($primary-color, 10%);
-  border-color: darken($primary-color, 10%);
+  background-color: color.adjust($primaryColor, $lightness: -10%);
+  border-color: color.adjust($primaryColor, $lightness: -10%);
 }
 
 // ... other button styles ...
 
 .form-control:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba($primaryColor, 0.25);
 }
 
 #uploadStatus, #jobParseStatus, #tailorStatus {
@@ -142,16 +181,11 @@ header {
 
 // Resume Preview Component Styles (UI Wrapper)
 .resume-preview-container {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: $web-container-padding;
-  margin-top: 1.5rem;
-  background-color: var(--light-color); // Use light background for the container
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  width: $content-width; // Match content width
-  max-width: $content-width;
-  margin-left: auto;
-  margin-right: auto;
+  background-color: $background-color-page; // Grey background for the page
+  padding: $spacing-xlarge 0; // Add padding above and below the paper
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .preview-title {
@@ -165,10 +199,11 @@ header {
 
 // A4 Paper Styling for Resume Preview Content Area
 .tailored-resume-content {
-  // Base styles are in _base.scss
-  overflow-y: auto; // Allow scrolling if content overflows container
-  min-height: 10in; // Approximate A4 height
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); // Paper effect
+  // Inherits base resume styles from _resume.scss
+  box-shadow: $paper-shadow; // Add shadow for paper effect
+  margin-top: $spacing-medium; // Space above the paper
+  margin-bottom: $spacing-medium; // Space below the paper
+  // Width, padding, etc., are defined in _resume.scss
 }
 
 .resume-preview-content { // Old class, might be removable
@@ -203,8 +238,9 @@ header {
 // Overrides for web preview resume sections if needed
 .resume-section {
   h2 {
-    // Maybe use primary color for web preview headers?
-    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-bottom: $web-preview-title-margin-bottom;
+    color: var(--dark-color);
   }
 }
 
@@ -299,5 +335,36 @@ header {
     border-left: 2px solid var(--ai-color);
     margin-bottom: 0.5rem;
     padding: 0.4rem 0.8rem;
+  }
+}
+
+// Potentially add screen-only hover effects or other UI elements here
+// Example:
+a:hover {
+    // Already defined in _base, but could add more screen-specific effects
+}
+
+.title-with-hr {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: $web-preview-title-padding-bottom;
+  margin-bottom: $web-preview-title-margin-bottom;
+}
+
+.item-list {
+  list-style: none;
+  padding: 0;
+  
+  li {
+    padding: $spacing-small $spacing-medium;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    
+    &:hover { 
+      background-color: $light-color; 
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
   }
 } 

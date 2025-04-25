@@ -23,9 +23,10 @@ def generate_scss_variables():
         with open(output_path, 'w') as f:
             f.write("// Auto-generated from design_tokens.json. Do not edit directly.\n\n")
             for key, value in tokens.items():
-                # Simple camelCase to kebab-case conversion for SCSS variable names
-                scss_key = ''.join(['-' + i.lower() if i.isupper() 
-                                 else i for i in key]).lstrip('-')
+                # Keep the key as is for SCSS variable name, assuming keys are already kebab-case or valid
+                # scss_key = ''.join(['-' + i.lower() if i.isupper() 
+                #                  else i for i in key]).lstrip('-')
+                scss_key = key # Use the JSON key directly
                 f.write(f"${scss_key}: {value};\n")
         
         print(f"Successfully generated {output_path}")

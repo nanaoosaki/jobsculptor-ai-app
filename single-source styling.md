@@ -143,4 +143,17 @@ Implementing this plan converts the hard-coded-everywhere width fix into a maint
 - HTML preview successfully loads `preview.css` and applies centralized styling tokens.
 - Inline styles and JavaScript width hacks removed; full content width now controlled by SCSS.
 - PDF generation uses `print.css` via StyleManager; PDF layout matches the HTML preview in A4 format.
-- Verified consistent appearance in browser preview and exported PDF output. 
+- Verified consistent appearance in browser preview and exported PDF output.
+
+## Learnings and Progress
+
+- Successfully centralized styling using design tokens and SCSS, ensuring consistent styling across HTML and PDF outputs.
+- Removed inline styles and JavaScript width hacks, leading to a cleaner and more maintainable codebase.
+- Implemented a single-source styling architecture that allows for easy updates and modifications.
+
+## Solutions Implemented
+
+- Created `design_tokens.json` to store all visual constants, ensuring a single source of truth for styling.
+- Developed a `StyleManager` class to manage and apply styles consistently across different outputs.
+- Refactored CSS into SCSS files, separating concerns and improving maintainability.
+- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance. 

@@ -1,0 +1,154 @@
+// Core resume styles (YC-Eddie inspired)
+@use 'tokens' as *;
+
+// Define local fallback variables not yet in design tokens
+$font-family-body: $baseFontFamily !default;
+$font-size-body: $baseFontSize !default;
+$line-height-body: $baseLineHeight !default;
+$paper-width-a4: 8.5in !default;
+$paper-padding-vertical: 0.75in !default;
+$paper-padding-horizontal: 0.75in !default;
+$background-color-paper: #ffffff !default;
+$line-height-tight: 1.3 !default;
+$font-weight-bold: 700 !default;
+$text-color-primary: $textColor !default;
+$text-color-headings: $darkColor !default;
+$text-color-secondary: $textColor !default;
+$text-color-muted: #6c757d !default;
+$contact-divider-width: 90% !default;
+$section-header-fg: $darkColor !default;
+$section-header-bg: transparent !default;
+$section-header-border: none !default;
+$spacing-xsmall: 0.25rem !default;
+$spacing-small: 0.5rem !default;
+$spacing-medium: 1rem !default;
+$spacing-large: 1.5rem !default;
+$spacing-xlarge: 2rem !default;
+$font-size-h1: 2rem !default;
+$font-size-h2: 1.75rem !default;
+
+// Container for the actual resume content
+.tailored-resume-content {
+    width: $paper-width-a4;
+    max-width: 100%; // Ensure it fits within parent containers
+    margin: 0 auto; // Centering within the preview container
+    padding: $paper-padding-vertical $paper-padding-horizontal;
+    background-color: $background-color-paper; // White paper background
+    font-family: $font-family-body;
+    font-size: $font-size-body;
+    line-height: $line-height-body;
+    color: $text-color-primary;
+}
+
+// Contact Section Specifics
+.contact-section {
+    text-align: center;
+    margin-bottom: $spacing-medium;
+
+    p {
+        margin-bottom: $spacing-xsmall; // Tighter spacing for contact lines
+        line-height: $line-height-tight;
+    }
+
+    .name {
+        font-size: $font-size-h1;
+        font-weight: $font-weight-bold;
+        color: $text-color-headings;
+        margin-bottom: $spacing-small;
+    }
+}
+
+.contact-divider {
+    border: none;
+    height: 1px;
+    background-color: $text-color-headings;
+    width: $contact-divider-width;
+    margin: $spacing-medium auto; // Centered divider
+}
+
+// Resume Section Styling
+.resume-section {
+    margin-bottom: $spacing-large;
+
+    h2 {
+        font-size: $font-size-h2;
+        font-weight: $font-weight-bold;
+        color: $section-header-fg;
+        background-color: $section-header-bg;
+        border: $section-header-border;
+        text-align: center;
+        text-transform: uppercase;
+        padding: $spacing-xsmall $spacing-small;
+        margin-bottom: $spacing-medium;
+        letter-spacing: 0.05em;
+    }
+}
+
+// Experience and Education Entry Formatting
+.job, .education, .project {
+    margin-bottom: $spacing-medium;
+
+    .job-title-line, .education-title-line, .project-title-line, .degree-line, .position-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: $spacing-xsmall;
+    }
+
+    .company, .institution, .project-title, .position, .degree {
+        font-weight: $font-weight-bold;
+        color: $text-color-secondary;
+    }
+
+    .location, .dates {
+        font-style: italic;
+        color: $text-color-muted;
+        text-align: right;
+    }
+
+    .job-content, .education-content, .project-content {
+        margin-top: $spacing-small;
+
+        p, ul {
+            margin-bottom: $spacing-xsmall;
+            padding-left: $spacing-medium; // Indent content under job/degree title
+        }
+
+        // Bullet point styling
+        ul {
+            list-style-type: none; // Remove default bullets
+            padding-left: $spacing-medium; // Match paragraph indent
+        }
+
+        li {
+            position: relative;
+            padding-left: $spacing-medium; // Space for the custom bullet
+            margin-bottom: $spacing-xsmall;
+            line-height: $line-height-body;
+
+            &::before {
+                content: $bullet-glyph; // Use kebab-case token variable
+                position: absolute;
+                left: 0;
+                top: 0.1em; // Adjust vertical alignment
+                font-size: 1em; // Match parent font size
+                color: $text-color-primary;
+            }
+        }
+    }
+}
+
+// Skills Section (Often just paragraphs or a list)
+.skills-content {
+    // Add specific styling if needed, e.g., columns
+    p, ul {
+         margin-bottom: $spacing-xsmall;
+    }
+    ul {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    li {
+         margin-bottom: $spacing-xsmall;
+         // Could add custom bullet here too if desired
+    }
+} 

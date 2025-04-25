@@ -336,46 +336,68 @@ def format_projects_content(content: str) -> str:
         return f"<p>Error formatting projects section: {str(e)}</p>"
 
 
-def generate_preview_from_llm_responses(llm_client) -> str:
+def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> str:
     """
     Generate an HTML preview from LLM API responses.
     
     This function reads the response files from the API responses directory
     and generates an HTML preview of the tailored resume.
+    
+    Args:
+        llm_client: The LLM client instance (used for context).
+        for_screen (bool): If True, includes screen-specific elements like CSS links.
+                          If False, generates plain HTML suitable for PDF conversion.
     """
     import os
     import json
     from datetime import datetime
     from flask import current_app
-    from style_manager import StyleManager
-    
-    # Find the response files directory - use consistent path with claude_integration.py
+    import hashlib
+
+    # Find the response files directory
     api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
     logger.info(f"Looking for API responses in: {api_responses_dir}")
-    
-    # Create directory if it doesn't exist
+
     if not os.path.exists(api_responses_dir):
-        logger.warning(f"API responses directory not found, creating: {api_responses_dir}")
-        os.makedirs(api_responses_dir)
-    
+        logger.warning(f"API responses directory not found: {api_responses_dir}")
+        return "<p>Error: API response data not found.</p>"
+
     # Initialize HTML parts
     html_parts = []
     
-    # Add HTML header with link to the compiled preview CSS
-    html_parts.append(f"""<!DOCTYPE html>
+    # --- Add HTML Header --- 
+    html_parts.append("""<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Resume Preview</title>
-        <link rel="stylesheet" href="/static/css/preview.css"> 
-    </head>
-    <body>
-    <div class="resume-preview-container">
-    <div class="tailored-resume-content">
-    """)
+        <title>Tailored Resume Preview</title>""")
+
+    # Conditionally link preview CSS only if generating for screen
+    if for_screen:
+        # Basic cache busting using file modification time
+        css_path = os.path.join(current_app.static_folder, 'css', 'preview.css')
+        cache_bust = ""
+        try:
+            mtime = os.path.getmtime(css_path)
+            cache_bust = f"?v={int(mtime)}" 
+        except FileNotFoundError:
+            logger.warning(f"Preview CSS not found at {css_path} for cache busting.")
+            
+        html_parts.append(f'    <link rel="stylesheet" href="/static/css/preview.css{cache_bust}"> ')
+
+    html_parts.append("""</head>
+    <body>""")
+
+    # Add screen-specific container only if for_screen
+    if for_screen:
+        html_parts.append('<div class="resume-preview-container">')
+
+    # --- Start of Core Resume Content --- 
+    # This content is generated regardless of for_screen flag
+    html_parts.append('<div class="tailored-resume-content">')
     
-    # Try to get contact information from API responses
+    # --- Contact Section --- 
     contact_html = ""
     try:
         with open(os.path.join(api_responses_dir, 'contact.json'), 'r') as f:
@@ -570,56 +592,70 @@ def generate_preview_from_llm_responses(llm_client) -> str:
         logger.error(f"Error generating preview: {e}")
         html_parts.append(f"<p>Error generating preview: {str(e)}</p>")
     
-    # Add HTML footer
-    html_parts.append("""
-    <div style="margin-top: 30px; font-size: 12px; color: #95a5a6; text-align: center;">
-        Generated on """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
-    </div>
-    </div>
-    </div>
-    </body>
-    </html>
-    """)
-    
+    # --- End of Core Resume Content --- 
+    html_parts.append('</div>') # Close tailored-resume-content
+
+    # Add screen-specific container closing tag and footer only if for_screen
+    if for_screen:
+        html_parts.append("""
+        <div style="margin-top: 30px; font-size: 12px; color: #95a5a6; text-align: center;">
+            Generated on """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
+        </div>
+        </div>""") # Close resume-preview-container
+
+    # --- HTML Footer --- 
+    html_parts.append("""</body>
+    </html>""")
+
     # Join HTML parts
     html_content = ''.join(html_parts)
-    
+
     # Validate HTML content to remove empty bullet points
     html_content = validate_html_content(html_content)
-    
+
     return html_content
 
 
-def generate_resume_preview(resume_path: str) -> str:
+def generate_resume_preview(resume_path: str, for_screen: bool = True) -> str:
     """
-    Generate HTML preview of the resume document
+    Generate HTML preview of the resume document (stub).
     
-    This is a temporary stub to replace the function in claude_integration.py
+    Args:
+        resume_path (str): Path to the resume file.
+        for_screen (bool): If True, includes screen-specific elements.
     """
     html_parts = []
     
-    # Add HTML header with link to the compiled preview CSS
+    # Add HTML header with conditional link to preview CSS
     html_parts.append(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Resume Preview</title>
-        <link rel="stylesheet" href="/static/css/preview.css"> 
-    </head>
-    <body>
-    <div class="resume-preview-container">
-    <div class="tailored-resume-content">
+        <title>Resume Preview</title>""")
+        
+    if for_screen:
+         html_parts.append(f'    <link rel="stylesheet" href="/static/css/preview.css"> ')
+         
+    html_parts.append("""</head>
+    <body>""")
+    
+    if for_screen:
+        html_parts.append('<div class="resume-preview-container">')
+        
+    html_parts.append("""<div class="tailored-resume-content">
         <div class="resume-section">
             <h2>Resume Preview</h2>
             <p>This is a placeholder preview. The actual resume preview functionality is temporarily unavailable.</p>
             <p>Please use the "Tailor Resume" feature to see the tailored resume preview.</p>
         </div>
-    </div>
-    </div>
-    </body>
-    </html>
-    """)
+    </div>""") # Close tailored-resume-content
+    
+    if for_screen:
+        html_parts.append('</div>') # Close resume-preview-container
+        
+    html_parts.append("""</body>
+    </html>""")
     
     # Join HTML parts
     html_content = ''.join(html_parts)

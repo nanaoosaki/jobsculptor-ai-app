@@ -216,4 +216,19 @@ When starting new conversations with Claude about this project, include this fil
 1. You're working on the Resume Tailor application
 2. Reference recent changes you've made
 3. Specify which part of the application you're focusing on
-4. Indicate if you're working on local development or deployment 
+4. Indicate if you're working on local development or deployment
+
+## Project Context
+
+This project focuses on creating an AI-powered resume tailoring tool that optimizes resumes to match job requirements using LLM technology. The application helps job seekers create targeted resumes for specific job listings.
+
+## Learnings
+
+- Centralizing styling using design tokens and SCSS improves consistency and maintainability across different outputs.
+- Using a single-source styling approach simplifies updates and modifications.
+
+## Solutions Implemented
+
+- Implemented PDF generation using WeasyPrint for consistent and professional output.
+- Centralized styling using `design_tokens.json` and SCSS, aligning HTML and PDF appearances.
+- Refactored CSS into SCSS files, improving maintainability and separation of concerns. 

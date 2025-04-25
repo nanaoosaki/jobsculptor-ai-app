@@ -1,169 +1,255 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: "Calibri", Arial, sans-serif;
   font-size: 11pt;
   line-height: 1.4;
   color: #333;
-  margin: 0;
-  padding: 0;
+  background-color: #f8f9fa;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Calibri", Arial, sans-serif;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #343a40;
 }
 
-.resume-document {
-  max-width: 100%;
+h2 {
+  font-size: 1.75rem;
 }
 
-.tailored-resume-content,
-.resume-content {
-  width: 95%;
-  max-width: 95%;
-  margin: 0 auto;
-  padding: 0 0.5in;
-  box-sizing: border-box;
-  background-color: white;
+h3 {
+  font-size: 1.5rem;
 }
 
-.resume-section {
-  margin-bottom: 0.5cm;
-  page-break-inside: avoid;
+p {
+  margin-bottom: 0.5rem;
 }
-.resume-section h2 {
-  font-size: 14pt;
-  font-weight: bold;
-  color: rgb(0, 0, 102);
+
+ul,
+ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.25rem;
+}
+
+a {
+  color: #4a6fdc;
+  text-decoration: none;
+}
+a:hover {
+  color: rgb(35.2430555556, 72.5, 182.2569444444);
+  text-decoration: underline;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background-color: #dee2e6;
+  margin: 1.5rem 0;
+}
+
+.text-center {
   text-align: center;
-  text-transform: uppercase;
-  margin-top: 0.5cm;
-  margin-bottom: 0.3cm;
-  padding: 0.1cm 0.5cm;
-  border: 1px solid #000;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  page-break-after: avoid;
 }
-.resume-section h2 + p, .resume-section h2 + ul {
-  page-break-before: avoid;
+
+.text-right {
+  text-align: right;
 }
-.resume-section p,
-.resume-section ul,
-.resume-section li,
-.resume-section .summary-content,
-.resume-section .experience-content,
-.resume-section .education-content,
-.resume-section .skills-content,
-.resume-section .projects-content,
-.resume-section .additional-content {
-  text-align: left;
+
+.font-bold {
+  font-weight: 700;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.tailored-resume-content {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1.5cm 1.5cm;
+  background-color: #ffffff;
+  font-family: "Calibri", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
 }
 
 .contact-section {
   text-align: center;
-  margin-bottom: 0.4cm;
+  margin-bottom: 1rem;
 }
 .contact-section p {
-  margin: 0.05cm 0;
-  line-height: 1.3;
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
 }
 .contact-section .name {
-  font-size: 16pt;
-  font-weight: bold;
-  margin-bottom: 0.1cm;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #343a40;
+  margin-bottom: 0.5rem;
 }
 
 .contact-divider {
-  margin-top: 0.2cm;
-  margin-bottom: 0.4cm;
   border: none;
   height: 1px;
-  background-color: #000;
+  background-color: #343a40;
   width: 90%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 1rem auto;
 }
 
-.job-header,
-.education-header,
-.project-header,
-.job-title-line,
-.education-title-line,
-.project-title-line {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0;
-  padding-bottom: 0;
-  margin-top: 0.4cm;
+.resume-section {
+  margin-bottom: 1.5rem;
 }
-
-.job-subheader,
-.education-subheader,
-.position-line,
-.degree-line {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0;
-  padding-top: 0;
-  margin-bottom: 0.2cm;
-}
-
-.company,
-.institution,
-.project-title,
-.company-name {
-  font-weight: bold;
+.resume-section h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #343a40;
+  background-color: transparent;
+  border: none;
+  text-align: center;
   text-transform: uppercase;
-  text-align: left;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
 }
 
-.position,
-.degree,
-.position-title {
+.job, .education, .project {
+  margin-bottom: 1rem;
+}
+.job .job-title-line, .job .education-title-line, .job .project-title-line, .job .degree-line, .job .position-line, .education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line, .project .job-title-line, .project .education-title-line, .project .project-title-line, .project .degree-line, .project .position-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.job .company, .job .institution, .job .project-title, .job .position, .job .degree, .education .company, .education .institution, .education .project-title, .education .position, .education .degree, .project .company, .project .institution, .project .project-title, .project .position, .project .degree {
+  font-weight: 700;
+  color: #495057;
+}
+.job .location, .job .dates, .education .location, .education .dates, .project .location, .project .dates {
   font-style: italic;
-  text-align: left;
-}
-
-.location,
-.dates,
-.company-location,
-.position-date {
-  text-align: right;
-  margin-left: auto;
   color: #6c757d;
+  text-align: right;
+}
+.job .job-content, .job .education-content, .job .project-content, .education .job-content, .education .education-content, .education .project-content, .project .job-content, .project .education-content, .project .project-content {
+  margin-top: 0.5rem;
+}
+.job .job-content p, .job .job-content ul, .job .education-content p, .job .education-content ul, .job .project-content p, .job .project-content ul, .education .job-content p, .education .job-content ul, .education .education-content p, .education .education-content ul, .education .project-content p, .education .project-content ul, .project .job-content p, .project .job-content ul, .project .education-content p, .project .education-content ul, .project .project-content p, .project .project-content ul {
+  margin-bottom: 0.25rem;
+  padding-left: 1rem;
+}
+.job .job-content ul, .job .education-content ul, .job .project-content ul, .education .job-content ul, .education .education-content ul, .education .project-content ul, .project .job-content ul, .project .education-content ul, .project .project-content ul {
+  list-style-type: none;
+  padding-left: 1rem;
+}
+.job .job-content li, .job .education-content li, .job .project-content li, .education .job-content li, .education .education-content li, .education .project-content li, .project .job-content li, .project .education-content li, .project .project-content li {
+  position: relative;
+  padding-left: 1rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+.job .job-content li::before, .job .education-content li::before, .job .project-content li::before, .education .job-content li::before, .education .education-content li::before, .education .project-content li::before, .project .job-content li::before, .project .education-content li::before, .project .project-content li::before {
+  content: "u2022";
+  position: absolute;
+  left: 0;
+  top: 0.1em;
+  font-size: 1em;
+  color: #333;
 }
 
-.dot-bullets,
-ul {
-  list-style-type: disc;
-  padding-left: 1.5em;
-  margin-top: 0.1cm;
-  margin-bottom: 0.2cm;
-  margin-left: 0;
-  text-align: left;
+.skills-content p, .skills-content ul {
+  margin-bottom: 0.25rem;
 }
-
-.dot-bullets li,
-ul li {
-  margin-bottom: 0.1cm;
+.skills-content ul {
+  list-style-type: none;
   padding-left: 0;
-  text-indent: 0;
-  text-align: left;
-  page-break-inside: avoid;
 }
-
-p {
-  margin-top: 0.1cm;
-  margin-bottom: 0.2cm;
+.skills-content li {
+  margin-bottom: 0.25rem;
 }
 
 @page {
-  size: letter portrait;
-  margin: 0.8cm 1.2cm;
+  margin: 0;
+  size: letter;
 }
+body {
+  font-family: "Calibri", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.tailored-resume-content {
+  box-shadow: none;
+  border: none;
+  margin: 0;
+  width: 100%;
+}
+
+.tailored-resume-content {
+  box-shadow: none;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+.resume-section {
+  page-break-inside: avoid;
+}
+
+.job, .education, .project {
+  page-break-inside: avoid;
+}
+
 .resume-section h2 {
-  color: rgb(0, 0, 102);
+  color: #343a40;
 }
 
 .company, .institution, .project-title {
@@ -198,4 +284,142 @@ p {
   li {
     page-break-inside: avoid;
   }
+}
+
+/*# sourceMappingURL=print.css.map */
+
+/* PDF-specific styles */
+@page {
+    size: letter;
+    margin: 0.5in;
+}
+
+body {
+    font-family: "Calibri", "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.resume-container {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Contact Information */
+.contact-info {
+    text-align: center;
+    margin-bottom: 10pt;
+}
+
+.resume-name {
+    font-size: 18pt;
+    font-weight: bold;
+    margin: 0 0 8pt 0;
+    text-transform: uppercase;
+    color: #2a3e62;
+}
+
+.contact-details {
+    font-size: 10pt;
+    margin-bottom: 4pt;
+}
+
+.contact-item {
+    display: inline-block;
+    margin: 0 8pt;
+}
+
+.contact-item:not(:last-child)::after {
+    content: "•";
+    display: inline-block;
+    margin-left: 16pt;
+}
+
+.divider {
+    border-top: 1pt solid #999;
+    margin: 8pt 0 12pt 0;
+}
+
+/* Section Styling */
+.resume-section {
+    margin-bottom: 14pt;
+    break-inside: avoid;
+}
+
+.section-title {
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 0 0 8pt 0;
+    color: #2a3e62;
+    text-transform: uppercase;
+    border-bottom: 0.5pt solid #ddd;
+    padding-bottom: 4pt;
+}
+
+.section-content {
+    margin-bottom: 8pt;
+}
+
+/* Job/Education Item Styling */
+.experience-item, .education-item, .project-item {
+    margin-bottom: 10pt;
+    break-inside: avoid;
+}
+
+.job-header, .education-header, .project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4pt;
+}
+
+.job-title, .degree, .project-title {
+    font-weight: bold;
+    font-size: 11pt;
+}
+
+.company-name, .institution {
+    font-style: italic;
+}
+
+.job-date, .education-date, .project-date {
+    font-style: italic;
+    color: #666;
+}
+
+/* Lists */
+ul {
+    margin: 4pt 0;
+    padding-left: 16pt;
+}
+
+li {
+    margin-bottom: 3pt;
+    position: relative;
+}
+
+.job-description li, .education-description li, .project-description li {
+    list-style-type: disc;
+}
+
+.skills-list, .certifications-list, .awards-list {
+    columns: 2;
+    column-gap: 20pt;
+}
+
+.skills-list li, .certifications-list li, .awards-list li {
+    break-inside: avoid;
+    margin-bottom: 3pt;
+}
+
+/* Page Breaks - Avoid breaking in the middle of sections */
+h1, h2, h3, .job-header, .education-header, .project-header {
+    break-after: avoid;
+}
+
+p {
+    margin: 0 0 6pt 0;
 }

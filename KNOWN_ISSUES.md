@@ -234,3 +234,15 @@ The frame lines may distract from the content and reduce the overall quality of 
 ---
 
 ## Other Issues 
+
+## Known Issues
+
+- **PDF Generation Delay**: There may be a slight delay in PDF generation due to the rendering process, especially for large resumes.
+- **Styling Discrepancies**: Minor styling discrepancies may occur between HTML preview and PDF output due to differences in rendering engines.
+- **Font Rendering**: Some fonts may not render identically across different platforms and devices, leading to slight variations in appearance.
+
+## Solutions in Progress
+
+- Investigating optimization techniques to reduce PDF generation time.
+- Exploring alternative rendering engines to minimize styling discrepancies.
+- Testing font rendering across multiple platforms to ensure consistency. 

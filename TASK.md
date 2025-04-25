@@ -33,6 +33,9 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Fix missing contact section in tailored resume
 - [x] Fix missing professional summary section in tailored resume
 - [x] Centralize styling architecture using design tokens and SCSS; removed inline styles and JS width hacks; ensured consistent HTML/PDF output via `preview.css` and `print.css`
+- [x] Implemented PDF generation using WeasyPrint, ensuring consistent and professional output.
+- [x] Centralized styling using design tokens and SCSS, aligning HTML and PDF appearances.
+- [x] Refactored CSS into SCSS files, improving maintainability and separation of concerns.
 
 ## In Progress Tasks
 
@@ -747,4 +750,15 @@ This is a significant architectural change that should be planned as a medium-pr
 
 Total estimated effort: 2-3 weeks of dedicated development time.
 
-Given the current priorities, this should be scheduled after addressing critical user-facing issues, but before implementing extensive new styling features. 
+Given the current priorities, this should be scheduled after addressing critical user-facing issues, but before implementing extensive new styling features.
+
+## Learnings
+
+- Centralizing styling improves consistency and maintainability across different outputs.
+- Using design tokens as a single source of truth simplifies updates and modifications.
+
+## Solutions Implemented
+
+- Created `design_tokens.json` for visual constants.
+- Developed a `StyleManager` class for consistent style application.
+- Ensured consistent styling across HTML and PDF outputs. 
