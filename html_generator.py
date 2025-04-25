@@ -378,17 +378,18 @@ def generate_preview_from_llm_responses(llm_client) -> str:
             .resume-preview-container {
                 border: 1px solid #ddd;
                 border-radius: 8px;
-                padding: 1rem;
+                padding: 0.5rem;
                 margin: 1.5rem auto;
                 background-color: #fff;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                max-width: 1000px;
+                width: 95%;
+                max-width: 95%;
             }
             .tailored-resume-content {
                 width: 8.27in; /* A4 width in inches */
                 max-width: 100%; /* Ensure responsiveness */
                 margin: 0 auto;
-                padding: 0 1in; /* 1 inch margins on left and right */
+                padding: 0 0.5in; /* Reduced horizontal padding */
                 box-sizing: border-box; /* Include padding in width calculation */
                 min-height: 10in; /* Approximate A4 height with some space for scrolling */
                 background-color: white;
@@ -724,17 +725,18 @@ def generate_resume_preview(resume_path: str) -> str:
             .resume-preview-container {
                 border: 1px solid #ddd;
                 border-radius: 8px;
-                padding: 1rem;
+                padding: 0.5rem;
                 margin: 1.5rem auto;
                 background-color: #fff;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                max-width: 1000px;
+                width: 95%;
+                max-width: 95%;
             }
             .tailored-resume-content {
                 width: 8.27in; /* A4 width in inches */
                 max-width: 100%; /* Ensure responsiveness */
                 margin: 0 auto;
-                padding: 0 1in; /* 1 inch margins on left and right */
+                padding: 0 0.5in; /* Reduced horizontal padding */
                 box-sizing: border-box; /* Include padding in width calculation */
                 min-height: 10in; /* Approximate A4 height with some space for scrolling */
                 background-color: white;

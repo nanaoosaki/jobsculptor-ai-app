@@ -2,7 +2,7 @@
 
 @page {
   size: letter portrait;
-  margin: 1cm 2cm;
+  margin: 0.8cm 1.2cm;
   @top-right {
     content: "Resume";
     font-size: 9pt;
@@ -29,7 +29,10 @@ body {
 }
 
 .resume-content {
-  margin: 0 auto;
+  width: 95% !important;
+  max-width: 95% !important;
+  margin: 0 auto !important;
+  padding: 0 0.5in !important;
 }
 
 /* Section styling */

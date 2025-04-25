@@ -110,10 +110,19 @@ class PDFExporter:
         .company-location, 
         .position-date {{ text-align: right !important; }}
         .contact-section {{ text-align: center; }}
+        
+        /* Ensure wider content */
+        .resume-document {{ max-width: 100% !important; }}
+        .resume-content {{ 
+            width: 95% !important; 
+            max-width: 95% !important; 
+            margin: 0 auto !important; 
+            padding: 0 0.5in !important; 
+        }}
     </style>
 </head>
 <body class="resume-document">
-    <main class="resume-content">
+    <main class="resume-content" style="width: 95%; max-width: 95%; padding: 0 0.5in;">
         {resume_html}
     </main>
 </body>

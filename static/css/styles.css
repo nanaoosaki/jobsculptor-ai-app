@@ -204,10 +204,14 @@ header {
 .resume-preview-container {
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.5rem;
   margin-top: 1.5rem;
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 95%;
+  max-width: 95%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .preview-title {
@@ -221,11 +225,11 @@ header {
 
 /* A4 Paper Styling for Resume Preview */
 .tailored-resume-content {
-  /* A4 paper width is 210mm, with 1 inch (25.4mm) margins on each side */
+  /* A4 paper width is 210mm, with reduced margins */
   width: 8.27in; /* A4 width in inches */
   max-width: 100%; /* Ensure responsiveness */
   margin: 0 auto;
-  padding: 0 1in; /* 1 inch margins on left and right */
+  padding: 0 0.5in; /* Reduced from 1in to 0.5in */
   box-sizing: border-box; /* Include padding in width calculation */
   overflow-y: auto;
   min-height: 10in; /* Approximate A4 height with some space for scrolling */
