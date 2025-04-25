@@ -1,0 +1,179 @@
+// Base styles shared between preview and print
+
+@import 'tokens';
+
+body {
+  font-family: $base-font-family;
+  font-size: $base-font-size;
+  line-height: $base-line-height;
+  color: $text-color;
+  margin: 0;
+  padding: 0;
+}
+
+// Basic layout container for web preview
+.container {
+  max-width: 1200px; // Keep specific UI layout rules separate if needed
+  margin: 0 auto;
+}
+
+// Common resume structure elements
+.resume-document {
+  max-width: 100%;
+}
+
+.tailored-resume-content,
+.resume-content { // Used in PDF exporter template
+  width: $content-width;
+  max-width: $content-width; 
+  margin: 0 auto;
+  padding: 0 $content-padding;
+  box-sizing: border-box;
+  background-color: white; // Common background for content area
+}
+
+// Section styling
+.resume-section {
+  margin-bottom: $section-margin-bottom; 
+  page-break-inside: avoid; // Common PDF rule
+
+  h2 {
+    font-size: $header-font-size;
+    font-weight: bold;
+    color: $pdf-header-color; // Using PDF header color for consistency, can be overridden
+    text-align: center;
+    text-transform: uppercase;
+    margin-top: $section-margin-bottom; // Reuse for spacing
+    margin-bottom: 0.3cm; // Specific spacing, consider making a token
+    padding: $pdf-header-padding-vertical $pdf-header-padding-horizontal;
+    border: 1px solid $pdf-border-color;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    page-break-after: avoid; // Common PDF rule
+  }
+  
+  // Prevent orphaned headings in PDF
+  h2 + p, h2 + ul {
+      page-break-before: avoid;
+  }
+  
+  // Ensure content is left-aligned by default
+  p,
+  ul,
+  li,
+  .summary-content,
+  .experience-content,
+  .education-content,
+  .skills-content,
+  .projects-content,
+  .additional-content {
+    text-align: left;
+  }
+}
+
+// Contact section styling
+.contact-section {
+  text-align: center;
+  margin-bottom: $contact-divider-margin-bottom;
+
+  p {
+    margin: 0.05cm 0; // Specific spacing, consider token
+    line-height: 1.3; // Slightly tighter line height
+  }
+
+  .name {
+    font-size: $name-font-size;
+    font-weight: bold;
+    margin-bottom: 0.1cm; // Specific spacing, consider token
+  }
+}
+
+.contact-divider {
+  margin-top: $contact-divider-margin-top;
+  margin-bottom: $contact-divider-margin-bottom;
+  border: none;
+  height: 1px;
+  background-color: $pdf-border-color;
+  width: 90%; // Keep this specific for now
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+// Job/Education/Project Entry Formatting
+.job-header, 
+.education-header, 
+.project-header, 
+.job-title-line, // from old web styles
+.education-title-line, // from old web styles
+.project-title-line { // from old web styles
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  margin-top: 0.4cm; // Specific spacing, consider token
+}
+
+.job-subheader,
+.education-subheader,
+.position-line, // from old web styles
+.degree-line { // from old web styles
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0;
+  padding-top: 0;
+  margin-bottom: 0.2cm; // Specific spacing, consider token
+}
+
+.company, 
+.institution, 
+.project-title,
+.company-name { // from old web styles
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.position, 
+.degree,
+.position-title { // from old web styles
+  font-style: italic; // Often italicized
+  text-align: left;
+}
+
+.location, 
+.dates,
+.company-location, // from old web styles
+.position-date { // from old web styles
+  text-align: right;
+  margin-left: auto;
+  color: $secondary-color; // Use secondary color for dates/locations
+}
+
+// Bullet points
+.dot-bullets, // Class used in generated HTML
+ul { // Apply base style to standard ul as well
+  list-style-type: disc;
+  padding-left: 1.5em; // Standard indentation
+  margin-top: $bullet-list-margin-top;
+  margin-bottom: $bullet-list-margin-bottom;
+  margin-left: 0;
+  text-align: left;
+}
+
+.dot-bullets li, 
+ul li { // Apply base style to standard li
+  margin-bottom: $bullet-item-margin-bottom;
+  padding-left: 0;
+  // margin-left: 1em; // Handled by padding-left on ul
+  text-indent: 0;
+  text-align: left;
+  page-break-inside: avoid; // Common PDF rule
+}
+
+// Base paragraph styling
+p {
+  margin-top: 0.1cm; // Minimal spacing, consider token
+  margin-bottom: 0.2cm; // Minimal spacing, consider token
+} 

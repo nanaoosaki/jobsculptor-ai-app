@@ -4,6 +4,7 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 import tempfile
 from pathlib import Path
+from style_manager import StyleManager
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -20,15 +21,13 @@ class PDFExporter:
         """Initialize the PDF exporter with default configuration"""
         logger.info("Initializing PDF Exporter")
         self.font_config = FontConfiguration()
+        # Use StyleManager to get the CSS path
+        self.css_path = StyleManager.print_css_path()
         
-        # Get the path to the static CSS file
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.css_path = os.path.join(current_dir, "static", "css", "pdf_styles.css")
-        
-        # Create PDF-specific CSS if it doesn't exist
+        # Check if the CSS file exists
         if not os.path.exists(self.css_path):
-            logger.info(f"PDF-specific CSS not found, will use default styles")
-            self.css_path = os.path.join(current_dir, "static", "css", "styles.css")
+            logger.error(f"Print CSS file not found at {self.css_path}. PDF styling may be incorrect.")
+            self.css_path = None # Fallback or handle error
     
     def html_to_pdf(self, html_content, output_path=None):
         """
@@ -52,18 +51,18 @@ class PDFExporter:
             # Ensure output directory exists
             os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
             
-            # Load CSS
+            # Load CSS using the path from StyleManager
             css = None
-            if os.path.exists(self.css_path):
+            if self.css_path and os.path.exists(self.css_path):
                 css = CSS(filename=self.css_path, font_config=self.font_config)
                 logger.info(f"Using CSS from {self.css_path}")
+            else:
+                logger.warning("No valid CSS file found. Generating PDF without custom print styles.")
             
             # Convert HTML to PDF
             html = HTML(string=html_content)
-            if css:
-                html.write_pdf(output_path, stylesheets=[css], font_config=self.font_config)
-            else:
-                html.write_pdf(output_path, font_config=self.font_config)
+            stylesheets = [css] if css else []
+            html.write_pdf(output_path, stylesheets=stylesheets, font_config=self.font_config)
             
             logger.info(f"PDF generated successfully: {output_path}")
             return output_path
@@ -85,44 +84,17 @@ class PDFExporter:
             str: Path to the generated PDF file
         """
         try:
-            # Add HTML wrapper with proper doctype and meta tags
+            # Add HTML wrapper with proper doctype and meta tags, remove inline style block
             full_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{metadata.get('title', 'Tailored Resume') if metadata else 'Tailored Resume'}</title>
-    <style>
-        /* Ensure content is left-aligned while headers remain centered */
-        .resume-section h2 {{ text-align: center; }}
-        .resume-section p, 
-        .resume-section ul, 
-        .resume-section li,
-        .company-name, 
-        .position-title,
-        .dot-bullets,
-        .dot-bullets li,
-        .experience-content,
-        .education-content,
-        .skills-content,
-        .projects-content,
-        .additional-content {{ text-align: left !important; }}
-        .company-location, 
-        .position-date {{ text-align: right !important; }}
-        .contact-section {{ text-align: center; }}
-        
-        /* Ensure wider content */
-        .resume-document {{ max-width: 100% !important; }}
-        .resume-content {{ 
-            width: 95% !important; 
-            max-width: 95% !important; 
-            margin: 0 auto !important; 
-            padding: 0 0.5in !important; 
-        }}
-    </style>
+    <!-- Styles are now linked via print.css -->
 </head>
 <body class="resume-document">
-    <main class="resume-content" style="width: 95%; max-width: 95%; padding: 0 0.5in;">
+    <main class="resume-content">
         {resume_html}
     </main>
 </body>

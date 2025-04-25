@@ -1,0 +1,303 @@
+// Styles specific to the web preview UI
+
+@import 'base'; // Includes tokens as well
+
+// Import UI-specific color variables (or define here if not in tokens)
+:root {
+  --primary-color: #{$primary-color};
+  --secondary-color: #{$secondary-color};
+  --success-color: #28a745; // Keep UI colors separate unless needed globally
+  --info-color: #17a2b8;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-color: #{$light-color};
+  --dark-color: #{$dark-color};
+  --ai-color: #8a2be2;
+  --ai-light-color: #f3eafa;
+}
+
+body {
+  background-color: var(--light-color);
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-header {
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: darken($primary-color, 10%);
+  border-color: darken($primary-color, 10%);
+}
+
+// ... other button styles ...
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+}
+
+#uploadStatus, #jobParseStatus, #tailorStatus {
+  font-size: 0.9rem;
+}
+
+.status-success { color: var(--success-color); }
+.status-error { color: var(--danger-color); }
+.status-loading { color: var(--info-color); }
+
+
+// Remove old #resumePreview styles, handled by tailored-resume-content
+
+#jobRequirements, #userResumeParsed {
+  min-height: 150px;
+}
+
+.requirement-item {
+  background-color: #e9f7fe;
+  border-left: 3px solid var(--info-color);
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+/* Scrollable sections for UI only */
+.scrollable-section {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) #f0f0f0;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+  }
+}
+
+// User resume content - should not scroll internally
+.user-resume-content {
+  overflow: visible !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+
+  * { // Apply to all descendants
+    overflow: visible !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// Only the outer container should have a scrollbar
+#userResumeParsed {
+  height: auto;
+  max-height: 300px;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+// Top row cards styling
+.row.mb-4 .card {
+  margin-bottom: 0;
+  height: 100%;
+  .card-body { padding: 0; }
+  .scrollable-section { max-height: 250px; }
+}
+
+// Job Requirements card styling
+.job-requirements-card {
+  margin-top: -10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--info-color);
+  .card-header { background-color: var(--info-color); }
+}
+
+// Resume Preview Component Styles (UI Wrapper)
+.resume-preview-container {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: $web-container-padding;
+  margin-top: 1.5rem;
+  background-color: var(--light-color); // Use light background for the container
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: $content-width; // Match content width
+  max-width: $content-width;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.preview-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: $web-preview-title-margin-bottom;
+  color: var(--dark-color);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: $web-preview-title-padding-bottom;
+}
+
+// A4 Paper Styling for Resume Preview Content Area
+.tailored-resume-content {
+  // Base styles are in _base.scss
+  overflow-y: auto; // Allow scrolling if content overflows container
+  min-height: 10in; // Approximate A4 height
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); // Paper effect
+}
+
+.resume-preview-content { // Old class, might be removable
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+// Styling for specific sections *within* the preview UI, not the resume itself
+.preview-section {
+  margin-bottom: $web-preview-section-margin-bottom;
+}
+
+.preview-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.preview-text {
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.preview-bold {
+  font-weight: 600;
+}
+
+
+// Overrides for web preview resume sections if needed
+.resume-section {
+  h2 {
+    // Maybe use primary color for web preview headers?
+    color: var(--primary-color);
+  }
+}
+
+.job-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: $text-color;
+  margin-bottom: 0.25rem;
+  margin-top: 1rem;
+}
+
+.job-date {
+  font-size: 0.9rem;
+  color: #666; // Consider using $secondary-color token
+  font-style: italic;
+  margin-bottom: 0.75rem;
+}
+
+// Responsive adjustments for UI
+@media (max-width: 768px) {
+  .card { margin-bottom: 1rem; }
+  .btn { padding: 0.375rem 0.75rem; }
+  .resume-preview-content { max-height: 300px; } // Old class
+  .job-requirements-card { margin-top: 0; }
+  .row.mb-4 .scrollable-section { max-height: 200px; }
+}
+
+// Loading spinner
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+  to {transform: rotate(360deg);}
+}
+
+// File upload styling
+.custom-file-upload {
+  border: 1px dashed #ccc;
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  border-radius: 4px;
+  background-color: var(--light-color);
+  &:hover { background-color: darken($light-color, 5%); }
+}
+
+// AI Analysis Styling (UI Specific)
+.ai-analysis-section {
+  background-color: var(--ai-light-color);
+  border-left: 3px solid var(--ai-color);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(138, 43, 226, 0.15);
+
+  .job-section-title {
+    color: var(--ai-color);
+    border-bottom: 1px solid var(--ai-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  h5 {
+    color: var(--ai-color);
+    font-weight: 600;
+    margin-top: 1rem;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    background-color: var(--ai-color) !important;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+  }
+
+  .requirement-list {
+    margin-left: 0;
+    padding-left: 1.2rem;
+  }
+
+  .requirement-item {
+    background-color: white;
+    border-left: 2px solid var(--ai-color);
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.8rem;
+  }
+} 

@@ -582,7 +582,6 @@ document.addEventListener('DOMContentLoaded', function() {
         previewContainer.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
         previewContainer.style.backgroundColor = 'white';
         previewContainer.style.position = 'relative';
-        previewContainer.style.maxWidth = '100%'; // Ensure proper width
         
         // Add the HTML content
         previewContainer.innerHTML = preview;
@@ -591,8 +590,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const paperContainer = document.createElement('div');
         paperContainer.className = 'paper-container';
         paperContainer.style.margin = '0 auto';
-        paperContainer.style.width = '95%'; // Widen the container
-        paperContainer.style.maxWidth = '95%'; // Widen the container
         paperContainer.style.display = 'flex';
         paperContainer.style.justifyContent = 'center';
         

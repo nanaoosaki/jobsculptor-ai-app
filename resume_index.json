@@ -1,0 +1,49 @@
+{
+  "resumes": {
+    "76f3f9da-3366-427f-8f80-bbde815bd2c4": {
+      "filename": "76f3f9da-3366-427f-8f80-bbde815bd2c4.pdf",
+      "added_date": "2025-04-24T10:07:24.732168",
+      "processing_history": [],
+      "notes": [
+        {
+          "timestamp": "2025-04-24T10:07:24.807940",
+          "note": "Processing for job: Senior Manager, Data Science – Conversational AI at Walmart"
+        }
+      ]
+    },
+    "29d026c4-e09a-482b-b959-7dc3b8db1baf": {
+      "filename": "29d026c4-e09a-482b-b959-7dc3b8db1baf.pdf",
+      "added_date": "2025-04-25T05:37:33.846519",
+      "processing_history": [],
+      "notes": [
+        {
+          "timestamp": "2025-04-25T05:37:33.853520",
+          "note": "Processing for job: Director, AI Innovation at Warner Bros. Discovery"
+        }
+      ]
+    },
+    "4163c800-5dbc-4d2a-b5df-a6013f79a0c3": {
+      "filename": "4163c800-5dbc-4d2a-b5df-a6013f79a0c3.pdf",
+      "added_date": "2025-04-25T05:46:14.385503",
+      "processing_history": [],
+      "notes": [
+        {
+          "timestamp": "2025-04-25T05:46:14.392504",
+          "note": "Processing for job: Director, AI Innovation at Warner Bros. Discovery"
+        }
+      ]
+    },
+    "15b538c1-3f2a-4519-9ce9-9ebe3e88e828": {
+      "filename": "15b538c1-3f2a-4519-9ce9-9ebe3e88e828.pdf",
+      "added_date": "2025-04-25T07:03:25.154594",
+      "processing_history": [],
+      "notes": [
+        {
+          "timestamp": "2025-04-25T07:03:25.161596",
+          "note": "Processing for job: Director, AI Innovation at Warner Bros. Discovery"
+        }
+      ]
+    }
+  },
+  "last_updated": "2025-04-25T07:03:25.161596"
+}

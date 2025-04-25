@@ -1,0 +1,106 @@
+// Styles specific to the PDF output
+
+@import 'base'; // Includes tokens as well
+
+@page {
+  size: letter portrait;
+  margin: $page-margin-vertical $page-margin-horizontal;
+  
+  // Optional: Add headers/footers if needed
+  // @top-right {
+  //   content: "Resume";
+  //   font-size: 9pt;
+  //   color: $secondary-color; 
+  // }
+  // @bottom-center {
+  //   content: counter(page);
+  //   font-size: 9pt;
+  //   color: $secondary-color;
+  // }
+}
+
+body {
+  // Base body styles are in _base.scss
+}
+
+.resume-document {
+  // Base styles are in _base.scss
+}
+
+.resume-content {
+  // Base styles are in _base.scss
+}
+
+// Section styling specific to PDF (if any)
+.resume-section {
+  // Base styles are in _base.scss
+  h2 {
+    // Ensure the PDF header color is used
+    color: $pdf-header-color;
+  }
+}
+
+// Contact section specific to PDF (if any)
+.contact-section {
+  // Base styles are in _base.scss
+}
+
+.contact-divider {
+  // Base styles are in _base.scss
+}
+
+// Entry formatting specific to PDF (if any)
+.job-header, .education-header, .project-header {
+  // Base styles are in _base.scss
+}
+
+.job-subheader, .education-subheader {
+  // Base styles are in _base.scss
+}
+
+// Ensure alignment overrides are maintained for PDF
+.company, .institution, .project-title { text-align: left; }
+.position, .degree { text-align: left; }
+.location, .dates { text-align: right; }
+
+
+// Bullet points specific to PDF (if any)
+.dot-bullets {
+  // Base styles are in _base.scss
+}
+
+.dot-bullets li {
+  // Base styles are in _base.scss
+}
+
+// Paragraph styling specific to PDF (if any)
+p {
+  // Base styles are in _base.scss
+}
+
+// Fix for potential centering issue from old CSS
+// Only contact information should be centered
+.resume-section:first-child {
+  page-break-before: avoid;
+  > div { // Target direct div children, assuming contact is wrapped
+    text-align: left; // Override potential centering
+  }
+  .contact-section { // Explicitly allow contact section to be centered
+     text-align: center;
+  }
+}
+
+// Handle page breaks between sections better
+@media print { // These rules technically only apply in print context anyway
+  h2 {
+    page-break-after: avoid;
+  }
+  
+  h2 + p, h2 + ul {
+    page-break-before: avoid;
+  }
+  
+  li {
+    page-break-inside: avoid;
+  }
+} 

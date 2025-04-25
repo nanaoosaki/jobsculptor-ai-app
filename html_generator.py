@@ -1,6 +1,7 @@
 import logging
 import re
 from typing import Dict, List, Union, Optional
+from style_manager import StyleManager
 
 logger = logging.getLogger(__name__)
 
@@ -346,6 +347,7 @@ def generate_preview_from_llm_responses(llm_client) -> str:
     import json
     from datetime import datetime
     from flask import current_app
+    from style_manager import StyleManager
     
     # Find the response files directory - use consistent path with claude_integration.py
     api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
@@ -359,124 +361,14 @@ def generate_preview_from_llm_responses(llm_client) -> str:
     # Initialize HTML parts
     html_parts = []
     
-    # Add HTML header
-    html_parts.append("""<!DOCTYPE html>
+    # Add HTML header with link to the compiled preview CSS
+    html_parts.append(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Resume Preview</title>
-        <style>
-            body {
-                font-family: 'Calibri', Arial, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                margin: 0;
-                padding: 0;
-                background-color: #f5f7fa;
-            }
-            .resume-preview-container {
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 0.5rem;
-                margin: 1.5rem auto;
-                background-color: #fff;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                width: 95%;
-                max-width: 95%;
-            }
-            .tailored-resume-content {
-                width: 8.27in; /* A4 width in inches */
-                max-width: 100%; /* Ensure responsiveness */
-                margin: 0 auto;
-                padding: 0 0.5in; /* Reduced horizontal padding */
-                box-sizing: border-box; /* Include padding in width calculation */
-                min-height: 10in; /* Approximate A4 height with some space for scrolling */
-                background-color: white;
-                line-height: 1.5;
-                font-family: 'Calibri', Arial, sans-serif;
-                font-size: 11pt;
-            }
-            h1, h2 {
-                color: #2c3e50;
-            }
-            .resume-section {
-                margin-bottom: 20px;
-            }
-            .resume-section h2 {
-                font-size: 14pt;
-                font-weight: bold;
-                color: rgb(0, 0, 102);
-                text-align: center;
-                text-transform: uppercase;
-                margin-top: 0.5cm;
-                margin-bottom: 0.3cm;
-                padding: 0.1cm 0.5cm;
-                border: 1px solid #000;
-                width: 100%;
-                margin-left: auto;
-                margin-right: auto;
-            }
-            .job, .education, .project {
-                margin-bottom: 15px;
-            }
-            .job-title-line, .education-title-line, .project-title-line {
-                display: flex;
-                justify-content: space-between;
-                font-weight: bold;
-            }
-            .position-line, .degree-line {
-                font-style: italic;
-                margin-bottom: 5px;
-            }
-            .dates {
-                color: #7f8c8d;
-            }
-            p {
-                margin: 5px 0;
-            }
-            .job-content, .education-content, .project-content {
-                margin-left: 0;
-            }
-            .contact-section {
-                text-align: center;
-                margin-bottom: 0.4cm;
-            }
-            .contact-section p {
-                margin: 0.05cm 0;
-                line-height: 1.3;
-            }
-            .contact-section .name {
-                font-size: 16pt;
-                font-weight: bold;
-                margin-bottom: 0.1cm;
-            }
-            .contact-divider {
-                margin-top: 0.2cm;
-                margin-bottom: 0.4cm;
-                border: none;
-                height: 1px;
-                background-color: #000;
-                width: 90%;
-            }
-            .company, .institution, .project-title {
-                font-weight: bold;
-                text-transform: uppercase;
-                text-align: left;
-            }
-            .location, .dates {
-                text-align: right;
-                margin-left: auto;
-            }
-            ul {
-                padding-left: 1.5em;
-                margin-top: 0.2cm;
-            }
-            li {
-                page-break-inside: avoid;
-                margin-bottom: 0.1cm;
-            }
-        </style>
+        <link rel="stylesheet" href="/static/css/preview.css"> 
     </head>
     <body>
     <div class="resume-preview-container">
@@ -706,65 +598,14 @@ def generate_resume_preview(resume_path: str) -> str:
     """
     html_parts = []
     
-    # Add HTML header
-    html_parts.append("""<!DOCTYPE html>
+    # Add HTML header with link to the compiled preview CSS
+    html_parts.append(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Resume Preview</title>
-        <style>
-            body {
-                font-family: 'Calibri', Arial, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                margin: 0;
-                padding: 0;
-                background-color: #f5f7fa;
-            }
-            .resume-preview-container {
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 0.5rem;
-                margin: 1.5rem auto;
-                background-color: #fff;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                width: 95%;
-                max-width: 95%;
-            }
-            .tailored-resume-content {
-                width: 8.27in; /* A4 width in inches */
-                max-width: 100%; /* Ensure responsiveness */
-                margin: 0 auto;
-                padding: 0 0.5in; /* Reduced horizontal padding */
-                box-sizing: border-box; /* Include padding in width calculation */
-                min-height: 10in; /* Approximate A4 height with some space for scrolling */
-                background-color: white;
-                line-height: 1.5;
-                font-family: 'Calibri', Arial, sans-serif;
-                font-size: 11pt;
-            }
-            h1, h2 {
-                color: #2c3e50;
-            }
-            .resume-section {
-                margin-bottom: 20px;
-            }
-            .resume-section h2 {
-                font-size: 14pt;
-                font-weight: bold;
-                color: rgb(0, 0, 102);
-                text-align: center;
-                text-transform: uppercase;
-                margin-top: 0.5cm;
-                margin-bottom: 0.3cm;
-                padding: 0.1cm 0.5cm;
-                border: 1px solid #000;
-                width: 100%;
-                margin-left: auto;
-                margin-right: auto;
-            }
-        </style>
+        <link rel="stylesheet" href="/static/css/preview.css"> 
     </head>
     <body>
     <div class="resume-preview-container">
