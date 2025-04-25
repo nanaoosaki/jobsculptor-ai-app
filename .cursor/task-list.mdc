@@ -8,6 +8,11 @@ description:
 globs: 
 alwaysApply: false
 ---
+---
+description: 
+globs: 
+alwaysApply: false
+---
 # Task List Management
 
 Guidelines for creating and managing task lists in markdown files to track project progress
@@ -65,3 +70,6 @@ Guidelines for creating and managing task lists in markdown files to track proje
    - Provide a clear description for each task
    - Link to relevant documentation or issues where appropriate
    - Add notes about dependencies or requirements 
+
+## Project Task Updates
+- [x] Documented styling architecture refactor outcomes in documentation files (`single-source styling.md`, `TASK.md`, `KNOWN_ISSUES.md`, `project_context.md`). 
