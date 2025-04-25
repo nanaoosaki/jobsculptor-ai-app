@@ -32,6 +32,7 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 - [x] Fix Python module import path issue by adding current directory to sys.path in app.py
 - [x] Fix missing contact section in tailored resume
 - [x] Fix missing professional summary section in tailored resume
+- [x] Centralize styling architecture using design tokens and SCSS; removed inline styles and JS width hacks; ensured consistent HTML/PDF output via `preview.css` and `print.css`
 
 ## In Progress Tasks
 

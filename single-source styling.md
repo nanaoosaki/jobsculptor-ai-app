@@ -137,4 +137,10 @@ Total dev effort ≈ 22 hrs → 3 working days for one engineer, or 2 days with 
 - No JavaScript styling hacks.
 - Safer, faster future styling changes with visual test coverage.
 
-Implementing this plan converts the hard-coded-everywhere width fix into a maintainable, token-driven architecture—ensuring future format tweaks are literally "change one JSON value, re-build CSS, done." 
+Implementing this plan converts the hard-coded-everywhere width fix into a maintainable, token-driven architecture—ensuring future format tweaks are literally "change one JSON value, re-build CSS, done."
+
+## Results
+- HTML preview successfully loads `preview.css` and applies centralized styling tokens.
+- Inline styles and JavaScript width hacks removed; full content width now controlled by SCSS.
+- PDF generation uses `print.css` via StyleManager; PDF layout matches the HTML preview in A4 format.
+- Verified consistent appearance in browser preview and exported PDF output. 

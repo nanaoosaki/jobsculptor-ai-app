@@ -200,13 +200,18 @@ The issue was resolved by adjusting the CSS properties across multiple files to 
 3. Adjusted @page margins in `static/css/pdf_styles.css` to `1cm 1.5cm` to allow more horizontal space.
 4. Updated the `displayResumePreview()` function in `static/js/main.js` to remove width constraints.
 5. Ensured consistent styling across HTML preview and PDF output by centralizing style definitions.
+6. Centralized styling architecture using design tokens and SCSS; removed inline styles and JS width hacks; unified styling via `preview.css` and `print.css`.
+
+**Verification**:  
+- Browser preview displays full-width resume matching A4 dimensions without manual width hacks.  
+- Exported PDF rendered by WeasyPrint matches the browser preview layout and uses correct margins based on design tokens.
 
 **Impact**:  
 The changes increased the effective content width of the resume, improved visual presentation, and maintained proper formatting and readability.
 
 **Lessons Learned**:  
-- Centralizing style definitions can simplify future adjustments.
-- Consistent application of CSS properties across all relevant files is crucial for maintaining uniform appearance.
+- Centralizing style definitions can simplify future adjustments.  
+- Consistent application of CSS properties across all relevant files is crucial for maintaining uniform appearance.  
 - Testing with various content types ensures changes do not negatively impact readability or layout.
 
 **Priority**: Medium

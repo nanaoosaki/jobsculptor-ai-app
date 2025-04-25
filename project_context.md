@@ -44,6 +44,7 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 8. **PDF Export**: Switched from Word document generation to PDF export for better consistency
 9. **A4 Paper Format**: Implemented proper A4 paper dimensions with 1-inch margins for HTML preview
 10. **Contact Information Fix**: Attempted to ensure contact information is preserved in tailored resumes
+11. **Styling Architecture Refactor**: Centralized styling using design tokens and SCSS; removed inline styles and JS width hacks; HTML and PDF outputs now consistent via `preview.css` and `print.css`
 
 ## Current Limitations and Known Issues
 1. **PythonAnywhere Constraints**: 
