@@ -188,35 +188,26 @@ Incomplete representation of the candidate's educational background, potentially
 **Priority**: High
 
 ### Narrow Formatting of Resume
-**Status**: Unresolved (April 26, 2025)
+**Status**: Resolved (April 26, 2025)
 
 **Description**:  
-The tailored resume is formatted narrower than expected for an A4 page, with excessive whitespace on both sides affecting the visual presentation and efficient use of space. The resume content area appears constrained despite having adequate page width available.
+The tailored resume was formatted narrower than expected for an A4 page, with excessive whitespace on both sides affecting the visual presentation and efficient use of space. The resume content area appeared constrained despite having adequate page width available.
+
+**Solution**:  
+The issue was resolved by adjusting the CSS properties across multiple files to ensure the resume utilizes the full A4 page width. Key changes included:
+1. Reduced horizontal padding in `.tailored-resume-content` from `1in` to `0.5in` in both `html_generator.py` and `static/css/styles.css`.
+2. Ensured `box-sizing: border-box` was consistently applied to include padding in width calculations.
+3. Adjusted @page margins in `static/css/pdf_styles.css` to `1cm 1.5cm` to allow more horizontal space.
+4. Updated the `displayResumePreview()` function in `static/js/main.js` to remove width constraints.
+5. Ensured consistent styling across HTML preview and PDF output by centralizing style definitions.
 
 **Impact**:  
-The narrow formatting creates a visually imbalanced resume that doesn't make optimal use of available space. This can lead to content appearing cramped vertically while horizontal space is underutilized, resulting in a less professional appearance.
+The changes increased the effective content width of the resume, improved visual presentation, and maintained proper formatting and readability.
 
-**Investigation Findings**:
-1. The issue is caused by multiple layers of CSS constraints:
-   - The `.resume-preview-container` and `.tailored-resume-content` classes have nested width and padding settings
-   - The frontend JavaScript in `main.js` adds additional styling when displaying the preview
-   - There's inconsistency between HTML preview rendering and PDF generation in `pdf_exporter.py`
-   - Visual styling (borders, shadows) creates an illusion of additional narrowness
-
-2. The A4 page width (8.27in) is correctly specified in CSS, but large padding values (0 1in) reduce the effective content area to approximately 6.27 inches.
-
-3. Multiple styling sources (HTML generator, CSS files, JavaScript) affect the final rendering, making the fix more complex than just adjusting a single CSS property.
-
-**Possible Solutions**:
-1. Implement a coordinated update across multiple files:
-   - Adjust container widths and padding in both `html_generator.py` and `static/css/styles.css`
-   - Update the preview display code in `static/js/main.js`
-   - Modify the HTML template in `pdf_exporter.py`
-   - Adjust page margins in `static/css/pdf_styles.css`
-
-2. Use `!important` CSS rules where needed to override conflicting styles.
-
-3. Address both the actual width constraints and visual styling elements that create the appearance of narrowness.
+**Lessons Learned**:  
+- Centralizing style definitions can simplify future adjustments.
+- Consistent application of CSS properties across all relevant files is crucial for maintaining uniform appearance.
+- Testing with various content types ensures changes do not negatively impact readability or layout.
 
 **Priority**: Medium
 

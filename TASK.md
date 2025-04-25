@@ -85,10 +85,15 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
     - Add detailed logging for monitoring the generation process
     - Create appropriate error handling and fallback mechanisms
 
-- [ ] Adjust resume formatting to utilize full A4 page width
-  - Adjust the HTML/CSS styling to utilize the full A4 page width.
-  - Review and update the PDF generation settings to ensure proper page width.
+- [x] Adjust resume formatting to utilize full A4 page width
+  - Adjusted CSS properties across multiple files to ensure the resume utilizes the full A4 page width.
+  - Reduced horizontal padding in `.tailored-resume-content` from `1in` to `0.5in` in both `html_generator.py` and `static/css/styles.css`.
+  - Ensured `box-sizing: border-box` was consistently applied to include padding in width calculations.
+  - Adjusted @page margins in `static/css/pdf_styles.css` to `1cm 1.5cm` to allow more horizontal space.
+  - Updated the `displayResumePreview()` function in `static/js/main.js` to remove width constraints.
+  - Ensured consistent styling across HTML preview and PDF output by centralizing style definitions.
   - **Priority**: Medium
+  - **Implemented**: The changes increased the effective content width of the resume, improved visual presentation, and maintained proper formatting and readability.
 
 - [ ] Remove frame lines in PDF download
   - Review and adjust the CSS styling to remove unwanted frame lines.
@@ -142,7 +147,7 @@ The issue is not just about CSS width values but the combination of:
    ```
 
 2. **Update Frontend Display Logic**:
-   - Modify `static/js/main.js` function `displayResumePreview()` to remove width constraints:
+   - Modify `static/js/main.js` function `displayResumePreview()` to remove width constraints
    ```javascript
    // Remove existing width constraints
    previewContainer.style.maxWidth = '95%'; // Allow wider content
