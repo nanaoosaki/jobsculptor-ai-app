@@ -36,7 +36,7 @@
 **Status**: Resolved
 
 ### Styling Discrepancy: Preview vs. PDF & PDF Enlargement
-**Status**: Unresolved
+**Status**: Resolved
 
 **Description**: 
 Recent attempts to apply styling changes (e.g., adding a test outline) resulted in the change appearing **only** in the downloaded PDF, not in the live HTML preview. Furthermore, the PDF content appeared enlarged or misaligned with standard page dimensions after the change. This indicates a divergence in how styles are applied/loaded between the preview and PDF generation, despite efforts towards single-source styling (`ALIGN_HTML_PDF_STYLING_PLAN.md`). The root cause likely involves browser caching for the preview and potentially unexpected CSS interactions within the PDF renderer.
@@ -53,7 +53,7 @@ Recent attempts to apply styling changes (e.g., adding a test outline) resulted 
 **Priority**: High
 
 ### Styling Changes Not Reflected
-**Status**: Unresolved
+**Status**: Resolved
 
 **Description**: 
 Despite implementing various styling changes, there have been no visible changes in the application's appearance. This indicates a fundamental issue in our approach to styling.

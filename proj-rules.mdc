@@ -1,7 +1,7 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
 # Project Rules for Styling Changes
 
@@ -31,3 +31,4 @@ Any changes to resume styling **MUST** follow the established workflow documente
 - **Test** both preview and PDF output to ensure consistent appearance.
 
 Following these rules will prevent difficult-to-debug styling issues and ensure consistency in the application.
+

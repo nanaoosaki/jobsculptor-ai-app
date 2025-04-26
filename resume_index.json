@@ -219,7 +219,29 @@
           "note": "Processing for job: Director, AI Innovation at CNN"
         }
       ]
+    },
+    "bd07c763-88a4-48dd-92d6-57000d171296": {
+      "filename": "bd07c763-88a4-48dd-92d6-57000d171296.pdf",
+      "added_date": "2025-04-26T07:08:09.500933",
+      "processing_history": [],
+      "notes": [
+        {
+          "timestamp": "2025-04-26T07:08:09.508057",
+          "note": "Processing for job: Director, AI Innovation at CNN"
+        }
+      ]
+    },
+    "2c265551-9358-4cd1-8881-88af0e04043a": {
+      "filename": "2c265551-9358-4cd1-8881-88af0e04043a.docx",
+      "added_date": "2025-04-26T07:11:36.010738",
+      "processing_history": [],
+      "notes": [
+        {
+          "timestamp": "2025-04-26T07:11:36.018033",
+          "note": "Processing for job: Director, AI Innovation at CNN"
+        }
+      ]
     }
   },
-  "last_updated": "2025-04-26T06:57:41.430154"
+  "last_updated": "2025-04-26T07:11:36.018046"
 }

@@ -45,6 +45,9 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 9. **A4 Paper Format**: Implemented proper A4 paper dimensions with 1-inch margins for HTML preview
 10. **Contact Information Fix**: Attempted to ensure contact information is preserved in tailored resumes
 11. **Styling Architecture Refactor**: Centralized styling using design tokens and SCSS; removed inline styles and JS width hacks; HTML and PDF outputs now consistent via `preview.css` and `print.css`
+12. **Single-Source Styling Implementation**: Centralized styling using design tokens and SCSS, ensuring consistent styling across HTML and PDF outputs.
+13. **Resume Section Parsing Improvements**: Enhanced section detection with expanded regex patterns and better default section handling, implemented a fallback mechanism, and improved error handling.
+14. **Align HTML & PDF Styling**: Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS, improving maintainability and consistency.
 
 ## Current Limitations and Known Issues
 1. **PythonAnywhere Constraints**: 
@@ -231,4 +234,22 @@ This project focuses on creating an AI-powered resume tailoring tool that optimi
 
 - Implemented PDF generation using WeasyPrint for consistent and professional output.
 - Centralized styling using `design_tokens.json` and SCSS, aligning HTML and PDF appearances.
-- Refactored CSS into SCSS files, improving maintainability and separation of concerns. 
+- Refactored CSS into SCSS files, improving maintainability and separation of concerns.
+- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance.
+- Enhanced resume parsing with expanded regex patterns and better default section handling.
+- Implemented a robust fallback mechanism for resume parsing to ensure downstream processes have the required data structure.
+- Improved error handling in the resume section extraction process.
+- Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS.
+- Removed inline styles and JavaScript width hacks, leading to a cleaner and more maintainable codebase.
+- Implemented a single-source styling architecture that allows for easy updates and modifications.
+
+- Created `design_tokens.json` to store all visual constants, ensuring a single source of truth for styling.
+- Developed a `StyleManager` class to manage and apply styles consistently across different outputs.
+- Refactored CSS into SCSS files, separating concerns and improving maintainability.
+- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance.
+- Enhanced resume parsing with expanded regex patterns and better default section handling.
+- Implemented a robust fallback mechanism for resume parsing to ensure downstream processes have the required data structure.
+- Improved error handling in the resume section extraction process.
+- Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS.
+- Removed inline styles and JavaScript width hacks, leading to a cleaner and more maintainable codebase.
+- Implemented a single-source styling architecture that allows for easy updates and modifications. 

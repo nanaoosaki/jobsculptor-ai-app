@@ -75,17 +75,17 @@ $font-size-h2: 1.75rem !default;
     margin: $spacing-medium auto; // Centered divider
 }
 
-// Section Box Styling – blue pill
+// Section Box Styling – pink pill
 .section-box {
     margin: $space-section-y 0;
     padding: 0.35rem 0.6rem;
-    background: $primaryColor;  // filled blue rectangle
+    background: #FF69B4;  // hot pink color
     color: #ffffff;
     border: none;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    max-width: 100%;  // revert width
+    max-width: 100%;  // full width
     margin: 0 auto;  // center
 }
 
