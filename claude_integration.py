@@ -72,6 +72,9 @@ def clean_bullet_points(text: str) -> str:
     # ASCII/common bullet symbols for regex
     ascii_bullets = r'[\*\-\+o~=#>]'
     
+    # NEW: textual escape sequences for bullets (e.g., "u2022")
+    bullet_escapes_pattern = re.compile(r'^(?:u2022|\\u2022|U\+2022|&#8226;|&bull;)\s+', re.IGNORECASE)
+
     for i, line in enumerate(lines):
         line = line.strip()
         
@@ -111,6 +114,14 @@ def clean_bullet_points(text: str) -> str:
             bullet_count += 1
             continue
             
+        # Check for textual bullet escape sequences (e.g., "u2022")
+        escape_match = bullet_escapes_pattern.match(line)
+        if escape_match:
+            cleaned_line = line[escape_match.end():]
+            cleaned_lines.append(cleaned_line)
+            bullet_count += 1
+            continue
+        
         # No bullet point found, keep the line as is
         cleaned_lines.append(line)
     
@@ -1359,6 +1370,8 @@ def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
         r'^[•◦▪▫■□▸►▹▻▷▶→⇒⟹⟶⇢⇨⟾➔➜➙➛➝➞➟➠➡➢➣➤➥➦➧➨➩➪➫➬➭➮➯➱➲➳➵➸➼⦿⦾⧫⧮⧠⧔∙◆◇◈]',
         # ASCII bullets at beginning of line (after any whitespace)
         r'^\s*[\*\-\+o~=#>]\s+',
+        # Textual escape forms for bullets (e.g., u2022, \u2022, U+2022, &#8226;, &bull;)
+        r'^\s*(?:u2022|\\u2022|U\+2022|&#8226;|&bull;)\s+',
         # Numbered bullets
         r'^\s*(?:\(?\d+[\.\)\]]\s+|\d+[\.\)\]]\s+|\[\d+\]\s+)'
     ]

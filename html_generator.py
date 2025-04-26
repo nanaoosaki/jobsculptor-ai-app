@@ -76,7 +76,8 @@ def format_section_content(content: str) -> str:
     content = '\n'.join(filtered_lines)
     
     # Check if content contains any bulleted items
-    bullet_pattern = r'^[-•*]\s|^\d+[.)\]]\s'
+    # Accept real bullet glyphs, ASCII dashes/star, numbers, and textual escapes (u2022 etc.)
+    bullet_pattern = r'^(?:[-•*]|\d+[.)\]]|(?:u2022|\\u2022|U\+2022|&#8226;|&bull;))\s'
     has_bullets = any(re.match(bullet_pattern, line.strip()) for line in content.split('\n'))
     
     if has_bullets:
@@ -95,7 +96,7 @@ def format_section_content(content: str) -> str:
             # Check if it's a bullet point
             if re.match(bullet_pattern, stripped_line):
                 # Extract content after bullet
-                bullet_content = re.sub(r'^[-•*\d.)\]]+\s*', '', stripped_line)
+                bullet_content = re.sub(r'^(?:[-•*]|\d+[.)\]]|(?:u2022|\\u2022|U\+2022|&#8226;|&bull;))\s*', '', stripped_line)
                 if not in_bullet_list:
                     in_bullet_list = True
                     

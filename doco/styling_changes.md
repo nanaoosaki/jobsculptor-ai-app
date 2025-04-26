@@ -54,6 +54,28 @@ Fix implemented:
 
 Expected → outline now shows in both HTML preview and PDF. This eliminates the last preview-vs-PDF divergence.
 
+### 2025-04-27  – “u2022” double-bullet fix
+
+**Symptom**  
+Experience bullets showed an extra literal text `u2022` overlapping the normal list bullet (both in HTML preview and PDF). Other sections were unaffected.
+
+**Root cause**  
+LLM sometimes returns the *textual escape* `u2022` rather than the actual bullet glyph `•`. Our cleaning helpers (`clean_bullet_points`, `html_generator.format_section_content`) stripped glyphs but not the escape string, so it survived into the rendered HTML where `<ul>` added another bullet.
+
+**Fix**  
+1. `claude_integration.clean_bullet_points()` – added regex that removes leading textual escapes (`u2022`, `\u2022`, `U+2022`, `&#8226;`, `&bull;`).  
+2. `html_generator.format_section_content()` – extended `bullet_pattern` & stripping regex to recognise those escapes as bullet markers.  
+3. `validate_bullet_point_cleaning()` – added same pattern so test/ logging will catch future misses.
+
+**Test procedure**  
+1. Tailor a resume that previously exhibited the bug.  
+2. Inspect preview: each line starts with a single normal list bullet.  
+3. Download PDF – confirm no stray `u2022` string.  
+4. Run unit `pytest tests/test_bullet_cleaning.py` (added) – passes.
+
+**Take-away**  
+Always handle both glyph *and* escape representations when stripping control symbols from LLM output.
+
 ## Original Implementation Plan (Reference Only)
 
 <details>
