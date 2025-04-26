@@ -54,27 +54,39 @@ Fix implemented:
 
 Expected → outline now shows in both HTML preview and PDF. This eliminates the last preview-vs-PDF divergence.
 
-### 2025-04-27  – “u2022” double-bullet fix
+### 2025-04-27  – Centralised bullet-cleanup refactor (planned)
 
-**Symptom**  
-Experience bullets showed an extra literal text `u2022` overlapping the normal list bullet (both in HTML preview and PDF). Other sections were unaffected.
+We observed that quick patches did not fully eliminate stray `u2022` artefacts. Analysis shows the text bullets are injected at multiple stages (LLM responses, HTML back-parsing, raw resume parsing). To guarantee a single-bullet output we will **centralise bullet stripping** in one utility and pipe **every** textual pathway through it.
 
-**Root cause**  
-LLM sometimes returns the *textual escape* `u2022` rather than the actual bullet glyph `•`. Our cleaning helpers (`clean_bullet_points`, `html_generator.format_section_content`) stripped glyphs but not the escape string, so it survived into the rendered HTML where `<ul>` added another bullet.
+**Goals**
+1. All Unicode/ASCII/textual/HTML bullet markers removed **before** HTML generation.
+2. No duplication of regexes across the codebase—all import the same constant.
+3. Regression guard: automated test + runtime validation.
 
-**Fix**  
-1. `claude_integration.clean_bullet_points()` – added regex that removes leading textual escapes (`u2022`, `\u2022`, `U+2022`, `&#8226;`, `&bull;`).  
-2. `html_generator.format_section_content()` – extended `bullet_pattern` & stripping regex to recognise those escapes as bullet markers.  
-3. `validate_bullet_point_cleaning()` – added same pattern so test/ logging will catch future misses.
+**Implementation outline**
+A. `utils/bullet_utils.py` (already created)
+   • Holds `BULLET_ESCAPE_RE` and `strip_bullet_prefix()`.
 
-**Test procedure**  
-1. Tailor a resume that previously exhibited the bug.  
-2. Inspect preview: each line starts with a single normal list bullet.  
-3. Download PDF – confirm no stray `u2022` string.  
-4. Run unit `pytest tests/test_bullet_cleaning.py` (added) – passes.
+B. Refactor steps
+   1. `clean_bullet_points()` → thin wrapper around `strip_bullet_prefix()`.
+   2. In **all** formatter functions (`_format_experience_json`, `_format_education_json`, `_format_projects_json`, `_format_skills_json`) call `strip_bullet_prefix()` on each list item (achievements, highlights, details, skills).
+   3. In `html_generator.format_section_content()` run `strip_bullet_prefix()` on every line *before* bullet-detection regex.
+   4. Inside JSON extractors (`_extract_experience_from_html`, etc.) call helper on each recovered string.
+   5. Replace hard-coded patterns in `validate_bullet_point_cleaning()` with `bullet_utils.BULLET_ESCAPE_RE`.
 
-**Take-away**  
-Always handle both glyph *and* escape representations when stripping control symbols from LLM output.
+C. Unit test
+   • `tests/test_bullet_utils.py` ensures a variety of prefixes (`'• '`, `'u2022'`, `'\u2022'`, `'1. '`, `'2) '`) are stripped correctly.
+
+D. Deployment checklist
+| Step | Action |
+|------|--------|
+| 1 | Implement refactor changes & run `pytest` |
+| 2 | Rebuild site, restart Flask |
+| 3 | Tailor known-problem resume → verify preview & PDF have clean bullets |
+| 4 | Commit & push; document success here |
+
+**Fallback plan**  
+A feature flag `STRIP_BULLETS=False` (env var or settings) will bypass the new stripping layer in case of unforeseen side-effects.
 
 ## Original Implementation Plan (Reference Only)
 
