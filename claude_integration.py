@@ -34,6 +34,9 @@ last_llm_client = None
 # Import the new html_generator module
 import html_generator
 
+# Import utils
+from utils.bullet_utils import strip_bullet_prefix
+
 
 def clean_bullet_points(text: str) -> str:
     """
@@ -510,9 +513,9 @@ Focus on emphasizing elements most relevant to this job opportunity.
             dates = job.get('dates', '')
             achievements = job.get('achievements', [])
             
-            # Filter out empty or whitespace-only achievements
+            # Filter and strip bullet prefixes
             if achievements:
-                achievements = [a for a in achievements if a and a.strip()]
+                achievements = [strip_bullet_prefix(a) for a in achievements if a and a.strip()]
             
             # New format: company/location on first line, position/dates on second line
             # Company name (left) and location (right)
@@ -1048,10 +1051,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
             dates = job.get('dates', '')
             achievements = job.get('achievements', [])
             
-            # Filter out empty or whitespace-only achievements
+            # Filter and strip bullet prefixes
             if achievements:
-                achievements = [a for a in achievements if a and a.strip()]
-                
+                achievements = [strip_bullet_prefix(a) for a in achievements if a and a.strip()]
+            
             # New format: company/location on first line, position/dates on second line
             # Company name (left) and location (right)
             formatted_text += f"<p><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
