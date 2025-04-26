@@ -1,6 +1,49 @@
 # Implementation Plan for Styling Changes
 
-## Detailed Implementation Plan for Styling Issues
+## ISSUE RESOLVED: Styling Changes Now Apply Correctly
+
+The issue where styling changes weren't visible in the preview or PDF has been resolved. The key fix was properly restarting the Flask server after making changes, combined with following the complete styling update workflow.
+
+## Validated Workflow for Resume Styling Changes
+
+Based on successful tests (including changing section header color to pink), follow this process for all styling changes:
+
+| Step | Action | Command / Tool |
+|------|--------|----------------|
+| 1 | Edit tokens or SCSS | Edit `static/scss/_resume.scss` or other SCSS files |
+| 2 | Re-generate tokens (if needed) | `python tools/generate_tokens_css.py` |
+| 3 | Build CSS | `sass static/scss/preview.scss static/css/preview.css` <br> `sass static/scss/print.scss static/css/print.css` |
+| 4 | **Restart Flask dev server** | `Ctrl-C` then `python app.py` |
+| 5 | Hard refresh browser | `Ctrl+Shift+R` |
+| 6 | Verify preview & PDF | Check both HTML preview and generated PDF |
+
+**IMPORTANT**: Missing any of these steps, especially #4 (restarting Flask), will result in styling changes not being applied.
+
+## Key Lessons Learned
+
+1. **Flask Server Restart Critical**: The development server caches imports at startup, so changes to Python files (like `html_generator.py`) aren't reflected until restart.
+2. **CSS ↔ HTML Coordination**: Both parts need to be in sync - CSS selectors must match the HTML elements emitted by the Python generator.
+3. **Complete Process Required**: The styling pipeline has multiple steps, and skipping any can lead to misleading results.
+4. **Paper Width Corrections**: Setting the proper A4 width (8.27in instead of 8.5in) fixed PDF output scaling issues.
+5. **Style Isolation**: Adding style isolation rules prevents Bootstrap styles from leaking into the resume content.
+
+## Implementation History
+
+### Successful Implementation of Pink and Blue Section Headers
+
+We successfully implemented both blue and pink section header boxes, confirming our styling process works. The changes were:
+
+1. Updating the `.section-box` class styling in `_resume.scss`
+2. Rebuilding CSS files with sass
+3. Restarting the Flask server
+4. Verifying the changes appeared correctly in both preview and PDF
+
+This confirms that the styling pipeline is working properly and can be used for future visual enhancements.
+
+## Original Implementation Plan (Reference Only)
+
+<details>
+<summary>Click to expand original implementation plan</summary>
 
 ### Phase 0 – Rapid Proof (½ hr)
 - Edit `_resume.scss`, add `body{outline:5px solid red!important;}` rebuild SCSS, refresh preview.
@@ -41,6 +84,24 @@
 ### Phase 5 – Documentation & Clean-up (1 hr)
 - Update `single-source styling.md` with the new pipeline diagram (data → Jinja → SCSS → preview/PDF).
 - Move the old Python HTML generator to `archived/`.
+</details>
+
+## Diagnostics Information (Reference Only)
+
+<details>
+<summary>Click to expand diagnostics information</summary>
+
+### Debug Attempt – Hot-Pink Border Test
+
+**Observation**: After rebuilding `preview.css` and `print.css` with a forced hard refresh (`Ctrl+Shift+R`), _no hot-pink dashed borders were visible_ around any section headings in either the browser preview or the generated PDF.
+
+### What this suggested
+The element that the rule targets was **not present in the live DOM**.  Therefore we had a **selector ↔ markup mismatch** rather than a stylesheet issue.
+
+### Root Cause Confirmed
+After testing hypothesis H-1, we confirmed that **Flask server was still running old code** that didn't emit `.section-box` wrappers. The hot-reloader was not reloading the Python modules that were imported at startup.
+
+</details>
 
 ## Deliverable Checklist
 - ☑ Unified HTML source (`resume.html`) used everywhere
@@ -162,5 +223,20 @@ The recent changes successfully implemented blue section header boxes with a fil
 ### Next Steps
 - Continue monitoring for any discrepancies between preview and PDF outputs.
 - Document the process for future styling changes to ensure consistency and efficiency.
+
+### Successful Process for Styling Changes
+
+The following process was successfully used to change the section header color to pink:
+
+1. **Edit SCSS Files**: Updated the `_resume.scss` file to change the section header background color to pink.
+2. **Re-generate Tokens**: (If needed) Run `generate_tokens_css.py` to update design tokens.
+3. **Build CSS**: Compiled the SCSS files into CSS using the `sass` command:
+   - `sass static/scss/preview.scss static/css/preview.css`
+   - `sass static/scss/print.scss static/css/print.css`
+4. **Restart Flask Server**: Restarted the Flask server to apply changes to Python files:
+   - `Ctrl-C` then `python app.py`
+5. **Verify Changes**: Performed a hard refresh in the browser (Ctrl+Shift+R) and checked both the HTML preview and PDF output to ensure changes were applied correctly.
+
+This process ensures that styling changes are consistently applied across both the preview and PDF outputs. Following these steps will help maintain a unified appearance and streamline future styling updates.
 
 --- 
