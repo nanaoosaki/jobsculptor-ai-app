@@ -1412,9 +1412,9 @@ def format_projects_content(content: str) -> str:
     return html_generator.format_projects_content(content)
 
 
-def generate_preview_from_llm_responses(llm_client) -> str:
+def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> str:
     """Proxy function that calls the implementation in html_generator"""
-    return html_generator.generate_preview_from_llm_responses(llm_client)
+    return html_generator.generate_preview_from_llm_responses(llm_client, for_screen=for_screen)
 
 
 def extract_resume_sections(doc_path: str) -> Dict[str, str]:

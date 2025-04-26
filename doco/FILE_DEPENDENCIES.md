@@ -28,5 +28,8 @@ The `resume_index.py` module is responsible for tracking and logging resume proc
 ### File Structure
 - **resume_index.json**: The default file where the index is stored. It is created in the same directory as `resume_index.py` if not specified otherwise.
 
+## Runtime Reload Caveat
+`html_generator.py`, `style_manager.py`, and any other imported Python modules are **only loaded at Flask startup**.  The development reloader detects template changes but *not* deep imports.  After editing these files you must restart the server (`Ctrl-C` then `python app.py`).
+
 ## Conclusion
 The `resume_index.py` module is a critical component for maintaining a history of resume processing activities, providing valuable insights and traceability for the application. 

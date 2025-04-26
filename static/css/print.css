@@ -106,6 +106,13 @@ hr {
   margin-top: 1.5rem;
 }
 
+.resume-preview-container .tailored-resume-content,
+.resume-preview-container .tailored-resume-content * {
+  line-height: inherit;
+  font-family: "Calibri", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
 .tailored-resume-content {
   width: 210mm;
   max-width: 100%;
@@ -114,7 +121,7 @@ hr {
   background-color: #ffffff;
   font-family: "Calibri", Arial, sans-serif;
   font-size: 11pt;
-  line-height: 1.4;
+  line-height: 1.2;
   color: #333;
 }
 
@@ -141,20 +148,53 @@ hr {
   margin: 1rem auto;
 }
 
+.section-box {
+  margin: 0.55rem 0;
+  padding: 0.35rem 0.6rem;
+  background: #4a6fdc;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
 .resume-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 .resume-section h2 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #343a40;
-  background-color: transparent;
-  border: none;
+  color: #ffffff;
   text-align: center;
-  text-transform: uppercase;
-  padding: 0.25rem 0.5rem;
-  margin-bottom: 1rem;
+  padding: 0;
+  margin: 0;
   letter-spacing: 0.05em;
+}
+
+.position-bar {
+  background: #FFFFFF;
+  padding: 0.25rem 0.45rem;
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+}
+.position-bar .role,
+.position-bar .company-name,
+.position-bar .institution,
+.position-bar .project-title,
+.position-bar .degree,
+.position-bar .dates,
+.position-bar .location {
+  font-weight: 700;
+}
+.position-bar .location, .position-bar .dates {
+  font-style: normal;
+  font-weight: 700;
+  color: #495057;
+  text-align: right;
 }
 
 .job, .education, .project {
@@ -189,7 +229,7 @@ hr {
   position: relative;
   padding-left: 1rem;
   margin-bottom: 0.25rem;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 .job .job-content li::before, .job .education-content li::before, .job .project-content li::before, .education .job-content li::before, .education .education-content li::before, .education .project-content li::before, .project .job-content li::before, .project .education-content li::before, .project .project-content li::before {
   content: "u2022";
@@ -198,6 +238,17 @@ hr {
   top: 0.1em;
   font-size: 1em;
   color: #333;
+}
+
+ul.bullets {
+  margin: 0.25rem 0 0.15rem 1.1rem;
+}
+ul.bullets li {
+  margin-bottom: 0.15rem;
+  line-height: 1.25;
+}
+ul.bullets li::marker {
+  color: #3A3A3A;
 }
 
 .skills-content p, .skills-content ul {
@@ -209,16 +260,17 @@ hr {
 }
 .skills-content li {
   margin-bottom: 0.25rem;
+  line-height: 1.2;
 }
 
 @page {
-  margin: 0;
-  size: letter;
+  size: A4;
+  margin: 1.5cm;
 }
 body {
   font-family: "Calibri", Arial, sans-serif;
   font-size: 11pt;
-  line-height: 1.4;
+  line-height: 1.25;
   color: #333;
   background-color: white;
   margin: 0;
@@ -226,10 +278,9 @@ body {
 }
 
 .tailored-resume-content {
-  box-shadow: none;
-  border: none;
-  margin: 0;
   width: 100%;
+  box-shadow: none;
+  margin: 0;
 }
 
 .tailored-resume-content {
@@ -238,6 +289,46 @@ body {
   width: 100%;
   max-width: 100%;
   padding: 0;
+}
+
+.section-box {
+  margin: 0.55rem 0;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #3A3A3A;
+  background: #FFFFFF;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  break-inside: avoid;
+}
+
+.position-bar {
+  background: #FFFFFF;
+  padding: 0.25rem 0.45rem;
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+}
+.position-bar .role,
+.position-bar .company-name,
+.position-bar .institution,
+.position-bar .project-title,
+.position-bar .degree,
+.position-bar .dates,
+.position-bar .location {
+  font-weight: 700;
+}
+
+ul.bullets {
+  margin: 0.25rem 0 0.15rem 1.1rem;
+}
+ul.bullets li {
+  margin-bottom: 0.15rem;
+  line-height: 1.25;
+  break-inside: avoid;
+}
+ul.bullets li::marker {
+  color: #3A3A3A;
 }
 
 .resume-section {
@@ -285,141 +376,18 @@ body {
     page-break-inside: avoid;
   }
 }
+.resume-preview-container {
+  display: block;
+  padding: 0;
+  background: none;
+}
+
+.section-box {
+  break-inside: avoid;
+}
+
+.bullets li {
+  break-inside: avoid;
+}
 
 /*# sourceMappingURL=print.css.map */
-
-/* PDF-specific styles */
-@page {
-    size: letter;
-    margin: 0.5in;
-}
-
-body {
-    font-family: "Calibri", "Helvetica Neue", Arial, sans-serif;
-    font-size: 11pt;
-    line-height: 1.4;
-    color: #333;
-    margin: 0;
-    padding: 0;
-}
-
-.resume-container {
-    max-width: 100%;
-    margin: 0 auto;
-}
-
-/* Contact Information */
-.contact-info {
-    text-align: center;
-    margin-bottom: 10pt;
-}
-
-.resume-name {
-    font-size: 18pt;
-    font-weight: bold;
-    margin: 0 0 8pt 0;
-    text-transform: uppercase;
-    color: #2a3e62;
-}
-
-.contact-details {
-    font-size: 10pt;
-    margin-bottom: 4pt;
-}
-
-.contact-item {
-    display: inline-block;
-    margin: 0 8pt;
-}
-
-.contact-item:not(:last-child)::after {
-    content: "•";
-    display: inline-block;
-    margin-left: 16pt;
-}
-
-.divider {
-    border-top: 1pt solid #999;
-    margin: 8pt 0 12pt 0;
-}
-
-/* Section Styling */
-.resume-section {
-    margin-bottom: 14pt;
-    break-inside: avoid;
-}
-
-.section-title {
-    font-size: 13pt;
-    font-weight: bold;
-    margin: 0 0 8pt 0;
-    color: #2a3e62;
-    text-transform: uppercase;
-    border-bottom: 0.5pt solid #ddd;
-    padding-bottom: 4pt;
-}
-
-.section-content {
-    margin-bottom: 8pt;
-}
-
-/* Job/Education Item Styling */
-.experience-item, .education-item, .project-item {
-    margin-bottom: 10pt;
-    break-inside: avoid;
-}
-
-.job-header, .education-header, .project-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 4pt;
-}
-
-.job-title, .degree, .project-title {
-    font-weight: bold;
-    font-size: 11pt;
-}
-
-.company-name, .institution {
-    font-style: italic;
-}
-
-.job-date, .education-date, .project-date {
-    font-style: italic;
-    color: #666;
-}
-
-/* Lists */
-ul {
-    margin: 4pt 0;
-    padding-left: 16pt;
-}
-
-li {
-    margin-bottom: 3pt;
-    position: relative;
-}
-
-.job-description li, .education-description li, .project-description li {
-    list-style-type: disc;
-}
-
-.skills-list, .certifications-list, .awards-list {
-    columns: 2;
-    column-gap: 20pt;
-}
-
-.skills-list li, .certifications-list li, .awards-list li {
-    break-inside: avoid;
-    margin-bottom: 3pt;
-}
-
-/* Page Breaks - Avoid breaking in the middle of sections */
-h1, h2, h3, .job-header, .education-header, .project-header {
-    break-after: avoid;
-}
-
-p {
-    margin: 0 0 6pt 0;
-}

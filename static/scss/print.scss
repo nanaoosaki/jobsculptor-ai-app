@@ -13,8 +13,8 @@ $spacing-xsmall: 0.25rem !default; // Extra small spacing
 
 // Custom set global properties for print media
 @page {
-  margin: 0; // No margins on the page (we control this in the container)
-  size: letter; // Use letter size (8.5in x 11in)
+  size: A4;
+  margin: 1.5cm; // Standard margin for printed documents
 }
 
 body {
@@ -29,10 +29,10 @@ body {
 
 // Print-specific overrides
 .tailored-resume-content {
-  box-shadow: none; // No shadows in print
-  border: none; // No borders
-  margin: 0; // Override any margins
-  width: 100%; // Use full width
+  width: 100%; // Let the @page size control dimensions
+  box-shadow: none; // No shadow for print
+  margin: 0; // No margin needed for print
+  // Note: Internal padding from _resume.scss still controls content positioning
 }
 
 // Remove screen-specific effects for print
@@ -53,6 +53,7 @@ body {
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    break-inside: avoid; // Prevent section headers breaking across pages
 }
 
 // Position Bar Styling - ensure consistency with HTML
@@ -81,6 +82,7 @@ ul.bullets {
         margin-bottom: $space-bullet-y;
         line-height: $font-lineHeight-tight;
         &::marker { color: $color-bullet; }
+        break-inside: avoid;
     }
 }
 
@@ -177,4 +179,21 @@ p {
   li {
     page-break-inside: avoid;
   }
+}
+
+// Hide screen-only elements
+.resume-preview-container {
+  display: block;
+  padding: 0;
+  background: none;
+}
+
+// Extra overrides if needed for PDF output
+.section-box {
+  break-inside: avoid; // Prevent section headers breaking across pages
+}
+
+// Prevent orphaned list items
+.bullets li {
+  break-inside: avoid;
 } 

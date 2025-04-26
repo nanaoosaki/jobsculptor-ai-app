@@ -156,4 +156,40 @@ Implementing this plan converts the hard-coded-everywhere width fix into a maint
 - Created `design_tokens.json` to store all visual constants, ensuring a single source of truth for styling.
 - Developed a `StyleManager` class to manage and apply styles consistently across different outputs.
 - Refactored CSS into SCSS files, separating concerns and improving maintainability.
-- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance. 
+- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance.
+
+## Root Cause Analysis
+
+### Issue
+The styling changes made to the resume application did not reflect in the browser preview or PDF output.
+
+### Root Causes
+1. **Token Variable Name Mismatch**
+   - The `generate_tokens_css.py` script writes SCSS variables directly from JSON keys, which contain dots (e.g., `$font.lineHeight.tight`).
+   - The SCSS files reference these variables using hyphens (e.g., `$font-lineHeight-tight`), leading to undefined variables at compile-time.
+
+2. **SCSS Compilation Issue**
+   - The SCSS compilation pipeline used `python-libsass`, which does not support the modern `@use` syntax.
+   - As a result, the SCSS files that rely on `@use` (e.g., `_resume.scss`) were not compiled correctly, and the new styles were not included in the output CSS.
+
+### Symptoms
+- No `.section-box` or `.position-bar` classes in the compiled CSS.
+- Compiled `preview.css` still has `line-height: 1.4` at the top.
+- `_tokens.scss` contains variables with dots, while SCSS uses hyphens.
+
+### Action Plan
+1. **Fix Token Generation**
+   - Modify `generate_tokens_css.py` to convert dots to hyphens in variable names.
+   - Regenerate `_tokens.scss`.
+
+2. **Restore a Compiler that Supports `@use`**
+   - Option A: Restore and use `tools/compile_scss.py`.
+   - Option B: Switch to Dart Sass (`npm i -D sass`) and use `npx sass` for compilation.
+
+3. **Re-build CSS**
+   - Run the fixed build script to ensure `preview.css` and `print.css` contain the new styles.
+
+4. **Smoke-test**
+   - Verify changes in the browser and PDF output.
+
+> **Tip**: After changing any Python emitter (`html_generator.py`, `style_manager.py`) **restart Flask**; otherwise compiled CSS may load but new markup will not be emitted. 

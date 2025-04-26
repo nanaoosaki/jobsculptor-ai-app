@@ -151,4 +151,7 @@ class StyleManager:
 - Created `design_tokens.json` to store all visual constants, ensuring a single source of truth for styling.
 - Developed a `StyleManager` class to manage and apply styles consistently across different outputs.
 - Refactored CSS into SCSS files, separating concerns and improving maintainability.
-- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance. 
+- Ensured consistent application of styles across HTML preview and PDF generation, resulting in a unified appearance.
+
+### Dev workflow reminder
+After editing SCSS → rebuild CSS → **restart Flask server** so updated Python emitters take effect before verifying preview/PDF. 

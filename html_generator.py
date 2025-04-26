@@ -148,7 +148,7 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     html_parts.append(f'</div>')
     
     # Position and dates on the second line
-    html_parts.append(f'<div class="position-line">')
+    html_parts.append(f'<div class="position-bar position-line">')
     html_parts.append(f'<span class="position">{position}</span>')
     html_parts.append(f'<span class="dates">{dates}</span>')
     html_parts.append(f'</div>')
@@ -156,8 +156,14 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     # Content as paragraphs
     if content:
         html_parts.append('<div class="job-content">')
-        for item in content:
-            html_parts.append(f'<p>{item}</p>')
+        # Determine if the content list should be bullets
+        if len(content) > 1:
+            html_parts.append('<ul class="bullets">')
+            for item in content:
+                html_parts.append(f'<li>{item}</li>')
+            html_parts.append('</ul>')
+        else:
+            html_parts.append(f'<p>{content[0]}</p>')
         html_parts.append('</div>')
     
     html_parts.append('</div>')
@@ -345,8 +351,8 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
     
     Args:
         llm_client: The LLM client instance (used for context).
-        for_screen (bool): If True, includes screen-specific elements like CSS links.
-                          If False, generates plain HTML suitable for PDF conversion.
+        for_screen (bool): If True, returns only the HTML fragment for the resume content.
+                          If False, generates a full HTML document suitable for PDF conversion.
     """
     import os
     import json
@@ -360,63 +366,36 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
 
     if not os.path.exists(api_responses_dir):
         logger.warning(f"API responses directory not found: {api_responses_dir}")
-        return "<p>Error: API response data not found.</p>"
+        # Return an error message appropriate for the context (fragment or full page)
+        return "<p>Error: API response data not found.</p>" if for_screen else \
+               "<!DOCTYPE html><html><head><title>Error</title></head><body><p>Error: API response data not found.</p></body></html>"
 
-    # Initialize HTML parts
-    html_parts = []
-    
-    # --- Add HTML Header --- 
-    html_parts.append("""<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Tailored Resume Preview</title>""")
+    # Initialize HTML parts for the core content
+    content_parts = []
 
-    # Conditionally link preview CSS only if generating for screen
-    if for_screen:
-        # Basic cache busting using file modification time
-        css_path = os.path.join(current_app.static_folder, 'css', 'preview.css')
-        cache_bust = ""
-        try:
-            mtime = os.path.getmtime(css_path)
-            cache_bust = f"?v={int(mtime)}" 
-        except FileNotFoundError:
-            logger.warning(f"Preview CSS not found at {css_path} for cache busting.")
-            
-        html_parts.append(f'    <link rel="stylesheet" href="/static/css/preview.css{cache_bust}"> ')
+    # --- Start of Core Resume Content ---
+    content_parts.append('<div class="tailored-resume-content">')
 
-    html_parts.append("""</head>
-    <body>""")
-
-    # Add screen-specific container only if for_screen
-    if for_screen:
-        html_parts.append('<div class="resume-preview-container">')
-
-    # --- Start of Core Resume Content --- 
-    # This content is generated regardless of for_screen flag
-    html_parts.append('<div class="tailored-resume-content">')
-    
-    # --- Contact Section --- 
+    # --- Contact Section ---
     contact_html = ""
     try:
         with open(os.path.join(api_responses_dir, 'contact.json'), 'r') as f:
             contact_data = json.load(f)
             contact_text = contact_data.get('content', '')
-            
+
             if contact_text:
                 contact_lines = contact_text.strip().split('\n')
                 contact_html = '<div class="contact-section">'
-                
+
                 # First line is usually the name
                 if contact_lines:
                     contact_html += f'<p class="name">{contact_lines[0]}</p>'
-                    
+
                     # Add remaining contact lines
                     for line in contact_lines[1:]:
                         if line.strip():
                             contact_html += f'<p>{line.strip()}</p>'
-                
+
                 contact_html += '</div><hr class="contact-divider"/>'
                 logger.info("Successfully loaded contact information from contact.json")
     except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -461,7 +440,7 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
         
     # Add contact section if available
     if contact_html:
-        html_parts.append(contact_html)
+        content_parts.append(contact_html)
     
     try:
         # Add summary section
@@ -471,12 +450,12 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                 
             summary_text = summary_data.get('content', '')
             if summary_text.strip():
-                html_parts.append('<div class="resume-section">')
-                html_parts.append('<h2>Professional Summary</h2>')
-                html_parts.append('<div class="summary-content">')
-                html_parts.append(format_section_content(summary_text))
-                html_parts.append('</div>')
-                html_parts.append('</div>')
+                content_parts.append('<div class="resume-section">')
+                content_parts.append('<div class="section-box"><h2>Professional Summary</h2></div>')
+                content_parts.append('<div class="summary-content">')
+                content_parts.append(format_section_content(summary_text))
+                content_parts.append('</div>')
+                content_parts.append('</div>')
                 
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error(f"Error processing summary section: {e}")
@@ -499,12 +478,12 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                             if cached_data.get('sections') and cached_data['sections'].get('summary'):
                                 summary_text = cached_data['sections'].get('summary', '')
                                 if summary_text.strip():
-                                    html_parts.append('<div class="resume-section">')
-                                    html_parts.append('<h2>Professional Summary</h2>')
-                                    html_parts.append('<div class="summary-content">')
-                                    html_parts.append(format_section_content(summary_text))
-                                    html_parts.append('</div>')
-                                    html_parts.append('</div>')
+                                    content_parts.append('<div class="resume-section">')
+                                    content_parts.append('<div class="section-box"><h2>Professional Summary</h2></div>')
+                                    content_parts.append('<div class="summary-content">')
+                                    content_parts.append(format_section_content(summary_text))
+                                    content_parts.append('</div>')
+                                    content_parts.append('</div>')
                                     logger.info("Successfully recovered summary information from cached parsing")
             except Exception as fallback_error:
                 logger.warning(f"Fallback summary recovery failed: {fallback_error}")
@@ -515,9 +494,9 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                 experience_data = json.load(f)
                 
             if experience_data:
-                html_parts.append('<div class="resume-section">')
-                html_parts.append('<h2>Experience</h2>')
-                html_parts.append('<div class="experience-content">')
+                content_parts.append('<div class="resume-section">')
+                content_parts.append('<div class="section-box"><h2>Experience</h2></div>')
+                content_parts.append('<div class="experience-content">')
                 
                 for job in experience_data:
                     company = job.get('company', '')
@@ -529,12 +508,12 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                     if not any([company, position]):  # Skip empty entries
                         continue
                         
-                    html_parts.append(
+                    content_parts.append(
                         format_job_entry(company, location, position, dates, content)
                     )
                 
-                html_parts.append('</div>')
-                html_parts.append('</div>')
+                content_parts.append('</div>')
+                content_parts.append('</div>')
                 
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error(f"Error processing experience section: {e}")
@@ -545,12 +524,12 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                 education_content = f.read()
                 
             if education_content.strip():
-                html_parts.append('<div class="resume-section">')
-                html_parts.append('<h2>Education</h2>')
-                html_parts.append('<div class="education-content">')
-                html_parts.append(format_education_content(education_content))
-                html_parts.append('</div>')
-                html_parts.append('</div>')
+                content_parts.append('<div class="resume-section">')
+                content_parts.append('<div class="section-box"><h2>Education</h2></div>')
+                content_parts.append('<div class="education-content">')
+                content_parts.append(format_education_content(education_content))
+                content_parts.append('</div>')
+                content_parts.append('</div>')
                 
         except FileNotFoundError as e:
             logger.error(f"Error processing education section: {e}")
@@ -562,12 +541,12 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                 
             skills_text = skills_data.get('content', '')
             if skills_text.strip():
-                html_parts.append('<div class="resume-section">')
-                html_parts.append('<h2>Skills</h2>')
-                html_parts.append('<div class="skills-content">')
-                html_parts.append(format_section_content(skills_text))
-                html_parts.append('</div>')
-                html_parts.append('</div>')
+                content_parts.append('<div class="resume-section">')
+                content_parts.append('<div class="section-box"><h2>Skills</h2></div>')
+                content_parts.append('<div class="skills-content">')
+                content_parts.append(format_section_content(skills_text))
+                content_parts.append('</div>')
+                content_parts.append('</div>')
                 
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error(f"Error processing skills section: {e}")
@@ -578,42 +557,64 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                 projects_content = f.read()
                 
             if projects_content.strip():
-                html_parts.append('<div class="resume-section">')
-                html_parts.append('<h2>Projects</h2>')
-                html_parts.append('<div class="projects-content">')
-                html_parts.append(format_projects_content(projects_content))
-                html_parts.append('</div>')
-                html_parts.append('</div>')
+                content_parts.append('<div class="resume-section">')
+                content_parts.append('<div class="section-box"><h2>Projects</h2></div>')
+                content_parts.append('<div class="projects-content">')
+                content_parts.append(format_projects_content(projects_content))
+                content_parts.append('</div>')
+                content_parts.append('</div>')
                 
         except FileNotFoundError as e:
             logger.error(f"Error processing projects section: {e}")
         
     except Exception as e:
-        logger.error(f"Error generating preview: {e}")
-        html_parts.append(f"<p>Error generating preview: {str(e)}</p>")
-    
-    # --- End of Core Resume Content --- 
-    html_parts.append('</div>') # Close tailored-resume-content
+        logger.error(f"Error generating preview content: {e}")
+        # Return error fragment or full page error based on for_screen
+        error_msg = f"<p>Error generating preview: {str(e)}</p>"
+        if for_screen:
+            return error_msg
+        else:
+             return f"<!DOCTYPE html><html><head><title>Error</title></head><body>{error_msg}</body></html>"
 
-    # Add screen-specific container closing tag and footer only if for_screen
+    # --- End of Core Resume Content ---
+    content_parts.append('</div>') # Close tailored-resume-content
+
+    # --- Decide Final Output ---
     if for_screen:
-        html_parts.append("""
-        <div style="margin-top: 30px; font-size: 12px; color: #95a5a6; text-align: center;">
-            Generated on """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """
-        </div>
-        </div>""") # Close resume-preview-container
+        # Return only the content fragment
+        html_content = ''.join(content_parts)
+    else:
+        # Construct the full HTML document for PDF generation
+        full_html_parts = [
+            "<!DOCTYPE html>",
+            "<html lang=\"en\">",
+            "<head>",
+            "    <meta charset=\"UTF-8\">",
+            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+            "    <title>Tailored Resume</title>",
+            "    <!-- No CSS link here; PDF exporter adds it -->",
+            "</head>",
+            "<body>"
+        ]
+        full_html_parts.extend(content_parts) # Add the core content
+        full_html_parts.extend([
+            "</body>",
+            "</html>"
+        ])
+        html_content = '\n'.join(full_html_parts) # Use newline for readability
 
-    # --- HTML Footer --- 
-    html_parts.append("""</body>
-    </html>""")
 
-    # Join HTML parts
-    html_content = ''.join(html_parts)
+    # Validate HTML content (if needed, apply to fragment or full doc)
+    # Consider if validation needs adjustment based on context
+    validated_html = validate_html_content(html_content)
 
-    # Validate HTML content to remove empty bullet points
-    html_content = validate_html_content(html_content)
+    # Log length based on context
+    if for_screen:
+        logger.info(f"Generated HTML fragment for preview: {len(validated_html)} chars")
+    else:
+        logger.info(f"Generated full HTML document for PDF: {len(validated_html)} chars")
 
-    return html_content
+    return validated_html
 
 
 def generate_resume_preview(resume_path: str, for_screen: bool = True) -> str:

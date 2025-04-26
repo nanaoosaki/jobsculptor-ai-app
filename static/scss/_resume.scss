@@ -6,7 +6,7 @@ $font-family-body: $baseFontFamily !default;
 $font-size-body: $baseFontSize !default;
 $line-height-body: $baseLineHeight !default;
 $line-height-tight: $font-lineHeight-tight !default; // From token
-$paper-width-a4: 8.5in !default;
+$paper-width-a4: 8.27in !default; // Standard A4 width (210mm)
 $paper-padding-vertical: 0.75in !default;
 $paper-padding-horizontal: 0.75in !default;
 $background-color-paper: #ffffff !default;
@@ -26,6 +26,15 @@ $spacing-large: 1.5rem !default;
 $spacing-xlarge: 2rem !default;
 $font-size-h1: 2rem !default;
 $font-size-h2: 1.75rem !default;
+
+// Style isolation - prevent Bootstrap/UI styles from leaking in
+.resume-preview-container .tailored-resume-content,
+.resume-preview-container .tailored-resume-content * {
+  // Reset inherited properties that cause styling conflicts
+  line-height: inherit;
+  font-family: $font-family-body;
+  box-sizing: border-box;
+}
 
 // Container for the actual resume content
 .tailored-resume-content {
@@ -66,31 +75,31 @@ $font-size-h2: 1.75rem !default;
     margin: $spacing-medium auto; // Centered divider
 }
 
-// Section Box Styling - New
+// Section Box Styling – blue pill
 .section-box {
     margin: $space-section-y 0;
     padding: 0.35rem 0.6rem;
-    border: 1px solid $color-sectionBox-border;
-    background: $color-sectionBox-bg;
+    background: $primaryColor;  // filled blue rectangle
+    color: #ffffff;
+    border: none;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    max-width: 100%;  // revert width
+    margin: 0 auto;  // center
 }
 
 // Resume Section Styling
 .resume-section {
-    margin-bottom: $spacing-large;
+    margin-bottom: $spacing-medium;
 
     h2 {
         font-size: $font-size-h2;
         font-weight: $font-weight-bold;
-        color: $section-header-fg;
-        background-color: $section-header-bg;
-        border: $section-header-border;
+        color: #ffffff; // ensure white inside .section-box if nested
         text-align: center;
-        text-transform: uppercase;
-        padding: $spacing-xsmall $spacing-small;
-        margin-bottom: $spacing-medium;
+        padding: 0; // padding handled by parent .section-box
+        margin: 0;
         letter-spacing: 0.05em;
     }
 }
@@ -111,6 +120,13 @@ $font-size-h2: 1.75rem !default;
     .dates,
     .location {
         font-weight: $font-weight-bold;
+    }
+
+    .location, .dates {
+        font-style: normal; // remove italic
+        font-weight: $font-weight-bold; // make bold
+        color: $text-color-secondary;
+        text-align: right;
     }
 }
 
