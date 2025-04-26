@@ -9,8 +9,8 @@ BULLET_ESCAPE_RE = re.compile(
     r'[\*\-\+o~=#>]|'
     # Number followed by dot/paren/bracket
     r'\d+[.)\]]|'
-    # Textual escapes
-    r'(?:u2022|\\u2022|U\+2022|&#8226;|&bull;)'
+    # Textual escapes (specific and generic)
+    r'(?:u[0-9a-fA-F]{4}|\\u[0-9a-fA-F]{4}|U\+[0-9A-F]{4}|&#\d{4,6};|&bull;)'  # covers u2022, \u2022, U+2022, numeric HTML, &bull;
     r')\s*',
     re.IGNORECASE
 )
