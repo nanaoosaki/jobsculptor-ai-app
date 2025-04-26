@@ -530,14 +530,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Apply to the element itself
         element.style.overflow = 'visible';
         element.style.maxHeight = 'none';
-        element.style.border = 'none';
         
         // Apply to all child elements
         Array.from(element.children).forEach(child => {
             // Apply same styles to direct children
             child.style.overflow = 'visible';
             child.style.maxHeight = 'none';
-            child.style.border = 'none';
             
             // Recursively apply to grandchildren
             if (child.children.length > 0) {

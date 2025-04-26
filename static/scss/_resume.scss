@@ -75,13 +75,13 @@ $font-size-h2: 1.75rem !default;
     margin: $spacing-medium auto; // Centered divider
 }
 
-// Section Box Styling – pink pill
+// Section Box Styling – blue outline with transparent fill
 .section-box {
     margin: $space-section-y 0;
     padding: 0.35rem 0.6rem;
-    background: #FF69B4;  // hot pink color
-    color: #ffffff;
-    border: none;
+    background: transparent;  // transparent fill
+    color: $primaryColor;  // blue text color
+    border: 2px solid $primaryColor !important;  // light blue outline, override inline styles
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -96,7 +96,7 @@ $font-size-h2: 1.75rem !default;
     h2 {
         font-size: $font-size-h2;
         font-weight: $font-weight-bold;
-        color: #ffffff; // ensure white inside .section-box if nested
+        color: $primaryColor; // blue text to match the outline
         text-align: center;
         padding: 0; // padding handled by parent .section-box
         margin: 0;

@@ -151,9 +151,9 @@ hr {
 .section-box {
   margin: 0.55rem 0;
   padding: 0.35rem 0.6rem;
-  background: #FF69B4;
-  color: #ffffff;
-  border: none;
+  background: transparent;
+  color: #4a6fdc;
+  border: 2px solid #4a6fdc !important;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -167,7 +167,7 @@ hr {
 .resume-section h2 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #4a6fdc;
   text-align: center;
   padding: 0;
   margin: 0;

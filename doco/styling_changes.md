@@ -40,6 +40,20 @@ We successfully implemented both blue and pink section header boxes, confirming 
 
 This confirms that the styling pipeline is working properly and can be used for future visual enhancements.
 
+### 2025-04-26  – Border Outline Fix
+
+Issue: blue outline visible in PDF but missing in browser preview. 
+
+Root Cause →  `removeNestedScrollbars()` in `static/js/main.js` set `style.border = 'none'` on every injected element, wiping the `.section-box` border. PDF engine does not run JS, so outline survived in PDF.
+
+Fix implemented:
+1. Removed the two `style.border = 'none'` statements from `removeNestedScrollbars()`.
+2. Added `!important` to the `.section-box` border rule in `_resume.scss` for extra safety.
+3. Re-built `preview.css` and `print.css`.
+4. Restarted Flask dev server.
+
+Expected → outline now shows in both HTML preview and PDF. This eliminates the last preview-vs-PDF divergence.
+
 ## Original Implementation Plan (Reference Only)
 
 <details>

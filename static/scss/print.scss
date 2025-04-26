@@ -54,6 +54,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     break-inside: avoid; // Prevent section headers breaking across pages
+    break-after: avoid;
 }
 
 // Position Bar Styling - ensure consistency with HTML
@@ -99,12 +100,8 @@ ul.bullets {
 // }
 
 // Control page breaks (optional)
-.resume-section {
-    page-break-inside: avoid;
-}
-
-.job, .education, .project {
-    page-break-inside: avoid;
+.resume-section, .job, .education, .project {
+    page-break-inside: auto;
 }
 
 // Section styling specific to PDF (if any)
