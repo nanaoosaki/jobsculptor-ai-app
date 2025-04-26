@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ resume.name }} - Resume</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
 </head>
 <body>
     <div class="resume-container">
@@ -42,7 +43,7 @@
         <!-- Summary Section -->
         {% if resume.summary %}
         <div class="resume-section">
-            <h2 class="section-title">Professional Summary</h2>
+            <div class="section-box">Professional Summary</div>
             <div class="section-content">
                 <p>{{ resume.summary }}</p>
             </div>
@@ -52,18 +53,18 @@
         <!-- Experience Section -->
         {% if resume.experience %}
         <div class="resume-section">
-            <h2 class="section-title">Professional Experience</h2>
+            <div class="section-box">Professional Experience</div>
             <div class="section-content">
                 {% for job in resume.experience %}
                 <div class="experience-item">
-                    <div class="job-header">
+                    <div class="position-bar">
                         <div class="job-title-company">
-                            <div class="job-title">{{ job.title }}</div>
-                            <div class="company-name">{{ job.company }}</div>
+                            <span class="role">{{ job.title }}</span>
+                            <span class="company-name">{{ job.company }}</span>
                         </div>
-                        <div class="job-date">{{ job.date }}</div>
+                        <div class="dates">{{ job.date }}</div>
                     </div>
-                    <ul class="job-description">
+                    <ul class="job-description bullets">
                         {% for bullet in job.description %}
                         <li>{{ bullet }}</li>
                         {% endfor %}
@@ -77,9 +78,9 @@
         <!-- Skills Section -->
         {% if resume.skills %}
         <div class="resume-section">
-            <h2 class="section-title">Skills</h2>
+            <div class="section-box">Skills</div>
             <div class="section-content">
-                <ul class="skills-list">
+                <ul class="skills-list bullets">
                     {% for skill in resume.skills %}
                     <li>{{ skill }}</li>
                     {% endfor %}
@@ -91,19 +92,19 @@
         <!-- Education Section -->
         {% if resume.education %}
         <div class="resume-section">
-            <h2 class="section-title">Education</h2>
+            <div class="section-box">Education</div>
             <div class="section-content">
                 {% for edu in resume.education %}
                 <div class="education-item">
-                    <div class="education-header">
+                    <div class="position-bar">
                         <div class="degree-institution">
-                            <div class="degree">{{ edu.degree }}</div>
-                            <div class="institution">{{ edu.institution }}</div>
+                            <span class="role">{{ edu.degree }}</span>
+                            <span class="institution">{{ edu.institution }}</span>
                         </div>
-                        <div class="education-date">{{ edu.date }}</div>
+                        <div class="dates">{{ edu.date }}</div>
                     </div>
                     {% if edu.description %}
-                    <ul class="education-description">
+                    <ul class="education-description bullets">
                         {% for bullet in edu.description %}
                         <li>{{ bullet }}</li>
                         {% endfor %}
@@ -118,17 +119,17 @@
         <!-- Projects Section -->
         {% if resume.projects %}
         <div class="resume-section">
-            <h2 class="section-title">Projects</h2>
+            <div class="section-box">Projects</div>
             <div class="section-content">
                 {% for project in resume.projects %}
                 <div class="project-item">
-                    <div class="project-header">
-                        <div class="project-title">{{ project.name }}</div>
+                    <div class="position-bar">
+                        <div class="project-title role">{{ project.name }}</div>
                         {% if project.date %}
-                        <div class="project-date">{{ project.date }}</div>
+                        <div class="dates">{{ project.date }}</div>
                         {% endif %}
                     </div>
-                    <ul class="project-description">
+                    <ul class="project-description bullets">
                         {% for bullet in project.description %}
                         <li>{{ bullet }}</li>
                         {% endfor %}
@@ -142,9 +143,9 @@
         <!-- Certifications Section -->
         {% if resume.certifications %}
         <div class="resume-section">
-            <h2 class="section-title">Certifications</h2>
+            <div class="section-box">Certifications</div>
             <div class="section-content">
-                <ul class="certifications-list">
+                <ul class="certifications-list bullets">
                     {% for cert in resume.certifications %}
                     <li>{{ cert }}</li>
                     {% endfor %}
@@ -156,9 +157,9 @@
         <!-- Awards Section -->
         {% if resume.awards %}
         <div class="resume-section">
-            <h2 class="section-title">Awards & Achievements</h2>
+            <div class="section-box">Awards & Achievements</div>
             <div class="section-content">
-                <ul class="awards-list">
+                <ul class="awards-list bullets">
                     {% for award in resume.awards %}
                     <li>{{ award }}</li>
                     {% endfor %}

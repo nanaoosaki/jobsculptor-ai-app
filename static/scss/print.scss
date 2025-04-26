@@ -20,7 +20,7 @@ $spacing-xsmall: 0.25rem !default; // Extra small spacing
 body {
   font-family: $baseFontFamily;
   font-size: $baseFontSize;
-  line-height: $baseLineHeight;
+  line-height: $font-lineHeight-tight; // Use tighter line height for body
   color: $textColor;
   background-color: white;
   margin: 0;
@@ -42,6 +42,46 @@ body {
     width: 100%; // Use full available width within page margins
     max-width: 100%;
     padding: 0; // Page margins handle padding
+}
+
+// Section Box Styling - ensure consistency with HTML
+.section-box {
+    margin: $space-section-y 0;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid $color-sectionBox-border;
+    background: $color-sectionBox-bg;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+// Position Bar Styling - ensure consistency with HTML
+.position-bar {
+    background: $color-positionBar-bg;
+    padding: 0.25rem 0.45rem;
+    margin-top: 0.4rem;
+    display: flex;
+    justify-content: space-between; // company left, dates right
+    
+    .role,
+    .company-name,
+    .institution,
+    .project-title,
+    .degree,
+    .dates,
+    .location {
+        font-weight: $font-weight-bold;
+    }
+}
+
+// Tight Bullet Spacing - ensure consistency with HTML
+ul.bullets {
+    margin: 0.25rem 0 0.15rem 1.1rem;  // left indent slight
+    li {
+        margin-bottom: $space-bullet-y;
+        line-height: $font-lineHeight-tight;
+        &::marker { color: $color-bullet; }
+    }
 }
 
 // Ensure links are printable (optional: show URL)
