@@ -300,7 +300,7 @@ contains literal `u2022` at the start of some achievements.
 ```
 
 ### Findings
-1. **Whitespace-prefixed escapes**   If the LLM returns `"  u2022 Achievement"`
+1. **Whitespace-prefixed escapes**   If the LLM returns `"  u2022 ..."`
    (note the two spaces) our regex fails because it is anchored to column 0.
 2. **Down-stream re-injection**   Some content is concatenated _after_ we strip
    bullets (e.g. during `format_section_content` when building `<li>` tags), so
@@ -317,17 +317,28 @@ sent to the client or converted to PDF.
 
 ---
 
-## 2025-04-28 – Persistent 'u2022' Artifacts in Experience Section
+## 2025-04-28: Resolution of 'u2022' Issue in HTML and PDF
 
-Despite recent changes aimed at cleaning bullet points, the experience section in the HTML preview and PDF output still displays 'u2022' artifacts. This issue persists even though the tailored content in `experience.json` is correctly structured.
+**Observation:** The literal text `u2022` appeared in both the HTML preview and PDF output of the experience section.
 
-#### Analysis
-- **Root Cause:** The cleaning logic may not be effectively removing all instances of 'u2022', especially when they are embedded within the content strings.
-- **Impact:** The presence of 'u2022' artifacts affects the visual presentation of the experience section, leading to a cluttered appearance.
+**Initial Hypothesis:** The issue was suspected to originate from the LLM response or data cleaning process.
 
-#### Next Steps
-1. **Refine Cleaning Logic:** Further refine the bullet point cleaning logic to ensure all instances of 'u2022' are removed.
-2. **Implement End-of-Pipeline Check:** Consider adding a final check to clean the fully rendered HTML before it is sent to the client or converted to PDF.
-3. **Test and Validate:** Conduct thorough testing to ensure the experience section displays correctly without unwanted artifacts.
+**Investigation:**
+- Verified that the JSON data was clean and free of `u2022` text.
+- Confirmed that the cleaning process in `claude_integration.py` was correctly applied.
 
-This observation highlights the need for a more robust cleaning process to maintain the intended visual structure of the resume content. 
+**Root Cause:**
+- The issue was traced to a CSS rule in both `preview.css` and `print.css` that hard-coded `content: "u2022";` in the `::before` pseudo-element for list items.
+
+**Fixes Implemented:**
+- Removed the problematic CSS rule from both `preview.css` and `print.css`.
+- Restarted the Flask application to apply changes.
+
+**Learnings:**
+- The issue was not with the LLM response or JSON data, but with CSS styling.
+- It highlights the importance of considering all layers (data, HTML, CSS) when debugging.
+- The hard-coded CSS rule was overlooked initially, emphasizing the need for thorough inspection of all potential sources of an issue.
+
+**Conclusion:**
+- The HTML preview and PDF output now correctly display bullet points without the `u2022` text.
+- This experience underscores the value of a systematic approach to debugging, ensuring all aspects of the rendering process are considered. 

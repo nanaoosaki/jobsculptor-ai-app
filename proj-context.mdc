@@ -1,12 +1,12 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: true
 ---
 
 # Your rule content
 
-- You can @ files here
+- [project_context.md](mdc:doco/project_context.md)
 - You can use markdown but dont have to
 
 # Resume Tailoring Application Context
@@ -71,3 +71,4 @@ Implementation approach:
 - `claude_integration.py`: Integrates with LLM APIs
 - `static/css/styles.css`: Main stylesheet for UI and PDF styling
 - `templates/`: HTML templates for the web interface
+

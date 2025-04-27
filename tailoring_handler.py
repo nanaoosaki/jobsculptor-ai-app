@@ -3,7 +3,7 @@ import json
 import traceback
 import logging
 from flask import request, jsonify, current_app
-from claude_integration import tailor_resume_with_llm, generate_resume_preview, generate_preview_from_llm_responses
+from claude_integration import tailor_resume_with_llm, generate_preview_from_llm_responses
 from pdf_exporter import create_pdf_from_html
 from dotenv import load_dotenv
 from resume_index import get_resume_index
@@ -192,12 +192,8 @@ def setup_tailoring_routes(app):
             # Tailor the resume with the selected provider
             logger.info(f"Using {provider.upper()} API for tailoring")
             try:
-                # Get tailored content from LLM
-                # tailor_resume_with_llm returns: output_filename, output_path, llm_client
-                # - output_filename: The filename of the generated file (e.g., "resume_tailored_openai.pdf")
-                # - output_path: The full path to the generated file
-                # - llm_client: The LLM client instance used for tailoring
-                _, _, llm_client = tailor_resume_with_llm(
+                # tailor_resume_with_llm now returns: output_filename, output_path, llm_client, request_id
+                _, _, llm_client, request_id = tailor_resume_with_llm(
                     resume_path,
                     job_data,
                     api_key,
@@ -205,11 +201,11 @@ def setup_tailoring_routes(app):
                     api_url
                 )
                 
-                # Generate HTML preview for the screen
-                preview_html_for_screen = generate_preview_from_llm_responses(llm_client, for_screen=True)
+                # Generate HTML preview for the screen using the request_id
+                preview_html_for_screen = generate_preview_from_llm_responses(request_id, for_screen=True)
                 
-                # Generate clean HTML body content for PDF export
-                html_body_for_pdf = generate_preview_from_llm_responses(llm_client, for_screen=False)
+                # Generate clean HTML body content for PDF export using the request_id
+                html_body_for_pdf = generate_preview_from_llm_responses(request_id, for_screen=False)
                 
                 # Extract only the content within the <body> tags for PDF generation
                 # This is a simple regex approach, might need refinement
@@ -277,12 +273,21 @@ def setup_tailoring_routes(app):
                     # If PDF generation fails, fallback (potentially remove DOCX fallback)
                     logger.error(f"PDF generation failed: {str(pdf_error)}")
                     logger.error(traceback.format_exc())
-                    # Decide on fallback behavior - maybe just return the preview?
-                    # For now, return error
+                    # Try to get preview even if PDF fails
+                    preview_html_fallback = "<p>Preview generation failed after PDF error.</p>"
+                    try:
+                        # Need request_id here too for fallback preview
+                        if 'request_id' in locals(): # Check if request_id was obtained before error
+                            preview_html_fallback = generate_preview_from_llm_responses(request_id, for_screen=True)
+                        else:
+                             logger.warning("Request ID not available for fallback preview generation.")
+                    except Exception as preview_fallback_error:
+                        logger.error(f"Fallback preview generation failed: {preview_fallback_error}")
+                    
                     return jsonify({
                         'success': False,
                         'error': f'PDF generation failed: {str(pdf_error)}',
-                        'preview': preview_html_for_screen, # Still return preview
+                        'preview': preview_html_fallback, # Use fallback preview
                         'provider': provider
                     }), 500
                     

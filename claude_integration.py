@@ -13,6 +13,7 @@ import docx2txt
 from typing import Dict, List, Tuple, Optional, Any, Union
 from datetime import datetime
 from flask import current_app
+import uuid  # Import UUID module
 
 # Third-party imports for Claude
 from anthropic import Anthropic, RateLimitError
@@ -74,15 +75,51 @@ class LLMClient:
     
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.tailored_content = {}  # Store tailored responses for direct HTML generation
+        self.tailored_content = {}  # Store tailored responses (cleaned Python structures)
+        self.request_id = str(uuid.uuid4()) # Generate unique ID for this instance/request
+        self.temp_data_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_session_data')
+        os.makedirs(self.temp_data_dir, exist_ok=True) # Ensure temp dir exists
         
     def tailor_resume_content(
     self,
     section_name: str,
     content: str,
-     job_data: Dict) -> str:
+     job_data: Dict) -> Optional[Union[Dict, List, str]]: # Return type can vary
         """Tailor resume content using LLM API - to be implemented by subclasses"""
         raise NotImplementedError("Subclasses must implement this method")
+
+    def _save_cleaned_section_to_temp_file(self, section_name: str, data: Union[Dict, List, str]):
+        """Saves the cleaned Python data structure to a temporary session file."""
+        if data is None:
+            logger.warning(f"Attempted to save None data for section {section_name} with request ID {self.request_id}. Skipping.")
+            return
+
+        try:
+            # Handle simple text sections (summary, contact) - wrap in dict for consistency
+            if section_name in ["summary", "contact"] and isinstance(data, str):
+                 save_data = {"content": data}
+                 logger.debug(f"Wrapping string content for {section_name} in dict for saving.")
+            else:
+                 save_data = data # Assumes data is already list/dict for other sections
+
+            temp_filename = f"{self.request_id}_{section_name}.json"
+            temp_filepath = os.path.join(self.temp_data_dir, temp_filename)
+
+            with open(temp_filepath, 'w', encoding='utf-8') as f:
+                json.dump(save_data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Stored cleaned, structured data for request {self.request_id} for section {section_name}. Method: temp_file, Location: {temp_filepath}")
+
+        except TypeError as te:
+            logger.error(f"TypeError saving {section_name} (Req ID: {self.request_id}) to JSON: {te}. Content type: {type(data)}")
+            logger.error(f"Problematic content snippet: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"Error saving {section_name} (Req ID: {self.request_id}) to temp file: {e}")
+            logger.error(traceback.format_exc())
+
+    def get_request_id(self) -> str:
+         """Returns the unique request ID for this tailoring operation."""
+         return self.request_id
 
 
 class ClaudeClient(LLMClient):
@@ -113,7 +150,7 @@ class ClaudeClient(LLMClient):
 
             # Initialize Claude client
             self.client = Anthropic(api_key=api_key)
-            logger.info(f"Claude API client initialized successfully")
+            logger.info(f"Claude API client initialized successfully (Req ID: {self.request_id})")
 
         except Exception as e:
             logger.error(f"Error initializing Claude API client: {str(e)}")
@@ -124,23 +161,17 @@ class ClaudeClient(LLMClient):
     self,
     section_name: str,
     content: str,
-     job_data: Dict) -> str:
+     job_data: Dict) -> Optional[Union[Dict, List, str]]: # Return type can vary
         """
-        Tailor resume content using Claude API
-
-        Args:
-            section_name: Name of the section to tailor
-            content: Content of the section
-            job_data: Job data including requirements and skills
-
-        Returns:
-            Tailored content as string
+        Tailor resume content using Claude API.
+        Parses response, cleans structured data, stores it in self.tailored_content,
+        saves cleaned data to temp file, and returns cleaned data.
         """
-        logger.info(f"Tailoring {section_name} with Claude API")
+        logger.info(f"Tailoring {section_name} with Claude API (Req ID: {self.request_id})")
             
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
-            return ""
+            return None
 
         if not self.client:
             logger.error("Claude client not initialized")
@@ -387,6 +418,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
         len(response_content)} chars")
 
             # Parse JSON response
+            cleaned_data = None # Initialize variable to store cleaned data
             try:
                 # First try to extract JSON if not properly formatted
                 json_str = response_content
@@ -398,6 +430,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                         json_str = response_content[json_start:json_end]
 
                 json_response = json.loads(json_str)
+                logger.debug(f"Parsed LLM response for {section_name} (Req ID: {self.request_id}) before cleaning: {str(json_response)[:200]}...")
 
                 # Process JSON based on section type
                 if section_name == "experience" and "experience" in json_response:
@@ -414,15 +447,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
                                 cleaned_experience_data.append(job)
                             else:
                                 logger.warning(f"Skipping non-dictionary item in experience data: {job}")
-                        # Store the cleaned Python list structure
-                        self.tailored_content[section_name] = cleaned_experience_data 
-                        # Return the cleaned structure (though it's not directly used by caller now)
-                        return cleaned_experience_data 
+                        cleaned_data = cleaned_experience_data # Store cleaned data
                     else:
                         logger.warning(f"Experience data is not a list: {experience_data}")
-                        # Store raw response as fallback if structure is wrong
-                        self.tailored_content[section_name] = response_content 
-                        return response_content # Return raw text if structure unexpected
+                        cleaned_data = response_content # Use raw as fallback
                 elif section_name == "education" and "education" in json_response:
                     # Clean education highlights
                     education_data = json_response["education"]
@@ -436,8 +464,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                                 cleaned_education_data.append(edu)
                              else:
                                  logger.warning(f"Skipping non-dictionary item in education data: {edu}")
-                    self.tailored_content[section_name] = cleaned_education_data
-                    return cleaned_education_data # Return cleaned structure
+                    cleaned_data = cleaned_education_data
                 elif section_name == "skills" and "skills" in json_response:
                      # Clean skills lists
                     skills_data = json_response["skills"]
@@ -445,12 +472,10 @@ Focus on emphasizing elements most relevant to this job opportunity.
                         for key in ['technical', 'soft', 'other']:
                             if key in skills_data and isinstance(skills_data[key], list):
                                 skills_data[key] = [strip_bullet_prefix(s) for s in skills_data[key] if isinstance(s, str) and s.strip()]
-                        self.tailored_content[section_name] = skills_data
-                        return skills_data # Return cleaned structure
+                        cleaned_data = skills_data
                     else:
                         logger.warning(f"Skills data is not a dictionary: {skills_data}")
-                        self.tailored_content[section_name] = response_content
-                        return response_content # Return raw text if structure unexpected
+                        cleaned_data = response_content
                 elif section_name == "projects" and "projects" in json_response:
                      # Clean project details
                     projects_data = json_response["projects"]
@@ -464,27 +489,37 @@ Focus on emphasizing elements most relevant to this job opportunity.
                                 cleaned_projects_data.append(proj)
                             else:
                                logger.warning(f"Skipping non-dictionary item in projects data: {proj}")
-                    self.tailored_content[section_name] = cleaned_projects_data
-                    return cleaned_projects_data # Return cleaned structure
+                    cleaned_data = cleaned_projects_data
                 elif section_name in json_response:
                     # For other sections, just return the string content
                     formatted_text = json_response[section_name]
-                    # Store for preview generation
-                    self.tailored_content[section_name] = formatted_text
-                    return formatted_text
+                    cleaned_data = clean_bullet_points(formatted_text) # Apply general cleaning
                 else:
                     logger.warning(f"JSON response missing expected '{section_name}' key")
-                    return content
+                    cleaned_data = content # Fallback to original content
+
+                # Log after cleaning
+                logger.debug(f"Parsed LLM response for {section_name} (Req ID: {self.request_id}) after cleaning: {str(cleaned_data)[:200]}...")
 
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse JSON from Claude response: {response_content[:100]}...")
-                # Store as raw text for fallback
-                self.tailored_content[section_name] = response_content
-                return response_content
+                cleaned_data = response_content # Store raw response as the data to save
+
+            # Store the final cleaned data (structure or raw fallback) in the instance
+            self.tailored_content[section_name] = cleaned_data
+            
+            # Save the cleaned data to a temporary file
+            self._save_cleaned_section_to_temp_file(section_name, cleaned_data)
+
+            # Return the cleaned data structure (or raw text fallback)
+            return cleaned_data
             
         except Exception as e:
             logger.error(f"Error in Claude API call: {str(e)}")
-            return content
+            cleaned_data = content # Fallback to original content
+            self.tailored_content[section_name] = cleaned_data
+            self._save_cleaned_section_to_temp_file(section_name, cleaned_data)
+            return cleaned_data
 
 
 class OpenAIClient(LLMClient):
@@ -522,23 +557,17 @@ class OpenAIClient(LLMClient):
     self,
     section_name: str,
     content: str,
-     job_data: Dict) -> str:
+     job_data: Dict) -> Optional[Union[Dict, List, str]]: # Return type can vary
         """
-        Tailor resume content using OpenAI API
-
-        Args:
-            section_name: Name of the section to tailor
-            content: Content of the section
-            job_data: Job data including requirements and skills
-
-        Returns:
-            Tailored content as string
+        Tailor resume content using OpenAI API.
+        Parses response, cleans structured data, stores it in self.tailored_content,
+        saves cleaned data to temp file, and returns cleaned data.
         """
-        logger.info(f"Tailoring {section_name} with OpenAI API")
+        logger.info(f"Tailoring {section_name} with OpenAI API (Req ID: {self.request_id})")
             
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
-            return ""
+            return None
 
         if not self.client:
             logger.error("OpenAI client not initialized")
@@ -860,103 +889,100 @@ Focus on emphasizing elements most relevant to this job opportunity.
                     return content
 
             # Parse the JSON string
+            cleaned_data = None # Initialize variable
             try:
                 json_response = json.loads(json_str)
+                logger.debug(f"Parsed LLM response for {section_name} (Req ID: {self.request_id}) before cleaning: {str(json_response)[:200]}...")
+
+                # Process JSON based on section type - Apply cleaning and store structure
+            if section_name == "experience" and "experience" in json_response:
+                    # Clean the structured data directly after parsing
+                    experience_data = json_response["experience"]
+                    cleaned_experience_data = []
+                    if isinstance(experience_data, list):
+                        for job in experience_data:
+                            if isinstance(job, dict):
+                                # Clean achievements list within the job dictionary
+                                achievements = job.get('achievements', [])
+                                if isinstance(achievements, list):
+                                    job['achievements'] = [strip_bullet_prefix(a) for a in achievements if isinstance(a, str) and a.strip()]
+                                cleaned_experience_data.append(job)
+                            else:
+                                logger.warning(f"Skipping non-dictionary item in experience data: {job}")
+                        cleaned_data = cleaned_experience_data # Store cleaned data
+                    else:
+                        logger.warning(f"Experience data is not a list: {experience_data}")
+                        cleaned_data = response_text # Use raw as fallback
+            elif section_name == "education" and "education" in json_response:
+                    # Clean education highlights
+                    education_data = json_response["education"]
+                    cleaned_education_data = []
+                    if isinstance(education_data, list):
+                        for edu in education_data:
+                             if isinstance(edu, dict):
+                                highlights = edu.get('highlights', [])
+                                if isinstance(highlights, list):
+                                    edu['highlights'] = [strip_bullet_prefix(h) for h in highlights if isinstance(h, str) and h.strip()]
+                                cleaned_education_data.append(edu)
+                             else:
+                                 logger.warning(f"Skipping non-dictionary item in education data: {edu}")
+                    cleaned_data = cleaned_education_data
+            elif section_name == "skills" and "skills" in json_response:
+                     # Clean skills lists
+                    skills_data = json_response["skills"]
+                    if isinstance(skills_data, dict):
+                        for key in ['technical', 'soft', 'other']:
+                            if key in skills_data and isinstance(skills_data[key], list):
+                                skills_data[key] = [strip_bullet_prefix(s) for s in skills_data[key] if isinstance(s, str) and s.strip()]
+                        cleaned_data = skills_data
+                    else:
+                        logger.warning(f"Skills data is not a dictionary: {skills_data}")
+                        cleaned_data = response_text
+            elif section_name == "projects" and "projects" in json_response:
+                     # Clean project details
+                    projects_data = json_response["projects"]
+                    cleaned_projects_data = []
+                    if isinstance(projects_data, list):
+                        for proj in projects_data:
+                            if isinstance(proj, dict):
+                                details = proj.get('details', [])
+                                if isinstance(details, list):
+                                    proj['details'] = [strip_bullet_prefix(d) for d in details if isinstance(d, str) and d.strip()]
+                                cleaned_projects_data.append(proj)
+                            else:
+                               logger.warning(f"Skipping non-dictionary item in projects data: {proj}")
+                    cleaned_data = cleaned_projects_data
+                elif section_name in json_response and isinstance(json_response[section_name], str):
+                    # Generic section (summary, contact): Clean the single string
+                    raw_text = json_response[section_name]
+                    cleaned_data = clean_bullet_points(raw_text) # Apply general cleaning
+            else:
+                logger.warning(f"JSON response missing expected '{section_name}' key")
+                    cleaned_data = content # Fallback to original content
+
+                # Log after cleaning
+                logger.debug(f"Parsed LLM response for {section_name} (Req ID: {self.request_id}) after cleaning: {str(cleaned_data)[:200]}...")
+
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON from OpenAI response: {e}")
                 logger.error(f"JSON string: {json_str[:100]}...")
-                # Store the raw response as fallback
-                self.tailored_content[section_name] = response_text
-                return response_text
+                cleaned_data = response_text # Store raw response as the data to save
 
-            # Process JSON based on section type
-            if section_name == "experience" and "experience" in json_response:
-                # Clean the structured data directly after parsing
-                experience_data = json_response["experience"]
-                cleaned_experience_data = []
-                if isinstance(experience_data, list):
-                    for job in experience_data:
-                        if isinstance(job, dict):
-                            # Clean achievements list within the job dictionary
-                            achievements = job.get('achievements', [])
-                            if isinstance(achievements, list):
-                                job['achievements'] = [strip_bullet_prefix(a) for a in achievements if isinstance(a, str) and a.strip()]
-                            cleaned_experience_data.append(job)
-                        else:
-                            logger.warning(f"Skipping non-dictionary item in experience data: {job}")
-                    # Store the cleaned Python list structure
-                    self.tailored_content[section_name] = cleaned_experience_data 
-                    # Return the cleaned structure (though it's not directly used by caller now)
-                    return cleaned_experience_data 
-                else:
-                    logger.warning(f"Experience data is not a list: {experience_data}")
-                    # Store raw response as fallback if structure is wrong
-                    self.tailored_content[section_name] = response_text 
-                    return response_text # Return raw text if structure unexpected
-            elif section_name == "education" and "education" in json_response:
-                # Clean education highlights
-                education_data = json_response["education"]
-                cleaned_education_data = []
-                if isinstance(education_data, list):
-                    for edu in education_data:
-                         if isinstance(edu, dict):
-                            highlights = edu.get('highlights', [])
-                            if isinstance(highlights, list):
-                                edu['highlights'] = [strip_bullet_prefix(h) for h in highlights if isinstance(h, str) and h.strip()]
-                            cleaned_education_data.append(edu)
-                         else:
-                             logger.warning(f"Skipping non-dictionary item in education data: {edu}")
-                    self.tailored_content[section_name] = cleaned_education_data
-                    return cleaned_education_data # Return cleaned structure
-                else:
-                     logger.warning(f"Education data is not a list: {education_data}")
-                     self.tailored_content[section_name] = response_text 
-                     return response_text # Return raw text if structure unexpected
-            elif section_name == "skills" and "skills" in json_response:
-                 # Clean skills lists
-                skills_data = json_response["skills"]
-                if isinstance(skills_data, dict):
-                    for key in ['technical', 'soft', 'other']:
-                        if key in skills_data and isinstance(skills_data[key], list):
-                            skills_data[key] = [strip_bullet_prefix(s) for s in skills_data[key] if isinstance(s, str) and s.strip()]
-                    self.tailored_content[section_name] = skills_data
-                    return skills_data # Return cleaned structure
-                else:
-                    logger.warning(f"Skills data is not a dictionary: {skills_data}")
-                    self.tailored_content[section_name] = response_text
-                    return response_text # Return raw text if structure unexpected
-            elif section_name == "projects" and "projects" in json_response:
-                 # Clean project details
-                projects_data = json_response["projects"]
-                cleaned_projects_data = []
-                if isinstance(projects_data, list):
-                    for proj in projects_data:
-                        if isinstance(proj, dict):
-                            details = proj.get('details', [])
-                            if isinstance(details, list):
-                                proj['details'] = [strip_bullet_prefix(d) for d in details if isinstance(d, str) and d.strip()]
-                            cleaned_projects_data.append(proj)
-                        else:
-                           logger.warning(f"Skipping non-dictionary item in projects data: {proj}")
-                    self.tailored_content[section_name] = cleaned_projects_data
-                    return cleaned_projects_data # Return cleaned structure
-                else:
-                    logger.warning(f"Projects data is not a list: {projects_data}")
-                    self.tailored_content[section_name] = response_text
-                    return response_text # Return raw text if structure unexpected
-            elif section_name in json_response:
-                # For other sections, just return the string content
-                formatted_text = json_response[section_name]
-                # Store for preview generation
-                self.tailored_content[section_name] = formatted_text
-                return formatted_text
-            else:
-                logger.warning(f"JSON response missing expected '{section_name}' key")
-                return content
+            # Store the final cleaned data (structure or raw fallback) in the instance
+            self.tailored_content[section_name] = cleaned_data
+            
+            # Save the cleaned data to a temporary file
+            self._save_cleaned_section_to_temp_file(section_name, cleaned_data)
+
+            # Return the cleaned data structure (or raw text fallback)
+            return cleaned_data
                 
         except Exception as e:
             logger.error(f"Error in OpenAI API call: {str(e)}")
-            return content
+            cleaned_data = content # Fallback to original content
+            self.tailored_content[section_name] = cleaned_data
+            self._save_cleaned_section_to_temp_file(section_name, cleaned_data)
+            return cleaned_data
 
     def save_all_raw_responses(self, resume_filename):
         """Save all raw API responses to a single file"""
@@ -1007,7 +1033,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 if content is None: 
                     logger.warning(f"None content for section {section_name}, skipping")
                     continue
-                    
+                
                 # Define the output file path (non-timestamped)
                 filepath = os.path.join(api_responses_dir, f"{section_name}.json")
                 
@@ -1034,15 +1060,16 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 # Write the Python structure directly to JSON file
                 try:
                     with open(filepath, 'w', encoding='utf-8') as f:
-                        json.dump(json_data, f, indent=2) 
-                    sections_saved += 1
+                        # Save with ensure_ascii=False to preserve unicode characters
+                        json.dump(json_data, f, indent=2, ensure_ascii=False) 
+                sections_saved += 1
                     logger.info(f"Saved {section_name} structure to {filepath}")
                 except TypeError as te:
                      logger.error(f"TypeError saving {section_name} to JSON: {te}. Content type: {type(json_data)}")
                      logger.error(f"Problematic content snippet: {str(json_data)[:200]}")
                 except Exception as e:
                      logger.error(f"Error saving {section_name} to JSON: {e}")
-
+            
             logger.info(f"Saved {sections_saved} sections to non-timestamped JSON files")
             
             # Verify key files were created
@@ -1053,7 +1080,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
             if not os.path.exists(contact_path): logger.warning(f"Contact.json was not created at {contact_path}")
             if not os.path.exists(summary_path): logger.warning(f"Summary.json was not created at {summary_path}")
             if not os.path.exists(experience_path): logger.warning(f"Experience.json was not created at {experience_path}")
-
+                
             return True
             
         except Exception as e:
@@ -1360,19 +1387,10 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
         }
 
 
-def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = "openai", api_url: str = None) -> Tuple[str, str, Union[ClaudeClient, OpenAIClient]]:
+def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = "openai", api_url: str = None) -> Tuple[str, str, LLMClient, str]: # Added request_id to return tuple
     """
-    Tailor resume with LLM (Claude or OpenAI)
-    
-    Args:
-        resume_path: Path to resume file
-        job_data: Job data including requirements and skills
-        api_key: API key for the LLM provider
-        provider: LLM provider (claude or openai)
-        api_url: Optional API URL for Claude
-        
-    Returns:
-        Tuple of (output_filename, output_path, llm_client)
+    Tailor resume with LLM (Claude or OpenAI).
+    Returns output PDF info, the LLM client instance, and the unique request ID.
     """
     global last_llm_client
     
@@ -1381,7 +1399,7 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
     # Extract resume sections
     resume_sections = extract_resume_sections(resume_path)
     
-    # Initialize the appropriate LLM client
+    # Initialize the appropriate LLM client (generates request_id)
     llm_client = None
     if provider.lower() == "claude":
         llm_client = ClaudeClient(api_key, api_url)
@@ -1389,6 +1407,9 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
         llm_client = OpenAIClient(api_key)
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
+    
+    request_id = llm_client.get_request_id() # Get the generated ID
+    logger.info(f"Starting tailoring process with Request ID: {request_id}")
     
     # Add contact section directly to tailored_content without tailoring it
     if resume_sections.get("contact", "").strip():
@@ -1407,6 +1428,7 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
         if generated_summary:
             logger.info(f"Generated new professional summary: {len(generated_summary)} chars")
             llm_client.tailored_content["summary"] = generated_summary
+            llm_client._save_cleaned_section_to_temp_file("summary", generated_summary)
         else:
             logger.error("Failed to generate professional summary")
     
@@ -1416,9 +1438,6 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
             logger.info(f"Tailoring {section_name} section")
             tailored_content = llm_client.tailor_resume_content(section_name, content, job_data)
             resume_sections[section_name] = tailored_content
-    
-    # Save tailored content to non-timestamped JSON files for HTML preview
-    llm_client.save_tailored_content_to_json()
     
     # Generate output filename
     resume_filename = os.path.basename(resume_path)
@@ -1430,8 +1449,8 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
     # Store LLM client for preview generation
     last_llm_client = llm_client
     
-    # Return info without generating YC-style PDF
-    return output_filename, output_path, llm_client
+    # Return info including the request_id
+    return output_filename, output_path, llm_client, request_id
 
 def generate_professional_summary(resume_sections: Dict[str, str], job_data: Dict, llm_client, provider: str) -> str:
     """

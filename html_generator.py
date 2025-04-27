@@ -2,6 +2,8 @@ import logging
 import re
 from typing import Dict, List, Union, Optional
 import traceback
+import os
+import json
 
 from utils.bullet_utils import strip_bullet_prefix, BULLET_ESCAPE_RE
 from style_manager import StyleManager
@@ -167,7 +169,7 @@ def format_job_entry(company: str, location: str, position: str, dates: str, ach
                 # Cleaning is now done before saving to JSON, removed here
                 # cleaned_item = strip_bullet_prefix(item)
                 # Use item directly as it should be clean
-                html_parts.append(f'<li>{item}</li>') 
+                html_parts.append(f'<li>{item}</li>')
             html_parts.append('</ul>')
         elif len(achievements) == 1:
             # Cleaning is now done before saving to JSON, removed here
@@ -264,20 +266,20 @@ def format_education_content(education_data: List[Dict]) -> str:
     
     html = ""
     try:
-        if isinstance(education_data, list):
-            for entry in education_data:
-                institution = entry.get('institution', '')
-                location = entry.get('location', '')
-                degree = entry.get('degree', '')
-                dates = entry.get('dates', '')
-                highlights = entry.get('highlights', [])
+                if isinstance(education_data, list):
+                    for entry in education_data:
+                        institution = entry.get('institution', '')
+                        location = entry.get('location', '')
+                        degree = entry.get('degree', '')
+                        dates = entry.get('dates', '')
+                        highlights = entry.get('highlights', [])
                 
                 # Ensure highlights is a list of strings
                 if not isinstance(highlights, list):
                     highlights = [str(highlights)] if highlights else []
-                    
-                html += format_education_entry(institution, location, degree, dates, highlights)
-            return html
+                        
+                        html += format_education_entry(institution, location, degree, dates, highlights)
+                    return html
         else:
             # Handle case where unexpected data type is passed
             logger.warning(f"Unexpected data type for education content: {type(education_data)}")
@@ -298,18 +300,18 @@ def format_projects_content(projects_data: List[Dict]) -> str:
     
     html = ""
     try:
-        if isinstance(projects_data, list):
-            for entry in projects_data:
-                title = entry.get('title', '')
-                dates = entry.get('dates', '')
-                details = entry.get('details', [])
-                
+                if isinstance(projects_data, list):
+                    for entry in projects_data:
+                        title = entry.get('title', '')
+                        dates = entry.get('dates', '')
+                        details = entry.get('details', [])
+                        
                  # Ensure details is a list of strings
                 if not isinstance(details, list):
                     details = [str(details)] if details else []
                 
-                html += format_project_entry(title, dates, details)
-            return html
+                        html += format_project_entry(title, dates, details)
+                    return html
         else:
             # Handle case where unexpected data type is passed
             logger.warning(f"Unexpected data type for projects content: {type(projects_data)}")
@@ -349,257 +351,143 @@ def format_skills_content(skills_data: Dict) -> str:
     return "\n".join(html_parts)
 
 
-def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> str:
+# Define a helper function to load data from temp files
+def _load_cleaned_data_from_temp(request_id: str, section_name: str, temp_dir: str) -> Optional[Union[Dict, List, str]]:
+    """Loads cleaned data for a specific section from its temporary file."""
+    temp_filename = f"{request_id}_{section_name}.json"
+    temp_filepath = os.path.join(temp_dir, temp_filename)
+    
+    if not os.path.exists(temp_filepath):
+        logger.warning(f"Temporary data file not found for section '{section_name}' (Req ID: {request_id}): {temp_filepath}")
+        return None
+        
+    try:
+        with open(temp_filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        # If it was a simple string saved as {"content": ...}, extract the string
+        if isinstance(data, dict) and len(data) == 1 and "content" in data:
+            return data["content"]
+        return data
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from temp file {temp_filepath}: {e}")
+        return None # Return None if file is corrupt
+    except Exception as e:
+        logger.error(f"Error loading data from temp file {temp_filepath}: {e}")
+        return None
+
+
+def generate_preview_from_llm_responses(request_id: str, for_screen: bool = True) -> str:
     """
-    Generate an HTML preview from LLM API responses.
-    Reads structured JSON data saved by the LLM client.
+    Generate an HTML preview from cleaned data stored in temporary session files.
+    
+    Args:
+        request_id (str): The unique ID for the tailoring request.
+        for_screen (bool): If True, returns only the HTML fragment for the resume content.
+                          If False, generates a full HTML document suitable for PDF conversion.
     """
-    import os
+    # import os # Removed redundant import
     import json
-    from datetime import datetime
     from flask import current_app
-    import hashlib
+    
+    # Define the directory where temporary session files are stored
+    temp_data_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_session_data')
+    logger.info(f"Looking for cleaned data for request ID {request_id} in: {temp_data_dir}")
 
-    # Find the response files directory
-    api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
-    logger.info(f"Looking for API responses in: {api_responses_dir}")
-
-    if not os.path.exists(api_responses_dir):
-        logger.warning(f"API responses directory not found: {api_responses_dir}")
-        # Return an error message appropriate for the context (fragment or full page)
-        return "<p>Error: API response data not found.</p>" if for_screen else \
-               "<!DOCTYPE html><html><head><title>Error</title></head><body><p>Error: API response data not found.</p></body></html>"
+    if not os.path.exists(temp_data_dir):
+        logger.error(f"Temporary session data directory not found: {temp_data_dir}")
+        error_msg = "<p>Error: Temporary data directory not found.</p>"
+        return error_msg if for_screen else f"<!DOCTYPE html><html><head><title>Error</title></head><body>{error_msg}</body></html>"
 
     # Initialize HTML parts for the core content
     content_parts = []
+    
+    # Define the sections to load and format
+    sections_to_process = ["contact", "summary", "experience", "education", "skills", "projects"]
 
     # --- Start of Core Resume Content ---
     content_parts.append('<div class="tailored-resume-content">')
 
-    # --- Contact Section ---
-    contact_html = ""
-    try:
-        with open(os.path.join(api_responses_dir, 'contact.json'), 'r') as f:
-            contact_data = json.load(f)
-            contact_text = contact_data.get('content', '')
+    # --- Load and Format Each Section ---
+    for section_name in sections_to_process:
+        logger.debug(f"Processing section: {section_name} for request ID: {request_id}")
+        cleaned_data = _load_cleaned_data_from_temp(request_id, section_name, temp_data_dir)
 
-            if contact_text:
-                contact_lines = contact_text.strip().split('\n')
-                contact_html = '<div class="contact-section">'
+        if cleaned_data is None:
+            logger.warning(f"No cleaned data found for section '{section_name}' (Req ID: {request_id}). Skipping section.")
+            continue # Skip this section if data is missing or invalid
 
-                # First line is usually the name
-                if contact_lines:
-                    contact_html += f'<p class="name">{contact_lines[0]}</p>'
-
-                    # Add remaining contact lines
-                    for line in contact_lines[1:]:
-                        if line.strip():
-                            contact_html += f'<p>{line.strip()}</p>'
-
-                contact_html += '</div><hr class="contact-divider"/>'
-                logger.info("Successfully loaded contact information from contact.json")
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        # Contact file not found or invalid - try fallback methods
-        logger.warning(f"Contact information not found in JSON file: {e}")
+        # Add section header (adjust title casing as needed)
+        section_title = section_name.replace("_", " ").title()
+        content_parts.append('<div class="resume-section">')
+        # Only add section box/title for major sections, not contact
+        if section_name != "contact":
+             content_parts.append(f'<div class="section-box"><h2>{section_title}</h2></div>')
         
-        # Fallback 1: Try to get contact info from the original resume parsing
+        # Add section content div
+        content_parts.append(f'<div class="{section_name}-content">')
+
+        # Format content based on section type
         try:
-            # Get the resume file ID from the current context
-            from flask import current_app, g
-            if hasattr(g, 'resume_file_id') and g.resume_file_id:
-                resume_id = g.resume_file_id
-                logger.info(f"Attempting to recover contact from original resume parsing (ID: {resume_id})")
-                
-                # Try to locate the cached parsing result
-                import glob
-                llm_parsed_files = glob.glob(os.path.join(current_app.config['UPLOAD_FOLDER'], f"*{resume_id}*_llm_parsed.json"))
-                
-                if llm_parsed_files:
-                    with open(llm_parsed_files[0], 'r') as f:
-                        cached_data = json.load(f)
-                        if cached_data.get('contact'):
-                            contact_text = cached_data.get('contact', '')
-                            if contact_text:
-                                contact_lines = contact_text.strip().split('\n')
-                                contact_html = '<div class="contact-section">'
-                                
-                                # First line is usually the name
+            if section_name == "contact":
+                if isinstance(cleaned_data, str):
+                    contact_lines = cleaned_data.strip().split('\n')
                                 if contact_lines:
-                                    contact_html += f'<p class="name">{contact_lines[0]}</p>'
-                                    
-                                    # Add remaining contact lines
+                        content_parts.append(f'<p class="name">{contact_lines[0]}</p>')
                                     for line in contact_lines[1:]:
                                         if line.strip():
-                                            contact_html += f'<p>{line.strip()}</p>'
-                                
-                                contact_html += '</div><hr class="contact-divider"/>'
-                                logger.info("Successfully recovered contact information from cached parsing")
-        except Exception as fallback_error:
-            logger.warning(f"Fallback contact recovery failed: {fallback_error}")
-            # The resume will be generated without contact info
-        
-    # Add contact section if available
-    if contact_html:
-        content_parts.append(contact_html)
-    
-    try:
-        # Add summary section
-        try:
-            with open(os.path.join(api_responses_dir, 'summary.json'), 'r') as f:
-                summary_data = json.load(f)
-                
-            summary_text = summary_data.get('content', '')
-            if summary_text.strip():
-                content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Professional Summary</h2></div>')
-                content_parts.append('<div class="summary-content">')
-                content_parts.append(format_section_content(summary_text))
-                content_parts.append('</div>')
-                content_parts.append('</div>')
-                
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.error(f"Error processing summary section: {e}")
-            
-            # Fallback: Try to get summary info from the original resume parsing
-            try:
-                # Get the resume file ID from the current context
-                from flask import current_app, g
-                if hasattr(g, 'resume_file_id') and g.resume_file_id:
-                    resume_id = g.resume_file_id
-                    logger.info(f"Attempting to recover summary from original resume parsing (ID: {resume_id})")
-                    
-                    # Try to locate the cached parsing result
-                    import glob
-                    llm_parsed_files = glob.glob(os.path.join(current_app.config['UPLOAD_FOLDER'], f"*{resume_id}*_llm_parsed.json"))
-                    
-                    if llm_parsed_files:
-                        with open(llm_parsed_files[0], 'r') as f:
-                            cached_data = json.load(f)
-                            if cached_data.get('sections') and cached_data['sections'].get('summary'):
-                                summary_text = cached_data['sections'].get('summary', '')
-                                if summary_text.strip():
-                                    content_parts.append('<div class="resume-section">')
-                                    content_parts.append('<div class="section-box"><h2>Professional Summary</h2></div>')
-                                    content_parts.append('<div class="summary-content">')
-                                    content_parts.append(format_section_content(summary_text))
-                                    content_parts.append('</div>')
-                                    content_parts.append('</div>')
-                                    logger.info("Successfully recovered summary information from cached parsing")
-            except Exception as fallback_error:
-                logger.warning(f"Fallback summary recovery failed: {fallback_error}")
-        
-        # Add experience section
-        try:
-            with open(os.path.join(api_responses_dir, 'experience.json'), 'r') as f:
-                experience_data = json.load(f)
-                
-            if experience_data:
-                content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Experience</h2></div>')
-                content_parts.append('<div class="experience-content">')
-                
-                for job in experience_data:
+                                content_parts.append(f'<p>{line.strip()}</p>')
+                    content_parts.append('<hr class="contact-divider"/>') # Add divider after contact
+                else:
+                     logger.warning(f"Unexpected data type for contact section: {type(cleaned_data)}")
+            elif section_name == "summary":
+                if isinstance(cleaned_data, str):
+                    # Summary is expected as a simple string, format using format_section_content
+                    content_parts.append(format_section_content(cleaned_data))
+                else:
+                    logger.warning(f"Unexpected data type for summary section: {type(cleaned_data)}")
+            elif section_name == "experience":
+                if isinstance(cleaned_data, list):
+                    for job in cleaned_data:
+                        if isinstance(job, dict):
                     company = job.get('company', '')
                     location = job.get('location', '')
                     position = job.get('position', '')
                     dates = job.get('dates', '')
-                    # Use the correct key 'achievements' instead of 'content'
-                    achievements = job.get('achievements', []) 
-                    
-                    if not any([company, position]):  # Skip empty entries
-                        continue
-                        
-                    # Pass the achievements list to the updated function
-                    content_parts.append(
-                        format_job_entry(company, location, position, dates, achievements)
-                    )
-                
-                content_parts.append('</div>')
-                content_parts.append('</div>')
-                
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.error(f"Error processing experience section: {e}")
-        
-        # Add education section
-        try:
-            education_filepath = os.path.join(api_responses_dir, 'education.json')
-            with open(education_filepath, 'r') as f:
-                education_data = json.load(f)
-                
-            if education_data:
-                content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Education</h2></div>')
-                content_parts.append('<div class="education-content">')
-                # Pass the loaded list directly to the formatter
-                content_parts.append(format_education_content(education_data))
-                content_parts.append('</div>')
-                content_parts.append('</div>')
-            else:
-                 logger.info("Education data file was empty or contained no data.")
-                
-        except FileNotFoundError:
-            logger.warning(f"Education section file not found: {education_filepath}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding education JSON from {education_filepath}: {e}")
+                            achievements = job.get('achievements', [])
+                            if not any([company, position]): continue # Skip potentially empty entries
+                            # Pass cleaned data directly to entry formatter
+                            content_parts.append(format_job_entry(company, location, position, dates, achievements))
+                        else:
+                            logger.warning(f"Skipping non-dictionary item in experience data: {job}")
+                else:
+                    logger.warning(f"Unexpected data type for experience section: {type(cleaned_data)}")
+            elif section_name == "education":
+                 if isinstance(cleaned_data, list):
+                    # Pass the list directly to the content formatter
+                    content_parts.append(format_education_content(cleaned_data))
+                 else:
+                     logger.warning(f"Unexpected data type for education section: {type(cleaned_data)}")
+            elif section_name == "skills":
+                 if isinstance(cleaned_data, dict):
+                     # Pass the dict directly to the content formatter
+                     content_parts.append(format_skills_content(cleaned_data))
+                 else:
+                     logger.warning(f"Unexpected data type for skills section: {type(cleaned_data)}")
+            elif section_name == "projects":
+                 if isinstance(cleaned_data, list):
+                     # Pass the list directly to the content formatter
+                     content_parts.append(format_projects_content(cleaned_data))
+                 else:
+                      logger.warning(f"Unexpected data type for projects section: {type(cleaned_data)}")
+            # Add other sections if necessary
+
         except Exception as e:
-             logger.error(f"Error processing education section: {e}")
+            logger.error(f"Error formatting HTML for section '{section_name}' (Req ID: {request_id}): {e}")
+            content_parts.append(f"<p>Error formatting {section_name} section.</p>")
         
-        # Add skills section
-        try:
-            skills_filepath = os.path.join(api_responses_dir, 'skills.json')
-            with open(skills_filepath, 'r') as f:
-                skills_data = json.load(f)
-                
-            if skills_data:
-                content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Skills</h2></div>')
-                content_parts.append('<div class="skills-content">')
-                 # Pass the loaded dictionary directly to the new formatter
-                content_parts.append(format_skills_content(skills_data))
-                content_parts.append('</div>')
-                content_parts.append('</div>')
-            else:
-                logger.info("Skills data file was empty or contained no data.")
-                
-        except FileNotFoundError:
-             logger.warning(f"Skills section file not found: {skills_filepath}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding skills JSON from {skills_filepath}: {e}")
-        except Exception as e:
-            logger.error(f"Error processing skills section: {e}")
-        
-        # Add projects section
-        try:
-            projects_filepath = os.path.join(api_responses_dir, 'projects.json')
-            with open(projects_filepath, 'r') as f:
-                projects_data = json.load(f)
-                
-            if projects_data:
-                content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Projects</h2></div>')
-                content_parts.append('<div class="projects-content">')
-                # Pass the loaded list directly to the formatter
-                content_parts.append(format_projects_content(projects_data))
-                content_parts.append('</div>')
-                content_parts.append('</div>')
-            else:
-                logger.info("Projects data file was empty or contained no data.")
-                
-        except FileNotFoundError:
-            logger.warning(f"Projects section file not found: {projects_filepath}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding projects JSON from {projects_filepath}: {e}")
-        except Exception as e:
-            logger.error(f"Error processing projects section: {e}")
-        
-    except Exception as e:
-        logger.error(f"Error generating preview content: {e}")
-        # Return error fragment or full page error based on for_screen
-        error_msg = f"<p>Error generating preview: {str(e)}</p>"
-        if for_screen:
-            return error_msg
-        else:
-             return f"<!DOCTYPE html><html><head><title>Error</title></head><body>{error_msg}</body></html>"
+        # Close section content and resume section divs
+        content_parts.append('</div>') # Close {section-name}-content
+        content_parts.append('</div>') # Close resume-section
 
     # --- End of Core Resume Content ---
     content_parts.append('</div>') # Close tailored-resume-content

@@ -2,7 +2,7 @@ import re
 
 # Comprehensive bullet pattern including unicode glyphs, ascii symbols, and textual escapes
 BULLET_ESCAPE_RE = re.compile(
-    r'^(?:'
+    r'^\s*(?:'
     # Unicode bullet glyphs (common subset)
     r'[•◦▪▫■□▸►▹▻▷▶→⇒⟹⟶]|'
     # ASCII/common symbols

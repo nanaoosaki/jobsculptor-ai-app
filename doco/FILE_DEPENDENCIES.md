@@ -46,5 +46,22 @@ The `resume_index.py` module is responsible for tracking and logging resume proc
 ### Runtime Reload Caveat
 `html_generator.py`, `style_manager.py`, and any other imported Python modules are **only loaded at Flask startup**. The development reloader detects template changes but *not* deep imports. After editing these files you must restart the server (`Ctrl-C` then `python app.py`).
 
+## Updated Data Workflow and File Handling
+
+### LLM Interaction
+- **Structured JSON Output:** Modify LLM prompts to request structured JSON output only, avoiding bullet characters.
+- **Raw Response Logging:** Save raw, timestamped JSON responses as ground truth in `uploads/api_responses/`.
+
+### Parsing and Cleaning
+- **Single Cleaning Step:** Apply `strip_bullet_prefix` immediately after parsing to relevant fields in `claude_integration.py`.
+- **Session-Specific Storage:** Store cleaned data in session-specific temporary files in `uploads/temp_session_data/`.
+
+### HTML/PDF Generation
+- **Clean Data Usage:** Retrieve cleaned data for HTML/PDF generation in `html_generator.py`, ensuring no additional cleaning is performed.
+- **CSS Styling:** Rely on CSS for visual bullet points, using `preview.css` and `print.css`.
+
+### Logging and Debugging
+- **Enhanced Logging:** Implement detailed logging for data state transitions and storage locations.
+
 ## Conclusion
 The `resume_index.py` module is a critical component for maintaining a history of resume processing activities, providing valuable insights and traceability for the application. The styling workflow ensures consistent appearance across HTML and PDF outputs, with a clear build process for maintaining styles. 

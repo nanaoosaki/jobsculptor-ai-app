@@ -282,4 +282,21 @@ To start the Flask application, follow these steps:
    - The application will display logs in the terminal, including any errors or warnings.
    - If you encounter issues, check the terminal output for debugging information.
 
-By following these steps, you can ensure the application starts correctly without encountering syntax errors or other issues. 
+By following these steps, you can ensure the application starts correctly without encountering syntax errors or other issues.
+
+## Updated Data Workflow
+
+### LLM Interaction
+- **Structured JSON Output:** Modify LLM prompts to request structured JSON output only, avoiding bullet characters.
+- **Raw Response Logging:** Save raw, timestamped JSON responses as ground truth.
+
+### Parsing and Cleaning
+- **Single Cleaning Step:** Apply `strip_bullet_prefix` immediately after parsing to relevant fields.
+- **Session-Specific Storage:** Store cleaned data in session-specific temporary files.
+
+### HTML/PDF Generation
+- **Clean Data Usage:** Retrieve cleaned data for HTML/PDF generation, ensuring no additional cleaning is performed.
+- **CSS Styling:** Rely on CSS for visual bullet points.
+
+### Logging and Debugging
+- **Enhanced Logging:** Implement detailed logging for data state transitions and storage locations. 
