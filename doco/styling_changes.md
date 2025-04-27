@@ -287,4 +287,54 @@ The following process was successfully used to change the section header color t
 
 This process ensures that styling changes are consistently applied across both the preview and PDF outputs. Following these steps will help maintain a unified appearance and streamline future styling updates.
 
+## 2025-04-27  – Bullet-cleanup Attempt #1 Post-Mortem
+
+We centralised bullet stripping in `utils/bullet_utils.py` and wired the new
+`strip_bullet_prefix()` helper through all formatter paths. While this removed
+many stray glyphs, **textual escapes `u2022` are still leaking into the final
+HTML/PDF**. Our latest run (see log excerpt below) shows the cleaned HTML still
+contains literal `u2022` at the start of some achievements.
+
+```
+… <li>u2022 Led cross-functional AI initiative that …</li>
+```
+
+### Findings
+1. **Whitespace-prefixed escapes**   If the LLM returns `"  u2022 Achievement"`
+   (note the two spaces) our regex fails because it is anchored to column 0.
+2. **Down-stream re-injection**   Some content is concatenated _after_ we strip
+   bullets (e.g. during `format_section_content` when building `<li>` tags), so
+   any bullet prefix that survives earlier stages becomes visible next to the
+   rendered list marker.
+3. **Validation gap**   `validate_bullet_point_cleaning()` only runs on raw
+   _section text_, not on the final HTML fragment. It therefore misses any
+   bullets that survive formatting.
+
+### Impact on Logic / Flow
+The current cleaning pipeline is **still too early in the data-flow**. We need
+an **end-of-pipeline gate** that scans the fully rendered HTML _before_ it is
+sent to the client or converted to PDF.
+
+---
+
+## Bullet-cleanup Attempt #2 – Detailed Implementation Plan
+
+| # | Task | Owner | Notes |
+|---|------|-------|-------|
+| 1 | Expand `BULLET_ESCAPE_RE` to allow leading whitespace (`^\s*`) and fix a bug where the trailing `\s*` was stripped _after_ we already called `.lstrip()` | BE | Single-line change in `utils/bullet_utils.py` |
+| 2 | Add **HTML-level sanitiser** `html_generator.scrub_bullets_from_html()` that runs the regex across the _entire_ HTML fragment/doc right before it is returned. | BE | Guarantees no bullets make it past this point |
+| 3 | Call the sanitiser from `generate_preview_from_llm_responses()` and from `pdf_exporter` before PDF conversion. | BE | Two call-sites |
+| 4 | Strengthen `validate_bullet_point_cleaning()` to optionally accept HTML and scan **after formatting**. | BE | Keeps runtime logging useful |
+| 5 | Unit tests: | QA | 1) raw line with `"  u2022 Foo"` 2) HTML `<li>u2022 Bar</li>` – both must emerge bullet-free |
+| 6 | Regression script: tailor a known problematic resume and assert that `u2022` does **not** appear in the resulting PDF text layer (`pdftotext`). | QA | CI step |
+| 7 | Documentation update (this file) once confirmed fixed. | Tech W |  |
+
+### Roll-back Plan
+Set env var `RESUMEGEN_SKIP_HTML_BULLET_SCRUB=1` to bypass the new sanitizer if
+it causes accidental data loss.
+
+### ETA & Risk
+Small patch (<50 LOC) but touches core HTML path – low risk, <1 hr coding, 30 m
+validation.
+
 --- 
