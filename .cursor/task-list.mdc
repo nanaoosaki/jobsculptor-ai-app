@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 ---
 description: 
@@ -48,6 +48,10 @@ Guidelines for creating and managing task lists in markdown files to track proje
 
    Detailed description of how the feature will be implemented.
    ```
+
+## Reference Plan
+
+- [Refactoring Plan: Session-Based Data Storage](mdc:../new-refactor-data-flow.md)
 
 ## Task Management Guidelines
 

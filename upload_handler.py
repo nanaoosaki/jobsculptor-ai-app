@@ -95,7 +95,6 @@ def setup_upload_routes(app):
                         
                         # Generate HTML preview based on LLM sections
                         preview_html = '<div class="resume-preview-container">'
-                        preview_html += '<h3 class="preview-title">User Resume Parsed (LLM)</h3>'
                         preview_html += '<div class="resume-preview-content">'
                         
                         # Add each section to the preview

@@ -137,4 +137,36 @@ The CSS files `print.css` and `preview.css` contained a hard-coded string "u2022
 
 ## Other Issues
 
-All known issues have been resolved. If new issues arise, they will be documented here. 
+All known issues have been resolved. If new issues arise, they will be documented here.
+
+### New Known Issues
+
+1. **Redundant Text in Resume Section**
+   - **Description**: The text 'User Resume Parsed (LLM)' appears unnecessarily in the resume section.
+   - **Impact**: Clutters the UI and may confuse users.
+   - **Next Steps**: Remove the redundant text from the UI.
+   - **Priority**: Medium
+
+2. **Section Header Height**
+   - **Description**: The section headers are too tall, taking up excessive vertical space.
+   - **Impact**: Affects the visual balance and readability of the resume.
+   - **Next Steps**: Adjust the CSS to reduce the height of section headers.
+   - **Priority**: Medium
+
+3. **Section Header Alignment**
+   - **Description**: Section header texts are not left-aligned as intended.
+   - **Impact**: Misalignment affects the professional appearance of the resume.
+   - **Next Steps**: Modify the CSS to ensure section headers are left-aligned.
+   - **Priority**: Medium
+
+4. **Bullet Point Alignment**
+   - **Description**: Bullet points are not aligned with the company/title.
+   - **Impact**: Misalignment affects readability and professionalism.
+   - **Next Steps**: Adjust the CSS to align bullet points with the company/title.
+   - **Priority**: Medium
+
+5. **Page Margin Size**
+   - **Description**: The page margins are larger than desired, currently exceeding 1 inch on each side.
+   - **Impact**: Reduces the amount of content visible on each page.
+   - **Next Steps**: Reduce the page margins to 1 inch on each side.
+   - **Priority**: Medium 

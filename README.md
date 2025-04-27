@@ -52,6 +52,9 @@ A web application that helps job seekers optimize their resumes for specific job
 - `resume_formatter.py`: Resume formatting utilities
 - `resume_processor.py`: Resume processing and analysis
 - `static/`: CSS, JavaScript, and uploads
+  - `uploads/`: Location for uploaded resumes, job data, and tailored outputs.
+  - `uploads/api_responses/`: Stores raw, timestamped LLM API responses for debugging.
+  - `uploads/temp_session_data/`: Stores cleaned, tailored resume sections per user request (UUID-based filenames). **Requires cleanup.**
 - `templates/`: HTML templates
 
 ## How It Works
@@ -119,4 +122,8 @@ A web application that helps job seekers optimize their resumes for specific job
 
 ## License
 
-MIT 
+MIT
+
+## Important Note: Temporary File Cleanup
+
+The application currently stores temporary tailored resume data in `static/uploads/temp_session_data/` using unique request IDs. These files are necessary during the tailoring process but are not automatically cleaned up afterwards. **A cleanup mechanism (e.g., a scheduled task to delete files older than 24 hours) should be implemented** to prevent disk space issues in a production environment. 

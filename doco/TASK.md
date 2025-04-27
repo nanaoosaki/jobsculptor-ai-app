@@ -761,4 +761,32 @@ Given the current priorities, this should be scheduled after addressing critical
 
 - Created `design_tokens.json` for visual constants.
 - Developed a `StyleManager` class for consistent style application.
-- Ensured consistent styling across HTML and PDF outputs. 
+- Ensured consistent styling across HTML and PDF outputs.
+
+## New Styling Fixes (May 2025)
+
+### Overview
+Address five UI/print styling issues discovered during QA testing.  These changes touch both the HTML preview and PDF output.  We will tackle them in a single sprint because they share the same SCSS sources.
+
+### Issues to Resolve
+1. Remove redundant text: **"User Resume Parsed (LLM)"**
+2. Reduce **section-header** height and left-align header text
+3. Align bullet points flush with company/title lines
+4. Standardise page margins to **1 inch** on all sides (preview + PDF)
+
+### Implementation Plan
+| Step | File(s) | Action |
+|------|---------|--------|
+|1| `upload_handler.py`, `templates/index.html` | Delete or hide the header string *User Resume Parsed (LLM)* so it no longer shows in the UI. |
+|2| `design_tokens.json` | Change `"paper-padding-vertical"` & `"paper-padding-horizontal"` to `"1in"`.  Add `"sectionHeaderPadding": "4px 8px"` for tight boxes.  Re-generate `_tokens.scss` (or hand-edit if script unavailable). |
+|3| `static/scss/_resume.scss` | a) Update `.section-box` `padding` → `$sectionHeaderPadding` and `text-align:left`; b) Update `.resume-section h2` to `text-align:left`. |
+|4| `static/scss/_resume.scss` | Adjust bullet styles: `.job-content ul { margin-left:0; padding-left:1.1em; }` and `.job-content li { padding-left:1.1em; }` |
+|5| `static/scss/print.scss` | Set `@page { margin: 1in; }` |
+|6| **Build** | Re-compile SCSS → `preview.css`, `print.css` (command: `npm run build-scss` or `sass static/scss:static/css`). |
+|7| **QA** | Run Flask locally, upload a sample résumé, verify preview & PDF.  Check: no extra label, slim headers left-aligned, bullets aligned, 1-in margins. |
+|8| **Docs** | Update `KNOWN_ISSUES.md` – mark items resolved, and add any notes.  Commit & push. |
+
+### Timeline
+Estimated effort: **1–2 hours** including QA and commit.
+
+--- 
