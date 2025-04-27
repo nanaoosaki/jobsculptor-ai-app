@@ -116,6 +116,23 @@ The section header box currently has a blue fill, but it should only have a blue
 
 **Priority**: Medium
 
+### Bullet Point Character Issue in CSS
+**Status**: Resolved
+
+**Description**: 
+The CSS files `print.css` and `preview.css` contained a hard-coded string "u2022" for bullet points, which was displayed literally in the experience section of resumes.
+
+**Resolution**:
+- Replaced the hard-coded "u2022" with the properly escaped Unicode character "\2022" in both CSS files.
+
+**Impact**: 
+- Bullet points now display correctly in both the HTML preview and PDF outputs, improving the professional appearance of resumes.
+
+**Next Steps**: 
+- Monitor for any further styling discrepancies in resume outputs.
+
+**Priority**: Low
+
 ---
 
 ## Other Issues

@@ -1,12 +1,11 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: true
 ---
-
 # Your rule content
 
-- You can @ files here
+- [project_context.md](mdc:doco/project_context.md)
 - You can use markdown but dont have to
 
 # Resume Tailoring Application Context
@@ -71,3 +70,22 @@ Implementation approach:
 - `claude_integration.py`: Integrates with LLM APIs
 - `static/css/styles.css`: Main stylesheet for UI and PDF styling
 - `templates/`: HTML templates for the web interface
+
+## Task Management
+
+### Completed Tasks
+
+- [x] Implemented PDF export for consistent document appearance
+- [x] Enhanced resume formatting with standard dot bullets
+
+### In Progress Tasks
+
+- [ ] Monitor for further styling discrepancies in resume outputs
+
+### Future Tasks
+
+- [ ] Explore additional LLM integrations for improved resume tailoring
+
+### Implementation Plan
+
+Continue to refine the PDF export process and explore new features to enhance the resume tailoring tool's capabilities.
