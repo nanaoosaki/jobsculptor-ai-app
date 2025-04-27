@@ -49,6 +49,12 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 13. **Resume Section Parsing Improvements**: Enhanced section detection with expanded regex patterns and better default section handling, implemented a fallback mechanism, and improved error handling.
 14. **Align HTML & PDF Styling**: Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS, improving maintainability and consistency.
 
+## Recent Improvements
+
+1. **Session-Specific UUID Data Storage**: Implemented UUID-based filenames for storing cleaned resume data, ensuring data isolation and multi-user compatibility.
+2. **Enhanced Logging**: Updated log messages to accurately reflect file operations, improving traceability and debugging.
+3. **Consistent Data Flow**: Ensured a consistent data flow from LLM responses to structured JSON, saved and loaded using UUIDs, and formatted to HTML for previews and PDFs.
+
 ## Current Limitations and Known Issues
 1. **PythonAnywhere Constraints**: 
    - 512MB disk quota on free tier

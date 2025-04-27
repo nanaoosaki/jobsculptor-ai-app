@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // State variables
     let uploadedResumeFilename = null;
     let parsedJobData = null;
-    let tailoredResumeFilename = null;
+    let currentRequestId = null; // Store the ID for the current tailoring request
     
     // Handle resume upload
     resumeUploadForm.addEventListener('submit', function(e) {
@@ -154,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         showStatus(tailorStatus, 'Tailoring your resume... (this may take a minute)', 'loading');
+        downloadResumeBtn.disabled = true; // Disable download button while tailoring
+        currentRequestId = null; // Reset request ID
         
         // Send the complete job data with AI analysis - using OpenAI specifically
         fetch('/tailor-resume', {
@@ -174,23 +176,39 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            showStatus(tailorStatus, 'Resume tailored successfully!', 'success');
-            console.log('Tailored resume data:', data);
-            
-            // Display the tailored resume preview
-            if (data.preview) {
-                displayResumePreview(data.preview);
-                
-                // Scroll to resume preview
-                document.getElementById('resumePreview').scrollIntoView({ behavior: 'smooth' });
-            } else {
-                throw new Error('No preview generated');
+            if (!data.success) {
+                // Handle tailoring failure reported by the backend
+                throw new Error(data.error || 'Tailoring failed on the server.');
             }
             
-            // Store the tailored filename for download
-            tailoredResumeFilename = data.filename;
+            if (!data.request_id) {
+                throw new Error('No request_id received from tailoring endpoint.');
+            }
             
-            // Enable the download button
+            currentRequestId = data.request_id;
+            console.log('Tailored resume data:', data);
+            
+            showStatus(tailorStatus, 'Tailoring complete. Fetching preview...', 'loading');
+            
+            // Fetch the preview using the request_id
+            return fetch(`/preview/${currentRequestId}`);
+        })
+        .then(previewResponse => {
+            if (!previewResponse.ok) {
+                // Try to get error message from response body if available
+                return previewResponse.json().then(errData => {
+                    throw new Error(errData.error || `Preview fetch failed with status: ${previewResponse.status}`);
+                }).catch(() => {
+                    // Fallback if response body is not JSON or reading fails
+                    throw new Error(`Preview fetch failed with status: ${previewResponse.status}`);
+                });
+            }
+            return previewResponse.text(); // Get HTML preview as text
+        })
+        .then(previewHtml => {
+            showStatus(tailorStatus, 'Resume tailored successfully!', 'success');
+            displayResumePreview(previewHtml);
+            
             downloadResumeBtn.disabled = false;
         })
         .catch(error => {
@@ -201,12 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle resume download
     downloadResumeBtn.addEventListener('click', function() {
-        if (!tailoredResumeFilename) {
-            showStatus(tailorStatus, 'No tailored resume available for download.', 'error');
+        if (!currentRequestId) {
+            showStatus(tailorStatus, 'No tailored resume request ID found. Please tailor the resume first.', 'error');
             return;
         }
         
-        window.location.href = '/download/' + tailoredResumeFilename;
+        // Use the request_id to construct the download URL
+        window.location.href = `/download/${currentRequestId}`;
     });
     
     // Helper function to display status messages
@@ -614,6 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to check if tailoring should be enabled
     function checkEnableTailorButton() {
         tailorResumeBtn.disabled = !(uploadedResumeFilename && parsedJobData);
+        downloadResumeBtn.disabled = true; // Also disable download button until tailoring is done
     }
 });
 

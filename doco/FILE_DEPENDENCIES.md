@@ -31,5 +31,12 @@ The `resume_index.py` module is responsible for tracking and logging resume proc
 ## Runtime Reload Caveat
 `html_generator.py`, `style_manager.py`, and any other imported Python modules are **only loaded at Flask startup**.  The development reloader detects template changes but *not* deep imports.  After editing these files you must restart the server (`Ctrl-C` then `python app.py`).
 
+## Updated I/O and Workflow
+
+- **Session-Specific Data Storage**: All cleaned resume data is now stored using UUIDs in `static/uploads/temp_session_data/`, ensuring data isolation and multi-user compatibility.
+- **Raw LLM Responses**: Continue to be stored with timestamps in `static/uploads/api_responses/` for logging and debugging.
+- **Log Messages**: Updated to accurately reflect file operations and enhance traceability.
+- **Data Flow**: LLM -> Structured JSON -> Save Structured JSON with UUID -> Load Structured JSON with UUID -> Format to HTML.
+
 ## Conclusion
 The `resume_index.py` module is a critical component for maintaining a history of resume processing activities, providing valuable insights and traceability for the application. 

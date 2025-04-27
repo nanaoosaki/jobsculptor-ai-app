@@ -2,6 +2,7 @@ import os
 import json
 import traceback
 import logging
+import uuid
 from flask import request, jsonify, current_app
 from claude_integration import tailor_resume_with_llm, generate_resume_preview, generate_preview_from_llm_responses
 from pdf_exporter import create_pdf_from_html
@@ -21,6 +22,10 @@ def setup_tailoring_routes(app):
         try:
             # Log the start of the request
             logger.info("Received tailor-resume request")
+            
+            # Generate a unique request ID for this tailoring operation
+            request_id = str(uuid.uuid4())
+            logger.info(f"Generated unique request_id: {request_id}")
             
             # Safely parse JSON data
             try:
@@ -197,19 +202,23 @@ def setup_tailoring_routes(app):
                 # - output_filename: The filename of the generated file (e.g., "resume_tailored_openai.pdf")
                 # - output_path: The full path to the generated file
                 # - llm_client: The LLM client instance used for tailoring
-                _, _, llm_client = tailor_resume_with_llm(
+                tailored_sections, llm_client = tailor_resume_with_llm(
                     resume_path,
                     job_data,
                     api_key,
                     provider,
-                    api_url
+                    api_url,
+                    request_id
                 )
                 
+                # Get upload folder path from current app context
+                upload_folder = current_app.config['UPLOAD_FOLDER']
+                
                 # Generate HTML preview for the screen
-                preview_html_for_screen = generate_preview_from_llm_responses(llm_client, for_screen=True)
+                preview_html_for_screen = generate_preview_from_llm_responses(request_id, upload_folder, for_screen=True)
                 
                 # Generate clean HTML body content for PDF export
-                html_body_for_pdf = generate_preview_from_llm_responses(llm_client, for_screen=False)
+                html_body_for_pdf = generate_preview_from_llm_responses(request_id, upload_folder, for_screen=False)
                 
                 # Extract only the content within the <body> tags for PDF generation
                 # This is a simple regex approach, might need refinement
@@ -269,6 +278,7 @@ def setup_tailoring_routes(app):
                         'success': True,
                         'filename': pdf_filename,
                         'preview': preview_html_for_screen, # Return the version for the screen
+                        'request_id': request_id,
                         'provider': provider,
                         'fileType': 'pdf',  # Indicate this is a PDF file
                         'message': f'Resume tailored successfully using {provider.upper()}'
@@ -283,6 +293,7 @@ def setup_tailoring_routes(app):
                         'success': False,
                         'error': f'PDF generation failed: {str(pdf_error)}',
                         'preview': preview_html_for_screen, # Still return preview
+                        'request_id': request_id,
                         'provider': provider
                     }), 500
                     

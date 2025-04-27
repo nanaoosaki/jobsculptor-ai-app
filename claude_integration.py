@@ -143,13 +143,12 @@ class LLMClient:
     
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.tailored_content = {}  # Store tailored responses for direct HTML generation
         
     def tailor_resume_content(
     self,
     section_name: str,
     content: str,
-     job_data: Dict) -> str:
+     job_data: Dict) -> Union[Dict, List, str]:
         """Tailor resume content using LLM API - to be implemented by subclasses"""
         raise NotImplementedError("Subclasses must implement this method")
 
@@ -163,7 +162,6 @@ class ClaudeClient(LLMClient):
         self.api_key = api_key
         self.api_url = api_url
         self.client = None
-        self.tailored_content = {}
 
         try:
             # Validate API key format for Claude
@@ -193,7 +191,7 @@ class ClaudeClient(LLMClient):
     self,
     section_name: str,
     content: str,
-     job_data: Dict) -> str:
+     job_data: Dict) -> Union[Dict, List, str]:
         """
         Tailor resume content using Claude API
 
@@ -203,13 +201,13 @@ class ClaudeClient(LLMClient):
             job_data: Job data including requirements and skills
 
         Returns:
-            Tailored content as string
+            Tailored content as structured data (dict/list) or string for simple sections
         """
         logger.info(f"Tailoring {section_name} with Claude API")
             
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
-            return ""
+            return content
 
         if not self.client:
             logger.error("Claude client not initialized")
@@ -470,21 +468,16 @@ Focus on emphasizing elements most relevant to this job opportunity.
 
                 # Process JSON based on section type
                 if section_name == "experience" and "experience" in json_response:
-                    return self._format_experience_json(
-                        json_response["experience"])
+                    return json_response["experience"]
                 elif section_name == "education" and "education" in json_response:
-                    return self._format_education_json(
-                        json_response["education"])
+                    return json_response["education"]
                 elif section_name == "skills" and "skills" in json_response:
-                    return self._format_skills_json(json_response["skills"])
+                    return json_response["skills"]
                 elif section_name == "projects" and "projects" in json_response:
-                    return self._format_projects_json(
-                        json_response["projects"])
+                    return json_response["projects"]
                 elif section_name in json_response:
                     # For other sections, just return the string content
                     formatted_text = json_response[section_name]
-                    # Store for preview generation
-                    self.tailored_content[section_name] = formatted_text
                     return formatted_text
                 else:
                     logger.warning(f"JSON response missing expected '{section_name}' key")
@@ -493,143 +486,11 @@ Focus on emphasizing elements most relevant to this job opportunity.
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse JSON from Claude response: {response_content[:100]}...")
                 # Store as raw text for fallback
-                self.tailored_content[section_name] = response_content
                 return response_content
             
         except Exception as e:
             logger.error(f"Error in Claude API call: {str(e)}")
             return content
-
-    def _format_experience_json(self, experience_data: List[Dict]) -> str:
-        """Format experience JSON data into HTML"""
-        if not experience_data:
-            return ""
-            
-        formatted_text = ""
-        for job in experience_data:
-            company = job.get('company', '')
-            location = job.get('location', '')
-            position = job.get('position', '')
-            dates = job.get('dates', '')
-            achievements = job.get('achievements', [])
-            
-            # Filter and strip bullet prefixes
-            if achievements:
-                achievements = [strip_bullet_prefix(a) for a in achievements if a and a.strip()]
-            
-            # New format: company/location on first line, position/dates on second line
-            # Company name (left) and location (right)
-            formatted_text += f"<p><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Position (left) and dates (right)
-            formatted_text += f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add achievements as paragraphs
-            if achievements:
-                for achievement in achievements:
-                    formatted_text += f"<p>{achievement}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["experience"] = formatted_text
-        return formatted_text
-
-    def _format_education_json(self, education_data: List[Dict]) -> str:
-        """Format education JSON data into HTML"""
-        if not education_data:
-            return ""
-            
-        formatted_text = ""
-        for edu in education_data:
-            institution = edu.get('institution', '')
-            location = edu.get('location', '')
-            degree = edu.get('degree', '')
-            dates = edu.get('dates', '')
-            highlights = edu.get('highlights', [])
-            
-            # Filter out empty or whitespace-only highlights
-            if highlights:
-                highlights = [h for h in highlights if h and h.strip()]
-            
-            # New format: institution/location on first line, degree/dates on second line
-            # Institution name (left) and location (right)
-            formatted_text += f"<p><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Degree (left) and dates (right)
-            formatted_text += f"<p><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add highlights as paragraphs
-            if highlights:
-                for highlight in highlights:
-                    formatted_text += f"<p>{highlight}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["education"] = formatted_text
-        return formatted_text
-
-    def _format_skills_json(self, skills_data: Dict) -> str:
-        """Format skills JSON data into HTML"""
-        if not skills_data:
-            return ""
-
-        formatted_text = ""
-
-        # Process technical skills
-        if 'technical' in skills_data and skills_data['technical']:
-            # Filter out empty or whitespace-only skills
-            technical_skills = [s for s in skills_data['technical'] if s and s.strip()]
-            if technical_skills:
-                formatted_text += "<p><strong>Technical Skills:</strong> "
-                formatted_text += ", ".join(technical_skills)
-                formatted_text += "</p>\n"
-
-        # Process soft skills
-        if 'soft' in skills_data and skills_data['soft']:
-            # Filter out empty or whitespace-only skills
-            soft_skills = [s for s in skills_data['soft'] if s and s.strip()]
-            if soft_skills:
-                formatted_text += "<p><strong>Soft Skills:</strong> "
-                formatted_text += ", ".join(soft_skills)
-                formatted_text += "</p>\n"
-
-        # Process other skills
-        if 'other' in skills_data and skills_data['other']:
-            # Filter out empty or whitespace-only skills
-            other_skills = [s for s in skills_data['other'] if s and s.strip()]
-            if other_skills:
-                formatted_text += "<p><strong>Other Skills:</strong> "
-                formatted_text += ", ".join(other_skills)
-                formatted_text += "</p>\n"
-
-        # Store formatted content for preview generation
-        self.tailored_content["skills"] = formatted_text
-        return formatted_text
-
-    def _format_projects_json(self, projects_data: List[Dict]) -> str:
-        """Format projects JSON data into HTML"""
-        if not projects_data:
-            return ""
-            
-        formatted_text = ""
-        for project in projects_data:
-            title = project.get('title', '')
-            dates = project.get('dates', '')
-            details = project.get('details', [])
-            
-            # Filter out empty or whitespace-only details
-            if details:
-                details = [d for d in details if d and d.strip()]
-            
-            # Project title (left) and dates (right)
-            formatted_text += f"<p><span class='project-title'>{title.upper()}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add details as paragraphs
-            if details:
-                for detail in details:
-                    formatted_text += f"<p>{detail}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["projects"] = formatted_text
-        return formatted_text
 
 
 class OpenAIClient(LLMClient):
@@ -667,7 +528,7 @@ class OpenAIClient(LLMClient):
     self,
     section_name: str,
     content: str,
-     job_data: Dict) -> str:
+     job_data: Dict) -> Union[Dict, List, str]:
         """
         Tailor resume content using OpenAI API
 
@@ -677,13 +538,13 @@ class OpenAIClient(LLMClient):
             job_data: Job data including requirements and skills
 
         Returns:
-            Tailored content as string
+            Tailored content as structured data (dict/list) or string for simple sections
         """
         logger.info(f"Tailoring {section_name} with OpenAI API")
             
         if not content or not content.strip():
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
-            return ""
+            return content
 
         if not self.client:
             logger.error("OpenAI client not initialized")
@@ -1011,24 +872,20 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 logger.error(f"Failed to parse JSON from OpenAI response: {e}")
                 logger.error(f"JSON string: {json_str[:100]}...")
                 # Store the raw response as fallback
-                self.tailored_content[section_name] = response_text
                 return response_text
 
             # Process JSON based on section type
             if section_name == "experience" and "experience" in json_response:
-                return self._format_experience_json(
-                    json_response["experience"])
+                return json_response["experience"]
             elif section_name == "education" and "education" in json_response:
-                return self._format_education_json(json_response["education"])
+                return json_response["education"]
             elif section_name == "skills" and "skills" in json_response:
-                return self._format_skills_json(json_response["skills"])
+                return json_response["skills"]
             elif section_name == "projects" and "projects" in json_response:
-                return self._format_projects_json(json_response["projects"])
+                return json_response["projects"]
             elif section_name in json_response:
                 # For other sections, just return the string content
                 formatted_text = json_response[section_name]
-                # Store for preview generation
-                self.tailored_content[section_name] = formatted_text
                 return formatted_text
             else:
                 logger.warning(f"JSON response missing expected '{section_name}' key")
@@ -1037,137 +894,6 @@ Focus on emphasizing elements most relevant to this job opportunity.
         except Exception as e:
             logger.error(f"Error in OpenAI API call: {str(e)}")
             return content
-
-    def _format_experience_json(self, experience_data: List[Dict]) -> str:
-        """Format experience JSON data into HTML"""
-        if not experience_data:
-            return ""
-            
-        formatted_text = ""
-        for job in experience_data:
-            company = job.get('company', '')
-            location = job.get('location', '')
-            position = job.get('position', '')
-            dates = job.get('dates', '')
-            achievements = job.get('achievements', [])
-            
-            # Filter and strip bullet prefixes
-            if achievements:
-                achievements = [strip_bullet_prefix(a) for a in achievements if a and a.strip()]
-            
-            # New format: company/location on first line, position/dates on second line
-            # Company name (left) and location (right)
-            formatted_text += f"<p><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Position (left) and dates (right)
-            formatted_text += f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add achievements as paragraphs
-            if achievements:
-                for achievement in achievements:
-                    formatted_text += f"<p>{achievement}</p>\n"
-                    
-        # Store formatted content for preview generation
-        self.tailored_content["experience"] = formatted_text
-        return formatted_text
-
-    def _format_education_json(self, education_data: List[Dict]) -> str:
-        """Format education JSON data into HTML"""
-        if not education_data:
-            return ""
-            
-        formatted_text = ""
-        for edu in education_data:
-            institution = edu.get('institution', '')
-            location = edu.get('location', '')
-            degree = edu.get('degree', '')
-            dates = edu.get('dates', '')
-            highlights = edu.get('highlights', [])
-            
-            # Filter out empty or whitespace-only highlights
-            if highlights:
-                highlights = [h for h in highlights if h and h.strip()]
-            
-            # New format: institution/location on first line, degree/dates on second line
-            # Institution name (left) and location (right)
-            formatted_text += f"<p><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Degree (left) and dates (right)
-            formatted_text += f"<p><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add highlights as paragraphs
-            if highlights:
-                for highlight in highlights:
-                    formatted_text += f"<p>{highlight}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["education"] = formatted_text
-        return formatted_text
-
-    def _format_skills_json(self, skills_data: Dict) -> str:
-        """Format skills JSON data into HTML"""
-        if not skills_data:
-            return ""
-
-        formatted_text = ""
-
-        # Process technical skills
-        if 'technical' in skills_data and skills_data['technical']:
-            # Filter out empty or whitespace-only skills
-            technical_skills = [s for s in skills_data['technical'] if s and s.strip()]
-            if technical_skills:
-                formatted_text += "<p><strong>Technical Skills:</strong> "
-                formatted_text += ", ".join(technical_skills)
-                formatted_text += "</p>\n"
-
-        # Process soft skills
-        if 'soft' in skills_data and skills_data['soft']:
-            # Filter out empty or whitespace-only skills
-            soft_skills = [s for s in skills_data['soft'] if s and s.strip()]
-            if soft_skills:
-                formatted_text += "<p><strong>Soft Skills:</strong> "
-                formatted_text += ", ".join(soft_skills)
-                formatted_text += "</p>\n"
-
-        # Process other skills
-        if 'other' in skills_data and skills_data['other']:
-            # Filter out empty or whitespace-only skills
-            other_skills = [s for s in skills_data['other'] if s and s.strip()]
-            if other_skills:
-                formatted_text += "<p><strong>Other Skills:</strong> "
-                formatted_text += ", ".join(other_skills)
-                formatted_text += "</p>\n"
-
-        # Store formatted content for preview generation
-        self.tailored_content["skills"] = formatted_text
-        return formatted_text
-
-    def _format_projects_json(self, projects_data: List[Dict]) -> str:
-        """Format projects JSON data into HTML"""
-        if not projects_data:
-            return ""
-            
-        formatted_text = ""
-        for project in projects_data:
-            title = project.get('title', '')
-            dates = project.get('dates', '')
-            details = project.get('details', [])
-            
-            # Filter out empty or whitespace-only details
-            if details:
-                details = [d for d in details if d and d.strip()]
-            
-            # Project title (left) and dates (right)
-            formatted_text += f"<p><span class='project-title'>{title.upper()}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add details as paragraphs
-            if details:
-                for detail in details:
-                    formatted_text += f"<p>{detail}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["projects"] = formatted_text
-        return formatted_text
 
     # Add a method to save all raw responses to a single file
     def save_all_raw_responses(self, resume_filename):
@@ -1195,7 +921,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
             return None
 
     def save_tailored_content_to_json(self):
-        """Save tailored content to non-timestamped JSON files for the HTML preview"""
+        """DEPRECATED: This method saved formatted HTML to fixed filenames. Use the request_id based saving in tailor_resume_with_llm."""
         try:
             # Create api_responses directory if it doesn't exist
             api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
@@ -1428,9 +1154,9 @@ def format_projects_content(content: str) -> str:
     return html_generator.format_projects_content(content)
 
 
-def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> str:
+def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for_screen: bool = True) -> str:
     """Proxy function that calls the implementation in html_generator"""
-    return html_generator.generate_preview_from_llm_responses(llm_client, for_screen=for_screen)
+    return html_generator.generate_preview_from_llm_responses(request_id, upload_folder, for_screen=for_screen)
 
 
 def extract_resume_sections(doc_path: str) -> Dict[str, str]:
@@ -1665,19 +1391,27 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
         }
 
 
-def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provider: str = "openai", api_url: str = None) -> Tuple[str, str, Union[ClaudeClient, OpenAIClient]]:
+def tailor_resume_with_llm(
+    resume_path: str,
+    job_data: Dict,
+    api_key: str,
+    provider: str = "openai",
+    api_url: str = None,
+    request_id: str = None
+) -> Tuple[Dict[str, Any], Union[ClaudeClient, OpenAIClient]]:
     """
-    Tailor resume with LLM (Claude or OpenAI)
+    Main function to tailor resume using either Claude or OpenAI LLM
     
     Args:
-        resume_path: Path to resume file
-        job_data: Job data including requirements and skills
-        api_key: API key for the LLM provider
-        provider: LLM provider (claude or openai)
-        api_url: Optional API URL for Claude
+        resume_path (str): Path to the original resume file (DOCX or PDF)
+        job_data (Dict): Dictionary containing job requirements and skills
+        api_key (str): API key for the selected provider
+        provider (str): LLM provider ("claude" or "openai")
+        api_url (str): API URL for Claude (optional)
+        request_id (str): Unique identifier for this tailoring request
         
     Returns:
-        Tuple of (output_filename, output_path, llm_client)
+        Tuple[Dict[str, Any], Union[ClaudeClient, OpenAIClient]]: Dictionary of tailored sections, LLM client instance
     """
     global last_llm_client
     
@@ -1695,50 +1429,106 @@ def tailor_resume_with_llm(resume_path: str, job_data: Dict, api_key: str, provi
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
     
-    # Add contact section directly to tailored_content without tailoring it
-    if resume_sections.get("contact", "").strip():
-        logger.info(f"Preserving contact section for tailored resume: {len(resume_sections['contact'])} chars")
-        llm_client.tailored_content["contact"] = resume_sections["contact"]
-    else:
-        logger.warning("No contact information found in resume sections")
-        
-    # Handle summary section - either preserve existing or generate a new one
-    if resume_sections.get("summary", "").strip():
-        logger.info(f"Preserving existing summary section for tailored resume: {len(resume_sections['summary'])} chars")
-        llm_client.tailored_content["summary"] = resume_sections["summary"]
-    else:
-        logger.warning("No summary information found in resume sections, generating a new summary")
-        generated_summary = generate_professional_summary(resume_sections, job_data, llm_client, provider)
-        if generated_summary:
-            logger.info(f"Generated new professional summary: {len(generated_summary)} chars")
-            llm_client.tailored_content["summary"] = generated_summary
-        else:
-            logger.error("Failed to generate professional summary")
-    
     # Tailor each section
-    for section_name, content in resume_sections.items():
-        if content.strip() and section_name in ["experience", "education", "skills", "projects"]:
-            logger.info(f"Tailoring {section_name} section")
-            tailored_content = llm_client.tailor_resume_content(section_name, content, job_data)
-            resume_sections[section_name] = tailored_content
-    
-    # Save tailored content to non-timestamped JSON files for HTML preview
-    llm_client.save_tailored_content_to_json()
-    
-    # Generate output filename
-    resume_filename = os.path.basename(resume_path)
-    base_name = os.path.splitext(resume_filename)[0]
-    output_filename = f"{base_name}_tailored_{provider}.pdf"
-    output_dir = os.path.dirname(resume_path)
-    output_path = os.path.join(output_dir, output_filename)
-    
-    # Store LLM client for preview generation
-    last_llm_client = llm_client
-    
-    # Return info without generating YC-style PDF
-    return output_filename, output_path, llm_client
+    tailored_sections = {}
+    section_order = ["contact", "summary", "experience", "education", "skills", "projects"]
 
-def generate_professional_summary(resume_sections: Dict[str, str], job_data: Dict, llm_client, provider: str) -> str:
+    # Preserve contact section directly
+    if "contact" in resume_sections:
+        tailored_sections["contact"] = resume_sections["contact"].strip()
+        # Store directly in client for potential later use (though we'll save from tailored_sections)
+        logger.info(f"Preserving contact section for tailored resume: {len(tailored_sections['contact'])} chars")
+    else:
+        logger.warning("Contact section not found in resume")
+        tailored_sections["contact"] = "" # Ensure key exists
+
+    # Handle summary - generate if missing or tailor if present
+    if "summary" not in resume_sections or not resume_sections["summary"].strip():
+        logger.warning("No summary information found in resume sections, generating a new summary")
+        try:
+            tailored_sections["summary"] = generate_professional_summary(resume_sections, job_data, llm_client, provider)
+            logger.info(f"Generated new professional summary: {len(tailored_sections['summary'])} chars")
+        except Exception as summary_err:
+            logger.error(f"Error generating professional summary: {summary_err}")
+            tailored_sections["summary"] = "" # Default to empty if generation fails
+    else:
+        logger.info("Tailoring existing summary section")
+        tailored_sections["summary"] = llm_client.tailor_resume_content("summary", resume_sections["summary"], job_data)
+
+    # Tailor other sections
+    for section_name in section_order:
+        if section_name not in ["contact", "summary"]:
+            if section_name in resume_sections and resume_sections[section_name].strip():
+                logger.info(f"Tailoring {section_name} section")
+                tailored_content_result = llm_client.tailor_resume_content(section_name, resume_sections[section_name], job_data)
+                tailored_sections[section_name] = tailored_content_result
+            else:
+                logger.info(f"Skipping empty or missing section: {section_name}")
+                tailored_sections[section_name] = "" # Ensure key exists
+
+    # --- START: New saving logic (Step 3.3c) ---
+    try:
+        temp_data_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp_session_data')
+        # Ensure directory exists (might be redundant if created in app.py, but safe)
+        os.makedirs(temp_data_dir, exist_ok=True)
+
+        sections_saved_count = 0
+        logger.info(f"Attempting to save cleaned sections for request_id: {request_id}")
+        # Use tailored_sections collected in this function scope
+        for section_name, content in tailored_sections.items():
+            if content is not None: # Save even if content is empty string, but not None
+                # Determine the filename using request_id
+                cleaned_filepath = os.path.join(temp_data_dir, f"{request_id}_{section_name}.json")
+                # Save the actual content (which should be the final string or structured data)
+                # We need to decide the format - let's save the direct content string/structure
+                # For now, let's assume the values in tailored_sections are the final desired JSON-compatible structures
+                # or strings. We'll save them directly.
+                # TODO: Verify the format stored in tailored_sections matches what html_generator expects.
+                # Let's wrap simple strings in a basic JSON structure for consistency.
+                data_to_save = {}
+                if isinstance(content, str):
+                     # Attempt to parse if it looks like JSON, otherwise wrap it
+                    try:
+                        parsed_json = json.loads(content)
+                        data_to_save = parsed_json # Save parsed JSON if valid
+                    except json.JSONDecodeError:
+                        # If not valid JSON, wrap the string content
+                        data_to_save = { "content": content }
+                elif isinstance(content, (dict, list)):
+                    data_to_save = content # Save dicts/lists directly
+                else:
+                    # Handle other types if necessary, or log a warning
+                    logger.warning(f"Unexpected data type for section {section_name}: {type(content)}. Saving as string.")
+                    data_to_save = { "content": str(content) }
+
+                try:
+                    with open(cleaned_filepath, 'w', encoding='utf-8') as f:
+                        json.dump(data_to_save, f, indent=2, ensure_ascii=False)
+                    sections_saved_count += 1
+                    logger.info(f"Saved cleaned {section_name} content for request {request_id} to {cleaned_filepath}")
+                except Exception as save_err:
+                    logger.error(f"Error saving cleaned section {section_name} for request {request_id} to {cleaned_filepath}: {save_err}")
+            else:
+                 logger.warning(f"Content for section {section_name} is None, skipping save for request {request_id}.")
+
+        logger.info(f"Saved {sections_saved_count} cleaned sections for request {request_id} to {temp_data_dir}")
+
+    except Exception as e:
+        logger.error(f"Error saving cleaned session data for request {request_id}: {e}")
+        logger.error(traceback.format_exc())
+        # Decide if we should raise an error or just log
+    # --- END: New saving logic ---
+
+    # Return the collected tailored sections and the client instance
+    last_llm_client = llm_client # Store client for potential reuse?
+    return tailored_sections, llm_client
+
+def generate_professional_summary(
+    resume_sections: Dict[str, str],
+    job_data: Dict,
+    llm_client,
+    provider: str
+) -> str:
     """
     Generate a professional summary based on resume content and job data
     

@@ -1,13 +1,14 @@
 import os
 # import ssl
-from flask import Flask, render_template, request, jsonify, send_from_directory, session, send_file, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, send_file, redirect, url_for, current_app
 from config import Config
 from upload_handler import setup_upload_routes
 from format_handler import setup_formatting_routes
 from job_parser_handler import setup_job_parser_routes
 from tailoring_handler import setup_tailoring_routes
 from werkzeug.utils import secure_filename
-from pdf_exporter import generate_pdf_from_html
+from pdf_exporter import create_pdf_from_html
+from html_generator import generate_preview_from_llm_responses
 import json
 import uuid
 from datetime import datetime
@@ -30,6 +31,10 @@ else:
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Ensure temporary session data directory exists
+TEMP_SESSION_DATA_PATH = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_session_data')
+os.makedirs(TEMP_SESSION_DATA_PATH, exist_ok=True)
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -49,6 +54,69 @@ setup_job_parser_routes(app)
 
 # Setup resume tailoring routes
 setup_tailoring_routes(app)
+
+# --- New Routes for Preview and Download using request_id ---
+
+@app.route('/preview/<request_id>')
+def preview_tailored_resume(request_id):
+    """Provide HTML preview for a specific tailoring request_id"""
+    try:
+        # Get upload folder path
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        # Generate HTML fragment using the request_id and upload_folder
+        html_fragment = generate_preview_from_llm_responses(request_id, upload_folder, for_screen=True)
+        return html_fragment # Return just the HTML content
+    except FileNotFoundError:
+        app.logger.error(f"Preview data not found for request_id: {request_id}")
+        return jsonify({'success': False, 'error': 'Preview data not found. Please tailor the resume again.'}), 404
+    except Exception as e:
+        app.logger.error(f"Error generating preview for request_id {request_id}: {str(e)}")
+        return jsonify({'success': False, 'error': f'Error generating preview: {str(e)}'}), 500
+
+@app.route('/download/<request_id>')
+def download_tailored_resume(request_id):
+    """Generate and download PDF for a specific tailoring request_id"""
+    try:
+        # Get upload folder path
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        # Generate the full HTML document needed for PDF conversion
+        full_html = generate_preview_from_llm_responses(request_id, upload_folder, for_screen=False)
+
+        # Define the output path for the PDF within the temp directory (or uploads)
+        # Let's put final PDFs in the main uploads folder for consistency with downloads
+        output_dir = app.config['UPLOAD_FOLDER']
+        # We need a base filename, maybe derive from request_id or fetch original filename if stored
+        # For now, use request_id
+        pdf_filename = f"tailored_resume_{request_id}.pdf"
+        pdf_output_path = os.path.join(output_dir, pdf_filename)
+
+        # Generate the PDF file
+        pdf_path = create_pdf_from_html(
+            full_html,
+            pdf_output_path,
+            metadata={
+                'title': f'Tailored Resume {request_id}',
+                'author': 'Resume Tailoring App'
+            }
+        )
+
+        # Send the generated PDF file for download
+        return send_from_directory(
+            output_dir,
+            pdf_filename,
+            as_attachment=True,
+            mimetype='application/pdf'
+        )
+
+    except FileNotFoundError:
+        app.logger.error(f"Data not found for generating PDF for request_id: {request_id}")
+        # Provide a user-friendly error page or response
+        return "<html><body><h1>Error</h1><p>Could not find the data needed to generate the PDF. Please try tailoring the resume again.</p></body></html>", 404
+    except Exception as e:
+        app.logger.error(f"Error generating or downloading PDF for request_id {request_id}: {str(e)}")
+        return "<html><body><h1>Error</h1><p>An unexpected error occurred while generating the PDF.</p></body></html>", 500
+
+# --- End New Routes ---
 
 @app.route('/download/<filename>')
 def download_file(filename):
@@ -89,7 +157,7 @@ def generate_pdf():
         filename = f"resume_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         
         # Generate PDF in memory
-        pdf_buffer = generate_pdf_from_html(resume_data)
+        pdf_buffer = create_pdf_from_html(resume_data)
         
         # Return PDF for download
         return send_file(
@@ -113,7 +181,7 @@ def download_pdf():
         return jsonify({"error": "No resume data provided"}), 400
     
     # Generate PDF from resume data
-    pdf_buffer = generate_pdf_from_html(resume_data)
+    pdf_buffer = create_pdf_from_html(resume_data)
     
     # Get file name from the person's name or use a default
     filename = f"{resume_data.get('name', 'Tailored_Resume').replace(' ', '_')}.pdf"
@@ -127,6 +195,12 @@ def download_pdf():
     )
 
 if __name__ == '__main__':
+    # Configure Flask session
+    # A secret key is required for session management
+    app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change') # Use environment variable or generate one
+    if app.secret_key == 'dev-secret-key-please-change':
+        print("WARNING: Using default Flask secret key. Set FLASK_SECRET_KEY environment variable for production.")
+
     # Run with HTTP only
     print("Running with HTTP on http://0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
