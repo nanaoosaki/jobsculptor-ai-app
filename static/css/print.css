@@ -232,7 +232,7 @@ hr {
   line-height: 1.2;
 }
 .job .job-content li::before, .job .education-content li::before, .job .project-content li::before, .education .job-content li::before, .education .education-content li::before, .education .project-content li::before, .project .job-content li::before, .project .education-content li::before, .project .project-content li::before {
-  content: "u2022";
+  content: "\2022";
   position: absolute;
   left: 0;
   top: 0.1em;
