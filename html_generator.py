@@ -1,6 +1,9 @@
 import logging
 import re
 from typing import Dict, List, Union, Optional
+import traceback
+
+from utils.bullet_utils import strip_bullet_prefix, BULLET_ESCAPE_RE
 from style_manager import StyleManager
 
 logger = logging.getLogger(__name__)
@@ -125,7 +128,7 @@ def format_section_content(content: str) -> str:
     return html
 
 
-def format_job_entry(company: str, location: str, position: str, dates: str, content: List[str]) -> str:
+def format_job_entry(company: str, location: str, position: str, dates: str, achievements: List[str]) -> str:
     """
     Format a job entry into HTML.
     
@@ -134,7 +137,7 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
         location: Job location
         position: Job position
         dates: Employment dates
-        content: Job details/bullets
+        achievements: Job details/bullets (previously content)
     
     Returns:
         Formatted HTML for job entry
@@ -155,16 +158,22 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     html_parts.append(f'</div>')
     
     # Content as paragraphs
-    if content:
+    if achievements:
         html_parts.append('<div class="job-content">')
         # Determine if the content list should be bullets
-        if len(content) > 1:
+        if len(achievements) > 1:
             html_parts.append('<ul class="bullets">')
-            for item in content:
-                html_parts.append(f'<li>{item}</li>')
+            for item in achievements:
+                # Cleaning is now done before saving to JSON, removed here
+                # cleaned_item = strip_bullet_prefix(item)
+                # Use item directly as it should be clean
+                html_parts.append(f'<li>{item}</li>') 
             html_parts.append('</ul>')
-        else:
-            html_parts.append(f'<p>{content[0]}</p>')
+        elif len(achievements) == 1:
+            # Cleaning is now done before saving to JSON, removed here
+            # cleaned_item = strip_bullet_prefix(content[0])
+             # Use item directly as it should be clean
+            html_parts.append(f'<p>{achievements[0]}</p>')
         html_parts.append('</div>')
     
     html_parts.append('</div>')
@@ -246,114 +255,104 @@ def format_project_entry(title: str, dates: str, details: List[str]) -> str:
     return ''.join(html_parts)
 
 
-def format_education_content(content: str) -> str:
+def format_education_content(education_data: List[Dict]) -> str:
     """
-    Format education content for HTML display.
-    
-    This function parses education content that could be either raw string or JSON,
-    and converts it to HTML.
+    Format education content (structured list) for HTML display.
     """
-    import json
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    if not content or content.strip() == "":
+    if not education_data:
         return "<p>No education information available.</p>"
     
+    html = ""
     try:
-        # Try to parse as JSON first
-        if content.strip().startswith('{') or content.strip().startswith('['):
-            try:
-                education_data = json.loads(content)
-                # Process structured JSON data
-                # This would need specific logic based on your data structure
-                if isinstance(education_data, list):
-                    html = ""
-                    for entry in education_data:
-                        institution = entry.get('institution', '')
-                        location = entry.get('location', '')
-                        degree = entry.get('degree', '')
-                        dates = entry.get('dates', '')
-                        highlights = entry.get('highlights', [])
-                        
-                        html += format_education_entry(institution, location, degree, dates, highlights)
-                    return html
-                elif isinstance(education_data, dict):
-                    # Handle single education entry as dictionary
-                    return format_section_content(education_data.get('content', ''))
-                else:
-                    # Use the raw content as fallback
-                    return format_section_content(content)
-            except json.JSONDecodeError:
-                # If JSON parsing fails, treat as raw content
-                logger.debug("Education content not valid JSON, processing as raw text")
-                return format_section_content(content)
+        if isinstance(education_data, list):
+            for entry in education_data:
+                institution = entry.get('institution', '')
+                location = entry.get('location', '')
+                degree = entry.get('degree', '')
+                dates = entry.get('dates', '')
+                highlights = entry.get('highlights', [])
+                
+                # Ensure highlights is a list of strings
+                if not isinstance(highlights, list):
+                    highlights = [str(highlights)] if highlights else []
+                    
+                html += format_education_entry(institution, location, degree, dates, highlights)
+            return html
         else:
-            # Treat as raw content
-            return format_section_content(content)
+            # Handle case where unexpected data type is passed
+            logger.warning(f"Unexpected data type for education content: {type(education_data)}")
+            return "<p>Error formatting education section: Invalid data format.</p>"
+            
     except Exception as e:
         logger.error(f"Error formatting education content: {str(e)}")
+        logger.error(traceback.format_exc())
         return f"<p>Error formatting education section: {str(e)}</p>"
 
 
-def format_projects_content(content: str) -> str:
+def format_projects_content(projects_data: List[Dict]) -> str:
     """
-    Format projects content for HTML display.
-    
-    This function parses projects content that could be either raw string or JSON,
-    and converts it to HTML.
+    Format projects content (structured list) for HTML display.
     """
-    import json
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    if not content or content.strip() == "":
+    if not projects_data:
         return "<p>No projects information available.</p>"
     
+    html = ""
     try:
-        # Try to parse as JSON first
-        if content.strip().startswith('{') or content.strip().startswith('['):
-            try:
-                projects_data = json.loads(content)
-                # Process structured JSON data
-                if isinstance(projects_data, list):
-                    html = ""
-                    for entry in projects_data:
-                        title = entry.get('title', '')
-                        dates = entry.get('dates', '')
-                        details = entry.get('details', [])
-                        
-                        html += format_project_entry(title, dates, details)
-                    return html
-                elif isinstance(projects_data, dict):
-                    # Handle single project entry or content field
-                    return format_section_content(projects_data.get('content', ''))
-                else:
-                    # Use the raw content as fallback
-                    return format_section_content(content)
-            except json.JSONDecodeError:
-                # If JSON parsing fails, treat as raw content
-                logger.debug("Projects content not valid JSON, processing as raw text")
-                return format_section_content(content)
+        if isinstance(projects_data, list):
+            for entry in projects_data:
+                title = entry.get('title', '')
+                dates = entry.get('dates', '')
+                details = entry.get('details', [])
+                
+                 # Ensure details is a list of strings
+                if not isinstance(details, list):
+                    details = [str(details)] if details else []
+                
+                html += format_project_entry(title, dates, details)
+            return html
         else:
-            # Treat as raw content
-            return format_section_content(content)
+            # Handle case where unexpected data type is passed
+            logger.warning(f"Unexpected data type for projects content: {type(projects_data)}")
+            return "<p>Error formatting projects section: Invalid data format.</p>"
     except Exception as e:
         logger.error(f"Error formatting projects content: {str(e)}")
+        logger.error(traceback.format_exc())
         return f"<p>Error formatting projects section: {str(e)}</p>"
+
+
+def format_skills_content(skills_data: Dict) -> str:
+    """
+    Format skills content (structured dict) for HTML display.
+    """
+    if not skills_data or not isinstance(skills_data, dict):
+        return "<p>No skills information available.</p>"
+
+    html_parts = []
+    # Define the order and titles for skill categories
+    skill_categories = {
+        "technical": "Technical Skills",
+        "soft": "Soft Skills",
+        "other": "Other Skills"
+    }
+
+    for key, title in skill_categories.items():
+        skills_list = skills_data.get(key, [])
+        if skills_list and isinstance(skills_list, list):
+            # Join skills with a comma and space
+            skills_text = ", ".join(filter(None, skills_list)) # Filter out potential None values
+            if skills_text: # Add paragraph only if there are skills to show
+                html_parts.append(f'<p><strong>{title}:</strong> {skills_text}</p>')
+
+    if not html_parts:
+        return "<p>No skills information available.</p>"
+        
+    return "\n".join(html_parts)
 
 
 def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> str:
     """
     Generate an HTML preview from LLM API responses.
-    
-    This function reads the response files from the API responses directory
-    and generates an HTML preview of the tailored resume.
-    
-    Args:
-        llm_client: The LLM client instance (used for context).
-        for_screen (bool): If True, returns only the HTML fragment for the resume content.
-                          If False, generates a full HTML document suitable for PDF conversion.
+    Reads structured JSON data saved by the LLM client.
     """
     import os
     import json
@@ -504,13 +503,15 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
                     location = job.get('location', '')
                     position = job.get('position', '')
                     dates = job.get('dates', '')
-                    content = job.get('content', [])
+                    # Use the correct key 'achievements' instead of 'content'
+                    achievements = job.get('achievements', []) 
                     
                     if not any([company, position]):  # Skip empty entries
                         continue
                         
+                    # Pass the achievements list to the updated function
                     content_parts.append(
-                        format_job_entry(company, location, position, dates, content)
+                        format_job_entry(company, location, position, dates, achievements)
                     )
                 
                 content_parts.append('</div>')
@@ -521,51 +522,74 @@ def generate_preview_from_llm_responses(llm_client, for_screen: bool = True) -> 
         
         # Add education section
         try:
-            with open(os.path.join(api_responses_dir, 'education.json'), 'r') as f:
-                education_content = f.read()
+            education_filepath = os.path.join(api_responses_dir, 'education.json')
+            with open(education_filepath, 'r') as f:
+                education_data = json.load(f)
                 
-            if education_content.strip():
+            if education_data:
                 content_parts.append('<div class="resume-section">')
                 content_parts.append('<div class="section-box"><h2>Education</h2></div>')
                 content_parts.append('<div class="education-content">')
-                content_parts.append(format_education_content(education_content))
+                # Pass the loaded list directly to the formatter
+                content_parts.append(format_education_content(education_data))
                 content_parts.append('</div>')
                 content_parts.append('</div>')
+            else:
+                 logger.info("Education data file was empty or contained no data.")
                 
-        except FileNotFoundError as e:
-            logger.error(f"Error processing education section: {e}")
+        except FileNotFoundError:
+            logger.warning(f"Education section file not found: {education_filepath}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding education JSON from {education_filepath}: {e}")
+        except Exception as e:
+             logger.error(f"Error processing education section: {e}")
         
         # Add skills section
         try:
-            with open(os.path.join(api_responses_dir, 'skills.json'), 'r') as f:
+            skills_filepath = os.path.join(api_responses_dir, 'skills.json')
+            with open(skills_filepath, 'r') as f:
                 skills_data = json.load(f)
                 
-            skills_text = skills_data.get('content', '')
-            if skills_text.strip():
+            if skills_data:
                 content_parts.append('<div class="resume-section">')
                 content_parts.append('<div class="section-box"><h2>Skills</h2></div>')
                 content_parts.append('<div class="skills-content">')
-                content_parts.append(format_section_content(skills_text))
+                 # Pass the loaded dictionary directly to the new formatter
+                content_parts.append(format_skills_content(skills_data))
                 content_parts.append('</div>')
                 content_parts.append('</div>')
+            else:
+                logger.info("Skills data file was empty or contained no data.")
                 
-        except (FileNotFoundError, json.JSONDecodeError) as e:
+        except FileNotFoundError:
+             logger.warning(f"Skills section file not found: {skills_filepath}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding skills JSON from {skills_filepath}: {e}")
+        except Exception as e:
             logger.error(f"Error processing skills section: {e}")
         
         # Add projects section
         try:
-            with open(os.path.join(api_responses_dir, 'projects.json'), 'r') as f:
-                projects_content = f.read()
+            projects_filepath = os.path.join(api_responses_dir, 'projects.json')
+            with open(projects_filepath, 'r') as f:
+                projects_data = json.load(f)
                 
-            if projects_content.strip():
+            if projects_data:
                 content_parts.append('<div class="resume-section">')
                 content_parts.append('<div class="section-box"><h2>Projects</h2></div>')
                 content_parts.append('<div class="projects-content">')
-                content_parts.append(format_projects_content(projects_content))
+                # Pass the loaded list directly to the formatter
+                content_parts.append(format_projects_content(projects_data))
                 content_parts.append('</div>')
                 content_parts.append('</div>')
+            else:
+                logger.info("Projects data file was empty or contained no data.")
                 
-        except FileNotFoundError as e:
+        except FileNotFoundError:
+            logger.warning(f"Projects section file not found: {projects_filepath}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding projects JSON from {projects_filepath}: {e}")
+        except Exception as e:
             logger.error(f"Error processing projects section: {e}")
         
     except Exception as e:

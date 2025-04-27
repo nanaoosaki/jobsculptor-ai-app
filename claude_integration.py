@@ -29,13 +29,11 @@ logger = logging.getLogger(__name__)
 # Global variable to track the last LLM client used
 last_llm_client = None
 
-# Import our YC Resume Generator
-
 # Import the new html_generator module
 import html_generator
 
-# Import utils
-from utils.bullet_utils import strip_bullet_prefix
+# Shared bullet utility
+from utils.bullet_utils import strip_bullet_prefix, BULLET_ESCAPE_RE
 
 
 def clean_bullet_points(text: str) -> str:
@@ -58,83 +56,16 @@ def clean_bullet_points(text: str) -> str:
     
     logger.info(f"Cleaning bullet points from text ({len(text)} chars)")
     
-    # Split into lines to process each line individually
+    # Simple wrapper using shared util – ensures single source of truth
     lines = text.split('\n')
-    cleaned_lines = []
-    bullet_count = 0
-    
-    # Define comprehensive bullet point patterns
-    # Unicode bullet symbols
-    unicode_bullets = [
-        '•', '◦', '▪', '▫', '■', '□', '▸', '►', '▹', '▻', '▷', '▶', '→', '⇒', '⟹', '⟶',
-        '⇢', '⇨', '⟾', '➔', '➜', '➙', '➛', '➝', '➞', '➟', '➠', '➡', '➢', '➣', '➤', '➥', 
-        '➦', '➧', '➨', '➩', '➪', '➫', '➬', '➭', '➮', '➯', '➱', '➲', '➳', '➵', '➸', '➼',
-        '⦿', '⦾', '⧫', '⧮', '⧠', '⧔', '∙', '◆', '◇', '◈'
-    ]
-    
-    # ASCII/common bullet symbols for regex
-    ascii_bullets = r'[\*\-\+o~=#>]'
-    
-    # NEW: textual escape sequences for bullets (e.g., "u2022")
-    bullet_escapes_pattern = re.compile(r'^(?:u2022|\\u2022|U\+2022|&#8226;|&bull;)\s+', re.IGNORECASE)
+    cleaned_lines = [strip_bullet_prefix(l) for l in lines]
 
-    for i, line in enumerate(lines):
-        line = line.strip()
-        
-        # Skip empty lines
-        if not line:
-            cleaned_lines.append('')
-            continue
-        
-        # Check for Unicode bullet symbols at the beginning
-        if line and line[0] in unicode_bullets:
-            # Find where the content starts after the bullet and any spaces
-            content_start = 1
-            while content_start < len(line) and line[content_start].isspace():
-                content_start += 1
-                
-            # Extract just the content, removing the bullet and leading spaces
-            if content_start < len(line):
-                cleaned_line = line[content_start:]
-                cleaned_lines.append(cleaned_line)
-                bullet_count += 1
-                continue
-        
-        # Check for ASCII bullet symbols (*, -, +, etc.) at the beginning
-        ascii_bullet_match = re.match(r'^\s*[-*•]\s+', line)
-        if ascii_bullet_match:
-            cleaned_line = line[ascii_bullet_match.end():]
-            cleaned_lines.append(cleaned_line)
-            bullet_count += 1
-            continue
-            
-        # Check for numbered bullets like "1.", "1)", "(1)", etc.
-        numbered_match = re.match(
-    r'^\s*(?:\(?\d+[\.\)\]]\s+|\d+[\.\)\]]\s+|\[\d+\]\s+)', line)
-        if numbered_match:
-            cleaned_line = line[numbered_match.end():]
-            cleaned_lines.append(cleaned_line)
-            bullet_count += 1
-            continue
-            
-        # Check for textual bullet escape sequences (e.g., "u2022")
-        escape_match = bullet_escapes_pattern.match(line)
-        if escape_match:
-            cleaned_line = line[escape_match.end():]
-            cleaned_lines.append(cleaned_line)
-            bullet_count += 1
-            continue
-        
-        # No bullet point found, keep the line as is
-        cleaned_lines.append(line)
-    
-    # Join the cleaned lines back into a single string
     cleaned_text = '\n'.join(cleaned_lines)
-    
-    # Validate the cleaning
-    if bullet_count > 0:
-        logger.info(f"Removed {bullet_count} bullet point markers from text")
-    
+
+    # Optional: quick validation log
+    stray = sum(1 for l in cleaned_lines if BULLET_ESCAPE_RE.match(l))
+    if stray:
+        logger.warning(f"clean_bullet_points(): {stray} bullet markers remained after cleaning")
     return cleaned_text
 
 
@@ -470,16 +401,71 @@ Focus on emphasizing elements most relevant to this job opportunity.
 
                 # Process JSON based on section type
                 if section_name == "experience" and "experience" in json_response:
-                    return self._format_experience_json(
-                        json_response["experience"])
+                    # Clean the structured data directly after parsing
+                    experience_data = json_response["experience"]
+                    cleaned_experience_data = []
+                    if isinstance(experience_data, list):
+                        for job in experience_data:
+                            if isinstance(job, dict):
+                                # Clean achievements list within the job dictionary
+                                achievements = job.get('achievements', [])
+                                if isinstance(achievements, list):
+                                    job['achievements'] = [strip_bullet_prefix(a) for a in achievements if isinstance(a, str) and a.strip()]
+                                cleaned_experience_data.append(job)
+                            else:
+                                logger.warning(f"Skipping non-dictionary item in experience data: {job}")
+                        # Store the cleaned Python list structure
+                        self.tailored_content[section_name] = cleaned_experience_data 
+                        # Return the cleaned structure (though it's not directly used by caller now)
+                        return cleaned_experience_data 
+                    else:
+                        logger.warning(f"Experience data is not a list: {experience_data}")
+                        # Store raw response as fallback if structure is wrong
+                        self.tailored_content[section_name] = response_content 
+                        return response_content # Return raw text if structure unexpected
                 elif section_name == "education" and "education" in json_response:
-                    return self._format_education_json(
-                        json_response["education"])
+                    # Clean education highlights
+                    education_data = json_response["education"]
+                    cleaned_education_data = []
+                    if isinstance(education_data, list):
+                        for edu in education_data:
+                             if isinstance(edu, dict):
+                                highlights = edu.get('highlights', [])
+                                if isinstance(highlights, list):
+                                    edu['highlights'] = [strip_bullet_prefix(h) for h in highlights if isinstance(h, str) and h.strip()]
+                                cleaned_education_data.append(edu)
+                             else:
+                                 logger.warning(f"Skipping non-dictionary item in education data: {edu}")
+                    self.tailored_content[section_name] = cleaned_education_data
+                    return cleaned_education_data # Return cleaned structure
                 elif section_name == "skills" and "skills" in json_response:
-                    return self._format_skills_json(json_response["skills"])
+                     # Clean skills lists
+                    skills_data = json_response["skills"]
+                    if isinstance(skills_data, dict):
+                        for key in ['technical', 'soft', 'other']:
+                            if key in skills_data and isinstance(skills_data[key], list):
+                                skills_data[key] = [strip_bullet_prefix(s) for s in skills_data[key] if isinstance(s, str) and s.strip()]
+                        self.tailored_content[section_name] = skills_data
+                        return skills_data # Return cleaned structure
+                    else:
+                        logger.warning(f"Skills data is not a dictionary: {skills_data}")
+                        self.tailored_content[section_name] = response_content
+                        return response_content # Return raw text if structure unexpected
                 elif section_name == "projects" and "projects" in json_response:
-                    return self._format_projects_json(
-                        json_response["projects"])
+                     # Clean project details
+                    projects_data = json_response["projects"]
+                    cleaned_projects_data = []
+                    if isinstance(projects_data, list):
+                        for proj in projects_data:
+                            if isinstance(proj, dict):
+                                details = proj.get('details', [])
+                                if isinstance(details, list):
+                                    proj['details'] = [strip_bullet_prefix(d) for d in details if isinstance(d, str) and d.strip()]
+                                cleaned_projects_data.append(proj)
+                            else:
+                               logger.warning(f"Skipping non-dictionary item in projects data: {proj}")
+                    self.tailored_content[section_name] = cleaned_projects_data
+                    return cleaned_projects_data # Return cleaned structure
                 elif section_name in json_response:
                     # For other sections, just return the string content
                     formatted_text = json_response[section_name]
@@ -499,137 +485,6 @@ Focus on emphasizing elements most relevant to this job opportunity.
         except Exception as e:
             logger.error(f"Error in Claude API call: {str(e)}")
             return content
-
-    def _format_experience_json(self, experience_data: List[Dict]) -> str:
-        """Format experience JSON data into HTML"""
-        if not experience_data:
-            return ""
-            
-        formatted_text = ""
-        for job in experience_data:
-            company = job.get('company', '')
-            location = job.get('location', '')
-            position = job.get('position', '')
-            dates = job.get('dates', '')
-            achievements = job.get('achievements', [])
-            
-            # Filter and strip bullet prefixes
-            if achievements:
-                achievements = [strip_bullet_prefix(a) for a in achievements if a and a.strip()]
-            
-            # New format: company/location on first line, position/dates on second line
-            # Company name (left) and location (right)
-            formatted_text += f"<p><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Position (left) and dates (right)
-            formatted_text += f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add achievements as paragraphs
-            if achievements:
-                for achievement in achievements:
-                    formatted_text += f"<p>{achievement}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["experience"] = formatted_text
-        return formatted_text
-
-    def _format_education_json(self, education_data: List[Dict]) -> str:
-        """Format education JSON data into HTML"""
-        if not education_data:
-            return ""
-            
-        formatted_text = ""
-        for edu in education_data:
-            institution = edu.get('institution', '')
-            location = edu.get('location', '')
-            degree = edu.get('degree', '')
-            dates = edu.get('dates', '')
-            highlights = edu.get('highlights', [])
-            
-            # Filter out empty or whitespace-only highlights
-            if highlights:
-                highlights = [h for h in highlights if h and h.strip()]
-            
-            # New format: institution/location on first line, degree/dates on second line
-            # Institution name (left) and location (right)
-            formatted_text += f"<p><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Degree (left) and dates (right)
-            formatted_text += f"<p><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add highlights as paragraphs
-            if highlights:
-                for highlight in highlights:
-                    formatted_text += f"<p>{highlight}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["education"] = formatted_text
-        return formatted_text
-
-    def _format_skills_json(self, skills_data: Dict) -> str:
-        """Format skills JSON data into HTML"""
-        if not skills_data:
-            return ""
-
-        formatted_text = ""
-
-        # Process technical skills
-        if 'technical' in skills_data and skills_data['technical']:
-            # Filter out empty or whitespace-only skills
-            technical_skills = [s for s in skills_data['technical'] if s and s.strip()]
-            if technical_skills:
-                formatted_text += "<p><strong>Technical Skills:</strong> "
-                formatted_text += ", ".join(technical_skills)
-                formatted_text += "</p>\n"
-
-        # Process soft skills
-        if 'soft' in skills_data and skills_data['soft']:
-            # Filter out empty or whitespace-only skills
-            soft_skills = [s for s in skills_data['soft'] if s and s.strip()]
-            if soft_skills:
-                formatted_text += "<p><strong>Soft Skills:</strong> "
-                formatted_text += ", ".join(soft_skills)
-                formatted_text += "</p>\n"
-
-        # Process other skills
-        if 'other' in skills_data and skills_data['other']:
-            # Filter out empty or whitespace-only skills
-            other_skills = [s for s in skills_data['other'] if s and s.strip()]
-            if other_skills:
-                formatted_text += "<p><strong>Other Skills:</strong> "
-                formatted_text += ", ".join(other_skills)
-                formatted_text += "</p>\n"
-
-        # Store formatted content for preview generation
-        self.tailored_content["skills"] = formatted_text
-        return formatted_text
-
-    def _format_projects_json(self, projects_data: List[Dict]) -> str:
-        """Format projects JSON data into HTML"""
-        if not projects_data:
-            return ""
-            
-        formatted_text = ""
-        for project in projects_data:
-            title = project.get('title', '')
-            dates = project.get('dates', '')
-            details = project.get('details', [])
-            
-            # Filter out empty or whitespace-only details
-            if details:
-                details = [d for d in details if d and d.strip()]
-            
-            # Project title (left) and dates (right)
-            formatted_text += f"<p><span class='project-title'>{title.upper()}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add details as paragraphs
-            if details:
-                for detail in details:
-                    formatted_text += f"<p>{detail}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["projects"] = formatted_text
-        return formatted_text
 
 
 class OpenAIClient(LLMClient):
@@ -1016,14 +871,79 @@ Focus on emphasizing elements most relevant to this job opportunity.
 
             # Process JSON based on section type
             if section_name == "experience" and "experience" in json_response:
-                return self._format_experience_json(
-                    json_response["experience"])
+                # Clean the structured data directly after parsing
+                experience_data = json_response["experience"]
+                cleaned_experience_data = []
+                if isinstance(experience_data, list):
+                    for job in experience_data:
+                        if isinstance(job, dict):
+                            # Clean achievements list within the job dictionary
+                            achievements = job.get('achievements', [])
+                            if isinstance(achievements, list):
+                                job['achievements'] = [strip_bullet_prefix(a) for a in achievements if isinstance(a, str) and a.strip()]
+                            cleaned_experience_data.append(job)
+                        else:
+                            logger.warning(f"Skipping non-dictionary item in experience data: {job}")
+                    # Store the cleaned Python list structure
+                    self.tailored_content[section_name] = cleaned_experience_data 
+                    # Return the cleaned structure (though it's not directly used by caller now)
+                    return cleaned_experience_data 
+                else:
+                    logger.warning(f"Experience data is not a list: {experience_data}")
+                    # Store raw response as fallback if structure is wrong
+                    self.tailored_content[section_name] = response_text 
+                    return response_text # Return raw text if structure unexpected
             elif section_name == "education" and "education" in json_response:
-                return self._format_education_json(json_response["education"])
+                # Clean education highlights
+                education_data = json_response["education"]
+                cleaned_education_data = []
+                if isinstance(education_data, list):
+                    for edu in education_data:
+                         if isinstance(edu, dict):
+                            highlights = edu.get('highlights', [])
+                            if isinstance(highlights, list):
+                                edu['highlights'] = [strip_bullet_prefix(h) for h in highlights if isinstance(h, str) and h.strip()]
+                            cleaned_education_data.append(edu)
+                         else:
+                             logger.warning(f"Skipping non-dictionary item in education data: {edu}")
+                    self.tailored_content[section_name] = cleaned_education_data
+                    return cleaned_education_data # Return cleaned structure
+                else:
+                     logger.warning(f"Education data is not a list: {education_data}")
+                     self.tailored_content[section_name] = response_text 
+                     return response_text # Return raw text if structure unexpected
             elif section_name == "skills" and "skills" in json_response:
-                return self._format_skills_json(json_response["skills"])
+                 # Clean skills lists
+                skills_data = json_response["skills"]
+                if isinstance(skills_data, dict):
+                    for key in ['technical', 'soft', 'other']:
+                        if key in skills_data and isinstance(skills_data[key], list):
+                            skills_data[key] = [strip_bullet_prefix(s) for s in skills_data[key] if isinstance(s, str) and s.strip()]
+                    self.tailored_content[section_name] = skills_data
+                    return skills_data # Return cleaned structure
+                else:
+                    logger.warning(f"Skills data is not a dictionary: {skills_data}")
+                    self.tailored_content[section_name] = response_text
+                    return response_text # Return raw text if structure unexpected
             elif section_name == "projects" and "projects" in json_response:
-                return self._format_projects_json(json_response["projects"])
+                 # Clean project details
+                projects_data = json_response["projects"]
+                cleaned_projects_data = []
+                if isinstance(projects_data, list):
+                    for proj in projects_data:
+                        if isinstance(proj, dict):
+                            details = proj.get('details', [])
+                            if isinstance(details, list):
+                                proj['details'] = [strip_bullet_prefix(d) for d in details if isinstance(d, str) and d.strip()]
+                            cleaned_projects_data.append(proj)
+                        else:
+                           logger.warning(f"Skipping non-dictionary item in projects data: {proj}")
+                    self.tailored_content[section_name] = cleaned_projects_data
+                    return cleaned_projects_data # Return cleaned structure
+                else:
+                    logger.warning(f"Projects data is not a list: {projects_data}")
+                    self.tailored_content[section_name] = response_text
+                    return response_text # Return raw text if structure unexpected
             elif section_name in json_response:
                 # For other sections, just return the string content
                 formatted_text = json_response[section_name]
@@ -1038,138 +958,6 @@ Focus on emphasizing elements most relevant to this job opportunity.
             logger.error(f"Error in OpenAI API call: {str(e)}")
             return content
 
-    def _format_experience_json(self, experience_data: List[Dict]) -> str:
-        """Format experience JSON data into HTML"""
-        if not experience_data:
-            return ""
-            
-        formatted_text = ""
-        for job in experience_data:
-            company = job.get('company', '')
-            location = job.get('location', '')
-            position = job.get('position', '')
-            dates = job.get('dates', '')
-            achievements = job.get('achievements', [])
-            
-            # Filter and strip bullet prefixes
-            if achievements:
-                achievements = [strip_bullet_prefix(a) for a in achievements if a and a.strip()]
-            
-            # New format: company/location on first line, position/dates on second line
-            # Company name (left) and location (right)
-            formatted_text += f"<p><span class='company'>{company.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Position (left) and dates (right)
-            formatted_text += f"<p class='job-subheader'><span class='position'>{position}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add achievements as paragraphs
-            if achievements:
-                for achievement in achievements:
-                    formatted_text += f"<p>{achievement}</p>\n"
-                    
-        # Store formatted content for preview generation
-        self.tailored_content["experience"] = formatted_text
-        return formatted_text
-
-    def _format_education_json(self, education_data: List[Dict]) -> str:
-        """Format education JSON data into HTML"""
-        if not education_data:
-            return ""
-            
-        formatted_text = ""
-        for edu in education_data:
-            institution = edu.get('institution', '')
-            location = edu.get('location', '')
-            degree = edu.get('degree', '')
-            dates = edu.get('dates', '')
-            highlights = edu.get('highlights', [])
-            
-            # Filter out empty or whitespace-only highlights
-            if highlights:
-                highlights = [h for h in highlights if h and h.strip()]
-            
-            # New format: institution/location on first line, degree/dates on second line
-            # Institution name (left) and location (right)
-            formatted_text += f"<p><span class='institution'>{institution.upper()}</span><span class='location'>{location}</span></p>\n"
-            
-            # Degree (left) and dates (right)
-            formatted_text += f"<p><span class='degree'>{degree}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add highlights as paragraphs
-            if highlights:
-                for highlight in highlights:
-                    formatted_text += f"<p>{highlight}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["education"] = formatted_text
-        return formatted_text
-
-    def _format_skills_json(self, skills_data: Dict) -> str:
-        """Format skills JSON data into HTML"""
-        if not skills_data:
-            return ""
-
-        formatted_text = ""
-
-        # Process technical skills
-        if 'technical' in skills_data and skills_data['technical']:
-            # Filter out empty or whitespace-only skills
-            technical_skills = [s for s in skills_data['technical'] if s and s.strip()]
-            if technical_skills:
-                formatted_text += "<p><strong>Technical Skills:</strong> "
-                formatted_text += ", ".join(technical_skills)
-                formatted_text += "</p>\n"
-
-        # Process soft skills
-        if 'soft' in skills_data and skills_data['soft']:
-            # Filter out empty or whitespace-only skills
-            soft_skills = [s for s in skills_data['soft'] if s and s.strip()]
-            if soft_skills:
-                formatted_text += "<p><strong>Soft Skills:</strong> "
-                formatted_text += ", ".join(soft_skills)
-                formatted_text += "</p>\n"
-
-        # Process other skills
-        if 'other' in skills_data and skills_data['other']:
-            # Filter out empty or whitespace-only skills
-            other_skills = [s for s in skills_data['other'] if s and s.strip()]
-            if other_skills:
-                formatted_text += "<p><strong>Other Skills:</strong> "
-                formatted_text += ", ".join(other_skills)
-                formatted_text += "</p>\n"
-
-        # Store formatted content for preview generation
-        self.tailored_content["skills"] = formatted_text
-        return formatted_text
-
-    def _format_projects_json(self, projects_data: List[Dict]) -> str:
-        """Format projects JSON data into HTML"""
-        if not projects_data:
-            return ""
-            
-        formatted_text = ""
-        for project in projects_data:
-            title = project.get('title', '')
-            dates = project.get('dates', '')
-            details = project.get('details', [])
-            
-            # Filter out empty or whitespace-only details
-            if details:
-                details = [d for d in details if d and d.strip()]
-            
-            # Project title (left) and dates (right)
-            formatted_text += f"<p><span class='project-title'>{title.upper()}</span><span class='dates'>{dates}</span></p>\n"
-            
-            # Add details as paragraphs
-            if details:
-                for detail in details:
-                    formatted_text += f"<p>{detail}</p>\n"
-        
-        # Store formatted content for preview generation
-        self.tailored_content["projects"] = formatted_text
-        return formatted_text
-
-    # Add a method to save all raw responses to a single file
     def save_all_raw_responses(self, resume_filename):
         """Save all raw API responses to a single file"""
         try:
@@ -1195,7 +983,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
             return None
 
     def save_tailored_content_to_json(self):
-        """Save tailored content to non-timestamped JSON files for the HTML preview"""
+        """Save tailored content (Python structures) to non-timestamped JSON files"""
         try:
             # Create api_responses directory if it doesn't exist
             api_responses_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'api_responses')
@@ -1206,156 +994,72 @@ Focus on emphasizing elements most relevant to this job opportunity.
             sections_available = list(self.tailored_content.keys())
             logger.info(f"Sections available for saving: {sections_available}")
             
-            # Validate that contact section exists
+            # Validate sections exist
             if "contact" not in sections_available:
-                logger.warning("Contact section not found in tailored content. This will result in missing contact information in the resume.")
-                
-            # Validate that summary section exists
+                logger.warning("Contact section not found in tailored content.")
             if "summary" not in sections_available:
-                logger.warning("Summary section not found in tailored content. This will result in missing professional summary in the resume.")
+                logger.warning("Summary section not found in tailored content.")
             
             # Save each section to a separate JSON file without timestamp
             sections_saved = 0
             for section_name, content in self.tailored_content.items():
-                # Skip empty content
-                if not content:
-                    logger.warning(f"Empty content for section {section_name}, skipping")
+                # Skip empty content (allow empty lists/dicts for structure)
+                if content is None: 
+                    logger.warning(f"None content for section {section_name}, skipping")
                     continue
                     
-                # Create a simple JSON structure based on section type
-                json_data = {}
-                
-                if section_name == "experience":
-                    # Parse the HTML content to extract job entries
-                    experience_entries = self._extract_experience_from_html(content)
-                    json_data = experience_entries if experience_entries else []
-                elif section_name in ["summary", "contact", "skills"]:
-                    # For text sections, use simple content field
-                    json_data = {"content": content}
-                    logger.debug(f"Saving {section_name} with {len(content)} chars as simple content field")
-                elif section_name == "education":
-                    # For education, convert to proper JSON format (not raw string)
-                    # Try to parse education data
-                    json_data = {"content": content}
-                    logger.debug(f"Saving {section_name} with {len(content)} chars in structured JSON format")
-                elif section_name == "projects":
-                    # For projects, convert to proper JSON format (not raw string)
-                    json_data = {"content": content}
-                    logger.debug(f"Saving {section_name} with {len(content)} chars in structured JSON format")
-                else:
-                    # For other sections, use simple content field
-                    json_data = {"content": content}
-                    logger.debug(f"Saving {section_name} with {len(content)} chars as simple content field")
-                
                 # Define the output file path (non-timestamped)
                 filepath = os.path.join(api_responses_dir, f"{section_name}.json")
                 
-                # Write to file
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    json.dump(json_data, f, indent=2)  # Always use json.dump, not raw strings
+                # Determine the data to save (content should already be correct Python structure)
+                json_data = content
+
+                # Handle simple text sections (summary, contact) - wrap in dict
+                if section_name in ["summary", "contact"] and isinstance(content, str):
+                     json_data = {"content": content}
+                     logger.debug(f"Saving {section_name} string wrapped in dict")
+                elif section_name == "experience" and not isinstance(content, list):
+                     logger.warning(f"Experience content is not a list, attempting to save raw: {content}")
+                     json_data = {"raw_content": str(content)} # Save raw if not list
+                elif section_name == "education" and not isinstance(content, list):
+                     logger.warning(f"Education content is not a list, attempting to save raw: {content}")
+                     json_data = {"raw_content": str(content)} # Save raw if not list
+                elif section_name == "skills" and not isinstance(content, dict):
+                     logger.warning(f"Skills content is not a dict, attempting to save raw: {content}")
+                     json_data = {"raw_content": str(content)} # Save raw if not dict
+                elif section_name == "projects" and not isinstance(content, list):
+                     logger.warning(f"Projects content is not a list, attempting to save raw: {content}")
+                     json_data = {"raw_content": str(content)} # Save raw if not list
                 
-                sections_saved += 1
-                logger.info(f"Saved {section_name} content to {filepath}")
-            
+                # Write the Python structure directly to JSON file
+                try:
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump(json_data, f, indent=2) 
+                    sections_saved += 1
+                    logger.info(f"Saved {section_name} structure to {filepath}")
+                except TypeError as te:
+                     logger.error(f"TypeError saving {section_name} to JSON: {te}. Content type: {type(json_data)}")
+                     logger.error(f"Problematic content snippet: {str(json_data)[:200]}")
+                except Exception as e:
+                     logger.error(f"Error saving {section_name} to JSON: {e}")
+
             logger.info(f"Saved {sections_saved} sections to non-timestamped JSON files")
             
-            # Verify contact.json was created
+            # Verify key files were created
             contact_path = os.path.join(api_responses_dir, "contact.json")
-            if os.path.exists(contact_path):
-                logger.info(f"Verified contact.json exists at {contact_path}")
-            else:
-                logger.warning(f"Contact.json was not created at {contact_path}")
-                
-            # Verify summary.json was created
             summary_path = os.path.join(api_responses_dir, "summary.json")
-            if os.path.exists(summary_path):
-                logger.info(f"Verified summary.json exists at {summary_path}")
-            else:
-                logger.warning(f"Summary.json was not created at {summary_path}")
-                
+            experience_path = os.path.join(api_responses_dir, "experience.json")
+            
+            if not os.path.exists(contact_path): logger.warning(f"Contact.json was not created at {contact_path}")
+            if not os.path.exists(summary_path): logger.warning(f"Summary.json was not created at {summary_path}")
+            if not os.path.exists(experience_path): logger.warning(f"Experience.json was not created at {experience_path}")
+
             return True
             
         except Exception as e:
             logger.error(f"Error saving tailored content to JSON: {str(e)}")
             logger.error(traceback.format_exc())
             return False
-            
-    def _extract_experience_from_html(self, html_content):
-        """Extract structured experience data from HTML content"""
-        try:
-            # Initialize the list to hold job entries
-            experience_entries = []
-            
-            # Simple pattern matching to extract job entries
-            # This is a basic implementation - in a production environment, 
-            # consider using a proper HTML parser like BeautifulSoup
-            
-            # Define regex patterns to identify parts of the experience entry
-            company_pattern = r'<span class=[\'"]company[\'"]>(.*?)</span>'
-            location_pattern = r'<span class=[\'"]location[\'"]>(.*?)</span>'
-            position_pattern = r'<span class=[\'"]position[\'"]>(.*?)</span>'
-            dates_pattern = r'<span class=[\'"]dates[\'"]>(.*?)</span>'
-            
-            # Split HTML into job blocks (roughly by top-level paragraphs)
-            job_blocks = re.split(r'<p[^>]*>', html_content)
-            
-            current_job = {}
-            content_items = []
-            
-            for block in job_blocks:
-                if 'class=\'company\'' in block or 'class="company"' in block:
-                    # If we already have a job being built, add it to our list
-                    if current_job and 'company' in current_job:
-                        if content_items:
-                            current_job['content'] = content_items
-                        experience_entries.append(current_job)
-                        content_items = []
-                    
-                    # Start a new job
-                    current_job = {}
-                    
-                    # Extract company
-                    company_match = re.search(company_pattern, block)
-                    if company_match:
-                        current_job['company'] = company_match.group(1)
-                    
-                    # Extract location 
-                    location_match = re.search(location_pattern, block)
-                    if location_match:
-                        current_job['location'] = location_match.group(1)
-                
-                elif 'class=\'position\'' in block or 'class="position"' in block:
-                    # Extract position
-                    position_match = re.search(position_pattern, block)
-                    if position_match:
-                        current_job['position'] = position_match.group(1)
-                    
-                    # Extract dates
-                    dates_match = re.search(dates_pattern, block)
-                    if dates_match:
-                        current_job['dates'] = dates_match.group(1)
-                
-                elif '<li>' in block:
-                    # Extract content items (bullet points)
-                    items = re.findall(r'<li>(.*?)</li>', block)
-                    content_items.extend(items)
-                
-                elif block.strip() and 'company' in current_job and not block.startswith(('</p>', '</ul>')):
-                    # Add any other significant content
-                    plain_text = re.sub(r'<[^>]+>', '', block).strip()
-                    if plain_text:
-                        content_items.append(plain_text)
-            
-            # Add the last job if we have one
-            if current_job and 'company' in current_job:
-                if content_items:
-                    current_job['content'] = content_items
-                experience_entries.append(current_job)
-            
-            return experience_entries
-        except Exception as e:
-            logger.error(f"Error extracting experience from HTML: {str(e)}")
-            return []
 
 
 def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
@@ -1368,16 +1072,7 @@ def validate_bullet_point_cleaning(sections: Dict[str, str]) -> bool:
     Returns:
         bool: True if validation passed, False if bullet points were found
     """
-    bullet_patterns = [
-        # Unicode bullets
-        r'^[•◦▪▫■□▸►▹▻▷▶→⇒⟹⟶⇢⇨⟾➔➜➙➛➝➞➟➠➡➢➣➤➥➦➧➨➩➪➫➬➭➮➯➱➲➳➵➸➼⦿⦾⧫⧮⧠⧔∙◆◇◈]',
-        # ASCII bullets at beginning of line (after any whitespace)
-        r'^\s*[\*\-\+o~=#>]\s+',
-        # Textual escape forms for bullets (e.g., u2022, \u2022, U+2022, &#8226;, &bull;)
-        r'^\s*(?:u2022|\\u2022|U\+2022|&#8226;|&bull;)\s+',
-        # Numbered bullets
-        r'^\s*(?:\(?\d+[\.\)\]]\s+|\d+[\.\)\]]\s+|\[\d+\]\s+)'
-    ]
+    bullet_patterns = [BULLET_ESCAPE_RE]
 
     for section, content in sections.items():
         if not content:

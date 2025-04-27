@@ -300,6 +300,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   break-inside: avoid;
+  break-after: avoid;
 }
 
 .position-bar {
@@ -331,12 +332,8 @@ ul.bullets li::marker {
   color: #3A3A3A;
 }
 
-.resume-section {
-  page-break-inside: avoid;
-}
-
-.job, .education, .project {
-  page-break-inside: avoid;
+.resume-section, .job, .education, .project {
+  page-break-inside: auto;
 }
 
 .resume-section h2 {

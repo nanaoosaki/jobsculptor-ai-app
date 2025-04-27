@@ -252,4 +252,34 @@ This project focuses on creating an AI-powered resume tailoring tool that optimi
 - Improved error handling in the resume section extraction process.
 - Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS.
 - Removed inline styles and JavaScript width hacks, leading to a cleaner and more maintainable codebase.
-- Implemented a single-source styling architecture that allows for easy updates and modifications. 
+- Implemented a single-source styling architecture that allows for easy updates and modifications.
+
+## Starting the Application
+
+To start the Flask application, follow these steps:
+
+1. **Navigate to the Project Directory:**
+   - Open your terminal or command prompt.
+   - Use the `cd` command to navigate to the project directory:
+     ```
+     cd D:\AI\manus_resume3
+     ```
+
+2. **Run the Flask Application:**
+   - Execute the following command to start the Flask application:
+     ```
+     python app.py
+     ```
+   - Ensure that you are using the correct command syntax for your shell (e.g., PowerShell, Command Prompt).
+
+3. **Access the Application:**
+   - Once the server is running, you can access the application in your web browser at:
+     ```
+     http://127.0.0.1:5000
+     ```
+
+4. **Debugging Information:**
+   - The application will display logs in the terminal, including any errors or warnings.
+   - If you encounter issues, check the terminal output for debugging information.
+
+By following these steps, you can ensure the application starts correctly without encountering syntax errors or other issues. 

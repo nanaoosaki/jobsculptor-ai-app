@@ -317,24 +317,17 @@ sent to the client or converted to PDF.
 
 ---
 
-## Bullet-cleanup Attempt #2 – Detailed Implementation Plan
+## 2025-04-28 – Persistent 'u2022' Artifacts in Experience Section
 
-| # | Task | Owner | Notes |
-|---|------|-------|-------|
-| 1 | Expand `BULLET_ESCAPE_RE` to allow leading whitespace (`^\s*`) and fix a bug where the trailing `\s*` was stripped _after_ we already called `.lstrip()` | BE | Single-line change in `utils/bullet_utils.py` |
-| 2 | Add **HTML-level sanitiser** `html_generator.scrub_bullets_from_html()` that runs the regex across the _entire_ HTML fragment/doc right before it is returned. | BE | Guarantees no bullets make it past this point |
-| 3 | Call the sanitiser from `generate_preview_from_llm_responses()` and from `pdf_exporter` before PDF conversion. | BE | Two call-sites |
-| 4 | Strengthen `validate_bullet_point_cleaning()` to optionally accept HTML and scan **after formatting**. | BE | Keeps runtime logging useful |
-| 5 | Unit tests: | QA | 1) raw line with `"  u2022 Foo"` 2) HTML `<li>u2022 Bar</li>` – both must emerge bullet-free |
-| 6 | Regression script: tailor a known problematic resume and assert that `u2022` does **not** appear in the resulting PDF text layer (`pdftotext`). | QA | CI step |
-| 7 | Documentation update (this file) once confirmed fixed. | Tech W |  |
+Despite recent changes aimed at cleaning bullet points, the experience section in the HTML preview and PDF output still displays 'u2022' artifacts. This issue persists even though the tailored content in `experience.json` is correctly structured.
 
-### Roll-back Plan
-Set env var `RESUMEGEN_SKIP_HTML_BULLET_SCRUB=1` to bypass the new sanitizer if
-it causes accidental data loss.
+#### Analysis
+- **Root Cause:** The cleaning logic may not be effectively removing all instances of 'u2022', especially when they are embedded within the content strings.
+- **Impact:** The presence of 'u2022' artifacts affects the visual presentation of the experience section, leading to a cluttered appearance.
 
-### ETA & Risk
-Small patch (<50 LOC) but touches core HTML path – low risk, <1 hr coding, 30 m
-validation.
+#### Next Steps
+1. **Refine Cleaning Logic:** Further refine the bullet point cleaning logic to ensure all instances of 'u2022' are removed.
+2. **Implement End-of-Pipeline Check:** Consider adding a final check to clean the fully rendered HTML before it is sent to the client or converted to PDF.
+3. **Test and Validate:** Conduct thorough testing to ensure the experience section displays correctly without unwanted artifacts.
 
---- 
+This observation highlights the need for a more robust cleaning process to maintain the intended visual structure of the resume content. 
