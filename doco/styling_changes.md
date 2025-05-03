@@ -561,4 +561,70 @@ To fix bullet point alignment issues, follow these steps:
 2. **Proper CSS Positioning**: For custom bullets, use absolute positioning with proper offsets.
 3. **Text Indentation Control**: Use both padding and text-indent to align text properly with bullets.
 4. **Single Source of Truth**: Keep spacing values in design tokens for consistency and easier maintenance.
-5. **Test Both Outputs**: Always verify changes in both HTML preview and PDF output to ensure consistent appearance. 
+5. **Test Both Outputs**: Always verify changes in both HTML preview and PDF output to ensure consistent appearance.
+
+## ISSUE: Adjusting Section Header Box Height
+
+**Goal**: Reduce the vertical height of the section header boxes (e.g., "PROFESSIONAL SUMMARY") to be a tighter fit around the text content, similar to Image 2 provided earlier.
+
+**Status**: Unresolved (after multiple failed attempts).
+
+### Attempt 1 (Width Fix with `fit-content` - Failed)
+*   **Changes**: Introduced `sectionBoxWidth: fit-content`, `sectionBoxDisplay: inline-block` tokens and updated SCSS.
+*   **Result**: Failed, created unexpected brackets/boxes in HTML preview and PDF.
+*   **Reason**: Likely `fit-content` incompatibility with WeasyPrint and conflicts arising from changing `display` type without addressing HTML structure differences (`div > h2` vs `div > text`).
+
+### Attempt 2 (Width Fix with `inline-block` - Partially Successful, Height Unchanged)
+*   **Changes**: Used `display: inline-block`, `max-width: var(--sectionBoxMaxWidth, auto)`. Updated padding/line-height/font-size tokens.
+*   **Result**: Successfully fixed width to fit content, but **height remained unchanged**. Also caused WeasyPrint warnings for `max-width: auto`.
+*   **Reason**: Width constraint worked. Height issue persisted, indicating padding/line-height changes weren't targeting the correct element or were overridden. CSS variables and WeasyPrint incompatibility were likely factors.
+
+### Attempt 3 (Height Focus with CSS Variables - Failed)
+*   **Changes**: Reduced vertical padding token (`2px`), added line-height (`1.1`) and font-size (`12pt`) tokens. Applied these using `var()` to `.section-box` and `.resume-section h2`. Changed `max-width` fallback to `none`.
+*   **Result**: Height still unchanged.
+*   **Reason**: Applying styles with `var()` to both `.section-box` and the nested `h2` likely caused conflicts or specificity issues. The underlying HTML structure difference wasn't addressed. WeasyPrint's potential lack of support for these CSS variables could also explain the failure in the PDF.
+
+### Root Cause Analysis Summary
+*   **HTML Structure Discrepancy**: The primary issue is the difference between the preview (`div > h2`) and PDF (`div > text`) structures. The `h2` tag in the preview introduces default styles (margins, line-height) that interfere with height control.
+*   **CSS Variable Incompatibility**: WeasyPrint has limited support for CSS custom properties (`var(...)`), making them unreliable for consistent styling between preview and PDF.
+*   **Targeting Issues**: Previous attempts didn't correctly target or override the element controlling the final rendered height, especially due to the nested `h2`.
+
+### Plan for Attempt 4 (Unify HTML & Use SCSS Vars)
+1.  **Unify HTML**: Modify `html_generator.py` to remove the `<h2>` tags inside `.section-box`, making preview match PDF.
+2.  **Refine Tokens**: Use specific SCSS tokens for padding, line-height, font-size, and max-width.
+3.  **Update SCSS**: Apply styles directly to `.section-box` using SCSS variables only. Remove separate `h2` rules.
+4.  **Standard Workflow**: Regenerate tokens, compile CSS, restart server.
+5.  **Test**: Verify height reduction in both preview and PDF.
+
+This approach aims for consistency by fixing the HTML structure and avoiding potential WeasyPrint issues with CSS variables.
+
+## Successful Implementation: Attempt 4 – Adjusting Section Header Height
+
+### Overview
+The fourth attempt to adjust the section header height was successful. The changes ensured that the section headers fit tightly around the text content, as shown in the provided image.
+
+### Key Changes
+1. **Unified HTML Structure**: Modified `html_generator.py` to remove `<h2>` tags inside `.section-box`, ensuring the preview matches the PDF structure.
+2. **Refined SCSS Tokens**: Used specific SCSS tokens for padding, line-height, font-size, and max-width.
+3. **Updated SCSS**: Applied styles directly to `.section-box` using SCSS variables, removing separate `h2` rules.
+4. **Standard Workflow**: Followed the validated workflow for styling changes, including regenerating tokens, compiling CSS, and restarting the server.
+5. **Testing**: Verified the height reduction in both HTML preview and PDF output.
+
+### Lessons Learned
+- **HTML Structure Consistency**: Ensuring the HTML structure is consistent between preview and PDF is crucial for reliable styling.
+- **Avoiding CSS Variable Issues**: WeasyPrint's limited support for CSS variables necessitates careful consideration of their use.
+- **Targeting the Correct Elements**: Directly targeting the `.section-box` for styling changes was key to success.
+
+### Why Previous Attempts Failed
+- **Attempt 1**: Incompatibility with `fit-content` and HTML structure differences led to visual artifacts.
+- **Attempt 2**: Width adjustments were successful, but height remained unchanged due to incorrect targeting.
+- **Attempt 3**: CSS variable incompatibility and targeting issues prevented effective height adjustment.
+
+### Architectural Implications
+- **Unified Markup**: Moving towards a unified HTML structure for both preview and PDF will simplify future styling changes.
+- **SCSS Token Usage**: Consistent use of SCSS tokens ensures maintainability and consistency across outputs.
+
+### Future Recommendations
+- **Consistent Testing**: Always verify changes in both HTML preview and PDF outputs.
+- **Regular Workflow**: Follow the validated workflow for styling changes to ensure all steps are completed.
+- **Documentation**: Keep detailed records of changes and lessons learned to streamline future updates. 
