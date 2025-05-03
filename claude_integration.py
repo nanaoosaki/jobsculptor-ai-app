@@ -1206,35 +1206,49 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
     f"Attempting to parse resume with LLM ({llm_provider})...")
                 llm_sections = parse_resume_with_llm(doc_path, llm_provider)
                 
-                # If LLM parsing succeeded, clean bullet points from each
-                # section
+                # If LLM parsing succeeded, process sections, handling structured data correctly
                 if llm_sections and any(
     content for content in llm_sections.values()):
                     logger.info(
-                        "LLM parsing successful. Cleaning bullet points from LLM-parsed sections.")
+                        "LLM parsing successful. Processing LLM-parsed sections.")
                     
-                    # Clean bullet points from each section
-                    cleaned_sections = {}
+                    # Process sections, handling structured data correctly
+                    processed_sections = {}
                     for section, content in llm_sections.items():
                         if content:
-                            cleaned_content = clean_bullet_points(content)
-                            cleaned_sections[section] = cleaned_content
-                            logger.info(
+                            # --- START FIX: Handle experience list --- 
+                            if section == 'experience' and isinstance(content, list):
+                                # Preserve the list structure for experience
+                                processed_sections[section] = content
+                                logger.info(f"LLM extracted structured {section} section: {len(content)} entries")
+                            elif isinstance(content, str):
+                                # Clean bullet points only for string content
+                                cleaned_content = clean_bullet_points(content)
+                                processed_sections[section] = cleaned_content
+                                logger.info(
     f"LLM extracted and cleaned {section} section: {
         len(cleaned_content)} chars")
+                            else:
+                                # Handle unexpected content types if necessary
+                                logger.warning(f"Unexpected content type for LLM section {section}: {type(content)}. Storing as string.")
+                                processed_sections[section] = str(content)
+                            # --- END FIX ---    
                         else:
-                            cleaned_sections[section] = ""
+                            processed_sections[section] = ""
                             logger.info(
     f"LLM found no content for {section} section")
                     
-                    # Validate the cleaning was successful
+                    # Validate the cleaning was successful for STRING sections
+                    string_sections_for_validation = { 
+                        k: v for k, v in processed_sections.items() if isinstance(v, str) 
+                    }
                     validation_success = validate_bullet_point_cleaning(
-                        cleaned_sections)
+                        string_sections_for_validation)
                     if not validation_success:
                         logger.warning(
-                            "Bullet point cleaning validation failed. There may still be bullet markers in the text.")
+                            "Bullet point cleaning validation failed for some string sections.")
                     
-                    return cleaned_sections
+                    return processed_sections # Return the processed sections
                 else:
                     logger.warning(
                         "LLM parsing did not return usable results. Falling back to traditional parsing.")
