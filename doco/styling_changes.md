@@ -349,39 +349,31 @@ After hours of chasing SCSS and token bugs, the immediate blocker turned out to 
 
 Missing any one of these (especially #4) can give misleading results.
 
-## Successful Implementation of Blue Boxes
+## Successful Implementation: Section Header Box Styling
 
 ### Overview
-The recent changes successfully implemented blue section header boxes with a filled background, aligning with the desired resume format.
+The recent changes successfully adjusted the section header box styling to align with the resume content width and increase the section header text size.
 
 ### Key Changes
-1. **Section Header Box**: Updated the `.section-box` class to have a blue fill and white text, ensuring a visually appealing and consistent look across both HTML preview and PDF outputs.
-2. **CSS Rebuild**: Rebuilt both `preview.css` and `print.css` to apply the new styles effectively.
-3. **Testing and Verification**: Verified the changes in both the browser preview and PDF download to ensure consistency and correctness.
+1. **Design Tokens Update**: Added `sectionHeaderFontSize` and `sectionBoxWidth` tokens in `design_tokens.json`.
+2. **SCSS Update**: Updated `_resume.scss` to apply the new tokens for section header width and font size.
+3. **Token Generation**: Ran `python tools/generate_tokens_css.py` to regenerate the SCSS tokens.
+4. **CSS Compilation**: Compiled the SCSS files into CSS using the `sass` command:
+   - `sass static/scss/preview.scss static/css/preview.css`
+   - `sass static/scss/print.scss static/css/print.css`
+5. **Server Restart**: Restarted the Flask server to apply changes to Python files:
+   - `Ctrl-C` then `python app.py`
+6. **Verification**: Performed a hard refresh in the browser (Ctrl+Shift+R) and checked both the HTML preview and PDF output to ensure changes were applied correctly.
 
 ### Lessons Learned
 - **Consistent Styling**: Ensuring that both the preview and PDF outputs use the same styling rules is crucial for maintaining a unified appearance.
 - **Rebuilding CSS**: Always rebuild CSS files after making changes to SCSS to ensure that updates are reflected in the application.
 - **Server Restart**: Restarting the Flask server is necessary to apply changes to Python files and ensure that the latest code is running.
 
-### Next Steps
-- Continue monitoring for any discrepancies between preview and PDF outputs.
-- Document the process for future styling changes to ensure consistency and efficiency.
-
-### Successful Process for Styling Changes
-
-The following process was successfully used to change the section header color to pink:
-
-1. **Edit SCSS Files**: Updated the `_resume.scss` file to change the section header background color to pink.
-2. **Re-generate Tokens**: (If needed) Run `generate_tokens_css.py` to update design tokens.
-3. **Build CSS**: Compiled the SCSS files into CSS using the `sass` command:
-   - `sass static/scss/preview.scss static/css/preview.css`
-   - `sass static/scss/print.scss static/css/print.css`
-4. **Restart Flask Server**: Restarted the Flask server to apply changes to Python files:
-   - `Ctrl-C` then `python app.py`
-5. **Verify Changes**: Performed a hard refresh in the browser (Ctrl+Shift+R) and checked both the HTML preview and PDF output to ensure changes were applied correctly.
-
-This process ensures that styling changes are consistently applied across both the preview and PDF outputs. Following these steps will help maintain a unified appearance and streamline future styling updates.
+### Future Recommendations
+- **Consistent Testing**: Always verify changes in both HTML preview and PDF outputs.
+- **Regular Workflow**: Follow the validated workflow for styling changes to ensure all steps are completed.
+- **Documentation**: Keep detailed records of changes and lessons learned to streamline future updates.
 
 ## 2025-04-27  – Bullet-cleanup Attempt #1 Post-Mortem
 
@@ -604,27 +596,4 @@ This approach aims for consistency by fixing the HTML structure and avoiding pot
 The fourth attempt to adjust the section header height was successful. The changes ensured that the section headers fit tightly around the text content, as shown in the provided image.
 
 ### Key Changes
-1. **Unified HTML Structure**: Modified `html_generator.py` to remove `<h2>` tags inside `.section-box`, ensuring the preview matches the PDF structure.
-2. **Refined SCSS Tokens**: Used specific SCSS tokens for padding, line-height, font-size, and max-width.
-3. **Updated SCSS**: Applied styles directly to `.section-box` using SCSS variables, removing separate `h2` rules.
-4. **Standard Workflow**: Followed the validated workflow for styling changes, including regenerating tokens, compiling CSS, and restarting the server.
-5. **Testing**: Verified the height reduction in both HTML preview and PDF output.
-
-### Lessons Learned
-- **HTML Structure Consistency**: Ensuring the HTML structure is consistent between preview and PDF is crucial for reliable styling.
-- **Avoiding CSS Variable Issues**: WeasyPrint's limited support for CSS variables necessitates careful consideration of their use.
-- **Targeting the Correct Elements**: Directly targeting the `.section-box` for styling changes was key to success.
-
-### Why Previous Attempts Failed
-- **Attempt 1**: Incompatibility with `fit-content` and HTML structure differences led to visual artifacts.
-- **Attempt 2**: Width adjustments were successful, but height remained unchanged due to incorrect targeting.
-- **Attempt 3**: CSS variable incompatibility and targeting issues prevented effective height adjustment.
-
-### Architectural Implications
-- **Unified Markup**: Moving towards a unified HTML structure for both preview and PDF will simplify future styling changes.
-- **SCSS Token Usage**: Consistent use of SCSS tokens ensures maintainability and consistency across outputs.
-
-### Future Recommendations
-- **Consistent Testing**: Always verify changes in both HTML preview and PDF outputs.
-- **Regular Workflow**: Follow the validated workflow for styling changes to ensure all steps are completed.
-- **Documentation**: Keep detailed records of changes and lessons learned to streamline future updates. 
+1. **Unified HTML Structure**: Modified `html_generator.py` to remove `<h2>`
