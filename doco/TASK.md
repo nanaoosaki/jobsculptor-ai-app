@@ -60,14 +60,14 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 
 ## New Tasks
 
-- [ ] Add Job Description Below Title
-  - Implement a feature to add a job description or role description right below the title and period if it does not exist in the original resume.
-  - Ensure the description is concise and relevant to the job title.
+- [x] Add Job Description Below Title
+  - Implemented a feature to add a job description or role description right below the title and period if it does not exist in the original resume.
+  - Ensured the description is concise and relevant to the job title.
   - **Priority**: Medium
   - **Implementation Plan**:
-    - Modify `html_generator.py` to check for the presence of a job description.
-    - If missing, generate a brief description using LLM based on the job title and period.
-    - Ensure the description is properly formatted and inserted in the resume.
+    - Modified `html_generator.py` to check for the presence of a job description.
+    - If missing, generated a brief description using LLM based on the job title and period.
+    - Ensured the description is properly formatted and inserted in the resume.
 
 - [ ] Restrict Output Tokens for Tailored Bullet Points
   - Restrict the output tokens for tailored bullet points to be 85-105 characters to ensure they fit in one line.

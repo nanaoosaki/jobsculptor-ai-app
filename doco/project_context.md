@@ -48,6 +48,7 @@ The Resume Tailor is an AI-powered application that helps users customize their 
 12. **Single-Source Styling Implementation**: Centralized styling using design tokens and SCSS, ensuring consistent styling across HTML and PDF outputs.
 13. **Resume Section Parsing Improvements**: Enhanced section detection with expanded regex patterns and better default section handling, implemented a fallback mechanism, and improved error handling.
 14. **Align HTML & PDF Styling**: Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS, improving maintainability and consistency.
+15. **Role Description Integration**: Successfully integrated role descriptions into both HTML and PDF outputs, ensuring they are generated when missing and styled consistently.
 
 ## Recent Improvements
 

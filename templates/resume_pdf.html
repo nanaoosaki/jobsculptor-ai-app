@@ -64,12 +64,28 @@
                         </div>
                         <div class="dates">{{ job.date }}</div>
                     </div>
+                    <div class="position-bar position-line">
+                        <span class="position">{{ job.position }}</span>
+                        <span class="dates">{{ job.dates }}</span>
+                    </div>
+                    {% if job.role_description and job.role_description.strip() %}
+                    <p class="role-description-text">{{ job.role_description.strip() }}</p>
+                    {% endif %}
                     <ul class="job-description bullets">
                         {% for bullet in job.description %}
                         <li>{{ bullet }}</li>
                         {% endfor %}
                     </ul>
                 </div>
+                {% if job.achievements %}
+                <div class="job-content">
+                    <ul class="bullets">
+                        {% for item in job.achievements %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </div>
