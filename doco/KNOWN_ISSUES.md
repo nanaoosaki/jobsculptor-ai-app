@@ -90,17 +90,16 @@ A 'u2022' character was appearing in the experience section, overlapping with bu
 **Priority**: Medium
 
 ### Section Header Box Width
-**Status**: Unresolved
+**Status**: Resolved
 
 **Description**: 
 The section header box is too wide, leaving excessive space on either side.
 
-**Impact**: 
-- The layout appears unbalanced, with wasted space around section headers.
+**Resolution**:
+- Adjusted the CSS to match the section header box width with the resume width.
 
-**Next Steps**: 
-1. Adjust the CSS to reduce the width of the section header box.
-2. Ensure the layout is visually appealing and space-efficient.
+**Impact**: 
+- The layout appears balanced and space-efficient.
 
 **Priority**: Medium
 
@@ -235,4 +234,99 @@ All known issues have been resolved. If new issues arise, they will be documente
    - **Description**: The page margins are larger than desired, currently exceeding 1 inch on each side.
    - **Impact**: Reduces the amount of content visible on each page.
    - **Next Steps**: Reduce the page margins to 1 inch on each side.
-   - **Priority**: Medium 
+   - **Priority**: Medium
+
+### Resolved Issues
+
+1. **Grey Bar in PDF Output**
+   - **Status**: Resolved
+   - **Description**: A grey horizontal bar appeared in the PDF output but not in the HTML preview.
+   - **Resolution**: Updated `print.scss` to hide the contact-divider, resolving the issue.
+
+2. **Bullet Point Formatting**
+   - **Status**: Resolved
+   - **Description**: Bullet points were not aligned correctly, affecting readability.
+   - **Resolution**: Updated SCSS to ensure proper alignment and appearance of bullet points.
+
+3. **Contact Information Preservation**
+   - **Status**: Resolved
+   - **Description**: Contact information was not being preserved in tailored resumes.
+   - **Resolution**: Fixed the issue to ensure contact details are preserved correctly.
+
+### Unresolved Issues
+
+1. **Margin Size Issue**
+   - **Status**: Unresolved
+   - **Description**: The margin set to 1 inch is larger than expected and needs to be reduced to 1 cm.
+   - **Impact**: Reduces the amount of content visible on each page.
+   - **Next Steps**: Adjust the margin size in the SCSS files to 1 cm.
+
+2. **Section Box Height Issue**
+   - **Status**: Unresolved
+   - **Description**: The section box height needs to be reduced further.
+   - **Impact**: The layout appears unbalanced, with excessive vertical space in section headers.
+   - **Next Steps**: Further reduce the section box height in the SCSS files.
+
+3. **Bullet Point Length and Symbol Issue**
+   - **Status**: Unresolved
+   - **Description**: Bullet points are too long, and the bullet point symbol is missing.
+   - **Impact**: The readability and professional appearance of the resume are affected.
+   - **Next Steps**: Adjust the bullet point length in the SCSS files and ensure the bullet point symbol is correctly displayed.
+
+4. **Section Header Box Width**
+   - **Status**: Resolved
+   - **Description**: The section header box was too wide, leaving excessive space on either side.
+   - **Resolution**: Adjusted the CSS to match the section header box width with the resume width.
+
+5. **Bullet Point Formatting**
+   - **Status**: Resolved
+   - **Description**: Bullet points were not aligned correctly, affecting readability.
+   - **Resolution**: Updated SCSS to ensure proper alignment and appearance of bullet points.
+
+6. **Contact Information Preservation**
+   - **Status**: Resolved
+   - **Description**: Contact information was not being preserved in tailored resumes.
+   - **Resolution**: Fixed the issue to ensure contact details are preserved correctly.
+
+7. **Section Header Box Fill**
+   - **Status**: Unresolved
+   - **Description**: The section header box currently has a blue fill, but it should only have a blue outline with a transparent fill.
+   - **Impact**: The current design does not match the intended visual style.
+   - **Next Steps**: Modify the CSS to change the section header box to have a transparent fill and a blue outline.
+   - **Priority**: Medium
+
+8. **Bullet Point Character Issue in CSS**
+   - **Status**: Resolved
+   - **Description**: The CSS files `print.css` and `preview.css` contained a hard-coded string "u2022" for bullet points, which was displayed literally in the experience section of resumes.
+   - **Resolution**: Replaced the hard-coded "u2022" with the properly escaped Unicode character "\2022" in both CSS files.
+   - **Impact**: Bullet points now display correctly in both the HTML preview and PDF outputs, improving the professional appearance of resumes.
+   - **Next Steps**: Monitor for any further styling discrepancies in resume outputs.
+   - **Priority**: Low
+
+9. **Hard-Coded Bullet Point Issue**
+   - **Status**: Resolved
+   - **Description**: The recompilation of `_resume.scss` was resulting in the hard-coded "u2022" character being inserted into the CSS files instead of a proper bullet point.
+   - **Resolution**: Updated the `bullet-glyph` variable in `design_tokens.json` from `"\"\\u2022\""` to `"\"\\2022\""`, using the proper CSS escape syntax.
+   - **Impact**: Bullet points now display correctly with the proper bullet symbol instead of the literal text "u2022".
+   - **Priority**: Medium
+
+10. **Margin Size Issue**
+    - **Status**: Unresolved
+    - **Description**: The margin set to 1 inch is larger than expected and needs to be reduced to 1 cm.
+    - **Impact**: Reduces the amount of content visible on each page.
+    - **Next Steps**: Adjust the margin size in the SCSS files to 1 cm.
+    - **Priority**: Medium
+
+11. **Section Box Height Issue**
+    - **Status**: Unresolved
+    - **Description**: The section box height needs to be reduced further.
+    - **Impact**: The layout appears unbalanced, with excessive vertical space in section headers.
+    - **Next Steps**: Further reduce the section box height in the SCSS files.
+    - **Priority**: Medium
+
+12. **Bullet Point Length and Symbol Issue**
+    - **Status**: Unresolved
+    - **Description**: Bullet points are too long, and the bullet point symbol is missing.
+    - **Impact**: The readability and professional appearance of the resume are affected.
+    - **Next Steps**: Adjust the bullet point length in the SCSS files and ensure the bullet point symbol is correctly displayed.
+    - **Priority**: Medium 

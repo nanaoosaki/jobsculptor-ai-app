@@ -37,6 +37,7 @@ The `resume_index.py` module is responsible for tracking and logging resume proc
 - **Raw LLM Responses**: Continue to be stored with timestamps in `static/uploads/api_responses/` for logging and debugging.
 - **Log Messages**: Updated to accurately reflect file operations and enhance traceability.
 - **Data Flow**: LLM -> Structured JSON -> Save Structured JSON with UUID -> Load Structured JSON with UUID -> Format to HTML.
+- **PDF Export Process**: Enhanced with WeasyPrint for consistent and professional output, ensuring alignment with HTML preview.
 
 ## Conclusion
-The `resume_index.py` module is a critical component for maintaining a history of resume processing activities, providing valuable insights and traceability for the application. 
+The `resume_index.py` module is a critical component for maintaining a history of resume processing activities, providing valuable insights and traceability for the application. The recent updates ensure a more robust and consistent data handling process, improving both functionality and user experience. 

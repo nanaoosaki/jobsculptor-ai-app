@@ -258,4 +258,15 @@ This project focuses on creating an AI-powered resume tailoring tool that optimi
 - Improved error handling in the resume section extraction process.
 - Achieved alignment between HTML preview and PDF output by centralizing styling using design tokens and SCSS.
 - Removed inline styles and JavaScript width hacks, leading to a cleaner and more maintainable codebase.
-- Implemented a single-source styling architecture that allows for easy updates and modifications. 
+- Implemented a single-source styling architecture that allows for easy updates and modifications.
+
+## Recent Major Changes
+
+1. **Section Header Box Width Adjustment**: Updated the section header box width to match the resume width, ensuring a consistent and professional appearance.
+2. **Grey Bar Issue in PDF Output**: Resolved the issue of a grey horizontal bar appearing in the PDF output by updating the `print.scss` styling rules.
+3. **Styling Architecture Refactor**: Centralized styling using design tokens and SCSS, ensuring consistent styling across HTML and PDF outputs.
+4. **PDF Export Enhancements**: Improved PDF generation with WeasyPrint, ensuring consistent and professional output.
+5. **Resume Formatting Improvements**: Adjusted resume formatting to utilize full A4 page width, improving visual presentation and readability.
+6. **Bullet Point Formatting**: Resolved inconsistencies in bullet point display, ensuring proper alignment and appearance.
+7. **Contact Information Preservation**: Fixed issues with contact details in tailored resumes, ensuring they are preserved correctly.
+8. **HTML Preview Enhancement**: Ensured HTML preview precisely matches PDF output, improving consistency and user experience. 
