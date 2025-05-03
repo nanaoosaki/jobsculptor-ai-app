@@ -85,11 +85,13 @@ $font-size-h2: 1.75rem !default;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    display: inline-block;  // Allow it to size to content
-    max-width: $sectionBoxMaxWidth;  // Use SCSS var for width fix
+    display: block;  // Change to block to take full width
+    width: 100%;  // Set width to 100% to match resume width
     text-align: left; // left-align header text
     font-size: $sectionHeaderFontSize; // Apply font-size directly
     line-height: $sectionHeaderLineHeight; // Apply line-height directly
+    break-inside: avoid; // Prevent section headers breaking across pages
+    break-after: avoid;
 }
 
 // Resume Section Styling

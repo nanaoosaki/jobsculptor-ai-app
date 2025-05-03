@@ -161,8 +161,10 @@ hr {
   display: block;
   width: 100%;
   text-align: left;
-  font-size: 14pt;
+  font-size: 12pt;
   line-height: 1;
+  break-inside: avoid;
+  break-after: avoid;
 }
 
 .resume-section {
