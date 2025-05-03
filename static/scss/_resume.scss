@@ -85,8 +85,8 @@ $font-size-h2: 1.75rem !default;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    display: block;  // Change to block to take full width
-    width: 100%;  // Set width to 100% to match resume width
+    display: block;  // Explicitly set to block (though likely default)
+    width: auto;     // Explicitly set width to auto
     text-align: left; // left-align header text
     font-size: $sectionHeaderFontSize; // Apply font-size directly
     line-height: $sectionHeaderLineHeight; // Apply line-height directly

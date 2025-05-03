@@ -90,16 +90,21 @@ A 'u2022' character was appearing in the experience section, overlapping with bu
 **Priority**: Medium
 
 ### Section Header Box Width
-**Status**: Resolved
+**Status**: Reopened / Unresolved
 
 **Description**: 
-The section header box is too wide, leaving excessive space on either side.
+The section header box is too wide, leaving excessive space on either side. The width is also incorrectly set to 100% in the SCSS, causing it to span the full page width instead of fitting the content tightly, despite the correct HTML structure being generated.
 
 **Resolution**:
 - Adjusted the CSS to match the section header box width with the resume width.
 
 **Impact**: 
 - The layout appears balanced and space-efficient.
+
+**Next Steps**: 
+1. Modify `.section-box` in `_resume.scss`: remove `width: 100%` and change `display: block` to `display: inline-block`.
+2. Recompile SCSS and restart server.
+3. Verify the changes in both the HTML preview and PDF output.
 
 **Priority**: Medium
 
@@ -171,14 +176,15 @@ The margin set to 1 inch is equivalent to approximately 2.54 cm, which is larger
 **Status**: Unresolved
 
 **Description**: 
-The section box height needs to be reduced further, as previous adjustments did not achieve the desired effect.
+The section box height needs to be reduced further, as previous adjustments did not achieve the desired effect. The width is also incorrectly set to 100% in the SCSS, causing it to span the full page width instead of fitting the content tightly, despite the correct HTML structure being generated.
 
 **Impact**: 
-- The layout appears unbalanced, with excessive vertical space in section headers.
+- The layout appears unbalanced, with excessive vertical space and width in section headers.
 
 **Next Steps**: 
-1. Further reduce the section box height in the SCSS files.
-2. Verify the changes in both the HTML preview and PDF output.
+1. Modify `.section-box` in `_resume.scss`: remove `width: 100%` and change `display: block` to `display: inline-block`.
+2. Recompile SCSS and restart server.
+3. Verify the changes in both the HTML preview and PDF output.
 
 **Priority**: Medium
 
@@ -263,20 +269,22 @@ All known issues have been resolved. If new issues arise, they will be documente
 
 2. **Section Box Height Issue**
    - **Status**: Unresolved
-   - **Description**: The section box height needs to be reduced further.
-   - **Impact**: The layout appears unbalanced, with excessive vertical space in section headers.
-   - **Next Steps**: Further reduce the section box height in the SCSS files.
+   - **Description**: The section box height needs to be reduced further. The width is also incorrectly set to 100% in SCSS, preventing it from fitting the content.
+   - **Impact**: The layout appears unbalanced, with excessive vertical space and width in section headers.
+   - **Next Steps**: Modify `.section-box` in `_resume.scss` (remove `width: 100%`, change `display: block` to `display: inline-block`), recompile SCSS, restart server, and verify.
+   - **Priority**: Medium
 
 3. **Bullet Point Length and Symbol Issue**
    - **Status**: Unresolved
    - **Description**: Bullet points are too long, and the bullet point symbol is missing.
    - **Impact**: The readability and professional appearance of the resume are affected.
    - **Next Steps**: Adjust the bullet point length in the SCSS files and ensure the bullet point symbol is correctly displayed.
+   - **Priority**: Medium
 
 4. **Section Header Box Width**
-   - **Status**: Resolved
-   - **Description**: The section header box was too wide, leaving excessive space on either side.
-   - **Resolution**: Adjusted the CSS to match the section header box width with the resume width.
+   - **Status**: Reopened / Unresolved
+   - **Description**: The section header box was previously thought resolved but is still displaying at full width due to `width: 100%` in `_resume.scss`, overriding the intended fit-content behavior.
+   - **Resolution**: Planned fix involves removing `width: 100%` and changing `display: block` to `display: inline-block` in `_resume.scss`.
 
 5. **Bullet Point Formatting**
    - **Status**: Resolved
@@ -319,9 +327,9 @@ All known issues have been resolved. If new issues arise, they will be documente
 
 11. **Section Box Height Issue**
     - **Status**: Unresolved
-    - **Description**: The section box height needs to be reduced further.
-    - **Impact**: The layout appears unbalanced, with excessive vertical space in section headers.
-    - **Next Steps**: Further reduce the section box height in the SCSS files.
+    - **Description**: The section box height needs to be reduced further. The width is also incorrectly set to 100% in SCSS, preventing it from fitting the content.
+    - **Impact**: The layout appears unbalanced, with excessive vertical space and width in section headers.
+    - **Next Steps**: Modify `.section-box` in `_resume.scss` (remove `width: 100%`, change `display: block` to `display: inline-block`), recompile SCSS, restart server, and verify.
     - **Priority**: Medium
 
 12. **Bullet Point Length and Symbol Issue**

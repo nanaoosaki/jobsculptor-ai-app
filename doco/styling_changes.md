@@ -657,3 +657,42 @@ The issue of a grey horizontal bar appearing in the PDF output, but not in the H
 ### Future Recommendations
 - Regularly review and test styling changes in both HTML and PDF outputs to ensure consistency.
 - Maintain a clear documentation trail for all styling changes to aid in future troubleshooting.
+
+## 2025-06-XX - Section Header Fit Issue
+
+**Problem**: Despite prior documented fixes (Attempt 4 aiming to make section headers fit content width), the section headers (e.g., "PROFESSIONAL SUMMARY") are still rendering at full width in the preview and PDF.
+
+**Investigation**:
+1.  **HTML Generator (`html_generator.py`)**: Confirmed that the code correctly implements the change from Attempt 4, removing the `<h2>` tag and placing the header text directly within the `<div class="section-box">`. This part is correct.
+2.  **SCSS (`_resume.scss`)**: Found that the `.section-box` rule contains `display: block;` and `width: 100%;`.
+3. **Compiled CSS (`preview.css` / `print.css`)**: Confirmed the compiled CSS reflects the `width: 100%;` rule.
+
+**Root Cause**: The `width: 100%;` rule in `_resume.scss` is overriding the natural width of the content, forcing the box to span the full container width. This contradicts the goal established in Attempt 4.
+
+**Planned Fix**: 
+- Modify `.section-box` in `_resume.scss`:
+  - Change `display: block;` to `display: inline-block;`
+  - Remove `width: 100%;`
+- Follow standard workflow: Recompile SCSS, restart Flask server, test **both Preview and PDF**.
+
+## 2025-06-XX - Section Header Fit Issue - Final Resolution
+
+**Summary of Attempts**:
+1. **Attempt 1 (Inline-Block)**: Changed `display: block` to `display: inline-block` and removed `width: 100%`. This failed due to CSS overrides and WeasyPrint's handling.
+2. **Attempt 2 (Max-Content)**: Used `width: max-content;` which worked for PDF but not HTML due to WeasyPrint ignoring the rule.
+3. **Attempt 3 (Table)**: Tried `display: table;` which failed for both HTML and PDF, causing a regression.
+4. **Attempt 4 (Float)**: Used `float: left;` which disrupted the document flow, causing layout issues.
+5. **Attempt 5 (Block + Width Auto)**: Reverted to `display: block;` and set `width: auto;`, successfully resolving the issue.
+
+**Learnings**:
+- **Consistency Across Outputs**: Ensure that styling changes are tested in both HTML and PDF outputs, as rendering engines may interpret styles differently.
+- **CSS Overrides**: Be aware of potential CSS overrides from frameworks like Bootstrap or specific rendering engines like WeasyPrint.
+- **Document Flow**: Maintain elements in the normal document flow to prevent layout disruptions.
+- **Testing and Iteration**: Iterative testing and documentation are crucial for identifying the root cause of styling issues.
+
+**Guidance for Future Changes**:
+- **Single Source of Truth**: Consider centralizing style definitions in a single file (e.g., `design_tokens.json`) to ensure consistency.
+- **Cross-Platform Testing**: Always test changes across all platforms and outputs to catch discrepancies early.
+- **Documentation**: Maintain detailed documentation of changes and their impacts to aid future troubleshooting and development.
+
+**Conclusion**: The final solution of using `display: block;` with `width: auto;` aligns with the natural document flow and ensures consistent rendering across both HTML and PDF outputs.
