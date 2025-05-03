@@ -253,19 +253,24 @@ class ClaudeClient(LLMClient):
 
             # Build section-specific prompts
             if section_name == "experience":
-                prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the work experience section to better match the requirements for a {job_title} position at {company}.
+                # Convert the input list of job objects back to a JSON string for the prompt
+                experience_json_input = json.dumps(content, indent=2) # Assumes content is the list of dicts
 
-ORIGINAL EXPERIENCE SECTION:
-{content}
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the work experience section (provided as a JSON list) to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL EXPERIENCE SECTION (JSON):
+```json
+{experience_json_input}
+```
 
 JOB REQUIREMENTS:
-            {requirements_text}
+{requirements_text}
 
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
 
-Return your response as a structured JSON object with the following format:
+Return your response as a structured JSON object containing ONLY the tailored experience list, matching the exact input structure but with tailored content AND the addition/modification of the "role_description" field:
 
 ```json
 {{
@@ -275,23 +280,32 @@ Return your response as a structured JSON object with the following format:
       "location": "City, State",
       "position": "Job Title",
       "dates": "Time Period",
+      "role_description": "A 1-2 sentence tailored or generated description of the role.",
       "achievements": [
-        "Achievement 1",
-        "Achievement 2"
+        "Tailored Achievement 1",
+        "Tailored Achievement 2"
       ]
     }}
+    // ... other job entries
   ]
 }}
 ```
 
-Please restructure the experience section to better match the job requirements by:
-1. Highlighting relevant experience that demonstrates skills required for this job
-2. Focusing on achievements and results rather than just responsibilities
-3. Quantifying accomplishments with metrics where possible
-4. Using terminology from the job description where appropriate
-5. Maintaining the original company names, job titles, and dates
+Please process EACH job entry in the input JSON list and restructure it to better match the job requirements by:
+1.  For the "role_description":
+    *   If the original entry has a non-empty "role_description", TAILOR this description to highlight aspects relevant to the target job ({job_title}). Keep it concise (1-2 sentences).
+    *   If the original entry has an empty, null, or missing "role_description", GENERATE a concise (1-2 sentences) description based on the "position" and "achievements" for that specific job entry. This description should summarize the core responsibilities or focus of the role in the context of the achievements listed.
+2.  For the "achievements":
+    *   Tailor each achievement to highlight relevance to the target job ({job_title}).
+    *   Focus on results and quantify accomplishments using metrics where possible.
+    *   Use terminology from the job description ({job_title}, skills, requirements) where appropriate.
+3.  Maintain the original "company", "location", "position", and "dates" for each entry precisely.
 
-Do not add any fictional experiences or embellish beyond what is reasonable based on the original content.
+IMPORTANT:
+1. Do not include empty strings or whitespace-only strings in any arrays (like achievements).
+2. Every achievement must contain meaningful content.
+3. Ensure the "role_description" is present and populated for EVERY job entry in the output.
+4. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
 """
 
             elif section_name == "education":
@@ -590,19 +604,24 @@ class OpenAIClient(LLMClient):
 
             # Build section-specific prompts
             if section_name == "experience":
-                prompt = f"""
-You are an expert resume tailoring assistant. Your task is to tailor the work experience section to better match the requirements for a {job_title} position at {company}.
+                # Convert the input list of job objects back to a JSON string for the prompt
+                experience_json_input = json.dumps(content, indent=2) # Assumes content is the list of dicts
 
-ORIGINAL EXPERIENCE SECTION:
-{content}
+                prompt = f"""
+You are an expert resume tailoring assistant. Your task is to tailor the work experience section (provided as a JSON list) to better match the requirements for a {job_title} position at {company}.
+
+ORIGINAL EXPERIENCE SECTION (JSON):
+```json
+{experience_json_input}
+```
 
 JOB REQUIREMENTS:
-            {requirements_text}
+{requirements_text}
 
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
 
-Return your response as a structured JSON object with the following format:
+Return your response as a structured JSON object containing ONLY the tailored experience list, matching the exact input structure but with tailored content AND the addition/modification of the "role_description" field:
 
 ```json
 {{
@@ -612,29 +631,32 @@ Return your response as a structured JSON object with the following format:
       "location": "City, State",
       "position": "Job Title",
       "dates": "Time Period",
+      "role_description": "A 1-2 sentence tailored or generated description of the role.",
       "achievements": [
-        "Achievement 1",
-        "Achievement 2"
+        "Tailored Achievement 1",
+        "Tailored Achievement 2"
       ]
     }}
+    // ... other job entries
   ]
 }}
 ```
 
-Please restructure the experience section to better match the job requirements by:
-1. Highlighting relevant experience that demonstrates skills required for this job
-2. Focusing on achievements and results rather than just responsibilities
-3. Quantifying accomplishments with metrics where possible
-4. Using terminology from the job description where appropriate
-5. Maintaining the original company names, job titles, and dates
+Please process EACH job entry in the input JSON list and restructure it to better match the job requirements by:
+1.  For the "role_description":
+    *   If the original entry has a non-empty "role_description", TAILOR this description to highlight aspects relevant to the target job ({job_title}). Keep it concise (1-2 sentences).
+    *   If the original entry has an empty, null, or missing "role_description", GENERATE a concise (1-2 sentences) description based on the "position" and "achievements" for that specific job entry. This description should summarize the core responsibilities or focus of the role in the context of the achievements listed.
+2.  For the "achievements":
+    *   Tailor each achievement to highlight relevance to the target job ({job_title}).
+    *   Focus on results and quantify accomplishments using metrics where possible.
+    *   Use terminology from the job description ({job_title}, skills, requirements) where appropriate.
+3.  Maintain the original "company", "location", "position", and "dates" for each entry precisely.
 
 IMPORTANT:
-1. Do not include empty strings or whitespace-only strings in any arrays
-2. Every achievement must contain meaningful content
-3. Do not split single achievements into multiple entries
-4. Make sure each bullet point contains complete, meaningful content
-
-Do not add any fictional experiences or embellish beyond what is reasonable based on the original content.
+1. Do not include empty strings or whitespace-only strings in any arrays (like achievements).
+2. Every achievement must contain meaningful content.
+3. Ensure the "role_description" is present and populated for EVERY job entry in the output.
+4. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
 """
 
             elif section_name == "education":
@@ -675,13 +697,6 @@ Please rewrite the education section to better match the job requirements. Focus
 3. Formatting in a way that emphasizes the most relevant educational experiences
 4. Including any certifications or training that matches required skills
 
-IMPORTANT:
-1. Do not include empty strings or whitespace-only strings in any arrays
-2. Every highlight must contain meaningful content
-3. Do not split single highlights into multiple entries
-4. Make sure each bullet point contains complete, meaningful content
-5. Ensure all education entries from the original resume are preserved
-
 Keep the degree names, institutions, and dates exactly the same - only enhance descriptions to make them more relevant.
 """
 
@@ -717,11 +732,7 @@ Please rewrite the skills section to better match the job requirements. Focus on
 4. Rephrasing skills using the exact terminology from the job description
 5. Removing skills that are irrelevant to this position if the list is very long
 
-IMPORTANT:
-1. Do not include empty strings or whitespace-only strings in any arrays
-2. Every skill must contain meaningful content
-3. Do not create duplicate skills
-4. Skills should be concise - typically one to three words each
+Only include skills that are authentic to the candidate based on their resume.
 """
 
             elif section_name == "projects":
@@ -744,7 +755,7 @@ Return your response as a structured JSON object with the following format:
   "projects": [
     {{
       "title": "Project Name",
-      "dates": "Time Period (optional)",
+      "dates": "Time Period",
       "details": [
         "Detail 1",
         "Detail 2"
