@@ -205,7 +205,16 @@ class ClaudeClient(LLMClient):
         """
         logger.info(f"Tailoring {section_name} with Claude API")
             
-        if not content or not content.strip():
+        # --- START FIX: Type-aware check for empty content ---
+        # Check if content is None, empty string/list/dict, or whitespace-only string
+        is_empty = False
+        if not content:
+            is_empty = True
+        elif isinstance(content, str) and not content.strip():
+            is_empty = True
+            
+        if is_empty:
+        # --- END FIX ---
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
             return content
 
@@ -556,7 +565,16 @@ class OpenAIClient(LLMClient):
         """
         logger.info(f"Tailoring {section_name} with OpenAI API")
             
-        if not content or not content.strip():
+        # --- START FIX: Type-aware check for empty content ---
+        # Check if content is None, empty string/list/dict, or whitespace-only string
+        is_empty = False
+        if not content:
+            is_empty = True
+        elif isinstance(content, str) and not content.strip():
+            is_empty = True
+            
+        if is_empty:
+        # --- END FIX ---
             logger.warning(f"Empty {section_name} content provided, skipping tailoring")
             return content
 
@@ -1483,13 +1501,32 @@ def tailor_resume_with_llm(
     # Tailor other sections
     for section_name in section_order:
         if section_name not in ["contact", "summary"]:
-            if section_name in resume_sections and resume_sections[section_name].strip():
+            # --- START FIX: Handle list type for experience check ---
+            section_content = resume_sections.get(section_name) # Get content safely
+            
+            # Check if the section exists and has meaningful content (non-empty string or non-empty list)
+            has_content_to_tailor = False
+            if isinstance(section_content, str):
+                if section_content.strip():
+                    has_content_to_tailor = True
+            elif isinstance(section_content, list):
+                if section_content: # Check if list is not empty
+                    has_content_to_tailor = True
+            # Add checks for other types if necessary, e.g., dict for skills
+            elif isinstance(section_content, dict):
+                 if section_content: # Check if dict is not empty
+                     has_content_to_tailor = True
+            
+            if has_content_to_tailor:
+            # --- END FIX ---
                 logger.info(f"Tailoring {section_name} section")
-                tailored_content_result = llm_client.tailor_resume_content(section_name, resume_sections[section_name], job_data)
+                # Pass the original content (string or list) directly to tailoring
+                tailored_content_result = llm_client.tailor_resume_content(section_name, section_content, job_data)
                 tailored_sections[section_name] = tailored_content_result
             else:
                 logger.info(f"Skipping empty or missing section: {section_name}")
-                tailored_sections[section_name] = "" # Ensure key exists
+                # Ensure key exists even if skipped, potentially use the original empty value
+                tailored_sections[section_name] = section_content if section_content is not None else ""
 
     # --- START: New saving logic (Step 3.3c) ---
     try:

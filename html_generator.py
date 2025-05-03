@@ -128,7 +128,7 @@ def format_section_content(content: str) -> str:
     return html
 
 
-def format_job_entry(company: str, location: str, position: str, dates: str, content: List[str]) -> str:
+def format_job_entry(company: str, location: str, position: str, dates: str, content: List[str], role_description: Optional[str] = None) -> str:
     """
     Format a job entry into HTML.
     
@@ -138,6 +138,7 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
         position: Job position
         dates: Employment dates
         content: Job details/bullets
+        role_description: Optional job role description
     
     Returns:
         Formatted HTML for job entry
@@ -156,6 +157,10 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     html_parts.append(f'<span class="position">{position}</span>')
     html_parts.append(f'<span class="dates">{dates}</span>')
     html_parts.append(f'</div>')
+    
+    # Add role description if available (below position/dates, before bullets)
+    if role_description and role_description.strip():
+        html_parts.append(f'<p class="role-description-text">{role_description.strip()}</p>')
     
     # Content as paragraphs
     if content:
@@ -418,14 +423,16 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
                     location = job.get('location', '')
                     position = job.get('position', '')
                     dates = job.get('dates', '')
+                    role_description = job.get('role_description', '') # Extract role description
                     # The structured data has 'achievements' directly
                     achievements = job.get('achievements', [])
                     
                     if not any([company, position]):  # Skip empty entries
                         continue
                         
+                    # Pass role_description to format_job_entry
                     content_parts.append(
-                        format_job_entry(company, location, position, dates, achievements)
+                        format_job_entry(company, location, position, dates, achievements, role_description)
                     )
                 
                 content_parts.append('</div>')

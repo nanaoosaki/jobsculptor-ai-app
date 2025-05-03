@@ -239,4 +239,65 @@ ul.bullets {
              color: $color-bullet;
          }
     }
+}
+
+.role-description-text {
+    font-style: italic;
+    margin-top: 0.2em;  // Add some space above the description
+    margin-bottom: 0.5em; // Add some space below the description before bullets
+    color: #555; // Slightly lighter text color
+}
+
+.education,
+.project {
+    margin-bottom: $spacing-medium;
+
+    .job-title-line, .education-title-line, .project-title-line, .degree-line, .position-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: $spacing-xsmall;
+    }
+
+    .company, .institution, .project-title, .position, .degree {
+        font-weight: $font-weight-bold;
+        color: $text-color-secondary;
+    }
+
+    .location, .dates {
+        font-style: italic;
+        color: $text-color-muted;
+        text-align: right;
+    }
+
+    .job-content, .education-content, .project-content {
+        margin-top: $spacing-small;
+
+        p, ul {
+            margin-bottom: $spacing-xsmall;
+        }
+
+        // Bullet point styling
+        ul {
+            list-style-type: none; // Remove default bullets
+            margin-left: 0; // flush with parent text block
+            padding-left: $bullet-list-padding-left; // use token value for indent
+        }
+
+        li {
+            position: relative;
+            padding-left: $bullet-item-padding-left; // space between bullet and text
+            text-indent: $bullet-item-text-indent; // pull text back to align properly
+            margin-bottom: $spacing-xsmall;
+            line-height: $line-height-tight;
+
+            &::before {
+                content: $bullet-glyph;
+                position: absolute;
+                left: 0; // align with UL padding start
+                top: 0; // align with text top
+                font-size: 1em;
+                color: $text-color-primary;
+            }
+        }
+    }
 } 

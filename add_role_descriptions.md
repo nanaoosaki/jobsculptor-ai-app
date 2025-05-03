@@ -44,21 +44,24 @@
 
 ---
 
-## Phase 3: HTML Generation & Styling
+## Phase 3: HTML Display Implementation
 
-**Objective:** Render the role description in the HTML preview with appropriate styling.
+### Successful Implementation:
 
-**Tasks:**
+1. **HTML Generation:**
+   - Updated `html_generator.py` to include `role_description` in the job entry formatting.
+   - Ensured that `role_description` is displayed below the position and dates in the HTML preview.
 
-1.  **Update HTML Generation:** Modify `html_generator.py` (specifically the logic that processes the experience section, possibly involving `format_job_entry`) to include the `role_description`. Add a `div` or `p` tag with class `role-description-text` below the title/company/date line and before the bullet points list (`ul`). Only render this element if `role_description` has content.
-    *   **File(s) Affected:** `html_generator.py`
-2.  **Update SCSS:** Add styling rules for the `.role-description-text` class in `static/scss/_resume.scss`. Define appropriate margins, font size, font style (e.g., `font-style: italic;`), etc.
-    *   **File(s) Affected:** `static/scss/_resume.scss`
-3.  **Compile SCSS:** Run the build command (e.g., `npm run build-scss` or `sass static/scss:static/css`) to update `static/css/preview.css` and `static/css/print.css`.
-    *   **File(s) Affected:** `static/css/preview.css`, `static/css/print.css`
-4.  **Testing:** Verify the HTML preview renders correctly for jobs with and without descriptions. Check styling and positioning.
+2. **Styling:**
+   - Added styling for `.role-description-text` in `_resume.scss` to ensure consistent display.
+   - Compiled SCSS to CSS to reflect the new styles in both the HTML preview and PDF.
 
-**Estimated Time:** 1 day
+3. **Testing:**
+   - Verified that the `role_description` appears correctly in the HTML preview and PDF download.
+   - Confirmed that the display matches the sample resume format without additional symbols.
+
+4. **Outcome:**
+   - The implementation was successful, and the `role_description` is now correctly integrated into the resume display pipeline.
 
 ---
 
@@ -98,47 +101,76 @@
 
 ---
 
-## Learnings and Fixes
+## Learnings and Solution
 
-### Experience Section Rendering Issue
+### Key Learnings:
 
-**Issue:** The "User Resume Parsed" section in the UI did not display the Experience details correctly after modifying the data structure to include `role_description`.
+1. **Understanding Data Types:**
+   - When dealing with data that can be of multiple types (e.g., strings, lists, dictionaries), ensure that all functions handling this data are aware of these types and can process them correctly.
+   - Implement type-aware checks to prevent errors like `AttributeError` when methods assume a specific type.
 
-**Cause:** The backend was generating HTML previews assuming `experience` was a string, not a list of job objects.
+2. **Modular Code Review:**
+   - When fixing an issue, review all related functions and modules that interact with the data. Ensure that changes in one part of the codebase don't introduce errors elsewhere.
+   - In this case, both `tailor_resume_with_llm` and the `tailor_resume_content` methods needed updates to handle lists correctly.
 
-**Fix:** Updated the HTML generation logic in `upload_handler.py` to correctly iterate over the `experience` list and format each job entry with position, company/location/dates, role description, and achievements.
+3. **Testing and Validation:**
+   - After implementing a fix, thoroughly test the application with various inputs to ensure the issue is resolved and no new issues are introduced.
+   - Logs are invaluable for tracing the flow of data and identifying where errors occur.
 
-### Application Workflow for Resume Parsing
+4. **Documentation:**
+   - Keep documentation up-to-date with changes in the codebase. This includes updating any dependencies or interactions between modules.
+   - Documenting the solution and learnings helps future developers understand the context and reasoning behind changes.
 
-1. **Resume Upload:**
-   - User uploads a resume (DOCX/PDF) via the web interface.
-   - The file is saved to the server, and the `/upload-resume` endpoint is triggered.
+### Solution:
 
-2. **Parsing Process:**
-   - **LLM Parsing:**
-     - The resume is parsed using an LLM (e.g., OpenAI or Claude) if available.
-     - The parsed data is structured into sections: contact, summary, experience, education, skills, projects, and additional information.
-     - The `experience` section is now a list of job objects, each containing `position`, `company`, `location`, `dates`, `role_description`, and `achievements`.
-   - **Fallback Parsing:**
-     - If LLM parsing fails, traditional parsing methods are used.
+- Implemented type-aware checks in both `tailor_resume_with_llm` and `tailor_resume_content` methods to handle string, list, and dictionary types correctly.
+- Ensured that all sections of the resume are processed correctly, regardless of their data type.
+- Updated documentation to reflect these changes and provide guidance for future modifications.
 
-3. **HTML Preview Generation:**
-   - The backend generates an HTML preview of the parsed resume.
-   - For the `experience` section, it iterates over the list of job objects and formats them into HTML.
+---
 
-4. **Frontend Display:**
-   - The generated HTML is sent to the frontend and displayed in the "User Resume Parsed" section.
+## Implementation Issues & Fixes (Continued)
 
-### Future Changes and Additions
+### Issue 2: Sections Skipped During Tailoring (Experience, Education, etc.)
 
-- **Adding New Fields:**
-  - When adding new fields to the resume structure, ensure both the backend parsing logic and HTML generation are updated to handle the new data.
-  - Update the frontend JavaScript if the new data requires dynamic interaction or display changes.
+**Symptoms:**
+*   The "Tailored Resume Preview" in the UI is missing sections like Experience, Education, Skills, Projects.
+*   The corresponding temporary JSON files in `static/uploads/temp_session_data/` (e.g., `_experience.json`) contain minimal content like `{"content": ""}` instead of the expected tailored data.
+*   API response logs in `static/uploads/api_responses/` are only generated for the `summary` section.
+*   Application logs show messages like "Skipping empty or missing section: experience" during the tailoring phase.
+*   Application logs may also show a fallback to "traditional resume section extraction" even if LLM parsing should have worked.
 
-- **Testing:**
-  - Thoroughly test with various resume formats to ensure new fields are correctly parsed and displayed.
+**Cause:**
+1.  The LLM parser successfully returns the `experience` section as a list of dictionaries.
+2.  The `extract_resume_sections` function in `claude_integration.py` iterates through the LLM-parsed sections to clean bullet points using `clean_bullet_points`.
+3.  `clean_bullet_points` expects a string input, but receives a *list* for the `experience` section, causing an internal `AttributeError`.
+4.  This error is caught by a general exception handler in `extract_resume_sections`, which incorrectly triggers a fallback to the less reliable traditional parsing method.
+5.  The traditional parser fails to extract the Experience, Education, Skills, and Projects sections correctly from the specific resume format.
+6.  The `tailor_resume_with_llm` function receives these empty sections and skips the LLM tailoring step for them, resulting in empty output files and missing sections in the final preview.
 
-- **Documentation:**
-  - Document any changes to the data structure and display logic to maintain clarity for future development.
+**Fix Plan:**
 
---- 
+1.  **Modify `extract_resume_sections` (in `claude_integration.py`):**
+    *   Locate the loop where it processes sections returned by the LLM parser (`llm_sections`).
+    *   **Before** calling `clean_bullet_points`, check the `section_name` and the `type` of the `content`.
+    *   If `section_name == 'experience'` and `isinstance(content, list)`, **do not** call `clean_bullet_points`. Instead, directly assign the list `content` to `cleaned_sections['experience']`.
+    *   For all *other* sections where `content` is a string (`isinstance(content, str)`), proceed with calling `clean_bullet_points` as before.
+    *   Handle any other unexpected content types gracefully (e.g., log a warning and convert to string).
+2.  **Testing:**
+    *   Restart the application.
+    *   Upload a resume and run the tailoring process.
+    *   Check the application logs to confirm that LLM parsing is used and the fallback to traditional parsing *does not* occur.
+    *   Verify that API response logs are now created for *all* relevant sections (experience, education, skills, etc.) in the `api_responses` folder.
+    *   Inspect the temporary JSON files (e.g., `_experience.json`) in `temp_session_data` to ensure they contain the *structured, tailored* data returned by the LLM.
+    *   (Later) Confirm the tailored preview UI (Phase 3/4) displays these sections correctly.
+
+### Issue 3: AttributeError: 'list' object has no attribute 'strip' during Tailoring
+
+**Symptoms:**
+*   After applying the fix for "Issue 2", running the tailoring process with a resume successfully parsed by the LLM results in a 500 Internal Server Error.
+*   The application logs show `AttributeError: 'list' object has no attribute 'strip'` originating from the `tailor_resume_with_llm` function in `claude_integration.py` (specifically around the line checking `resume_sections[section_name].strip()`).
+
+**Cause:**
+1.  The `extract_resume_sections` function now correctly returns the `experience` section as a `List[Dict]` when LLM parsing succeeds.
+2.  The `tailor_resume_with_llm` function iterates through the extracted sections (`resume_sections`) to decide which ones to send for tailoring.
+3.  The check `if section_name in resume_sections and resume_sections[section_name].strip():` assumes the content (`
