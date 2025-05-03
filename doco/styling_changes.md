@@ -631,3 +631,29 @@ The fourth attempt to adjust the section header height was successful. The chang
 
 ### Key Changes
 1. **Unified HTML Structure**: Modified `html_generator.py` to remove `<h2>`
+
+## ISSUE RESOLVED: Grey Bar in PDF Output
+
+### Overview
+The issue of a grey horizontal bar appearing in the PDF output, but not in the HTML preview, has been resolved.
+
+### Failed Attempt Analysis
+- **Initial Hypothesis**: The grey bar was thought to be caused by a `contact-divider` element that was not properly styled for PDF output.
+- **Changes Made**: Attempted to hide the `contact-divider` in the `print.scss` file.
+- **Result**: The grey bar persisted, indicating the issue was not with the `contact-divider` styling.
+
+### Successful Solution
+- **Root Cause**: The grey bar was due to incorrect styling rules in the `print.scss` file that were not being overridden correctly for PDF output.
+- **Changes Made**:
+  1. Updated `print.scss` to ensure all unwanted dividers and background colors were hidden or set to transparent.
+  2. Ensured that the `section-box` and other elements had consistent styling between HTML and PDF outputs.
+  3. Recompiled the SCSS files and restarted the Flask server to apply changes.
+
+### Lessons Learned
+- **Consistent Styling**: Ensure that all styling rules are consistently applied across both HTML and PDF outputs.
+- **Thorough Testing**: Always verify changes in both outputs to catch discrepancies early.
+- **Documentation**: Keep detailed records of changes and solutions to streamline future debugging efforts.
+
+### Future Recommendations
+- Regularly review and test styling changes in both HTML and PDF outputs to ensure consistency.
+- Maintain a clear documentation trail for all styling changes to aid in future troubleshooting.
