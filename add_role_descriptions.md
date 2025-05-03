@@ -94,4 +94,51 @@
 
 ---
 
-**Total Estimated Time:** 6-9 days 
+**Total Estimated Time:** 6-9 days
+
+---
+
+## Learnings and Fixes
+
+### Experience Section Rendering Issue
+
+**Issue:** The "User Resume Parsed" section in the UI did not display the Experience details correctly after modifying the data structure to include `role_description`.
+
+**Cause:** The backend was generating HTML previews assuming `experience` was a string, not a list of job objects.
+
+**Fix:** Updated the HTML generation logic in `upload_handler.py` to correctly iterate over the `experience` list and format each job entry with position, company/location/dates, role description, and achievements.
+
+### Application Workflow for Resume Parsing
+
+1. **Resume Upload:**
+   - User uploads a resume (DOCX/PDF) via the web interface.
+   - The file is saved to the server, and the `/upload-resume` endpoint is triggered.
+
+2. **Parsing Process:**
+   - **LLM Parsing:**
+     - The resume is parsed using an LLM (e.g., OpenAI or Claude) if available.
+     - The parsed data is structured into sections: contact, summary, experience, education, skills, projects, and additional information.
+     - The `experience` section is now a list of job objects, each containing `position`, `company`, `location`, `dates`, `role_description`, and `achievements`.
+   - **Fallback Parsing:**
+     - If LLM parsing fails, traditional parsing methods are used.
+
+3. **HTML Preview Generation:**
+   - The backend generates an HTML preview of the parsed resume.
+   - For the `experience` section, it iterates over the list of job objects and formats them into HTML.
+
+4. **Frontend Display:**
+   - The generated HTML is sent to the frontend and displayed in the "User Resume Parsed" section.
+
+### Future Changes and Additions
+
+- **Adding New Fields:**
+  - When adding new fields to the resume structure, ensure both the backend parsing logic and HTML generation are updated to handle the new data.
+  - Update the frontend JavaScript if the new data requires dynamic interaction or display changes.
+
+- **Testing:**
+  - Thoroughly test with various resume formats to ensure new fields are correctly parsed and displayed.
+
+- **Documentation:**
+  - Document any changes to the data structure and display logic to maintain clarity for future development.
+
+--- 

@@ -107,17 +107,41 @@ def setup_upload_routes(app):
                             ('projects', 'Projects'),
                             ('additional', 'Additional Information')
                         ]:
-                            if llm_sections.get(orig_section):
+                            section_content = llm_sections.get(orig_section)
+                            if section_content:
                                 preview_html += f'<div class="preview-section">'
                                 preview_html += f'<h4 class="preview-section-title">{ui_section}</h4>'
                                 
-                                # Split by newlines and format as paragraphs
-                                paragraphs = llm_sections[orig_section].split('\n')
-                                for para in paragraphs:
-                                    if para.strip():
-                                        preview_html += f'<p class="preview-text">{para}</p>'
+                                # Special handling for the structured 'experience' section
+                                if orig_section == 'experience' and isinstance(section_content, list):
+                                    for job in section_content:
+                                        preview_html += '<div class="job-entry mb-3">' # Add margin between jobs
+                                        if job.get('position'):
+                                            preview_html += f'<p class="preview-text fw-bold">{job["position"]}</p>'
+                                        if job.get('company') or job.get('location') or job.get('dates'):
+                                            company_line = f"{job.get('company', '')} | {job.get('location', '')} | {job.get('dates', '')}".strip(' | ')
+                                            preview_html += f'<p class="preview-text text-muted">{company_line}</p>'
+                                        if job.get('role_description'):
+                                            # Display role description slightly differently, perhaps smaller or italic
+                                            preview_html += f'<p class="preview-text fst-italic">{job["role_description"]}</p>'
+                                        if job.get('achievements') and isinstance(job['achievements'], list):
+                                            preview_html += '<ul class="preview-list">'
+                                            for achievement in job['achievements']:
+                                                if achievement.strip():
+                                                    preview_html += f'<li class="preview-list-item">{achievement}</li>'
+                                            preview_html += '</ul>'
+                                        preview_html += '</div>' # End job-entry
+                                elif isinstance(section_content, str): # Handle other sections as strings
+                                    # Split by newlines and format as paragraphs
+                                    paragraphs = section_content.split('\n')
+                                    for para in paragraphs:
+                                        if para.strip():
+                                            preview_html += f'<p class="preview-text">{para}</p>'
+                                else:
+                                    # Handle unexpected format for other sections if necessary
+                                    preview_html += f'<p class="preview-text text-danger">[Unsupported format for section: {orig_section}]</p>' 
                                 
-                                preview_html += '</div>'
+                                preview_html += '</div>' # End preview-section
                         
                         preview_html += '</div></div>'
                         
