@@ -11,7 +11,6 @@
   "pdfHeaderColor": "rgb(0, 0, 102)",
   "pdfBorderColor": "#000",
   "baseFontSize": "11pt",
-  "headerFontSize": "14pt",
   "nameFontSize": "16pt", 
   "baseFontFamily": "'Calibri', Arial, sans-serif",
   "baseLineHeight": "1.4",
@@ -43,6 +42,11 @@
   "bullet-list-padding-left": "1.5em",
   "bullet-item-padding-left": "1em",
   "bullet-item-text-indent": "-1em",
+  "sectionBoxMaxWidth": "none",
+  "sectionHeaderLineHeight": "1.0",
+  "sectionHeaderFontSize": "12pt",
+  "sectionHeaderPaddingVert": "1px",
+  "sectionHeaderPaddingHoriz": "12px",
   
   "font.lineHeight.normal": 1.4,
   "font.lineHeight.tight": 1.25,
@@ -51,7 +55,6 @@
   "color.positionBar.bg": "#FFFFFF",
   "color.bullet": "#3A3A3A",
   "font.weight.bold": 700,
-  "space.section.y": "0.55rem",
-  "space.bullet.y": "0.15rem",
-  "sectionHeaderPadding": "4px 8px"
+  "space.section.y": "0.2rem",
+  "space.bullet.y": "0.15rem"
 } 

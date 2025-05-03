@@ -360,7 +360,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             summary_text = summary_data.get('content', '')
             if summary_text.strip():
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Professional Summary</h2></div>')
+                content_parts.append('<div class="section-box">Professional Summary</div>')
                 content_parts.append('<div class="summary-content">')
                 content_parts.append(format_section_content(summary_text))
                 content_parts.append('</div>')
@@ -393,7 +393,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
                             summary_text = cached_data.get('summary') or (cached_data.get('sections') and cached_data['sections'].get('summary'))
                             if summary_text and summary_text.strip():
                                 content_parts.append('<div class="resume-section">')
-                                content_parts.append('<div class="section-box"><h2>Professional Summary</h2></div>')
+                                content_parts.append('<div class="section-box">Professional Summary</div>')
                                 content_parts.append('<div class="summary-content">')
                                 content_parts.append(format_section_content(summary_text))
                                 content_parts.append('</div>')
@@ -410,7 +410,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
                 
             if isinstance(experience_data, list):
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Experience</h2></div>')
+                content_parts.append('<div class="section-box">Experience</div>')
                 content_parts.append('<div class="experience-content">')
                 
                 for job in experience_data:
@@ -433,7 +433,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             elif isinstance(experience_data, dict) and experience_data.get('content'):
                 logger.warning(f"Experience section for {request_id} loaded as simple content, formatting as text.")
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Experience</h2></div>')
+                content_parts.append('<div class="section-box">Experience</div>')
                 content_parts.append('<div class="experience-content">')
                 content_parts.append(format_section_content(experience_data['content']))
                 content_parts.append('</div>')
@@ -441,7 +441,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             elif isinstance(experience_data, str):
                 logger.warning(f"Experience section for {request_id} loaded as raw string, formatting as text.")
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Experience</h2></div>')
+                content_parts.append('<div class="section-box">Experience</div>')
                 content_parts.append('<div class="experience-content">')
                 content_parts.append(format_section_content(experience_data))
                 content_parts.append('</div>')
@@ -460,7 +460,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
                 
             if isinstance(education_data, list):
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Education</h2></div>')
+                content_parts.append('<div class="section-box">Education</div>')
                 content_parts.append('<div class="education-content">')
                 # Iterate and format each entry
                 for edu_entry in education_data:
@@ -475,7 +475,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             elif isinstance(education_data, dict) and education_data.get('content'):
                 logger.warning(f"Education section for {request_id} loaded as simple content, formatting as text.")
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Education</h2></div>')
+                content_parts.append('<div class="section-box">Education</div>')
                 content_parts.append('<div class="education-content">')
                 content_parts.append(format_section_content(education_data['content']))
                 content_parts.append('</div>')
@@ -483,7 +483,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             elif isinstance(education_data, str):
                 logger.warning(f"Education section for {request_id} loaded as raw string, formatting as text.")
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Education</h2></div>')
+                content_parts.append('<div class="section-box">Education</div>')
                 content_parts.append('<div class="education-content">')
                 content_parts.append(format_section_content(education_data))
                 content_parts.append('</div>')
@@ -519,7 +519,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
 
             if skills_html.strip():
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Skills</h2></div>')
+                content_parts.append('<div class="section-box">Skills</div>')
                 content_parts.append('<div class="skills-content">')
                 content_parts.append(skills_html)
                 content_parts.append('</div>')
@@ -538,7 +538,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
                 
             if isinstance(projects_data, list):
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Projects</h2></div>')
+                content_parts.append('<div class="section-box">Projects</div>')
                 content_parts.append('<div class="projects-content">')
                 # Iterate and format each entry
                 for proj_entry in projects_data:
@@ -551,7 +551,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             elif isinstance(projects_data, dict) and projects_data.get('content'):
                 logger.warning(f"Projects section for {request_id} loaded as simple content, formatting as text.")
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Projects</h2></div>')
+                content_parts.append('<div class="section-box">Projects</div>')
                 content_parts.append('<div class="projects-content">')
                 content_parts.append(format_section_content(projects_data['content']))
                 content_parts.append('</div>')
@@ -559,7 +559,7 @@ def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for
             elif isinstance(projects_data, str):
                 logger.warning(f"Projects section for {request_id} loaded as raw string, formatting as text.")
                 content_parts.append('<div class="resume-section">')
-                content_parts.append('<div class="section-box"><h2>Projects</h2></div>')
+                content_parts.append('<div class="section-box">Projects</div>')
                 content_parts.append('<div class="projects-content">')
                 content_parts.append(format_section_content(projects_data))
                 content_parts.append('</div>')

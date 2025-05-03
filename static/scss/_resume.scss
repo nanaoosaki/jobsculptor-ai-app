@@ -77,31 +77,36 @@ $font-size-h2: 1.75rem !default;
 
 // Section Box Styling – blue outline with transparent fill
 .section-box {
-    margin: $space-section-y 0;
-    padding: $sectionHeaderPadding; // tighter padding from design tokens
+    margin: $space-section-y 0; // Use existing token for spacing around box
+    padding: $sectionHeaderPaddingVert $sectionHeaderPaddingHoriz; // Use NEW specific tokens
     background: transparent;  // transparent fill
     color: $primaryColor;  // blue text color
     border: 2px solid $primaryColor !important;  // light blue outline, override inline styles
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    max-width: 100%;  // full width
+    display: inline-block;  // Allow it to size to content
+    max-width: $sectionBoxMaxWidth;  // Use SCSS var for width fix
     text-align: left; // left-align header text
+    font-size: $sectionHeaderFontSize; // Apply font-size directly
+    line-height: $sectionHeaderLineHeight; // Apply line-height directly
 }
 
 // Resume Section Styling
 .resume-section {
     margin-bottom: $spacing-medium;
 
-    h2 {
-        font-size: $font-size-h2;
-        font-weight: $font-weight-bold;
-        color: $primaryColor; // blue text to match the outline
-        text-align: left; // left-align header text
-        padding: 0; // padding handled by parent .section-box
-        margin: 0;
-        letter-spacing: 0.05em;
-    }
+    // h2 rule is no longer needed as we removed the h2 from the HTML generator
+    // h2 {
+    //     font-size: var(--sectionHeaderFontSize, 12pt);
+    //     font-weight: $font-weight-bold;
+    //     color: $primaryColor; // blue text to match the outline
+    //     text-align: left; // left-align header text
+    //     padding: 0; // padding handled by parent .section-box
+    //     margin: 0;
+    //     letter-spacing: 0.05em;
+    //     line-height: var(--sectionHeaderLineHeight, 1.1);
+    // }
 }
 
 // Position Bar Styling - New
