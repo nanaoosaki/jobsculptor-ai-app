@@ -158,10 +158,10 @@ hr {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  display: inline-block;
-  max-width: none;
+  display: block;
+  width: 100%;
   text-align: left;
-  font-size: 12pt;
+  font-size: 14pt;
   line-height: 1;
 }
 
@@ -353,6 +353,10 @@ ul.bullets li::marker {
 
 .resume-section h2 {
   color: #343a40;
+}
+
+.contact-divider {
+  display: none;
 }
 
 .company, .institution, .project-title {

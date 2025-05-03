@@ -119,7 +119,8 @@ ul.bullets {
 }
 
 .contact-divider {
-  // Base styles are in _base.scss
+  // Override for PDF: hide the divider to prevent it from appearing above the name
+  display: none;
 }
 
 // Entry formatting specific to PDF (if any)

@@ -158,10 +158,10 @@ hr {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  display: inline-block;
-  max-width: none;
+  display: block;
+  width: 100%;
   text-align: left;
-  font-size: 12pt;
+  font-size: 14pt;
   line-height: 1;
 }
 

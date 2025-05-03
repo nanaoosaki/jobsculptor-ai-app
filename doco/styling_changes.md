@@ -375,6 +375,40 @@ The recent changes successfully adjusted the section header box styling to align
 - **Regular Workflow**: Follow the validated workflow for styling changes to ensure all steps are completed.
 - **Documentation**: Keep detailed records of changes and lessons learned to streamline future updates.
 
+## ISSUE RESOLVED: Horizontal Grey Bar in PDF Output
+
+### Overview
+An issue was identified where a horizontal grey bar appeared above the name in the PDF output but was not visible in the HTML preview.
+
+### Root Cause Analysis
+The issue was caused by the `contact-divider` element being rendered incorrectly in the PDF output. While in the HTML preview it appeared correctly below the contact information, WeasyPrint was rendering it above the name in the PDF.
+
+### Implementation Details
+To fix the issue, the following changes were made:
+
+1. **Updated Print CSS**:
+   - Added a specific override for the `contact-divider` in `print.scss` to hide it in the PDF output:
+   ```scss
+   .contact-divider {
+     // Override for PDF: hide the divider to prevent it from appearing above the name
+     display: none;
+   }
+   ```
+
+2. **Regenerated CSS Files**:
+   - Rebuilt both print and preview CSS files using sass.
+
+3. **Restarted Flask Server**:
+   - Restarted the server to ensure all changes were applied.
+
+### Validation
+The fix was tested by generating a new PDF and verifying that the horizontal grey bar no longer appears above the name.
+
+### Lessons Learned
+1. **PDF vs HTML Rendering Differences**: WeasyPrint may interpret HTML structure differently than browsers, requiring specific overrides for PDF output.
+2. **Targeted CSS Fixes**: Using print-specific CSS rules helps solve PDF-only issues without affecting the HTML preview.
+3. **Document Structure Importance**: HTML element order and positioning can have different effects in WeasyPrint vs browser rendering.
+
 ## 2025-04-27  – Bullet-cleanup Attempt #1 Post-Mortem
 
 We centralised bullet stripping in `utils/bullet_utils.py` and wired the new
