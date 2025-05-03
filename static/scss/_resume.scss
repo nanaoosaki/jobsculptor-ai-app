@@ -7,8 +7,8 @@ $font-size-body: $baseFontSize !default;
 $line-height-body: $baseLineHeight !default;
 $line-height-tight: $font-lineHeight-tight !default; // From token
 $paper-width-a4: 8.27in !default; // Standard A4 width (210mm)
-$paper-padding-vertical: 0.75in !default;
-$paper-padding-horizontal: 0.75in !default;
+$paper-padding-vertical: 1cm !default;
+$paper-padding-horizontal: 1cm !default;
 $background-color-paper: #ffffff !default;
 $font-weight-bold: $font-weight-bold !default; // From token
 $text-color-primary: $textColor !default;
@@ -162,12 +162,13 @@ $font-size-h2: 1.75rem !default;
         ul {
             list-style-type: none; // Remove default bullets
             margin-left: 0; // flush with parent text block
-            padding-left: 1.1em; // small indent for bullet glyph
+            padding-left: $bullet-list-padding-left; // use token value for indent
         }
 
         li {
             position: relative;
-            padding-left: 0; // let UL padding provide indent
+            padding-left: $bullet-item-padding-left; // space between bullet and text
+            text-indent: $bullet-item-text-indent; // pull text back to align properly
             margin-bottom: $spacing-xsmall;
             line-height: $line-height-tight;
 
@@ -175,7 +176,7 @@ $font-size-h2: 1.75rem !default;
                 content: $bullet-glyph;
                 position: absolute;
                 left: 0; // align with UL padding start
-                top: 0.1em;
+                top: 0; // align with text top
                 font-size: 1em;
                 color: $text-color-primary;
             }
@@ -185,11 +186,24 @@ $font-size-h2: 1.75rem !default;
 
 // Tight Bullet Spacing - New
 ul.bullets {
-    margin: 0.25rem 0 0.15rem 1.1rem;  // left indent slight
+    margin: 0.25rem 0 0.15rem 0;  // no left indent (handled by padding)
+    padding-left: $bullet-list-padding-left;  // proper left indent from token
+    list-style-type: none;  // no default bullets
+
     li {
+        position: relative;
         margin-bottom: $space-bullet-y;
         line-height: $font-lineHeight-tight;
-        &::marker { color: $color-bullet; }
+        padding-left: $bullet-item-padding-left;  // space for bullet
+        text-indent: $bullet-item-text-indent;  // negative indent to pull text back
+        
+        &::before {
+            content: $bullet-glyph;  // custom bullet from token
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: $color-bullet;
+        }
     }
 }
 
@@ -201,11 +215,21 @@ ul.bullets {
     }
     ul {
         list-style-type: none;
-        padding-left: 0;
+        padding-left: $bullet-list-padding-left;
     }
     li {
+         position: relative;
          margin-bottom: $spacing-xsmall;
          line-height: $line-height-tight; // Use tighter line height
-         // Could add custom bullet here too if desired
+         padding-left: $bullet-item-padding-left;  // space for bullet
+         text-indent: $bullet-item-text-indent;  // negative indent to pull text back
+         
+         &::before {
+             content: $bullet-glyph;  // custom bullet from token
+             position: absolute;
+             left: 0;
+             top: 0;
+             color: $color-bullet;
+         }
     }
 } 

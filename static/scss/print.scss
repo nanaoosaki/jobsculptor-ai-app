@@ -14,7 +14,7 @@ $spacing-xsmall: 0.25rem !default; // Extra small spacing
 // Custom set global properties for print media
 @page {
   size: A4;
-  margin: 1in; // Standard 1-inch margins
+  margin: 1cm; // Reduced margin to 1 cm
 }
 
 body {

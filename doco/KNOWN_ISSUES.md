@@ -72,17 +72,20 @@ Despite implementing various styling changes, there have been no visible changes
 **Priority**: High
 
 ### Bullet Point Overlap Issue
-**Status**: Unresolved
+**Status**: Resolved
 
 **Description**: 
-A 'u2022' character is appearing in the experience section, overlapping with bullet points in both the HTML preview and PDF download.
+A 'u2022' character was appearing in the experience section, overlapping with bullet points in both the HTML preview and PDF download.
+
+**Resolution**:
+- Added proper spacing and positioning for bullet points in the SCSS
+- Added new design tokens for bullet list padding, item padding, and text indentation
+- Applied consistent styling to all bullet points across the resume
+- Verified the fix in both HTML preview and PDF output
 
 **Impact**: 
-- The visual appearance of the resume is affected, making it look unprofessional.
-
-**Next Steps**: 
-1. Investigate the source of the 'u2022' character in the resume content.
-2. Ensure proper encoding and character handling in the HTML and PDF generation.
+- The bullet points now display correctly with proper spacing and alignment
+- The visual appearance of the resume is improved, looking more professional
 
 **Priority**: Medium
 
@@ -132,6 +135,69 @@ The CSS files `print.css` and `preview.css` contained a hard-coded string "u2022
 - Monitor for any further styling discrepancies in resume outputs.
 
 **Priority**: Low
+
+### Hard-Coded Bullet Point Issue
+**Status**: Resolved
+
+**Description**: 
+The recompilation of `_resume.scss` was resulting in the hard-coded "u2022" character being inserted into the CSS files instead of a proper bullet point.
+
+**Resolution**:
+- Updated the `bullet-glyph` variable in `design_tokens.json` from `"\"\\u2022\""` to `"\"\\2022\""`, using the proper CSS escape syntax.
+- Regenerated tokens with `python tools/generate_tokens_css.py`
+- Recompiled SCSS files with `sass static/scss/preview.scss static/css/preview.css` and `sass static/scss/print.scss static/css/print.css`
+- Verified the bullet points now correctly display in both the HTML preview and PDF.
+
+**Impact**: 
+- Bullet points now display correctly with the proper bullet symbol instead of the literal text "u2022".
+
+**Priority**: Medium
+
+### Margin Size Issue
+**Status**: Unresolved
+
+**Description**: 
+The margin set to 1 inch is equivalent to approximately 2.54 cm, which is larger than expected. It needs to be reduced to 1 cm.
+
+**Impact**: 
+- The large margin reduces the amount of content visible on each page.
+
+**Next Steps**: 
+1. Adjust the margin size in the SCSS files to 1 cm.
+2. Verify the changes in both the HTML preview and PDF output.
+
+**Priority**: Medium
+
+### Section Box Height Issue
+**Status**: Unresolved
+
+**Description**: 
+The section box height needs to be reduced further, as previous adjustments did not achieve the desired effect.
+
+**Impact**: 
+- The layout appears unbalanced, with excessive vertical space in section headers.
+
+**Next Steps**: 
+1. Further reduce the section box height in the SCSS files.
+2. Verify the changes in both the HTML preview and PDF output.
+
+**Priority**: Medium
+
+### Bullet Point Length and Symbol Issue
+**Status**: Unresolved
+
+**Description**: 
+Bullet points are too long, and the bullet point symbol is missing.
+
+**Impact**: 
+- The readability and professional appearance of the resume are affected.
+
+**Next Steps**: 
+1. Adjust the bullet point length in the SCSS files.
+2. Ensure the bullet point symbol is correctly displayed.
+3. Verify the changes in both the HTML preview and PDF output.
+
+**Priority**: Medium
 
 ---
 

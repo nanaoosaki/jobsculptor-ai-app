@@ -19,13 +19,109 @@ Based on successful tests (including changing section header color to pink), fol
 
 **IMPORTANT**: Missing any of these steps, especially #4 (restarting Flask), will result in styling changes not being applied.
 
+## Correct Steps for Adjusting Margins
+
+To adjust the margins for both the HTML preview and PDF outputs, follow these steps:
+
+1. **Edit `design_tokens.json`**:
+   - Update `pageMarginVertical`, `pageMarginHorizontal`, `paper-padding-vertical`, and `paper-padding-horizontal` to the desired size (e.g., "1cm").
+
+2. **Generate Updated Tokens**:
+   - Run `python tools/generate_tokens_css.py` to regenerate the SCSS tokens.
+
+3. **Compile SCSS**:
+   - Use `sass` to compile the SCSS files into CSS:
+     ```bash
+     sass static/scss/preview.scss static/css/preview.css
+     sass static/scss/print.scss static/css/print.css
+     ```
+
+4. **Restart Flask**:
+   - Restart the Flask application to apply the changes.
+
+By following these steps, you ensure that both the HTML preview and PDF outputs reflect the updated margin settings.
+
 ## Key Lessons Learned
 
-1. **Flask Server Restart Critical**: The development server caches imports at startup, so changes to Python files (like `html_generator.py`) aren't reflected until restart.
-2. **CSS ↔ HTML Coordination**: Both parts need to be in sync - CSS selectors must match the HTML elements emitted by the Python generator.
-3. **Complete Process Required**: The styling pipeline has multiple steps, and skipping any can lead to misleading results.
-4. **Paper Width Corrections**: Setting the proper A4 width (8.27in instead of 8.5in) fixed PDF output scaling issues.
-5. **Style Isolation**: Adding style isolation rules prevents Bootstrap styles from leaking into the resume content.
+1. **Centralized Token Management**: Ensure all margin settings are updated in `design_tokens.json` for consistency.
+2. **Token Regeneration**: Always regenerate tokens after making changes to `design_tokens.json`.
+3. **SCSS Compilation**: Compile SCSS files to apply changes to CSS.
+4. **Flask Restart**: Restart the Flask server to ensure all changes are applied.
+
+These steps ensure that styling changes are consistently applied across both the preview and PDF outputs, maintaining a unified appearance.
+
+## NEW ISSUE RESOLVED: Bullet Point Overlapping with Text
+
+The issue where bullet points were overlapping with the text in the resume has been resolved. The key fix was to implement proper CSS spacing and positioning for bullet points.
+
+### Root Cause Analysis
+
+The bullet points were properly displayed with the correct symbol, but the CSS styling lacked proper spacing and positioning between the bullet and the text. This was due to:
+
+1. Insufficient padding and indentation in the list items
+2. Inconsistent positioning of the bullet points
+3. Lack of proper text indentation to align the text correctly with the bullet
+
+### Implementation Details
+
+To fix the issue, the following changes were made:
+
+1. **Added New Design Tokens**:
+   - `bullet-list-padding-left`: Controls the left padding of bullet lists
+   - `bullet-item-padding-left`: Controls the left padding of list items
+   - `bullet-item-text-indent`: Controls the text indentation of list items
+
+2. **Updated SCSS Styling**:
+   - Applied a consistent approach to bullet point styling across all list types
+   - Used the `::before` pseudo-element for bullet placement with proper positioning
+   - Applied proper padding and text-indent to ensure correct text alignment
+
+### Validation
+
+The fix was tested in both the HTML preview and PDF output, confirming that bullet points no longer overlap with text and are properly aligned.
+
+## Correct Steps for Fixing Bullet Point Alignment
+
+To fix bullet point alignment issues, follow these steps:
+
+1. **Edit `design_tokens.json`**:
+   - Add or update bullet-point related tokens:
+   ```json
+   {
+     "bullet-list-padding-left": "1.5em",
+     "bullet-item-padding-left": "1em",
+     "bullet-item-text-indent": "-1em"
+   }
+   ```
+
+2. **Update SCSS Files**:
+   - Ensure list items use consistent styling with proper positioning
+   - Use the `::before` pseudo-element with absolute positioning for custom bullets
+   - Apply proper padding and indentation
+
+3. **Generate Updated Tokens**:
+   - Run `python tools/generate_tokens_css.py` to regenerate the SCSS tokens
+
+4. **Compile SCSS**:
+   - Use `sass` to compile the SCSS files into CSS:
+   ```bash
+   sass static/scss/preview.scss static/css/preview.css
+   sass static/scss/print.scss static/css/print.css
+   ```
+
+5. **Restart Flask**:
+   - Restart the Flask application to apply the changes
+
+6. **Validate Changes**:
+   - Check both HTML preview and PDF output to ensure consistent bullet point alignment
+
+## Key Lessons Learned
+
+1. **Consistent Bullet Point Approach**: Use the same technique for all bullet points in the resume for consistent appearance.
+2. **Proper CSS Positioning**: For custom bullets, use absolute positioning with proper offsets.
+3. **Text Indentation Control**: Use both padding and text-indent to align text properly with bullets.
+4. **Single Source of Truth**: Keep spacing values in design tokens for consistency and easier maintenance.
+5. **Test Both Outputs**: Always verify changes in both HTML preview and PDF output to ensure consistent appearance.
 
 ## Implementation History
 
@@ -338,3 +434,131 @@ Small patch (<50 LOC) but touches core HTML path – low risk, <1 hr coding, 30 
 validation.
 
 --- 
+
+## ISSUE RESOLVED: Bullet Point Display Issue
+
+The issue where bullet points were incorrectly displayed as "u2022" in the CSS has been resolved. The key fix was to ensure proper SCSS string escaping in `design_tokens.json` and to follow the complete styling update workflow.
+
+## Correct Steps for Fixing Bullet Point Display
+
+To fix the bullet point display issue, follow these steps:
+
+1. **Edit `design_tokens.json`**:
+   - Update the `bullet-glyph` to use proper SCSS string escaping.
+
+2. **Generate Updated Tokens**:
+   - Run `python tools/generate_tokens_css.py` to regenerate the SCSS tokens.
+
+3. **Compile SCSS**:
+   - Use `sass` to compile the SCSS files into CSS:
+     ```bash
+     sass static/scss/preview.scss static/css/preview.css
+     sass static/scss/print.scss static/css/print.css
+     ```
+
+4. **Restart Flask**:
+   - Restart the Flask application to apply the changes.
+
+By following these steps, you ensure that both the HTML preview and PDF outputs reflect the updated bullet point settings.
+
+## Key Lessons Learned
+
+1. **Proper String Escaping**: Ensure all special characters are properly escaped in `design_tokens.json`.
+2. **Token Regeneration**: Always regenerate tokens after making changes to `design_tokens.json`.
+3. **SCSS Compilation**: Compile SCSS files to apply changes to CSS.
+4. **Flask Restart**: Restart the Flask server to ensure all changes are applied.
+
+These steps ensure that styling changes are consistently applied across both the preview and PDF outputs, maintaining a unified appearance.
+
+## NEW ISSUE: Bullet Point Overlapping with Text
+
+A new issue has been identified where bullet points are overlapping with the text in the resume, as shown in the provided image. This issue arose after the previous changes to correct the bullet point display.
+
+### Description
+- The bullet points are correctly processed and compiled in the CSS file, but they are not aligning properly with the text, causing an overlap.
+
+### Impact
+- The visual appearance of the resume is affected, making it look unprofessional.
+
+### Next Steps
+1. Investigate the CSS rules related to bullet point alignment and spacing.
+2. Adjust the CSS to ensure proper alignment and spacing of bullet points relative to the text.
+3. Verify the changes in both the HTML preview and PDF output to ensure the issue is resolved.
+
+### Priority
+- Medium
+
+This issue needs to be addressed to maintain the professional appearance of the resume and ensure that the text is readable and well-aligned.
+
+## NEW ISSUE RESOLVED: Bullet Point Overlapping with Text
+
+The issue where bullet points were overlapping with the text in the resume has been resolved. The key fix was to implement proper CSS spacing and positioning for bullet points.
+
+### Root Cause Analysis
+
+The bullet points were properly displayed with the correct symbol, but the CSS styling lacked proper spacing and positioning between the bullet and the text. This was due to:
+
+1. Insufficient padding and indentation in the list items
+2. Inconsistent positioning of the bullet points
+3. Lack of proper text indentation to align the text correctly with the bullet
+
+### Implementation Details
+
+To fix the issue, the following changes were made:
+
+1. **Added New Design Tokens**:
+   - `bullet-list-padding-left`: Controls the left padding of bullet lists
+   - `bullet-item-padding-left`: Controls the left padding of list items
+   - `bullet-item-text-indent`: Controls the text indentation of list items
+
+2. **Updated SCSS Styling**:
+   - Applied a consistent approach to bullet point styling across all list types
+   - Used the `::before` pseudo-element for bullet placement with proper positioning
+   - Applied proper padding and text-indent to ensure correct text alignment
+
+### Validation
+
+The fix was tested in both the HTML preview and PDF output, confirming that bullet points no longer overlap with text and are properly aligned.
+
+## Correct Steps for Fixing Bullet Point Alignment
+
+To fix bullet point alignment issues, follow these steps:
+
+1. **Edit `design_tokens.json`**:
+   - Add or update bullet-point related tokens:
+   ```json
+   {
+     "bullet-list-padding-left": "1.5em",
+     "bullet-item-padding-left": "1em",
+     "bullet-item-text-indent": "-1em"
+   }
+   ```
+
+2. **Update SCSS Files**:
+   - Ensure list items use consistent styling with proper positioning
+   - Use the `::before` pseudo-element with absolute positioning for custom bullets
+   - Apply proper padding and indentation
+
+3. **Generate Updated Tokens**:
+   - Run `python tools/generate_tokens_css.py` to regenerate the SCSS tokens
+
+4. **Compile SCSS**:
+   - Use `sass` to compile the SCSS files into CSS:
+   ```bash
+   sass static/scss/preview.scss static/css/preview.css
+   sass static/scss/print.scss static/css/print.css
+   ```
+
+5. **Restart Flask**:
+   - Restart the Flask application to apply the changes
+
+6. **Validate Changes**:
+   - Check both HTML preview and PDF output to ensure consistent bullet point alignment
+
+## Key Lessons Learned
+
+1. **Consistent Bullet Point Approach**: Use the same technique for all bullet points in the resume for consistent appearance.
+2. **Proper CSS Positioning**: For custom bullets, use absolute positioning with proper offsets.
+3. **Text Indentation Control**: Use both padding and text-indent to align text properly with bullets.
+4. **Single Source of Truth**: Keep spacing values in design tokens for consistency and easier maintenance.
+5. **Test Both Outputs**: Always verify changes in both HTML preview and PDF output to ensure consistent appearance. 
