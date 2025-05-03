@@ -15,6 +15,11 @@ $spacing-xsmall: 0.25rem !default; // Extra small spacing
 @page {
   size: A4;
   margin: 1cm; // Reduced margin to 1 cm
+  background-color: #FFFFFF; // Ensure white background for page
+}
+
+html {
+  background-color: #FFFFFF; // Ensure white background
 }
 
 body {
@@ -32,16 +37,36 @@ body {
   width: 100%; // Let the @page size control dimensions
   box-shadow: none; // No shadow for print
   margin: 0; // No margin needed for print
+  background-color: #FFFFFF; // Explicitly set white background
   // Note: Internal padding from _resume.scss still controls content positioning
 }
 
 // Remove screen-specific effects for print
 .tailored-resume-content {
-    box-shadow: none; // Remove paper shadow for print
-    margin: 0; // Remove extra margins used for screen layout
-    width: 100%; // Use full available width within page margins
-    max-width: 100%;
-    padding: 0; // Page margins handle padding
+  box-shadow: none; // Remove paper shadow for print
+  margin: 0; // Remove extra margins used for screen layout
+  width: 100%; // Use full available width within page margins
+  max-width: 100%;
+  padding: 0; // Page margins handle padding
+}
+
+// Make sure container has white background
+.resume-container {
+  background-color: #FFFFFF;
+}
+
+// Hide both divider styles
+.contact-divider, .divider {
+  display: none; // Hide all dividers in PDF output
+}
+
+// Ensure no unwanted background colors
+hr {
+  background-color: transparent;
+  border: none;
+  height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 // Section Box Styling - ensure consistency with HTML
