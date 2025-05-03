@@ -269,4 +269,18 @@ This project focuses on creating an AI-powered resume tailoring tool that optimi
 5. **Resume Formatting Improvements**: Adjusted resume formatting to utilize full A4 page width, improving visual presentation and readability.
 6. **Bullet Point Formatting**: Resolved inconsistencies in bullet point display, ensuring proper alignment and appearance.
 7. **Contact Information Preservation**: Fixed issues with contact details in tailored resumes, ensuring they are preserved correctly.
-8. **HTML Preview Enhancement**: Ensured HTML preview precisely matches PDF output, improving consistency and user experience. 
+8. **HTML Preview Enhancement**: Ensured HTML preview precisely matches PDF output, improving consistency and user experience.
+
+## Starting the Application
+
+To start the Resume Tailor application, follow these steps:
+
+1. Ensure you have Python installed on your system.
+2. Navigate to the project directory in your terminal.
+3. Run the following command to start the Flask application:
+   ```
+   python app.py
+   ```
+4. The application will start and be accessible at `http://127.0.0.1:5000` in your web browser.
+
+**Note:** This is a development server. For production deployment, use a production WSGI server. 

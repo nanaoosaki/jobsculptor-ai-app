@@ -39,7 +39,7 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 
 ## In Progress Tasks
 
-- [x] Switch from Word document generation to PDF export for better consistency
+- [x] Switch from Word document generation to PDF export for better consistency (Completed)
 - [x] Implement HTML-to-PDF conversion with professional styling
 - [x] Update download functionality to provide PDF files instead of Word documents
 - [x] Optimize PDF layout for ATS compatibility and professional appearance
@@ -60,250 +60,28 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
 
 ## New Tasks
 
-- [x] Fix missing contact section in tailored resume
-  - Ensure contact information is preserved during the tailoring process.
-  - Improve caching mechanisms for parsed resume data.
-  - Add a fallback mechanism to extract contact information directly from the original document.
-  - Update the LLM prompt to explicitly extract and preserve contact information.
-  - **Priority**: Critical
-  - **Implemented**: Added contact section preservation in tailor_resume_with_llm, improved error handling in html_generator.py, and enhanced validation in save_tailored_content_to_json.
+- [ ] Add Job Description Below Title
+  - Implement a feature to add a job description or role description right below the title and period if it does not exist in the original resume.
+  - Ensure the description is concise and relevant to the job title.
+  - **Priority**: Medium
+  - **Implementation Plan**:
+    - Modify `html_generator.py` to check for the presence of a job description.
+    - If missing, generate a brief description using LLM based on the job title and period.
+    - Ensure the description is properly formatted and inserted in the resume.
 
-- [x] Fix missing professional summary section
-  - Ensure the summary section is included in the LLM parsing and tailoring process.
-  - Add validation to check for the presence of a summary section.
-  - Update the approach by preserving the original summary instead of tailoring it.
-  - Add a fallback mechanism to extract summary information from the original parsed resume.
-  - **Priority**: High
-  - **Implemented**: Added summary section preservation in tailor_resume_with_llm similar to the contact section approach, added validation in save_tailored_content_to_json, and implemented a fallback mechanism in html_generator.py.
-
-- [ ] Add professional summary generator
-  - Implement a feature to generate a professional summary when one isn't found in the user's resume.
-  - Create a prompt that synthesizes the user's experience, skills, education and the target job.
-  - Integrate with both Claude and OpenAI LLM providers.
-  - Ensure the generated summary is properly formatted and tailored to the target position.
+- [ ] Restrict Output Tokens for Tailored Bullet Points
+  - Restrict the output tokens for tailored bullet points to be 85-105 characters to ensure they fit in one line.
   - **Priority**: High
   - **Implementation Plan**:
-    - Add summary generation functions to claude_integration.py
-    - Modify tailor_resume_with_llm to generate a summary when none exists
-    - Implement provider-specific generator functions
-    - Add detailed logging for monitoring the generation process
-    - Create appropriate error handling and fallback mechanisms
+    - Update the LLM prompt to include a character limit for bullet points.
+    - Implement validation to ensure bullet points do not exceed the character limit.
+    - Test with various resume content to ensure readability and consistency.
 
-- [x] Adjust resume formatting to utilize full A4 page width
-  - Adjusted CSS properties across multiple files to ensure the resume utilizes the full A4 page width.
-  - Reduced horizontal padding in `.tailored-resume-content` from `1in` to `0.5in` in both `html_generator.py` and `static/css/styles.css`.
-  - Ensured `box-sizing: border-box` was consistently applied to include padding in width calculations.
-  - Adjusted @page margins in `static/css/pdf_styles.css` to `1cm 1.5cm` to allow more horizontal space.
-  - Updated the `displayResumePreview()` function in `static/js/main.js` to remove width constraints.
-  - Ensured consistent styling across HTML preview and PDF output by centralizing style definitions.
-  - **Priority**: Medium
-  - **Implemented**: The changes increased the effective content width of the resume, improved visual presentation, and maintained proper formatting and readability.
+## Cleaned Up Tasks
 
-- [ ] Remove frame lines in PDF download
-  - Review and adjust the CSS styling to remove unwanted frame lines.
-  - Ensure the PDF generation process does not include unnecessary borders.
-  - **Priority**: Medium
-
-## Task Breakdown: Adjust Resume Formatting to Utilize Full A4 Page Width (Revised)
-
-### Issue Analysis
-After further investigation, the resume's narrow appearance persists despite the initial CSS adjustments. The root cause appears more complex than initially thought.
-
-The examination of the HTML rendering process and CSS application reveals:
-
-1. **Multiple CSS Layer Application**:
-   - Several CSS classes affect the width with cascading/nested containers:
-     - In `html_generator.py`, the `.resume-preview-container` wraps `.tailored-resume-content`
-     - In `static/css/styles.css`, the stylesheet sets similar constraints
-     - In JS (`main.js`), additional styling is applied when displaying the preview
-
-2. **Frontend-Backend Mismatch**:
-   - The HTML preview in the browser applies additional JS-based centering in `displayResumePreview()` function
-   - The PDF generation uses `pdf_exporter.py` with WeasyPrint and potentially different CSS application
-
-3. **Visual vs Actual Width**:
-   - The resume might be rendered at proper A4 width (8.27 inches) in code, but visually appears narrow due to:
-     - Excessive whitespace in the margins
-     - Nested container constraints
-     - PDF rendering differences from HTML preview
-     - Shadow effects and visual borders creating an illusion of narrowness
-
-### Root Cause (Refined)
-The issue is not just about CSS width values but the combination of:
-1. **Nested Containers**: Multiple wrapping elements constraining the content
-2. **UI Design Choices**: Visual styling making the content area appear smaller
-3. **Multiple Styling Sources**: CSS applied from different files and JavaScript
-4. **Preview-PDF Inconsistency**: Different rendering processes for preview vs PDF
-
-### Comprehensive Fix Plan
-
-1. **Adjust HTML Generator Template**:
-   - Modify the `.resume-preview-container` to use a wider width (95% of parent)
-   - Reduce padding in the container from `1rem` to `0.5rem`
-   - Update `.tailored-resume-content` to reduce horizontal padding:
-   ```css
-   .tailored-resume-content {
-       width: 8.27in; /* Keep A4 width */
-       max-width: 95%; /* Allow more content width */
-       padding: 0 0.5in; /* Reduce from 1in to 0.5in */
-       /* other properties remain */
-   }
-   ```
-
-2. **Update Frontend Display Logic**:
-   - Modify `static/js/main.js` function `displayResumePreview()` to remove width constraints
-   ```javascript
-   // Remove existing width constraints
-   previewContainer.style.maxWidth = '95%'; // Allow wider content
-   paperContainer.style.maxWidth = '100%';
-   ```
-
-3. **Fix PDF Exporter**:
-   - Update `pdf_exporter.py` wrapping HTML template to ensure wider content:
-   ```html
-   <main class="resume-content" style="width: 95%; max-width: 95%; padding: 0 0.5in;">
-       {resume_html}
-   </main>
-   ```
-   - Add specific CSS overrides in the inline `<style>` section to ensure proper margins
-
-4. **Update PDF Styles**:
-   - Modify @page margins in `static/css/pdf_styles.css`:
-   ```css
-   @page {
-     size: letter portrait;
-     margin: 0.8cm 1.2cm; /* Reduced from 1cm 2cm */
-   }
-   ```
-   - Add explicit !important rules to override potential conflicts:
-   ```css
-   .resume-content {
-     width: 95% !important;
-     max-width: 95% !important;
-     margin: 0 auto !important;
-     padding: 0 0.5in !important;
-   }
-   ```
-
-5. **Fix Visual Styling**:
-   - Update border and shadow effects to create less visual "boxing"
-   - Ensure section headers span the full width effectively
-   - Remove any fixed-width containers that may constrain content
-
-### Implementation Steps (Prioritized)
-
-1. **First Pass: HTML Generator Template and CSS**
-   - Update inline CSS in `html_generator.py` to reduce padding and widen containers
-   - Modify the same classes in `static/css/styles.css` for consistency
-
-2. **Second Pass: PDF Generation**
-   - Update @page margins and other styles in `pdf_styles.css`
-   - Modify the HTML wrapper template in `pdf_exporter.py`
-
-3. **Third Pass: JavaScript Display Logic**
-   - Adjust the `displayResumePreview()` function to ensure proper width rendering
-
-4. **Fourth Pass: Visual Styling**
-   - Fine-tune borders, shadows, and other visual elements affecting perceived width
-
-### Testing Strategy
-1. **Preview Testing**:
-   - Test the HTML preview after each phase of changes
-   - Verify with browser dev tools that the resume width increases correctly
-   - Use screenshots to compare before/after
-
-2. **PDF Testing**:
-   - Generate PDFs after implementing all changes
-   - Measure the actual content width in the generated PDFs
-   - Compare content area utilization before and after changes
-
-3. **Content Flow Testing**:
-   - Test with various resume content types, including long bullet points
-   - Ensure text flows properly and maintains readability
-   - Verify section headers span appropriately
-
-### Expected Results
-With this comprehensive approach, we expect:
-1. The resume content to expand and utilize more horizontal space
-2. Consistent appearance between preview and PDF output
-3. Proper visual balance with appropriate margins
-4. Professional appearance matching standard resume formats
-
-### Verification Metrics
-1. Content width increased by at least 25% compared to current state
-2. Ratio of text area to page width increased to at least 80%
-3. Consistent appearance across preview and PDF
-4. Positive user feedback on visual presentation
-
-### Priority
-Medium - This issue affects visual presentation but doesn't prevent core functionality.
-
-## Task Breakdown: Add Professional Summary Generator
-
-### Issue Analysis
-When a user's resume doesn't include a professional summary section, the application currently displays an error and doesn't generate one, resulting in a missing section in the tailored resume. The logs show:
-
-1. `INFO:claude_integration:LLM found no content for summary section` - The LLM parser didn't find a summary in the resume.
-2. `WARNING:claude_integration:No summary information found in resume sections` - The system acknowledges this.
-3. `ERROR:html_generator:Error processing summary section: [Errno 2] No such file or directory: 'D:\\AI\\manus_resume3\\static/uploads\\api_responses\\summary.json'` - The html_generator tries to read a non-existent summary.json file.
-
-Instead of just handling this as an error case, we need to proactively generate a professional summary based on the user's resume content and the target job.
-
-### Implementation Plan
-
-1. **Add Summary Generation Logic**:
-   - Created three new functions in `claude_integration.py`:
-     - `generate_professional_summary`: Main function that collects resume and job data and creates a prompt
-     - `generate_summary_with_claude`: Specialized function for using Claude API to generate a summary
-     - `generate_summary_with_openai`: Specialized function for using OpenAI API to generate a summary
-
-2. **Enhance Summary Section Handling**:
-   - Modified the `tailor_resume_with_llm` function to:
-     - Check if a summary exists in the resume sections
-     - If one exists, preserve it as before
-     - If none exists, call the new `generate_professional_summary` function
-     - Add the generated summary to the `tailored_content` dictionary
-
-3. **Prompt Design**:
-   The summary generation prompt includes:
-   - Job title and requirements from the job posting
-   - Candidate profile and target skills from the job analysis
-   - Excerpts from the user's experience, education, and skills sections
-   - Specific instructions for creating a concise, powerful summary
-   - Guidelines for formatting and writing style
-
-4. **Provider Support**:
-   - Added support for both Claude and OpenAI as summary generators
-   - Created provider-specific functions that handle API differences
-   - Implemented consistent error handling and logging
-   - Added response caching to avoid regenerating summaries
-
-5. **Output Formatting**:
-   - Ensured the generated summary is properly formatted
-   - Added logging to track the generation process
-   - Included validation to verify the quality of the generated summary
-
-### Expected Outcomes
-The implementation should:
-1. Detect when a resume lacks a professional summary
-2. Generate a high-quality, tailored summary based on the user's resume and target job
-3. Save the generated summary to a JSON file for the HTML generator
-4. Display the generated summary in the tailored resume
-5. Log the entire process for monitoring and debugging
-
-### Testing Process
-1. Submit a resume without a professional summary section
-2. Verify that the system correctly identifies the missing section
-3. Confirm that a professional summary is generated and included in the output
-4. Check the logs to ensure proper functioning of all components
-5. Verify that the generated summary is properly formatted and tailored to the target job
-
-### Next Steps
-After implementing the professional summary generator:
-1. Test with a variety of resume formats and job types
-2. Fine-tune the generation prompt based on output quality
-3. Consider adding user customization options for the summary style
-4. Implement caching to avoid regenerating summaries for the same resume-job combination
+- Removed completed tasks and consolidated ongoing tasks for clarity.
+- Updated task descriptions to reflect current priorities and implementation plans.
+- Ensured all tasks have clear implementation steps and expected outcomes.
 
 ## Implementation Plan
 

@@ -4,7 +4,7 @@ import time
 import uuid
 import logging
 import traceback
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 import docx2txt
 
 # Import PDF parser functions
@@ -237,37 +237,39 @@ class LLMResumeParser:
     def _get_parsing_prompt(self, resume_text: str) -> str:
         """Generate a prompt for the LLM to parse the resume"""
         return f"""
-I need you to parse the following resume into structured sections. 
+I need you to parse the following resume into structured sections.
 Extract the content exactly as written in the resume without adding, changing, or removing any information.
 Identify and categorize the content into these standard resume sections:
 
-1. contact: Contact information including name, email, phone, address, LinkedIn
-2. summary: Professional summary or objective statement
-3. experience: Work history and professional experience
-4. education: Educational background, degrees, certifications
-5. skills: Technical and professional skills
-6. projects: Notable projects
-7. additional: Additional information, interests, volunteer work
+1.  contact: Contact information including name, email, phone, address, LinkedIn (string)
+2.  summary: Professional summary or objective statement (string)
+3.  experience: Work history and professional experience. This MUST be a JSON list where each item is an object representing a single job. Each job object should contain the following keys:
+    *   `company`: The name of the company (string)
+    *   `location`: The location (city, state) of the job (string, optional)
+    *   `position`: The job title or role (string)
+    *   `dates`: The employment dates (string)
+    *   `role_description`: A brief description of the role, typically found between the title/date line and the bullet points. Extract if present, otherwise use null or an empty string. (string or null)
+    *   `achievements`: A JSON list of strings, where each string is a bullet point describing achievements or responsibilities. Extract the bullet points exactly.
+4.  education: Educational background, degrees, certifications (string for now, future improvement could structure this)
+5.  skills: Technical and professional skills (string)
+6.  projects: Notable projects (string for now, future improvement could structure this)
+7.  additional: Additional information, interests, volunteer work (string)
 
-IMPORTANT: When parsing company information in the experience section, carefully separate:
-- Company name (e.g., "DIRECTV") from 
-- Location information (e.g., "LOS ANGELES, CA")
+IMPORTANT Notes for Experience Parsing:
+*   Carefully separate Company name (e.g., "DIRECTV") from Location information (e.g., "LOS ANGELES, CA"). If you see patterns like "COMPANY CITY" or "COMPANY CITY STATE", parse them accordingly. Examples: "DIRECTV LOS ANGELES" -> Company: "DIRECTV", Location: "LOS ANGELES"; "Amazon Seattle" -> Company: "Amazon", Location: "Seattle"; "Microsoft Redmond WA" -> Company: "Microsoft", Location: "Redmond, WA".
+*   Identify the `role_description` as any text that appears *after* the line containing the Company/Location/Title/Dates, but *before* the list of bullet points (`achievements`). If no such text exists for a job, set `role_description` to null or an empty string.
+*   The `achievements` list should contain only the text of the bullet points themselves.
 
-If you see patterns like "COMPANY CITY" or "COMPANY CITY STATE", parse them accordingly.
-Common examples include:
-- "DIRECTV LOS ANGELES" → Company: "DIRECTV", Location: "LOS ANGELES"
-- "Amazon Seattle" → Company: "Amazon", Location: "Seattle"
-- "Microsoft Redmond WA" → Company: "Microsoft", Location: "Redmond, WA"
-
-Provide your response as a JSON object with these exact section names as keys, and the full text content of each section as the values.
-Preserve all original text formatting and bullet points where possible (convert to plain text).
+Provide your response ONLY as a single, valid JSON object with the exact section names (contact, summary, experience, education, skills, projects, additional) as keys.
+The value for `experience` MUST be a list of job objects as described above. The values for other sections should be strings.
+Preserve all original text formatting (like bullet points within achievements) where possible within the strings/list items.
 
 Here's the resume text to parse:
 
 {resume_text}
 
-Important: Return ONLY valid JSON containing the extracted sections, preserve the exact content from the resume, and do not add any explanations or commentary.
-If a section is not present in the resume, include it with an empty string value.
+Important: Return ONLY valid JSON. Do not add any explanations, apologies, or commentary before or after the JSON object.
+If a section (other than experience) is not present in the resume, include its key with an empty string value. If experience is not present, use an empty list `[]`.
         """
     
     def _validate_sections(self, sections: Dict) -> bool:
@@ -289,13 +291,13 @@ If a section is not present in the resume, include it with an empty string value
         else:
             return len(found_sections & required_sections) > 0
     
-    def _format_sections(self, sections: Dict) -> Dict[str, str]:
+    def _format_sections(self, sections: Dict) -> Dict[str, Union[str, list]]:
         """Format the parsed sections to match the expected output structure"""
         # Initialize standard resume sections
         formatted_sections = {
             "contact": "",
             "summary": "",
-            "experience": "",
+            "experience": [],
             "education": "",
             "skills": "",
             "projects": "",
@@ -311,11 +313,19 @@ If a section is not present in the resume, include it with an empty string value
         # Copy content from parsed sections
         for key in formatted_sections:
             if key in section_data:
-                if isinstance(section_data[key], dict) and "content" in section_data[key]:
-                    # Handle structure with content key
-                    formatted_sections[key] = section_data[key]["content"]
+                if key == 'experience':
+                    # Experience should be a list, pass it directly if it is
+                    if isinstance(section_data[key], list):
+                        formatted_sections[key] = section_data[key]
+                    else:
+                        # Log a warning if experience is not a list as expected
+                        logger.warning(f"LLM returned 'experience' section not as a list. Received type: {type(section_data[key])}")
+                        formatted_sections[key] = [] # Default to empty list on error
+                elif isinstance(section_data[key], dict) and "content" in section_data[key]:
+                    # Handle structure with content key for non-experience sections
+                    formatted_sections[key] = str(section_data[key]["content"])
                 else:
-                    # Handle direct string content
+                    # Handle direct string content for non-experience sections
                     formatted_sections[key] = str(section_data[key])
         
         return formatted_sections
