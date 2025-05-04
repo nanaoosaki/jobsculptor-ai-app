@@ -63,4 +63,55 @@ The `resume_index.py` module is a critical component for maintaining a history o
    - Keep documentation up-to-date with changes in the codebase, including updating any dependencies or interactions between modules.
    - Documenting solutions and learnings helps future developers understand the context and reasoning behind changes.
 
+---
+
+## Updated Dependencies and Interactions
+
+### sample_experience_snippet.py
+
+#### Purpose
+The `sample_experience_snippet.py` script provides example data for the LLM to follow, ensuring consistency in the output of tailored achievements. It includes examples with '??' placeholders to guide the LLM in generating quantifiable achievements.
+
+#### Interactions
+- **claude_integration.py**: Utilizes examples from `sample_experience_snippet.py` to improve the consistency and structure of the tailored achievements.
+
+### Optimizations for Quantifiable Achievements
+
+#### Overview
+Recent optimizations have focused on ensuring that every achievement bullet point in the experience section contains a quantifiable metric, either as a number or using the '??' placeholder.
+
+#### Key Changes
+- **Guardrail Logic**: Updated to inject '??' when no digit or placeholder is present, without relying on unit words or placement tokens.
+- **Prompt Optimization**: Emphasizes the action-impact-influence structure, generating concise and structured achievements with a character limit of 130 characters.
+- **Example Inclusion**: Examples with '??' in `sample_experience_snippet.py` provide a pattern for the LLM to follow, improving the consistency of the output.
+
+#### Implications
+- **Structured Output**: Future optimizations should focus on clear, structured prompts with explicit rules, maintaining a balance between flexibility and strict guidelines.
+- **System Message Reinforcement**: Reinforcing key rules in the system message can further improve compliance with the desired output format.
+- **Post-Processing Checks**: Implementing post-processing checks, such as assertions for character limits, can serve as an additional safeguard to catch any deviations from the expected output.
+
+## Token Generation Script
+
+### tools/generate_tokens_css.py
+
+- Purpose: Reads `design_tokens.json` and writes SCSS variable definitions to `static/scss/_tokens.scss`.
+- Input: `design_tokens.json` (design tokens for colors, spacing, margins, fonts, etc.).
+- Output: `static/scss/_tokens.scss` containing SCSS `$` variables that are imported by other SCSS files.
+- Usage: Run `python tools/generate_tokens_css.py` whenever `design_tokens.json` changes to regenerate token variables.
+
+### SCSS Compilation Workflow
+
+1. Regenerate Tokens:
+   - Run `python tools/generate_tokens_css.py` to update `_tokens.scss`.
+2. Compile SCSS:
+   - Use Sass to compile SCSS to CSS:
+     ```bash
+     sass static/scss/preview.scss static/css/preview.css
+     sass static/scss/print.scss static/css/print.css
+     ```
+3. Restart Server:
+   - Restart the Flask dev server (`Ctrl-C` then `python app.py`) to load updated templates and CSS.
+
+This workflow ensures that design token edits (including margin and padding adjustments) propagate through the SCSS build and into both the HTML preview and PDF output.
+
 --- 
