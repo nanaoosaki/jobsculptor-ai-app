@@ -37,9 +37,6 @@ import html_generator
 # Import utils
 from utils.bullet_utils import strip_bullet_prefix
 
-# Import the YC style example
-from sample_experience_snippet import EXPERIENCE_STYLE_EXAMPLE
-
 
 def clean_bullet_points(text: str) -> str:
     """
@@ -282,14 +279,6 @@ JOB REQUIREMENTS:
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
 
-### STYLE EXAMPLE – do **NOT** copy facts, only copy structure, brevity and verb–impact–influence pattern
-
-```json
-{EXPERIENCE_STYLE_EXAMPLE}
-```
-
-### OUTPUT SPEC
-
 Return your response as a structured JSON object containing ONLY the tailored experience list, matching the exact input structure but with tailored content AND the addition/modification of the "role_description" field:
 
 ```json
@@ -316,20 +305,16 @@ Please process EACH job entry in the input JSON list and restructure it to bette
     *   If the original entry has a non-empty "role_description", TAILOR this description to highlight aspects relevant to the target job ({job_title}). Keep it concise (1-2 sentences).
     *   If the original entry has an empty, null, or missing "role_description", GENERATE a concise (1-2 sentences) description based on the "position" and "achievements" for that specific job entry. This description should summarize the core responsibilities or focus of the role in the context of the achievements listed.
 2.  For the "achievements":
-    • Rewrite EACH bullet as one sentence 100-130 chars.
-    • Must contain **exactly one metric token**:
-        – keep any digits (42 %, $3 M, 8 TB, 10 min) that already appear **OR**
-        – insert **'??'** followed by the correct unit (?? %, ?? TB, ?? min).
-    • No words replacing numbers. "minutes" → "?? min" if the figure is unknown.
-    • Do not add or remove bullets.
+    *   Tailor each achievement to highlight relevance to the target job ({job_title}).
+    *   Focus on results and quantify accomplishments using metrics where possible.
+    *   Use terminology from the job description ({job_title}, skills, requirements) where appropriate.
 3.  Maintain the original "company", "location", "position", and "dates" for each entry precisely.
 
 IMPORTANT:
 1. Do not include empty strings or whitespace-only strings in any arrays (like achievements).
 2. Every achievement must contain meaningful content.
 3. Ensure the "role_description" is present and populated for EVERY job entry in the output.
-4. Each achievement must be 100-130 characters and use "??" when the source bullet had no numeric value.
-5. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
+4. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
 """
 
             elif section_name == "education":
@@ -480,7 +465,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 max_tokens=4000,
                 temperature=0.7,
                 messages=[
-                    {"role": "system", "content": "You are an expert resume tailor. Return ONLY valid JSON. Every achievement MUST contain exactly one numeric token: – either the original digit(s) you saw, OR the literal string '??'. If no digit was in the source bullet, you MUST write '??' as the metric. No words like \"minutes\", \"hours\", \"several\", etc. Count only 0-9 or '??'."},
+                    {"role": "system", "content": "You are an expert resume tailor. Return only valid JSON responses in the specified format."},
                     {"role": "user", "content": prompt}
                 ]
             )
@@ -506,46 +491,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
 
                 # Process JSON based on section type
                 if section_name == "experience" and "experience" in json_response:
-                    tailored = json_response["experience"]
-                    # --- START: Update post-processing guardrail for experience ---
-                    for job in tailored:
-                        fixed_achievements = []
-                        if "achievements" in job and isinstance(job["achievements"], list):
-                            for achievement in job["achievements"]:
-                                if isinstance(achievement, str):
-                                    # Strip leading bullet chars FIRST
-                                    clean = re.sub(r'^[•\\-\\u2022\\*]\\s*', '', achievement).strip()
-
-                                    has_digit       = bool(re.search(r'\\d', clean))
-                                    has_placeholder = "??" in clean
-
-                                    if not has_digit and not has_placeholder:
-                                        # <-- we don't care about unit words any more
-                                        if " by " in clean:
-                                            clean = clean.replace(" by ", " by ?? ", 1)
-                                        elif " to " in clean:
-                                            clean = clean.replace(" to ", " to ?? ", 1)
-                                        elif " of " in clean: # Another common pattern
-                                            clean = clean.replace(" of ", " of ?? ", 1)
-                                        else:
-                                            # Append if common patterns not found
-                                            clean = f"{clean} by ?? %" # Safe default unit
-                                        logger.info(f"Guardrail injected '??' into achievement: {clean}")
-
-                                    # final safety: guarantee one metric token
-                                    if not re.search(r'(?:\\d|\\?\\?)', clean):
-                                        logger.warning(f"Final safety check injecting '??' into: {clean}")
-                                        clean = f"{clean} by ?? %" # Safe default unit
-
-                                    # Truncate/cap length AFTER potential injection and cleaning
-                                    clean = clean[:130]
-                                    fixed_achievements.append(clean)
-                                else:
-                                     # Keep non-string items or already valid strings
-                                     fixed_achievements.append(achievement) # Use original item if not string
-                        job["achievements"] = fixed_achievements
-                    # --- END: Update post-processing guardrail ---
-                    return tailored
+                    return json_response["experience"]
                 elif section_name == "education" and "education" in json_response:
                     return json_response["education"]
                 elif section_name == "skills" and "skills" in json_response:
@@ -693,14 +639,6 @@ JOB REQUIREMENTS:
 REQUIRED SKILLS:
 {skills_text}{analysis_prompt}
 
-### STYLE EXAMPLE – do **NOT** copy facts, only copy structure, brevity and verb–impact–influence pattern
-
-```json
-{EXPERIENCE_STYLE_EXAMPLE}
-```
-
-### OUTPUT SPEC
-
 Return your response as a structured JSON object containing ONLY the tailored experience list, matching the exact input structure but with tailored content AND the addition/modification of the "role_description" field:
 
 ```json
@@ -727,20 +665,16 @@ Please process EACH job entry in the input JSON list and restructure it to bette
     *   If the original entry has a non-empty "role_description", TAILOR this description to highlight aspects relevant to the target job ({job_title}). Keep it concise (1-2 sentences).
     *   If the original entry has an empty, null, or missing "role_description", GENERATE a concise (1-2 sentences) description based on the "position" and "achievements" for that specific job entry. This description should summarize the core responsibilities or focus of the role in the context of the achievements listed.
 2.  For the "achievements":
-    • Rewrite EACH bullet as one sentence 100-130 chars.
-    • Must contain **exactly one metric token**:
-        – keep any digits (42 %, $3 M, 8 TB, 10 min) that already appear **OR**
-        – insert **'??'** followed by the correct unit (?? %, ?? TB, ?? min).
-    • No words replacing numbers. "minutes" → "?? min" if the figure is unknown.
-    • Do not add or remove bullets.
+    *   Tailor each achievement to highlight relevance to the target job ({job_title}).
+    *   Focus on results and quantify accomplishments using metrics where possible.
+    *   Use terminology from the job description ({job_title}, skills, requirements) where appropriate.
 3.  Maintain the original "company", "location", "position", and "dates" for each entry precisely.
 
 IMPORTANT:
 1. Do not include empty strings or whitespace-only strings in any arrays (like achievements).
 2. Every achievement must contain meaningful content.
 3. Ensure the "role_description" is present and populated for EVERY job entry in the output.
-4. Each achievement must be 100-130 characters and use "??" when the source bullet had no numeric value.
-5. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
+4. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
 """
 
             elif section_name == "education":
@@ -896,7 +830,8 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 model="gpt-4o" if "4" in os.environ.get(
     'OPENAI_MODEL_NAME', 'gpt-4') else "gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are an expert resume tailor. Return ONLY valid JSON. Every achievement MUST contain exactly one numeric token: – either the original digit(s) you saw, OR the literal string '??'. If no digit was in the source bullet, you MUST write '??' as the metric. No words like \"minutes\", \"hours\", \"several\", etc. Count only 0-9 or '??'."},
+                    {"role": "system",
+     "content": "You are an expert resume tailoring assistant."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,
@@ -970,46 +905,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
 
             # Process JSON based on section type
             if section_name == "experience" and "experience" in json_response:
-                tailored = json_response["experience"]
-                # --- START: Update post-processing guardrail for experience ---
-                for job in tailored:
-                    fixed_achievements = []
-                    if "achievements" in job and isinstance(job["achievements"], list):
-                        for achievement in job["achievements"]:
-                             if isinstance(achievement, str):
-                                # Strip leading bullet chars FIRST
-                                clean = re.sub(r'^[•\\-\\u2022\\*]\\s*', '', achievement).strip()
-
-                                has_digit       = bool(re.search(r'\\d', clean))
-                                has_placeholder = "??" in clean
-
-                                if not has_digit and not has_placeholder:
-                                    # <-- we don't care about unit words any more
-                                    if " by " in clean:
-                                        clean = clean.replace(" by ", " by ?? ", 1)
-                                    elif " to " in clean:
-                                        clean = clean.replace(" to ", " to ?? ", 1)
-                                    elif " of " in clean: # Another common pattern
-                                        clean = clean.replace(" of ", " of ?? ", 1)
-                                    else:
-                                         # Append if common patterns not found
-                                        clean = f"{clean} by ?? %" # Safe default unit
-                                    logger.info(f"Guardrail injected '??' into achievement: {clean}")
-
-                                # final safety: guarantee one metric token
-                                if not re.search(r'(?:\\d|\\?\\?)', clean):
-                                    logger.warning(f"Final safety check injecting '??' into: {clean}")
-                                    clean = f"{clean} by ?? %" # Safe default unit
-
-                                # Truncate/cap length AFTER potential injection and cleaning
-                                clean = clean[:130]
-                                fixed_achievements.append(clean)
-                             else:
-                                 # Keep non-string items or already valid strings
-                                 fixed_achievements.append(achievement) # Use original item if not string
-                        job["achievements"] = fixed_achievements
-                 # --- END: Update post-processing guardrail ---
-                return tailored
+                return json_response["experience"]
             elif section_name == "education" and "education" in json_response:
                 return json_response["education"]
             elif section_name == "skills" and "skills" in json_response:

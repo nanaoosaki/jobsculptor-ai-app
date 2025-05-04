@@ -90,38 +90,19 @@ A 'u2022' character was appearing in the experience section, overlapping with bu
 **Priority**: Medium
 
 ### Section Header Box Width
-**Status**: Reopened / Unresolved
-
-**Description**: 
-The section header box is too wide, leaving excessive space on either side. The width is also incorrectly set to 100% in the SCSS, causing it to span the full page width instead of fitting the content tightly, despite the correct HTML structure being generated.
-
-**Resolution**:
-- Adjusted the CSS to match the section header box width with the resume width.
-
-**Impact**: 
-- The layout appears balanced and space-efficient.
-
-**Next Steps**: 
-1. Modify `.section-box` in `_resume.scss`: remove `width: 100%` and change `display: block` to `display: inline-block`.
-2. Recompile SCSS and restart server.
-3. Verify the changes in both the HTML preview and PDF output.
-
-**Priority**: Medium
+**Status**: Resolved
 
 ### Section Header Box Fill
-**Status**: Unresolved
+**Status**: Resolved
 
-**Description**: 
-The section header box currently has a blue fill, but it should only have a blue outline with a transparent fill.
+### Margin Size
+**Status**: Resolved
 
-**Impact**: 
-- The current design does not match the intended visual style.
+### Section Box Height
+**Status**: Resolved
 
-**Next Steps**: 
-1. Modify the CSS to change the section header box to have a transparent fill and a blue outline.
-2. Verify the changes in both the HTML preview and PDF output.
-
-**Priority**: Medium
+### Bullet Point Length and Symbol
+**Status**: Resolved
 
 ### Bullet Point Character Issue in CSS
 **Status**: Resolved
@@ -157,52 +138,17 @@ The recompilation of `_resume.scss` was resulting in the hard-coded "u2022" char
 
 **Priority**: Medium
 
-### Margin Size Issue
-**Status**: Unresolved
+### Redundant Text in Resume Section
+**Status**: Resolved
 
-**Description**: 
-The margin set to 1 inch is equivalent to approximately 2.54 cm, which is larger than expected. It needs to be reduced to 1 cm.
+### Section Header Height and Alignment
+**Status**: Resolved
 
-**Impact**: 
-- The large margin reduces the amount of content visible on each page.
+### Bullet Point Alignment
+**Status**: Resolved
 
-**Next Steps**: 
-1. Adjust the margin size in the SCSS files to 1 cm.
-2. Verify the changes in both the HTML preview and PDF output.
-
-**Priority**: Medium
-
-### Section Box Height Issue
-**Status**: Unresolved
-
-**Description**: 
-The section box height needs to be reduced further, as previous adjustments did not achieve the desired effect. The width is also incorrectly set to 100% in the SCSS, causing it to span the full page width instead of fitting the content tightly, despite the correct HTML structure being generated.
-
-**Impact**: 
-- The layout appears unbalanced, with excessive vertical space and width in section headers.
-
-**Next Steps**: 
-1. Modify `.section-box` in `_resume.scss`: remove `width: 100%` and change `display: block` to `display: inline-block`.
-2. Recompile SCSS and restart server.
-3. Verify the changes in both the HTML preview and PDF output.
-
-**Priority**: Medium
-
-### Bullet Point Length and Symbol Issue
-**Status**: Unresolved
-
-**Description**: 
-Bullet points are too long, and the bullet point symbol is missing.
-
-**Impact**: 
-- The readability and professional appearance of the resume are affected.
-
-**Next Steps**: 
-1. Adjust the bullet point length in the SCSS files.
-2. Ensure the bullet point symbol is correctly displayed.
-3. Verify the changes in both the HTML preview and PDF output.
-
-**Priority**: Medium
+### Page Margin Size
+**Status**: Resolved
 
 ---
 
