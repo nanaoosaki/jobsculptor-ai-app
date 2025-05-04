@@ -28,6 +28,16 @@ EXPERIENCE_STYLE_EXAMPLE = """
       "Mentored ?? junior engineers, enhancing team productivity and code quality.",
       "Implemented automated testing framework, increasing test coverage from 60 % to 95 %."
     ]
+  },
+  {
+    "company": "Example Solutions",
+    "position": "Software Engineer",
+    "dates": "2019 - 2020",
+    "role_description": "Developed backend services for a large-scale e-commerce platform using Python and Django.",
+    "achievements": [
+      "Refactored monolithic order processing service into microservices, improving system scalability by 50 %.",
+      "Reduced API response time by implementing caching mechanisms, enhancing user experience significantly."
+    ]
   }
 ]
 """.strip() 

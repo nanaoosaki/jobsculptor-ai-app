@@ -77,6 +77,16 @@ AI-powered resume tailoring tool that analyzes job postings and optimizes resume
     - Implement validation to ensure bullet points do not exceed the character limit.
     - Test with various resume content to ensure readability and consistency.
 
+- [ ] Enable DOCX download functionality
+  - Allow users to download their tailored resume as a DOCX file for further editing.
+  - **Branch**: enable-docx-download
+  - **Priority**: Medium
+  - **Implementation Plan**:
+    1. Add a new Flask route `/download/docx/<request_id>` to serve DOCX export.
+    2. Implement DOCX generation using python-docx, mirroring the PDF exporter logic.
+    3. Add a "Download DOCX" button in the UI next to the PDF download option.
+    4. Write tests for DOCX output and update documentation.
+
 ## Cleaned Up Tasks
 
 - Removed completed tasks and consolidated ongoing tasks for clarity.

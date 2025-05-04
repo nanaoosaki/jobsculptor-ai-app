@@ -37,6 +37,9 @@ import html_generator
 # Import utils
 from utils.bullet_utils import strip_bullet_prefix
 
+# Import the new metric normalization utility
+from metric_utils import normalize_bullet
+
 # Import the YC style example
 from sample_experience_snippet import EXPERIENCE_STYLE_EXAMPLE
 
@@ -316,11 +319,10 @@ Please process EACH job entry in the input JSON list and restructure it to bette
     *   If the original entry has a non-empty "role_description", TAILOR this description to highlight aspects relevant to the target job ({job_title}). Keep it concise (1-2 sentences).
     *   If the original entry has an empty, null, or missing "role_description", GENERATE a concise (1-2 sentences) description based on the "position" and "achievements" for that specific job entry. This description should summarize the core responsibilities or focus of the role in the context of the achievements listed.
 2.  For the "achievements":
-    • Rewrite EACH bullet as one sentence 100-130 chars.
-    • Must contain **exactly one metric token**:
-        – keep any digits (42 %, $3 M, 8 TB, 10 min) that already appear **OR**
-        – insert **'??'** followed by the correct unit (?? %, ?? TB, ?? min).
-    • No words replacing numbers. "minutes" → "?? min" if the figure is unknown.
+    • Rewrite **each** bullet as **one sentence 115-130 characters** (ideal ≈125). If shorter, extend the influence clause ("for 7 global regions", "across 5 agile squads", etc.).
+    • If the original bullet already contained any digit (0-9), **keep that number** and **do NOT write '??' anywhere**.
+    • If no digit was present, insert the literal string **'??'** followed by a unit (?? %, ?? hrs, ?? TB …). Never mix real digits and '??'.
+    • Prefer placing the metric immediately after the quantified verb phrase (e.g., "… reducing latency by ?? % across …"), not as a tail clause.
     • Do not add or remove bullets.
 3.  Maintain the original "company", "location", "position", and "dates" for each entry precisely.
 
@@ -328,7 +330,7 @@ IMPORTANT:
 1. Do not include empty strings or whitespace-only strings in any arrays (like achievements).
 2. Every achievement must contain meaningful content.
 3. Ensure the "role_description" is present and populated for EVERY job entry in the output.
-4. Each achievement must be 100-130 characters and use "??" when the source bullet had no numeric value.
+4. Each achievement must be 115-130 characters and use "??" when the source bullet had no numeric value, NEVER both digits and '??'.
 5. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
 """
 
@@ -480,7 +482,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 max_tokens=4000,
                 temperature=0.7,
                 messages=[
-                    {"role": "system", "content": "You are an expert resume tailor. Return ONLY valid JSON. Every achievement MUST contain exactly one numeric token: – either the original digit(s) you saw, OR the literal string '??'. If no digit was in the source bullet, you MUST write '??' as the metric. No words like \"minutes\", \"hours\", \"several\", etc. Count only 0-9 or '??'."},
+                    {"role": "system", "content": "Return valid JSON. Each 'achievements' string must contain: EITHER ≥1 digit (then no '??') OR exactly one '??' placeholder. Nothing else counts as a metric."},
                     {"role": "user", "content": prompt}
                 ]
             )
@@ -507,44 +509,25 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 # Process JSON based on section type
                 if section_name == "experience" and "experience" in json_response:
                     tailored = json_response["experience"]
-                    # --- START: Update post-processing guardrail for experience ---
+                    # --- START: Updated post-processing guardrail using normalize_bullet ---
                     for job in tailored:
                         fixed_achievements = []
                         if "achievements" in job and isinstance(job["achievements"], list):
                             for achievement in job["achievements"]:
                                 if isinstance(achievement, str):
-                                    # Strip leading bullet chars FIRST
-                                    clean = re.sub(r'^[•\\-\\u2022\\*]\\s*', '', achievement).strip()
-
-                                    has_digit       = bool(re.search(r'\\d', clean))
-                                    has_placeholder = "??" in clean
-
-                                    if not has_digit and not has_placeholder:
-                                        # <-- we don't care about unit words any more
-                                        if " by " in clean:
-                                            clean = clean.replace(" by ", " by ?? ", 1)
-                                        elif " to " in clean:
-                                            clean = clean.replace(" to ", " to ?? ", 1)
-                                        elif " of " in clean: # Another common pattern
-                                            clean = clean.replace(" of ", " of ?? ", 1)
-                                        else:
-                                            # Append if common patterns not found
-                                            clean = f"{clean} by ?? %" # Safe default unit
-                                        logger.info(f"Guardrail injected '??' into achievement: {clean}")
-
-                                    # final safety: guarantee one metric token
-                                    if not re.search(r'(?:\\d|\\?\\?)', clean):
-                                        logger.warning(f"Final safety check injecting '??' into: {clean}")
-                                        clean = f"{clean} by ?? %" # Safe default unit
-
-                                    # Truncate/cap length AFTER potential injection and cleaning
-                                    clean = clean[:130]
-                                    fixed_achievements.append(clean)
+                                    # Strip leading bullet chars FIRST (using existing util)
+                                    clean = strip_bullet_prefix(achievement)
+                                    # Apply the NEW normalization function
+                                    clean = normalize_bullet(clean)
+                                    # Add only if not empty after normalization
+                                    if clean:
+                                        fixed_achievements.append(clean)
                                 else:
-                                     # Keep non-string items or already valid strings
-                                     fixed_achievements.append(achievement) # Use original item if not string
+                                     # Keep non-string items (should ideally not happen with strict JSON)
+                                     if achievement: # Avoid adding None or empty items
+                                         fixed_achievements.append(achievement)
                         job["achievements"] = fixed_achievements
-                    # --- END: Update post-processing guardrail ---
+                    # --- END: Updated post-processing guardrail ---
                     return tailored
                 elif section_name == "education" and "education" in json_response:
                     return json_response["education"]
@@ -727,11 +710,10 @@ Please process EACH job entry in the input JSON list and restructure it to bette
     *   If the original entry has a non-empty "role_description", TAILOR this description to highlight aspects relevant to the target job ({job_title}). Keep it concise (1-2 sentences).
     *   If the original entry has an empty, null, or missing "role_description", GENERATE a concise (1-2 sentences) description based on the "position" and "achievements" for that specific job entry. This description should summarize the core responsibilities or focus of the role in the context of the achievements listed.
 2.  For the "achievements":
-    • Rewrite EACH bullet as one sentence 100-130 chars.
-    • Must contain **exactly one metric token**:
-        – keep any digits (42 %, $3 M, 8 TB, 10 min) that already appear **OR**
-        – insert **'??'** followed by the correct unit (?? %, ?? TB, ?? min).
-    • No words replacing numbers. "minutes" → "?? min" if the figure is unknown.
+    • Rewrite **each** bullet as **one sentence 115-130 characters** (ideal ≈125). If shorter, extend the influence clause ("for 7 global regions", "across 5 agile squads", etc.).
+    • If the original bullet already contained any digit (0-9), **keep that number** and **do NOT write '??' anywhere**.
+    • If no digit was present, insert the literal string **'??'** followed by a unit (?? %, ?? hrs, ?? TB …). Never mix real digits and '??'.
+    • Prefer placing the metric immediately after the quantified verb phrase (e.g., "… reducing latency by ?? % across …"), not as a tail clause.
     • Do not add or remove bullets.
 3.  Maintain the original "company", "location", "position", and "dates" for each entry precisely.
 
@@ -739,7 +721,7 @@ IMPORTANT:
 1. Do not include empty strings or whitespace-only strings in any arrays (like achievements).
 2. Every achievement must contain meaningful content.
 3. Ensure the "role_description" is present and populated for EVERY job entry in the output.
-4. Each achievement must be 100-130 characters and use "??" when the source bullet had no numeric value.
+4. Each achievement must be 115-130 characters and use "??" when the source bullet had no numeric value, NEVER both digits and '??'.
 5. Ensure the output is a valid JSON object containing ONLY the "experience" key with the list of tailored job objects.
 """
 
@@ -896,7 +878,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 model="gpt-4o" if "4" in os.environ.get(
     'OPENAI_MODEL_NAME', 'gpt-4') else "gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are an expert resume tailor. Return ONLY valid JSON. Every achievement MUST contain exactly one numeric token: – either the original digit(s) you saw, OR the literal string '??'. If no digit was in the source bullet, you MUST write '??' as the metric. No words like \"minutes\", \"hours\", \"several\", etc. Count only 0-9 or '??'."},
+                    {"role": "system", "content": "Return valid JSON. Each 'achievements' string must contain: EITHER ≥1 digit (then no '??') OR exactly one '??' placeholder. Nothing else counts as a metric."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,
@@ -971,38 +953,16 @@ Focus on emphasizing elements most relevant to this job opportunity.
             # Process JSON based on section type
             if section_name == "experience" and "experience" in json_response:
                 tailored = json_response["experience"]
-                # --- START: Update post-processing guardrail for experience ---
+                # --- START: Updated post-processing guardrail using normalize_bullet ---
                 for job in tailored:
                     fixed_achievements = []
                     if "achievements" in job and isinstance(job["achievements"], list):
                         for achievement in job["achievements"]:
                              if isinstance(achievement, str):
                                 # Strip leading bullet chars FIRST
-                                clean = re.sub(r'^[•\\-\\u2022\\*]\\s*', '', achievement).strip()
-
-                                has_digit       = bool(re.search(r'\\d', clean))
-                                has_placeholder = "??" in clean
-
-                                if not has_digit and not has_placeholder:
-                                    # <-- we don't care about unit words any more
-                                    if " by " in clean:
-                                        clean = clean.replace(" by ", " by ?? ", 1)
-                                    elif " to " in clean:
-                                        clean = clean.replace(" to ", " to ?? ", 1)
-                                    elif " of " in clean: # Another common pattern
-                                        clean = clean.replace(" of ", " of ?? ", 1)
-                                    else:
-                                         # Append if common patterns not found
-                                        clean = f"{clean} by ?? %" # Safe default unit
-                                    logger.info(f"Guardrail injected '??' into achievement: {clean}")
-
-                                # final safety: guarantee one metric token
-                                if not re.search(r'(?:\\d|\\?\\?)', clean):
-                                    logger.warning(f"Final safety check injecting '??' into: {clean}")
-                                    clean = f"{clean} by ?? %" # Safe default unit
-
-                                # Truncate/cap length AFTER potential injection and cleaning
-                                clean = clean[:130]
+                                clean = re.sub(r'^[•\\\\-\\\\u2022\\\\*]\\\\s*', '', achievement).strip()
+                                # Apply the cleaning function
+                                clean = _clean_metric_tokens(clean)
                                 fixed_achievements.append(clean)
                              else:
                                  # Keep non-string items or already valid strings
@@ -1889,3 +1849,44 @@ def generate_resume_preview(resume_path: str) -> str:
             preview_html += f'<div class="resume-section"><h2>{section_name.title()}</h2>{formatted_content}</div>'
     
     return preview_html
+
+def _clean_metric_tokens(text: str) -> str:
+    """
+    Ensures exactly ONE metric token (digits OR '??').
+    If both are present, drop the '??' part.
+    If neither is present, inject '??' before trailing punctuation.
+    """
+    has_digit = bool(re.search(r'\\d', text))
+    has_placeholder = '??' in text
+
+    # Case: both present  →  remove the placeholder chunk
+    if has_digit and has_placeholder:
+        # remove 'by ?? %', '??', '?? TB', etc.
+        text = re.sub(r'\\bby\\s+\\?\\?\\s*\\w*', '', text) # Matches 'by ?? %', 'by ?? TB' etc.
+        text = re.sub(r'\\?\\?\\s*\\w*', '', text)      # Matches '?? %', '?? TB', '??' etc.
+        # Normalise double spaces that may appear
+        text = re.sub(r'\\s{2,}', ' ', text).strip(' ,.;')
+        logger.info(f"Cleaned metric: Removed '??' as digit was present: {text}")
+
+    # Case: neither present  →  inject a placeholder
+    elif not has_digit and not has_placeholder:
+        injected = False
+        for pivot in (' by ', ' to ', ' of '): # Use specific pivots for smarter injection
+            if pivot in text:
+                # Inject ?? right after the pivot word
+                text = text.replace(pivot, f'{pivot}?? ', 1)
+                logger.info(f"Cleaned metric: Injected '??' using pivot '{pivot}': {text}")
+                injected = True
+                break
+        # --- START: Updated fallback logic ---
+        if not injected:
+            # Split off a trailing punctuation mark, if any
+            m = re.match(r'^(.*?)([.!?])?$', text.strip())
+            core, punct = m.group(1), m.group(2) or ''
+            # add placeholder, then restore the punctuation
+            text = f'{core} by ?? %{punct}'
+            logger.info(f"Cleaned metric: injected placeholder before punctuation: {text}")
+        # --- END: Updated fallback logic ---
+
+    # Return with final length cap and space normalization
+    return re.sub(r'\\s{2,}', ' ', text)[:130]
