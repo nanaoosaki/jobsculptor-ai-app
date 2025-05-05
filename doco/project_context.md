@@ -284,4 +284,136 @@ To start the Resume Tailor application, follow these steps:
    ```
 4. The application will start and be accessible at `http://127.0.0.1:5000` in your web browser.
 
-**Note:** This is a development server. For production deployment, use a production WSGI server. 
+**Note:** This is a development server. For production deployment, use a production WSGI server.
+
+## Detailed Application Workflow
+
+### Resume Tailoring Process: From Upload to PDF Download
+
+#### 1. Initialization and Data Collection
+1. User uploads resume (DOCX/PDF) and provides job description
+2. Application generates a unique `request_id` (UUID format, e.g., `29fbc315-fa41-4c7b-b520-755f39b7060a`)
+3. Resume is parsed into structured sections (contact, summary, experience, education, skills, projects)
+4. Job requirements are extracted and analyzed
+
+#### 2. LLM Tailoring Process
+1. Each resume section is tailored individually using the selected LLM (Claude or OpenAI):
+   - Contact information is preserved without changes
+   - Summary is rewritten to match job requirements
+   - Experience bullets are tailored to highlight relevant achievements
+   - Education is adjusted to emphasize relevant coursework
+   - Skills are reorganized to prioritize job-relevant skills
+   - Projects (if present) are tailored to showcase relevant work
+2. LLM responses are saved as raw API responses:
+   ```
+   static/uploads/api_responses/{section}_response_{timestamp}.json
+   ```
+3. Quantifiable metrics in achievement bullets are normalized:
+   - If digits exist → all placeholder tokens ("??") are removed
+   - If no "??" exists → "?? %" or appropriate unit is injected
+   - If multiple "??" tokens → keep first, drop others
+   - Placeholders attached to words are separated (e.g., "across??" → "across ?? ")
+   - Placeholders are inserted before terminal punctuation
+   - Example transformations:
+     ```
+     "Designed a data placement service for S3-like storage, ensuring 99.9999% data durability for data lakes by ?? %."
+     "Built a garbage collector to ?? reclaim space via compaction, handling deleted, orphaned, and corrupted data."
+     ```
+
+#### 3. Section Data Storage
+1. Each tailored section is cleaned and structured as JSON
+2. Files are saved with request_id-based naming:
+   ```
+   static/uploads/temp_session_data/{request_id}_{section}.json
+   ```
+3. Example paths:
+   ```
+   29fbc315-fa41-4c7b-b520-755f39b7060a_contact.json
+   29fbc315-fa41-4c7b-b520-755f39b7060a_summary.json
+   29fbc315-fa41-4c7b-b520-755f39b7060a_experience.json
+   29fbc315-fa41-4c7b-b520-755f39b7060a_education.json
+   29fbc315-fa41-4c7b-b520-755f39b7060a_skills.json
+   29fbc315-fa41-4c7b-b520-755f39b7060a_projects.json
+   ```
+
+#### 4. HTML Preview Generation
+1. `html_generator.py` loads all section JSON files for the specific request_id
+2. For screen preview:
+   - Function: `generate_preview_from_llm_responses(request_id, upload_folder, for_screen=True)`
+   - Output: HTML fragment (~6649 chars) optimized for browser display
+   - Route: `/preview/{request_id}`
+3. For PDF generation:
+   - Function: `generate_preview_from_llm_responses(request_id, upload_folder, for_screen=False)`
+   - Output: Complete HTML document (~6939 chars) optimized for PDF generation
+   - Includes proper DOCTYPE, charset, and complete HTML structure
+
+#### 5. PDF Generation Process
+1. User requests PDF download via frontend
+2. Request is sent to `/download/{request_id}` route
+3. Backend generates full HTML document (not just fragment)
+4. PDF generation via `pdf_exporter.py`:
+   - Function: `create_pdf_from_html(html_content, output_path, metadata)`
+   - Uses WeasyPrint to convert HTML to PDF
+   - Applies CSS from both `static/css/print.css` and `static/css/preview.css`
+   - Handles web-specific CSS properties (ignores unsupported properties like box-shadow)
+5. PDF is saved to disk:
+   ```
+   static/uploads/tailored_resume_{request_id}.pdf
+   ```
+6. PDF is served to user via `send_from_directory` with proper MIME type
+
+#### 6. Styling Application
+1. Design tokens in `design_tokens.json` define all styling variables:
+   - Page margins (currently 0.8cm vertical and horizontal)
+   - Colors (primary: #4A6FDC, secondary: #2A4494, text: #333333)
+   - Font sizes and families
+   - Spacing and layout measurements
+2. Tokens are converted to SCSS variables:
+   - Tool: `tools/generate_tokens_css.py`
+   - Output: `static/scss/_tokens.scss`
+3. SCSS is compiled to CSS:
+   - Command: `sass static/scss/preview.scss static/css/preview.css`
+   - Command: `sass static/scss/print.scss static/css/print.css`
+4. CSS is applied to:
+   - Browser preview (primarily preview.css)
+   - PDF generation (both print.css and preview.css)
+
+#### 7. Output File Management
+1. Temporary files are stored in patterns:
+   - API responses: `static/uploads/api_responses/{section}_response_{timestamp}.json`
+   - Section JSON: `static/uploads/temp_session_data/{request_id}_{section}.json`
+2. Final output files:
+   - PDF: `static/uploads/tailored_resume_{request_id}.pdf`
+3. Resume indexing:
+   - Each tailored resume is added to `resume_index.json`
+   - Includes metadata like job title and processing timestamp
+
+### Exact Processing Sequence (from logs)
+
+1. **Tailoring Request**:
+   - POST request to `/tailor-resume`
+   - Request_id generated (e.g., `29fbc315-fa41-4c7b-b520-755f39b7060a`)
+
+2. **LLM Processing**:
+   - Each section processed sequentially
+   - Achievement bullets normalized
+   - Example transformation: "Designed a data placement service for S3-like storage, ensuring 99.9999% data durability for data lakes by ?? %."
+
+3. **Data Storage**:
+   - Six JSON section files saved to temp_session_data folder
+   - All reference the same request_id
+
+4. **Preview Generation**:
+   - HTML fragment (6649 chars) generated for browser preview
+   - Full HTML document (6939 chars) generated for PDF export
+
+5. **PDF Generation**:
+   - WeasyPrint converts HTML to PDF
+   - CSS applied (with browser-specific properties ignored)
+   - PDF saved to uploads folder
+
+6. **Download Delivery**:
+   - GET request to `/download/29fbc315-fa41-4c7b-b520-755f39b7060a`
+   - PDF served to user's browser
+
+The entire process from tailoring request to PDF download takes approximately 6-10 seconds, depending on the size of the resume and complexity of the job description. 
