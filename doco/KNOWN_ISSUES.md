@@ -334,8 +334,8 @@ All known issues have been resolved. If new issues arise, they will be documente
     - **Priority**: High
 
 14. **DOCX Styling Inconsistency**
-    - **Status**: Unresolved
+    - **Status**: Resolved
     - **Description**: The DOCX file lacks proper styling compared to the PDF and HTML outputs. The current implementation doesn't fully leverage the design tokens system for consistent styling.
-    - **Impact**: DOCX downloads appear less professional and don't match the styling users see in the preview or PDF.
-    - **Next Steps**: Enhance design token mapping for DOCX, implement comprehensive styling, and create predefined document styles.
+    - **Impact**: DOCX downloads appeared less professional and didn't match the styling users see in the preview or PDF.
+    - **Resolution**: Enhanced design token mapping for DOCX, implemented comprehensive paragraph styling, and created predefined document styles for section headers and bullet points.
     - **Priority**: Medium 

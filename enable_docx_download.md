@@ -735,230 +735,80 @@ if isinstance(contact_data, str):
 Tested with multiple request IDs including the specific problematic ID `ab723b19-2fe8-441e-b53d-468bc2f7abd7` and confirmed that contact information now appears correctly in the DOCX output.
 
 ### Issue #2: Lack of Styling in DOCX Output
-**Status**: Unresolved
+**Status**: Resolved
 
 **Description**: 
 The DOCX file lacks proper styling compared to the PDF and HTML outputs. The current implementation doesn't fully leverage the design tokens system for consistent styling across all output formats.
 
-**Current State Analysis**:
-- The design tokens are already being transformed into DOCX-compatible format via `_docx_styles.json`
-- However, the mapping between design tokens and DOCX styles is minimal and doesn't cover all styling aspects
-- DOCX styling requires specialized handling for many elements like fonts, colors, spacing, etc.
+**Root Cause**:
+- The design tokens weren't properly mapped to DOCX-specific styles
+- Section headers and bullet points weren't styled consistently
+- The DOCX builder applied basic formatting without aligning with the application's design system
 
-**Implementation Plan**:
-
+**Resolution**:
 1. **Enhanced Design Token Mapping**:
-   - Expand the `generate_docx_style_mappings()` function to include more DOCX-specific styles
-   - Create a more comprehensive mapping between design tokens and DOCX style properties
+   - Expanded the `generate_docx_style_mappings()` function to include more DOCX-specific styles
+   - Created a more comprehensive mapping between design tokens and DOCX style properties
+   - Added global styling properties and bullet list specific styles
 
-   ```python
-   def generate_docx_style_mappings():
-       """Generate enhanced DOCX style mappings from design tokens."""
-       try:
-           # ... existing code ...
-           
-           # Enhanced mapping with more styling options
-           docx_styles = {
-               "page": {
-                   "marginTopCm": float(tokens.get("pageMarginVertical", "0.8cm").replace("cm", "")),
-                   "marginBottomCm": float(tokens.get("pageMarginVertical", "0.8cm").replace("cm", "")),
-                   "marginLeftCm": float(tokens.get("pageMarginHorizontal", "0.8cm").replace("cm", "")),
-                   "marginRightCm": float(tokens.get("pageMarginHorizontal", "0.8cm").replace("cm", ""))
-               },
-               "global": {
-                   "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                   "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                   "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
-                   "color": hex_to_rgb(tokens.get("textColor", "#333")),
-                   "backgroundColor": hex_to_rgb(tokens.get("backgroundColor", "#ffffff"))
-               },
-               "heading1": {
-                   "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                   "fontSizePt": int(tokens.get("nameFontSize", "16pt").replace("pt", "")),
-                   "color": hex_to_rgb(tokens.get("textColor", "#333")),
-                   "bold": True,
-                   "spaceAfterPt": 12
-               },
-               "heading2": {
-                   "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                   "fontSizePt": int(tokens.get("sectionHeaderFontSize", "12pt").replace("pt", "")),
-                   "color": hex_to_rgb(tokens.get("pdfHeaderColor", "rgb(0, 0, 102)")),
-                   "spaceAfterPt": 6,
-                   "bold": True,
-                   "backgroundColor": hex_to_rgb(tokens.get("sectionHeaderBackground", "#eee")), 
-                   "borderColor": hex_to_rgb(tokens.get("sectionHeaderBorder", "#000"))
-               },
-               "heading3": {
-                   "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                   "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                   "bold": True,
-                   "spaceAfterPt": 4
-               },
-               "body": {
-                   "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                   "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                   "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
-                   "color": hex_to_rgb(tokens.get("textColor", "#333"))
-               },
-               "bulletList": {
-                   "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                   "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                   "indentCm": float(tokens.get("bulletIndent", "0.5cm").replace("cm", "")),
-                   "spaceAfterPt": 3
-               }
-           }
-           # ... existing code ...
-       except Exception as e:
-           print(f"An unexpected error occurred: {e}", file=sys.stderr)
-           sys.exit(1)
-   ```
+2. **Enhanced Paragraph Styling**:
+   - Updated `_apply_paragraph_style()` to apply formatting to all runs in a paragraph
+   - Added support for section headers with background colors and borders
+   - Implemented proper paragraph spacing and alignment
 
-2. **DOCX Style Implementation**:
-   - Enhance the `_apply_paragraph_style` function to handle more styling properties
-   - Add support for section headers with background colors and borders
-   - Implement consistent bullet list styling
+3. **Custom Document Styles**:
+   - Created predefined document styles for section headers and bullet points
+   - Added a new `_create_document_styles()` function to define consistent styles
+   - Updated the build_docx function to use these custom styles for consistent formatting
 
-   ```python
-   def _apply_paragraph_style(p, style_name: str, docx_styles: Dict[str, Any]):
-       """Enhanced style application for paragraphs in DOCX."""
-       if not p.runs:
-           return  # Skip empty paragraphs
-       
-       # Get style configuration
-       style_config = docx_styles.get(style_name, {})
-       if not style_config:
-           logger.warning(f"Style not found: {style_name}")
-           return
-       
-       # Apply font properties to all runs in the paragraph for consistency
-       for run in p.runs:
-           font = run.font
-           if "fontSizePt" in style_config:
-               font.size = Pt(style_config["fontSizePt"])
-           if "fontFamily" in style_config:
-               font.name = style_config["fontFamily"]
-           if "color" in style_config:
-               r, g, b = style_config["color"]
-               font.color.rgb = RGBColor(r, g, b)
-           if style_config.get("bold", False):
-               font.bold = True
-           if style_config.get("italic", False):
-               font.italic = True
-       
-       # Apply paragraph formatting
-       if "spaceAfterPt" in style_config:
-           p.paragraph_format.space_after = Pt(style_config["spaceAfterPt"])
-       if "spaceBeforePt" in style_config:
-           p.paragraph_format.space_before = Pt(style_config["spaceBeforePt"])
-       if "indentCm" in style_config:
-           p.paragraph_format.left_indent = Cm(style_config["indentCm"])
-       
-       # Apply alignment
-       if style_name == "heading1":
-           p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-       elif style_config.get("alignment") == "center":
-           p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-       else:
-           p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
-       
-       # For section headers (heading2), apply shading if specified
-       if style_name == "heading2" and "backgroundColor" in style_config:
-           from docx.oxml.ns import nsdecls
-           from docx.oxml import parse_xml
-           
-           r, g, b = style_config["backgroundColor"]
-           hex_color = f"{r:02x}{g:02x}{b:02x}"
-           
-           # Apply background shading
-           shading_xml = f'<w:shd {nsdecls("w")} w:fill="{hex_color}" w:val="clear"/>'
-           p._element.get_or_add_pPr().append(parse_xml(shading_xml))
-           
-           # Add border if specified
-           if "borderColor" in style_config:
-               r, g, b = style_config["borderColor"]
-               border_hex = f"{r:02x}{g:02x}{b:02x}"
-               border_xml = f'''
-                   <w:pBdr {nsdecls("w")}>
-                       <w:bottom w:val="single" w:sz="4" w:space="0" w:color="{border_hex}"/>
-                   </w:pBdr>
-               '''
-               p._element.get_or_add_pPr().append(parse_xml(border_xml))
-   ```
+**Implementation Details**:
+```python
+def _create_document_styles(doc, docx_styles):
+    """Create custom styles in the document for consistent formatting."""
+    # Create a style for section headers
+    if 'heading2' in docx_styles:
+        style = doc.styles.add_style('SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
+        font = style.font
+        h2_style = docx_styles['heading2']
+        
+        if "fontFamily" in h2_style:
+            font.name = h2_style["fontFamily"]
+        if "fontSizePt" in h2_style:
+            font.size = Pt(h2_style["fontSizePt"])
+        if "color" in h2_style:
+            r, g, b = h2_style["color"]
+            font.color.rgb = RGBColor(r, g, b)
+        if h2_style.get("bold", False):
+            font.bold = True
+        
+        # Apply paragraph formatting
+        style.paragraph_format.space_after = Pt(h2_style.get("spaceAfterPt", 6))
+        style.paragraph_format.space_before = Pt(h2_style.get("spaceBeforePt", 12))
+```
 
-3. **Custom Styles Definition**:
-   - Create predefined styles in the document instead of applying formatting directly
-   - This approach allows for more consistent styling and easier maintenance
+**Verification**:
+- Created a test script (`test_docx_styling.py`) to generate DOCX files with enhanced styling
+- Compared the output with PDF and HTML versions to ensure consistency
+- Tested with multiple sample resumes to verify that styling is applied correctly
 
-   ```python
-   def _create_document_styles(doc, docx_styles):
-       """Create custom styles in the document for consistent formatting."""
-       # Create a style for section headers
-       if 'heading2' in docx_styles:
-           style = doc.styles.add_style('SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
-           font = style.font
-           h2_style = docx_styles['heading2']
-           
-           if "fontFamily" in h2_style:
-               font.name = h2_style["fontFamily"]
-           if "fontSizePt" in h2_style:
-               font.size = Pt(h2_style["fontSizePt"])
-           if "color" in h2_style:
-               r, g, b = h2_style["color"]
-               font.color.rgb = RGBColor(r, g, b)
-           if h2_style.get("bold", False):
-               font.bold = True
-           
-           # Apply paragraph formatting
-           style.paragraph_format.space_after = Pt(h2_style.get("spaceAfterPt", 6))
-           style.paragraph_format.space_before = Pt(h2_style.get("spaceBeforePt", 12))
-       
-       # Create a style for bullet lists
-       if 'bulletList' in docx_styles:
-           style = doc.styles.add_style('CustomBullet', WD_STYLE_TYPE.PARAGRAPH)
-           font = style.font
-           bullet_style = docx_styles['bulletList']
-           
-           if "fontFamily" in bullet_style:
-               font.name = bullet_style["fontFamily"]
-           if "fontSizePt" in bullet_style:
-               font.size = Pt(bullet_style["fontSizePt"])
-           
-           # Add custom bullet format
-           style.paragraph_format.left_indent = Cm(bullet_style.get("indentCm", 0.5))
-           style.paragraph_format.first_line_indent = Cm(-0.25)  # Hanging indent for bullet
-   ```
+## Next Steps and Future Enhancements
 
-4. **Testing Phase**:
-   - Create test documents to verify styling
-   - Compare styling between PDF and DOCX outputs
-   - Refine style mappings based on visual inspection
+With the resolution of both major issues (missing contact section and styling inconsistencies), the DOCX download feature is now fully functional and provides professionally formatted documents. Here are some potential future enhancements:
 
-### Implementation Timeline
-
-| Task | Description | Estimated Time |
-|------|-------------|----------------|
-| Investigate Contact Section Issue | Debug and fix missing contact section | 1 day |
-| Enhanced Design Token Mapping | Expand the DOCX style mapping to include more properties | 1-2 days |
-| DOCX Style Implementation | Improve the styling application in the DOCX builder | 2-3 days |
-| Custom Styles Definition | Create predefined styles in DOCX for consistent formatting | 1-2 days |
-| Testing and Refinement | Test all changes and refine based on feedback | 2 days |
-
-**Total Estimated Time**: 7-10 days
-
-### Future Enhancements
-
-1. **Advanced Style Templates**: Create predefined DOCX templates with styles already defined, then populate them with content.
+1. **Advanced Table Support**: Add support for table-based layouts in certain resume sections for more flexible formatting.
 2. **Font Embedding**: Support for embedding custom fonts in DOCX files to ensure consistent appearance.
-3. **Theme Support**: Allow switching between multiple resume themes/styles via design tokens.
-4. **Table Layouts**: Support for table-based layouts in certain resume sections.
-5. **Image Support**: Add support for including profile images or logos in the DOCX output.
-6. **Header/Footer Support**: Add customizable headers and footers to the DOCX output.
+3. **Image Support**: Add capability to include profile images or logos in DOCX output when provided.
+4. **Theme Support**: Enable switching between multiple resume themes/styles via design tokens.
+5. **Caching Generated Files**: Implement caching of generated DOCX files to improve performance.
 
-## Next Steps
+## Implementation Summary
 
-Future enhancements:
+The DOCX download feature has been successfully implemented with the following accomplishments:
 
-1. Caching generated DOCX files
-2. Adding support for embedded images in DOCX
-3. Improving bullet point formatting
-4. Adding more style customization options
+1. **Complete Section Support**: All resume sections (contact, summary, experience, education, skills, projects) are now properly included in the DOCX output.
+2. **Consistent Styling**: The DOCX output now closely matches the styling of the PDF and HTML outputs, leveraging the same design tokens system.
+3. **Enhanced Bullet Points**: Custom bullet point styling ensures consistent appearance and proper indentation.
+4. **Section Header Formatting**: Section headers now have proper styling including colors, borders, and spacing.
+5. **Robust Error Handling**: Improved error detection and recovery for various data formats and edge cases.
+
+These enhancements provide users with professionally formatted, editable DOCX resume files that maintain the visual consistency established in the application's design system.
