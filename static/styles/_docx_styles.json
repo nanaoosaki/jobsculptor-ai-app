@@ -1,0 +1,43 @@
+{
+  "page": {
+    "marginTopCm": 0.8,
+    "marginBottomCm": 0.8,
+    "marginLeftCm": 0.8,
+    "marginRightCm": 0.8
+  },
+  "heading1": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 16,
+    "color": [
+      51,
+      51,
+      51
+    ]
+  },
+  "heading2": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 12,
+    "color": [
+      0,
+      0,
+      102
+    ],
+    "spaceAfterPt": 6
+  },
+  "heading3": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 11,
+    "bold": true,
+    "spaceAfterPt": 4
+  },
+  "body": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 11,
+    "lineHeight": 1.4,
+    "color": [
+      51,
+      51,
+      51
+    ]
+  }
+}

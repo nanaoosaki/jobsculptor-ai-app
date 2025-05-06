@@ -138,6 +138,47 @@ The recompilation of `_resume.scss` was resulting in the hard-coded "u2022" char
 
 **Priority**: Medium
 
+### DOCX Download Missing Sections
+**Status**: Resolved
+
+**Description**: 
+When downloading a résumé in DOCX format, only the Skills section was visible and it displayed raw JSON data instead of formatted skills. All other sections (contact, experience, education, projects) were missing.
+
+**Root Cause**:
+The issue was due to a mismatch between the data structures in the JSON files and what the DOCX builder expected:
+- Experience, education, and projects were stored as direct lists, not dictionaries with keys
+- Contact and summary sections used a 'content' key structure
+- The skills section needed proper formatting for nested dictionaries
+
+**Resolution**:
+- Enhanced the DOCX builder to handle different data structures flexibly
+- Added special handling for sections with 'content' keys
+- Added robust type checking throughout the code
+- Improved handling of skills data to properly format categories and items
+- Added special case for projects with string content
+- Created a test script to verify DOCX generation outside the web app
+
+**Impact**: 
+- DOCX downloads now correctly display all résumé sections with proper formatting
+- The code is more robust and can handle various data structures without errors
+
+**Priority**: High
+
+### Misunderstanding Regarding DOCX Download Button Implementation
+
+**Issue Description**: 
+There was a misunderstanding regarding the implementation of the DOCX download button. Initially, it was thought that the button was located in the `tailored_resume.html` template. However, it has been confirmed that the button is actually implemented in the `index.html` template. Additionally, the handling of download types is managed by the `main.js` file.
+
+**Impact**: 
+This misunderstanding may lead to confusion when troubleshooting or enhancing the download functionality, as the relevant code is not where it was initially assumed to be.
+
+**Next Steps**: 
+1. Review the `index.html` file to ensure the DOCX download button is correctly implemented.
+2. Verify the functionality in `main.js` to ensure it properly handles the download types for both PDF and DOCX formats.
+3. Update any related documentation to reflect the correct locations of the button and its handling logic.
+
+**Priority**: Medium
+
 ### Redundant Text in Resume Section
 **Status**: Resolved
 
@@ -283,4 +324,18 @@ All known issues have been resolved. If new issues arise, they will be documente
     - **Description**: Bullet points are too long, and the bullet point symbol is missing.
     - **Impact**: The readability and professional appearance of the resume are affected.
     - **Next Steps**: Adjust the bullet point length in the SCSS files and ensure the bullet point symbol is correctly displayed.
+    - **Priority**: Medium
+
+13. **DOCX Contact Section Missing**
+    - **Status**: Unresolved
+    - **Description**: The contact section is missing from the DOCX output, despite being visible in the PDF output and the corresponding JSON file existing in the temporary directory.
+    - **Impact**: Users downloading the DOCX version don't see their contact information, reducing the professional appearance and usefulness of the resume.
+    - **Next Steps**: Implement enhanced debugging and fix the contact data loading in the DOCX builder.
+    - **Priority**: High
+
+14. **DOCX Styling Inconsistency**
+    - **Status**: Unresolved
+    - **Description**: The DOCX file lacks proper styling compared to the PDF and HTML outputs. The current implementation doesn't fully leverage the design tokens system for consistent styling.
+    - **Impact**: DOCX downloads appear less professional and don't match the styling users see in the preview or PDF.
+    - **Next Steps**: Enhance design token mapping for DOCX, implement comprehensive styling, and create predefined document styles.
     - **Priority**: Medium 
