@@ -133,8 +133,23 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
         
         # ------ CONTACT SECTION ------
         logger.info("Processing Contact section...")
+        
+        # Open and inspect the contact file directly to debug structure issues
+        contact_file_path = os.path.join(temp_dir, f"{request_id}_contact.json")
+        if os.path.exists(contact_file_path):
+            try:
+                with open(contact_file_path, 'r', encoding='utf-8') as f:
+                    raw_content = f.read()
+                    logger.info(f"Raw contact file content (first 200 chars): {raw_content[:200]}")
+            except Exception as e:
+                logger.error(f"Error reading raw contact file: {e}")
+        
         contact = load_section_json(request_id, "contact", temp_dir)
         logger.info(f"Contact data loaded: {bool(contact)}")
+        logger.info(f"Contact data type: {type(contact)}")
+        
+        if isinstance(contact, dict):
+            logger.info(f"Contact keys: {list(contact.keys())}")
         
         if contact:
             # Verify contact is a dictionary
@@ -150,33 +165,114 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
                     # Try to access the contact data
                     contact_data = contact['content']
                     if isinstance(contact_data, dict):
+                        logger.info(f"Contact content is a dictionary with keys: {list(contact_data.keys())}")
                         contact = contact_data
-                    logger.info(f"Using contact content: {contact.keys() if isinstance(contact, dict) else type(contact)}")
+                    elif isinstance(contact_data, list) and len(contact_data) > 0 and isinstance(contact_data[0], dict):
+                        logger.info(f"Contact content is a list of dictionaries, using first item")
+                        contact = contact_data[0]
+                    elif isinstance(contact_data, str):
+                        # Handle string content - parse it into structured data
+                        logger.info("Contact content is a string, attempting to parse")
+                        
+                        # Parse the contact information from the string
+                        lines = contact_data.strip().split('\n')
+                        
+                        # Extract name from the first line
+                        name = lines[0].strip() if lines else ""
+                        logger.info(f"Extracted name from string: {name}")
+                        
+                        # Extract contact details from subsequent lines
+                        contact_details = {}
+                        if len(lines) > 1:
+                            details_line = lines[1].strip()
+                            # Split by common separators
+                            details_parts = [p.strip() for p in details_line.replace('|', '|').split('|')]
+                            
+                            logger.info(f"Extracted contact details: {details_parts}")
+                            
+                            for part in details_parts:
+                                part = part.strip()
+                                # Try to identify the type of contact detail
+                                if '@' in part:
+                                    contact_details['email'] = part
+                                elif 'P:' in part or 'Phone:' in part or any(c.isdigit() for c in part):
+                                    contact_details['phone'] = part
+                                elif 'LinkedIn' in part or 'linkedin.com' in part:
+                                    contact_details['linkedin'] = part
+                                elif 'Github' in part or 'github.com' in part:
+                                    contact_details['github'] = part
+                                elif any(loc in part.lower() for loc in ['street', 'ave', 'road', 'blvd', 'city', 'state']):
+                                    contact_details['location'] = part
+                        
+                        # Create a new contact object
+                        contact = {'name': name, **contact_details}
+                        logger.info(f"Created structured contact data: {contact}")
+                    else:
+                        logger.info(f"Contact content is type: {type(contact_data)}")
                 except Exception as e:
                     logger.warning(f"Error accessing contact content: {e}")
+            
+            # Print full contact data for debugging
+            logger.info(f"Final contact data structure to use: {contact}")
+            
+            # Name - handle potential different structures
+            name = ""
+            if "name" in contact:
+                name = contact["name"]
+            elif "full_name" in contact:
+                name = contact["full_name"]
+            
+            if name:
+                name_para = doc.add_paragraph(name)
+                _apply_paragraph_style(name_para, "heading1", docx_styles)
                 
-            # Name
-            name_para = doc.add_paragraph(contact.get("name", ""))
-            _apply_paragraph_style(name_para, "heading1", docx_styles)
+                # Contact details
+                contact_parts = []
+                if "location" in contact and contact["location"]:
+                    contact_parts.append(contact["location"])
+                if "phone" in contact and contact["phone"]:
+                    contact_parts.append(contact["phone"])
+                if "email" in contact and contact["email"]:
+                    contact_parts.append(contact["email"])
+                if "linkedin" in contact and contact["linkedin"]:
+                    contact_parts.append(contact["linkedin"])
+                
+                # Additional possible contact fields
+                if "website" in contact and contact["website"]:
+                    contact_parts.append(contact["website"])
+                if "github" in contact and contact["github"]:
+                    contact_parts.append(contact["github"])
+                
+                contact_text = " | ".join(contact_parts)
+                contact_para = doc.add_paragraph(contact_text)
+                _apply_paragraph_style(contact_para, "body", docx_styles)
+                contact_para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                # Add a horizontal line
+                doc.add_paragraph("").paragraph_format.space_after = Pt(6)
+            else:
+                logger.warning("No name found in contact data, skipping contact section")
+        else:
+            logger.warning("No contact data found")
             
-            # Contact details
-            contact_parts = []
-            if "location" in contact and contact["location"]:
-                contact_parts.append(contact["location"])
-            if "phone" in contact and contact["phone"]:
-                contact_parts.append(contact["phone"])
-            if "email" in contact and contact["email"]:
-                contact_parts.append(contact["email"])
-            if "linkedin" in contact and contact["linkedin"]:
-                contact_parts.append(contact["linkedin"])
-            
-            contact_text = " | ".join(contact_parts)
-            contact_para = doc.add_paragraph(contact_text)
-            _apply_paragraph_style(contact_para, "body", docx_styles)
-            contact_para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            
-            # Add a horizontal line
-            doc.add_paragraph("").paragraph_format.space_after = Pt(6)
+            # Try a fallback approach - look for the file directly
+            fallback_files = [f for f in os.listdir(temp_dir) if f.endswith("_contact.json") and request_id in f]
+            if fallback_files:
+                logger.info(f"Found fallback contact files: {fallback_files}")
+                try:
+                    with open(os.path.join(temp_dir, fallback_files[0]), 'r', encoding='utf-8') as f:
+                        fallback_contact = json.load(f)
+                        logger.info(f"Loaded fallback contact data: {fallback_contact}")
+                        
+                        # Extract name and add to document
+                        if isinstance(fallback_contact, dict):
+                            name = fallback_contact.get("name", "")
+                            if name:
+                                name_para = doc.add_paragraph(name)
+                                _apply_paragraph_style(name_para, "heading1", docx_styles)
+                                logger.info(f"Added name from fallback: {name}")
+                except Exception as e:
+                    logger.error(f"Error processing fallback contact data: {e}")
         
         # ------ SUMMARY SECTION ------
         logger.info("Processing Summary section...")

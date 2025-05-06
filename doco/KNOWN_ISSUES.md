@@ -327,10 +327,10 @@ All known issues have been resolved. If new issues arise, they will be documente
     - **Priority**: Medium
 
 13. **DOCX Contact Section Missing**
-    - **Status**: Unresolved
-    - **Description**: The contact section is missing from the DOCX output, despite being visible in the PDF output and the corresponding JSON file existing in the temporary directory.
-    - **Impact**: Users downloading the DOCX version don't see their contact information, reducing the professional appearance and usefulness of the resume.
-    - **Next Steps**: Implement enhanced debugging and fix the contact data loading in the DOCX builder.
+    - **Status**: Resolved
+    - **Description**: The contact section was missing from the DOCX output, despite being visible in the PDF output and the corresponding JSON file existing in the temporary directory.
+    - **Impact**: Users downloading the DOCX version couldn't see their contact information, reducing the professional appearance and usefulness of the resume.
+    - **Resolution**: Implemented string parsing logic to extract contact details from different formats and added support for various contact data structures.
     - **Priority**: High
 
 14. **DOCX Styling Inconsistency**

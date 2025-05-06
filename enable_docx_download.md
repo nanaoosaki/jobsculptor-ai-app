@@ -682,261 +682,57 @@ After initial implementation, consider these enhancements:
 4. **Template-Based Generation**: Switch to python-docx-template for more efficient code
 5. **Custom Font Embedding**: Embed custom fonts in the DOCX for consistent appearance
 
-## Issue Reports and Fixes
-
-### Attempt 1: Issue #001 - "list object has no attribute 'get'" Error
-
-#### Error Details:
-```
-INFO:style_manager:Successfully loaded DOCX styles from D:\AI\manusResume6\static\styles\_docx_styles.json        
-ERROR:utils.docx_builder:Error loading section JSON: 'charmap' codec can't decode byte 0x90 in position 1753: character maps to <undefined>
-ERROR:utils.docx_builder:Error building DOCX: 'list' object has no attribute 'get'
-ERROR:app:Error generating DOCX for request_id ebf346f1-afa9-415f-b205-aad838f98bab: 'list' object has no attribute 'get'
-```
-
-Frontend Error:
-```json
-{
-  "error": "Error generating DOCX: 'list' object has no attribute 'get'",
-  "success": false
-}
-```
-
-#### Diagnosis:
-The error trace shows two distinct issues:
-
-1. **Character Encoding Issue:** `'charmap' codec can't decode byte 0x90 in position 1753: character maps to <undefined>` - This indicates that when reading one of the section JSON files, there's an encoding issue with a non-ASCII character.
-
-2. **Type Error:** `'list' object has no attribute 'get'` - This suggests that in the DOCX builder, it's attempting to use the `.get()` method on a list object, which is invalid since `.get()` is a dictionary method.
-
-Looking at the error sequence:
-1. The section JSON loading function is encountering encoding issues
-2. This may be causing some sections to be returned as empty or in an unexpected format
-3. Later in the code, something that was expected to be a dictionary is actually a list
-
-Looking at the implementation of `build_docx`, there are several places that use the `.get()` method, especially on section data:
-
-```python
-# Potential problematic areas in build_docx function
-skills_content = skills.get("skills", "")  # Could be a list instead of a dict
-job.get('achievements', [])  # Could be a list instead of a dict
-school.get('highlights', [])  # Could be a list instead of a dict
-```
-
-#### Solution Plan:
-
-1. **Fix the encoding issue** by modifying the `load_section_json` function to explicitly specify UTF-8 encoding:
-
-```python
-def load_section_json(request_id: str, section_name: str, temp_dir: str) -> Dict[str, Any]:
-    """Load a section's JSON data from the temporary session directory."""
-    try:
-        file_path = os.path.join(temp_dir, f"{request_id}_{section_name}.json")
-        with open(file_path, 'r', encoding='utf-8') as f:  # Explicitly use UTF-8
-            return json.load(f)
-    except FileNotFoundError:
-        logger.warning(f"Section file not found: {file_path}")
-        return {}
-    except json.JSONDecodeError:
-        logger.error(f"Error decoding JSON from {file_path}")
-        return {}
-    except Exception as e:
-        logger.error(f"Error loading section JSON: {e}")
-        return {}
-```
-
-2. **Add more robust type checking** in the `build_docx` function for the sections that might be causing the error, particularly focusing on the skills section:
-
-```python
-# Modify the skills handling in build_docx
-if skills and "skills" in skills:
-    # Add section header
-    skills_header = doc.add_paragraph("SKILLS")
-    _apply_paragraph_style(skills_header, "heading2", docx_styles)
-    
-    # Add skills content - handle different possible formats
-    skills_content = skills.get("skills", "")
-    
-    # Check if skills is a dictionary with a 'skills' key that contains a list
-    if isinstance(skills_content, list):
-        # Handle skills as list
-        for skill in skills_content:
-            skill_para = doc.add_paragraph()
-            skill_para.style = 'List Bullet'
-            skill_para.add_run(skill)
-            _apply_paragraph_style(skill_para, "body", docx_styles)
-    elif isinstance(skills_content, dict) and 'skills' in skills_content:
-        # Handle nested skills dictionary
-        nested_skills = skills_content.get('skills', [])
-        if isinstance(nested_skills, list):
-            for skill in nested_skills:
-                skill_para = doc.add_paragraph()
-                skill_para.style = 'List Bullet'
-                skill_para.add_run(skill)
-                _apply_paragraph_style(skill_para, "body", docx_styles)
-        else:
-            # Handle as string
-            skills_para = doc.add_paragraph(str(nested_skills))
-            _apply_paragraph_style(skills_para, "body", docx_styles)
-    else:
-        # Handle skills as string or any other type
-        skills_para = doc.add_paragraph(str(skills_content))
-        _apply_paragraph_style(skills_para, "body", docx_styles)
-```
-
-3. **Add Error Reporting** - Improve error messages to make debugging easier in the future:
-
-```python
-def build_docx(request_id: str, temp_dir: str) -> BytesIO:
-    try:
-        # ... existing code ...
-    except Exception as e:
-        # Enhance error reporting
-        logger.error(f"Error building DOCX for request ID {request_id}: {e}")
-        logger.error(f"Error type: {type(e).__name__}")
-        logger.error(f"Error details: {str(e)}")
-        # Log traceback for detailed debugging
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise
-```
-
-#### Expected Outcome:
-1. The UTF-8 encoding fix should address the character encoding issues
-2. The more robust type checking will prevent the "list object has no attribute get" error
-3. Better error reporting will make future errors easier to diagnose
-
-This approach addresses both the immediate error and helps make the code more resilient against similar issues in the future.
-
-### Attempt 2: Issue #002 - DOCX File Only Contains Skills Section
-
-#### Error Details:
-When downloading the DOCX file, only the "SKILLS" section appeared in the output document, with raw JSON/dictionary-like content. All other sections (contact, summary, experience, education, projects) were missing. The skills section displays raw data format rather than formatted skills:
-
-```
-SKILLS
-
-{'technical': ['AI technologies', 'Data analysis', 'Machine learning applications', 'Consumer product development', 'Python', 'Java', 'AWS', 'Docker', 'MySQL', 'MongoDB'], 'soft': ['Leadership', 'Strategic mindset', 'Cross-functional collaboration', 'Communication of complex concepts', 'Advocacy for AI ethics'], 'other': ['Collaboration with product and technological teams', 'Editorial operations', 'Journalistic principles', 'Responsible AI usage']}
-```
-
-#### Diagnosis:
-Analysis of the log output revealed several data structure differences from what the code expected:
-
-1. `experience` data was stored as a direct LIST, but the code expected a DICT with an "experiences" key
-2. `education` data was stored as a direct LIST, but the code expected a DICT with an "institutions" key
-3. `projects` data was stored as a DICT with a "content" key that could be a string or list
-4. `contact` and `summary` had a 'content' key that needed to be unpacked
-5. The skills section was visible but displayed raw data instead of formatted skills
-
-#### Solution:
-We implemented multiple fixes to handle the various data structures:
-
-1. **Added Detection for 'content' Key**: Added special handling for sections that use a 'content' key structure:
-```python
-# For contact data with 'content' key
-if 'content' in contact:
-    contact_data = contact['content']
-    if isinstance(contact_data, dict):
-        contact = contact_data
-```
-
-2. **Handle Direct Lists**: Updated the code to handle both direct lists and dictionaries with keys:
-```python
-# For experience section
-if isinstance(experience, dict) and "experiences" in experience:
-    experiences_list = experience.get("experiences", [])
-elif isinstance(experience, list):
-    # Direct list of experiences
-    experiences_list = experience
-```
-
-3. **Improved Type Checking**: Added robust type checking throughout the code to handle different data types:
-```python
-# Check if skills content is a list, dict, or string
-if isinstance(skills_content, list):
-    # Handle skills as list
-elif isinstance(skills_content, dict):
-    # Handle skills as dictionary with categories
-else:
-    # Handle skills as string
-```
-
-4. **Special Handling for String Content**: Added special handling for projects with string content:
-```python
-elif isinstance(content, str):
-    # In some cases, content might be a string
-    logger.info("Projects content is a string, adding as single project")
-    # Add projects section header and content directly
-```
-
-5. **Improved Error Logging**: Added detailed logging to help diagnose any remaining issues:
-```python
-logger.info(f"Successfully loaded '{section_name}' section: {type(data)}")
-if isinstance(data, dict):
-    logger.info(f"Dict keys for {section_name}: {list(data.keys())}")
-elif isinstance(data, list):
-    logger.info(f"List length for {section_name}: {len(data)}")
-```
-
-#### Verification:
-We created a test script (`test_docx.py`) to test the DOCX generation outside the web application, which confirmed that all sections now appear correctly in the output document.
-
-#### Conclusion:
-The issue was due to mismatched expectations between the data structures stored in the JSON files and what the DOCX builder code expected. By making the code more robust and adaptive to different data structures, we've ensured that all resume sections now appear correctly in the DOCX output.
-
 ## DOCX Download Implementation Issues and Enhancement Plan
 
 ### Issue #1: Missing Contact Section in DOCX Output
-**Status**: Unresolved
+**Status**: Resolved
 
 **Description**: 
-The contact section is missing from the DOCX output, despite being visible in the PDF output and the corresponding JSON file (e.g., `ab723b19-2fe8-441e-b53d-468bc2f7abd7_contact.json`) existing in the temporary directory.
+The contact section was missing from the DOCX output, despite being visible in the PDF output and the corresponding JSON file (e.g., `ab723b19-2fe8-441e-b53d-468bc2f7abd7_contact.json`) existing in the temporary directory.
 
-**Hypothesis**:
-1. **JSON Structure Mismatch**: The contact data in the JSON file may have a different structure than what the DOCX builder is expecting.
-2. **Content Key Issue**: The contact data might be nested under a 'content' key or have a different format than anticipated.
-3. **Encoding or Loading Issue**: There might be issues with loading the contact section JSON file specifically.
+**Root Cause**:
+The issue was caused by the contact data being stored as a string within a 'content' key rather than as a structured object. The code was only handling dictionary-based contact information and wasn't properly parsing string-based contact data.
 
-**Implementation Plan**:
-1. **Enhanced Debugging**:
-   - Add detailed logging to track the loading and processing of the contact section specifically
-   - Inspect the actual contact JSON structure directly with a test script
+**Resolution**:
+1. Added enhanced debugging to track contact file loading and structure
+2. Implemented string parsing logic to extract contact details from string format
+3. Added support for various contact data structures:
+   - Dictionary with direct fields
+   - Dictionary with 'content' key containing a nested dictionary
+   - Dictionary with 'content' key containing a string
+   - List of contact details
 
-2. **Contact Section Handler Improvements**:
-   ```python
-   # Enhanced contact section handling
-   logger.info("Processing Contact section...")
-   contact = load_section_json(request_id, "contact", temp_dir)
-   logger.info(f"Contact data loaded: {bool(contact)}")
-   
-   if contact:
-       # Verify contact is a dictionary
-       if not isinstance(contact, dict):
-           logger.warning(f"Contact section is not a dictionary: {type(contact)}")
-           contact = {}
-       
-       # Check if contact has a 'content' key (alternate structure)
-       if 'content' in contact:
-           logger.info("Found 'content' key in contact section")
-           # Extract actual contact data from content
-           try:
-               # Try to access the contact data
-               contact_data = contact['content']
-               if isinstance(contact_data, dict):
-                   contact = contact_data
-               logger.info(f"Using contact content: {contact.keys() if isinstance(contact, dict) else type(contact)}")
-           except Exception as e:
-               logger.warning(f"Error accessing contact content: {e}")
-       
-       # Print full contact data for debugging
-       logger.info(f"Contact data structure: {contact}")
-       
-       # Continue with name and contact details as before...
-   ```
+**Implementation Details**:
+```python
+# Handling string-based contact data
+if isinstance(contact_data, str):
+    # Parse the contact information from the string
+    lines = contact_data.strip().split('\n')
+    
+    # Extract name from the first line
+    name = lines[0].strip() if lines else ""
+    
+    # Extract contact details from subsequent lines
+    contact_details = {}
+    if len(lines) > 1:
+        details_line = lines[1].strip()
+        # Split by common separators
+        details_parts = [p.strip() for p in details_line.replace('|', '|').split('|')]
+        
+        for part in details_parts:
+            # Identify the type of contact detail
+            if '@' in part:
+                contact_details['email'] = part
+            elif 'P:' in part or 'Phone:' in part:
+                contact_details['phone'] = part
+            # Additional field identification logic...
+    
+    # Create a structured contact object
+    contact = {'name': name, **contact_details}
+```
 
-3. **Testing**:
-   - Create a dedicated test script to validate contact data loading
-   - Manually review the contact JSON file structure
+**Verification**:
+Tested with multiple request IDs including the specific problematic ID `ab723b19-2fe8-441e-b53d-468bc2f7abd7` and confirmed that contact information now appears correctly in the DOCX output.
 
 ### Issue #2: Lack of Styling in DOCX Output
 **Status**: Unresolved
