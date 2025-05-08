@@ -78,7 +78,7 @@ $font-size-h2: 1.75rem !default;
 // Section Box Styling – blue outline with transparent fill
 .section-box {
     margin: $space-section-y 0; // Use existing token for spacing around box
-    padding: $sectionHeaderPaddingVert $sectionHeaderPaddingHoriz; // Use NEW specific tokens
+    padding: $sectionHeaderPaddingVert $sectionHeaderPaddingHoriz; // Use specific tokens
     background: transparent;  // transparent fill
     color: $primaryColor;  // blue text color
     border: 2px solid $primaryColor !important;  // light blue outline, override inline styles
@@ -92,23 +92,15 @@ $font-size-h2: 1.75rem !default;
     line-height: $sectionHeaderLineHeight; // Apply line-height directly
     break-inside: avoid; // Prevent section headers breaking across pages
     break-after: avoid;
+    margin-bottom: $section-box-margin-bottom; // Use new token for consistent margin
+    margin-left: $content-left-margin; // Ensure section headers align with content
 }
 
 // Resume Section Styling
 .resume-section {
-    margin-bottom: $spacing-medium;
-
-    // h2 rule is no longer needed as we removed the h2 from the HTML generator
-    // h2 {
-    //     font-size: var(--sectionHeaderFontSize, 12pt);
-    //     font-weight: $font-weight-bold;
-    //     color: $primaryColor; // blue text to match the outline
-    //     text-align: left; // left-align header text
-    //     padding: 0; // padding handled by parent .section-box
-    //     margin: 0;
-    //     letter-spacing: 0.05em;
-    //     line-height: var(--sectionHeaderLineHeight, 1.1);
-    // }
+    margin-bottom: $section-spacing-vertical;
+    margin-left: $content-left-margin; // Ensure consistent left margin
+    padding-left: $section-content-padding-left; // Ensure consistent left padding
 }
 
 // Position Bar Styling - New
@@ -116,6 +108,7 @@ $font-size-h2: 1.75rem !default;
     background: $color-positionBar-bg;
     padding: 0.25rem 0.45rem;
     margin-top: 0.4rem;
+    margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
     display: flex;
     justify-content: space-between; // company left, dates right
     
@@ -140,11 +133,13 @@ $font-size-h2: 1.75rem !default;
 // Experience and Education Entry Formatting
 .job, .education, .project {
     margin-bottom: $spacing-medium;
+    margin-left: $content-left-margin; // Ensure consistent left margin for all sections
 
     .job-title-line, .education-title-line, .project-title-line, .degree-line, .position-line {
         display: flex;
         justify-content: space-between;
-        margin-bottom: $spacing-xsmall;
+        margin-bottom: $position-line-margin-bottom; // Use new token for consistency
+        padding-left: 0; // Ensure no left padding to align with section headers
     }
 
     .company, .institution, .project-title, .position, .degree {
@@ -160,11 +155,26 @@ $font-size-h2: 1.75rem !default;
 
     .job-content, .education-content, .project-content {
         margin-top: $spacing-small;
-
-        p, ul {
+        margin-left: 0;  // No additional margin to maintain alignment with parent
+        padding-left: 0; // No padding to ensure alignment with section titles
+        
+        p {
             margin-bottom: $spacing-xsmall;
+            padding-left: 0;  // Ensure no left padding
+            margin-left: 0;   // Ensure no left margin
         }
-
+        
+        .role-description-text {
+            font-style: italic;
+            margin-top: 0.2em;  // Add some space above the description
+            margin-bottom: 0.5em; // Add some space below the description before bullets
+            color: #555; // Slightly lighter text color
+            padding-left: 0;  // No left padding to align with content
+            margin-left: 0;   // No left margin to align with content
+            display: block;  // Ensure block-level display
+            width: 100%;     // Take up full width
+        }
+        
         // Bullet point styling
         ul {
             list-style-type: none; // Remove default bullets
@@ -176,7 +186,7 @@ $font-size-h2: 1.75rem !default;
             position: relative;
             padding-left: $bullet-item-padding-left; // space between bullet and text
             text-indent: $bullet-item-text-indent; // pull text back to align properly
-            margin-bottom: $spacing-xsmall;
+            margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
             line-height: $line-height-tight;
 
             &::before {
@@ -185,7 +195,7 @@ $font-size-h2: 1.75rem !default;
                 left: 0; // align with UL padding start
                 top: 0; // align with text top
                 font-size: 1em;
-                color: $text-color-primary;
+                color: $color-bullet;
             }
         }
     }
@@ -196,10 +206,11 @@ ul.bullets {
     margin: 0.25rem 0 0.15rem 0;  // no left indent (handled by padding)
     padding-left: $bullet-list-padding-left;  // proper left indent from token
     list-style-type: none;  // no default bullets
+    margin-left: 0; // No additional margin to maintain alignment
 
     li {
         position: relative;
-        margin-bottom: $space-bullet-y;
+        margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
         line-height: $font-lineHeight-tight;
         padding-left: $bullet-item-padding-left;  // space for bullet
         text-indent: $bullet-item-text-indent;  // negative indent to pull text back
@@ -217,6 +228,8 @@ ul.bullets {
 // Skills Section (Often just paragraphs or a list)
 .skills-content {
     // Add specific styling if needed, e.g., columns
+    margin-left: $content-left-margin; // Ensure consistent left margin
+    
     p, ul {
          margin-bottom: $spacing-xsmall;
     }
@@ -226,7 +239,7 @@ ul.bullets {
     }
     li {
          position: relative;
-         margin-bottom: $spacing-xsmall;
+         margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
          line-height: $line-height-tight; // Use tighter line height
          padding-left: $bullet-item-padding-left;  // space for bullet
          text-indent: $bullet-item-text-indent;  // negative indent to pull text back
@@ -238,66 +251,5 @@ ul.bullets {
              top: 0;
              color: $color-bullet;
          }
-    }
-}
-
-.role-description-text {
-    font-style: italic;
-    margin-top: 0.2em;  // Add some space above the description
-    margin-bottom: 0.5em; // Add some space below the description before bullets
-    color: #555; // Slightly lighter text color
-}
-
-.education,
-.project {
-    margin-bottom: $spacing-medium;
-
-    .job-title-line, .education-title-line, .project-title-line, .degree-line, .position-line {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: $spacing-xsmall;
-    }
-
-    .company, .institution, .project-title, .position, .degree {
-        font-weight: $font-weight-bold;
-        color: $text-color-secondary;
-    }
-
-    .location, .dates {
-        font-style: italic;
-        color: $text-color-muted;
-        text-align: right;
-    }
-
-    .job-content, .education-content, .project-content {
-        margin-top: $spacing-small;
-
-        p, ul {
-            margin-bottom: $spacing-xsmall;
-        }
-
-        // Bullet point styling
-        ul {
-            list-style-type: none; // Remove default bullets
-            margin-left: 0; // flush with parent text block
-            padding-left: $bullet-list-padding-left; // use token value for indent
-        }
-
-        li {
-            position: relative;
-            padding-left: $bullet-item-padding-left; // space between bullet and text
-            text-indent: $bullet-item-text-indent; // pull text back to align properly
-            margin-bottom: $spacing-xsmall;
-            line-height: $line-height-tight;
-
-            &::before {
-                content: $bullet-glyph;
-                position: absolute;
-                left: 0; // align with UL padding start
-                top: 0; // align with text top
-                font-size: 1em;
-                color: $text-color-primary;
-            }
-        }
     }
 } 

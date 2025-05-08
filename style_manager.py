@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 _TOKENS = None
 _TOKENS_PATH = Path(__file__).parent / 'design_tokens.json'
+_DOCX_STYLES = None
 
 def load_tokens():
     """Loads design tokens from the JSON file."""
@@ -55,4 +56,33 @@ class StyleManager:
         path = Path(__file__).parent / 'static' / 'css' / 'print.css'
         if not path.exists():
             logger.warning(f"Print CSS file not found at {path}. Make sure SCSS is compiled.")
-        return str(path.resolve()) 
+        return str(path.resolve())
+        
+    @staticmethod
+    def docx_styles_path() -> str:
+        """Get the absolute path to the DOCX styles JSON file."""
+        path = Path(__file__).parent / 'static' / 'styles' / '_docx_styles.json'
+        if not path.exists():
+            logger.warning(f"DOCX styles file not found at {path}. Run 'python tools/generate_tokens.py' to generate it.")
+        return str(path.resolve())
+
+    @staticmethod
+    def load_docx_styles() -> dict:
+        """Load DOCX styles from the JSON file."""
+        global _DOCX_STYLES
+        if _DOCX_STYLES is None:
+            try:
+                path = StyleManager.docx_styles_path()
+                with open(path, 'r') as f:
+                    _DOCX_STYLES = json.load(f)
+                logger.info(f"Successfully loaded DOCX styles from {path}")
+            except FileNotFoundError:
+                logger.error(f"DOCX styles file not found. Run 'python tools/generate_tokens.py' to generate it.")
+                _DOCX_STYLES = {} # Fallback to empty dict
+            except json.JSONDecodeError:
+                logger.error(f"Error decoding JSON from DOCX styles file")
+                _DOCX_STYLES = {} # Fallback to empty dict
+            except Exception as e:
+                logger.error(f"An unexpected error occurred loading DOCX styles: {e}")
+                _DOCX_STYLES = {}
+        return _DOCX_STYLES 

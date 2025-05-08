@@ -116,6 +116,43 @@ def download_tailored_resume(request_id):
         app.logger.error(f"Error generating or downloading PDF for request_id {request_id}: {str(e)}")
         return "<html><body><h1>Error</h1><p>An unexpected error occurred while generating the PDF.</p></body></html>", 500
 
+@app.route('/download/docx/<request_id>')
+def download_docx_resume(request_id):
+    """Generate and download DOCX for a specific tailoring request_id"""
+    try:
+        # Get temp directory path
+        temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_session_data')
+        
+        # Import the docx builder
+        from utils.docx_builder import build_docx
+        
+        # Build the DOCX file
+        docx_bytes = build_docx(request_id, temp_dir)
+        
+        # Set the output filename
+        filename = f"tailored_resume_{request_id}.docx"
+        
+        # Send the file for download
+        return send_file(
+            docx_bytes,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        
+    except FileNotFoundError:
+        app.logger.error(f"Data not found for generating DOCX for request_id: {request_id}")
+        return jsonify({
+            'success': False, 
+            'error': 'Could not find the data needed to generate the DOCX. Please try tailoring the resume again.'
+        }), 404
+    except Exception as e:
+        app.logger.error(f"Error generating DOCX for request_id {request_id}: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'error': f'Error generating DOCX: {str(e)}'
+        }), 500
+
 # --- End New Routes ---
 
 @app.route('/download/<filename>')

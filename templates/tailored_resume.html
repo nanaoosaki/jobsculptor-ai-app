@@ -5,6 +5,9 @@
     <button id="download-pdf" class="btn btn-primary">
         <i class="fas fa-file-pdf"></i> Download PDF
     </button>
+    <button id="download-docx" class="btn btn-outline-primary">
+        <i class="fas fa-file-word"></i> Download DOCX
+    </button>
     <button id="back-button" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Back
     </button>
@@ -81,6 +84,52 @@
             // Reset button state
             downloadButton.disabled = false;
             downloadButton.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
+        }
+    });
+    
+    // Handle DOCX download
+    document.getElementById('download-docx').addEventListener('click', async function() {
+        try {
+            const downloadButton = this;
+            
+            // Disable the button and show loading state
+            downloadButton.disabled = true;
+            downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating DOCX...';
+            
+            // Get the request_id from the URL or the resumeData
+            // The URL format should be something like /preview/abc123 or contain request_id somewhere
+            const urlParams = new URLSearchParams(window.location.search);
+            let requestId = urlParams.get('request_id');
+            
+            // If not in URL params, try to extract from path
+            if (!requestId) {
+                const pathParts = window.location.pathname.split('/');
+                // Assuming format like /preview/abc123
+                if (pathParts.length > 2) {
+                    requestId = pathParts[pathParts.length - 1];
+                }
+            }
+            
+            if (!requestId) {
+                throw new Error('Could not determine request ID for DOCX download');
+            }
+            
+            // Open the DOCX download URL in a new tab
+            window.open(`/download/docx/${requestId}`, '_blank');
+            
+            // Reset button state after a short delay
+            setTimeout(() => {
+                downloadButton.disabled = false;
+                downloadButton.innerHTML = '<i class="fas fa-file-word"></i> Download DOCX';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error downloading DOCX:', error);
+            alert('Failed to generate DOCX. Please try again.');
+            
+            // Reset button state
+            downloadButton.disabled = false;
+            downloadButton.innerHTML = '<i class="fas fa-file-word"></i> Download DOCX';
         }
     });
     

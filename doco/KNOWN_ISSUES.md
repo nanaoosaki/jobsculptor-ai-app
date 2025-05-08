@@ -191,6 +191,41 @@ This misunderstanding may lead to confusion when troubleshooting or enhancing th
 ### Page Margin Size
 **Status**: Resolved
 
+### DOCX Styling Inconsistencies
+**Status**: Resolved
+
+**Description**: 
+The DOCX output format had several styling inconsistencies compared to the HTML and PDF outputs:
+1. Skills were displayed as bullet points on separate lines rather than as inline text with comma separation
+2. Section headers had different spacing and alignment than in HTML/PDF
+3. Box styling around section headers was inconsistent with other output formats
+4. Job titles and dates were not formatted consistently with HTML/PDF output - titles and dates appeared on separate lines
+5. Company and location were not properly right-aligned as in the HTML/PDF output
+6. Bullet points had incorrect indentation and styling
+
+**Resolution**:
+1. Modified the skills section handling in `utils/docx_builder.py` to format skills as comma-separated text on a single line
+2. Enhanced the section header styling in `style_engine.py` to improve alignment and spacing
+3. Added paragraph formatting properties in DOCX to better match HTML/PDF appearance
+4. Implemented tab-based right-alignment for experience, education, and project sections:
+   - Used Word's tab stops feature with right alignment to position elements
+   - Created paragraphs with left-aligned content (company/position) and right-aligned content (location/dates)
+   - Replaced the previous pipe ("|") separator approach with a cleaner tab-based layout
+5. Fixed bullet point formatting with proper indentation and styling
+
+**Impact**: 
+- The DOCX output now more closely resembles the HTML and PDF outputs
+- Company name appears on the left with location right-aligned on the same line
+- Position/title appears on the left with dates right-aligned on the same line
+- The unified styling approach maintains a single source of truth while allowing format-specific adaptations
+
+**Technical Details**:
+- Used `paragraph.paragraph_format.tab_stops.add_tab_stop(Cm(15), WD_TAB_ALIGNMENT.RIGHT)` for right alignment
+- Applied direct styling to individual runs within paragraphs for consistent appearance
+- Created separate approaches for HTML/PDF (using CSS flexbox) and DOCX (using tab stops) to achieve the same visual effect
+
+**Priority**: Medium
+
 ---
 
 ## Other Issues
@@ -335,7 +370,12 @@ All known issues have been resolved. If new issues arise, they will be documente
 
 14. **DOCX Styling Inconsistency**
     - **Status**: Resolved
-    - **Description**: The DOCX file lacks proper styling compared to the PDF and HTML outputs. The current implementation doesn't fully leverage the design tokens system for consistent styling.
+    - **Description**: The DOCX file lacks proper styling compared to the PDF/HTML outputs. The current implementation doesn't fully leverage the design tokens system for consistent styling.
     - **Impact**: DOCX downloads appeared less professional and didn't match the styling users see in the preview or PDF.
-    - **Resolution**: Enhanced design token mapping for DOCX, implemented comprehensive paragraph styling, and created predefined document styles for section headers and bullet points.
+    - **Resolution**: 
+      - Implemented a new StyleEngine to provide consistent styling across all output formats
+      - Created structured design tokens with format-specific variants
+      - Added proper section header boxing matching PDF output
+      - Enhanced bullet point formatting for consistency with PDF
+      - Applied consistent visual styling using a single source of truth
     - **Priority**: Medium 

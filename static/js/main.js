@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const resumeUploadForm = document.getElementById('resumeUploadForm');
     const jobUrlForm = document.getElementById('jobUrlForm');
     const tailorResumeBtn = document.getElementById('tailorResumeBtn');
-    const downloadResumeBtn = document.getElementById('downloadResumeBtn');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    const downloadDocxBtn = document.getElementById('downloadDocxBtn');
     
     // Get status elements
     const uploadStatus = document.getElementById('uploadStatus');
@@ -154,7 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         showStatus(tailorStatus, 'Tailoring your resume... (this may take a minute)', 'loading');
-        downloadResumeBtn.disabled = true; // Disable download button while tailoring
+        downloadPdfBtn.disabled = true;
+        downloadDocxBtn.disabled = true;
         currentRequestId = null; // Reset request ID
         
         // Send the complete job data with AI analysis - using OpenAI specifically
@@ -209,7 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showStatus(tailorStatus, 'Resume tailored successfully!', 'success');
             displayResumePreview(previewHtml);
             
-            downloadResumeBtn.disabled = false;
+            // Enable both download buttons
+            downloadPdfBtn.disabled = false;
+            downloadDocxBtn.disabled = false;
         })
         .catch(error => {
             console.error('Error:', error);
@@ -217,8 +221,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Handle resume download
-    downloadResumeBtn.addEventListener('click', function() {
+    // Handle PDF download
+    downloadPdfBtn.addEventListener('click', function() {
         if (!currentRequestId) {
             showStatus(tailorStatus, 'No tailored resume request ID found. Please tailor the resume first.', 'error');
             return;
@@ -226,6 +230,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Use the request_id to construct the download URL
         window.location.href = `/download/${currentRequestId}`;
+    });
+    
+    // Handle DOCX download
+    downloadDocxBtn.addEventListener('click', function() {
+        if (!currentRequestId) {
+            showStatus(tailorStatus, 'No tailored resume request ID found. Please tailor the resume first.', 'error');
+            return;
+        }
+        
+        // Use the request_id to construct the DOCX download URL
+        window.location.href = `/download/docx/${currentRequestId}`;
     });
     
     // Helper function to display status messages
@@ -623,8 +638,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Tailored resume preview displayed successfully");
         console.log("Preview length:", preview.length);
         
-        // Enable download button after preview is shown
-        downloadResumeBtn.disabled = false;
+        // Enable download buttons after preview is shown
+        downloadPdfBtn.disabled = false;
+        downloadDocxBtn.disabled = false;
         
         // Scroll to the resume preview section
         resumePreview.scrollIntoView({ behavior: 'smooth' });
@@ -633,7 +649,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to check if tailoring should be enabled
     function checkEnableTailorButton() {
         tailorResumeBtn.disabled = !(uploadedResumeFilename && parsedJobData);
-        downloadResumeBtn.disabled = true; // Also disable download button until tailoring is done
+        // Also disable download buttons until tailoring is done
+        downloadPdfBtn.disabled = true; 
+        downloadDocxBtn.disabled = true;
     }
 });
 

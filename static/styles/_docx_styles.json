@@ -5,6 +5,22 @@
     "marginLeftCm": 0.8,
     "marginRightCm": 0.8
   },
+  "global": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 11,
+    "lineHeight": 1.4,
+    "color": [
+      51,
+      51,
+      51
+    ],
+    "backgroundColor": [
+      255,
+      255,
+      255
+    ],
+    "tabStopPosition": 15.0
+  },
   "heading1": {
     "fontFamily": "Calibri",
     "fontSizePt": 16,
@@ -12,7 +28,9 @@
       51,
       51,
       51
-    ]
+    ],
+    "bold": true,
+    "spaceAfterPt": 12
   },
   "heading2": {
     "fontFamily": "Calibri",
@@ -22,7 +40,22 @@
       0,
       102
     ],
-    "spaceAfterPt": 6
+    "spaceAfterPt": 6,
+    "bold": true,
+    "backgroundColor": [
+      255,
+      255,
+      255
+    ],
+    "borderColor": [
+      0,
+      0,
+      0
+    ],
+    "borderSize": 1,
+    "paddingVertical": 1.0,
+    "paddingHorizontal": 12.0,
+    "marginBottom": 8.0
   },
   "heading3": {
     "fontFamily": "Calibri",
@@ -38,6 +71,38 @@
       51,
       51,
       51
+    ],
+    "marginLeft": 0.0
+  },
+  "bulletList": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 11,
+    "indentCm": 0.75,
+    "hangingIndentCm": 0.25,
+    "bulletCharacter": "\\2022",
+    "spaceAfterPt": 1.7999999999999998,
+    "color": [
+      58,
+      58,
+      58
     ]
+  },
+  "roleDescription": {
+    "fontFamily": "Calibri",
+    "fontSizePt": 11,
+    "indentCm": 0.0,
+    "spaceAfterPt": 6,
+    "color": [
+      51,
+      51,
+      51
+    ],
+    "fontStyle": "italic"
+  },
+  "positionBar": {
+    "spaceAfterPt": 1.7999999999999998
+  },
+  "sectionSpacing": {
+    "spacingCm": 0.31496062992125984
   }
 }

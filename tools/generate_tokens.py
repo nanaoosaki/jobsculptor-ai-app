@@ -74,7 +74,8 @@ def generate_docx_style_mappings():
                 "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
                 "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
                 "color": hex_to_rgb(tokens.get("textColor", "#333")),
-                "backgroundColor": hex_to_rgb(tokens.get("backgroundColor", "#ffffff"))
+                "backgroundColor": hex_to_rgb(tokens.get("backgroundColor", "#ffffff")),
+                "tabStopPosition": float(tokens.get("tab-stop-position-cm", "15"))
             },
             "heading1": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
@@ -93,7 +94,8 @@ def generate_docx_style_mappings():
                 "borderColor": hex_to_rgb(tokens.get("sectionHeaderBorder", "#0D2B7E").replace("px solid ", "")),
                 "borderSize": 1,
                 "paddingVertical": float(tokens.get("sectionHeaderPaddingVert", "1px").replace("px", "")),
-                "paddingHorizontal": float(tokens.get("sectionHeaderPaddingHoriz", "12px").replace("px", ""))
+                "paddingHorizontal": float(tokens.get("sectionHeaderPaddingHoriz", "12px").replace("px", "")),
+                "marginBottom": float(tokens.get("section-box-margin-bottom", "0.5rem").replace("rem", "")) * 16
             },
             "heading3": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
@@ -105,15 +107,31 @@ def generate_docx_style_mappings():
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
                 "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
                 "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
-                "color": hex_to_rgb(tokens.get("textColor", "#333"))
+                "color": hex_to_rgb(tokens.get("textColor", "#333")),
+                "marginLeft": float(tokens.get("content-left-margin", "0").replace("rem", "").replace("em", "").replace("px", ""))
             },
             "bulletList": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
                 "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                "indentCm": 0.5,
+                "indentCm": float(tokens.get("bullet-list-indent-cm", "0.75")),
+                "hangingIndentCm": float(tokens.get("bullet-list-hanging-indent-cm", "0.25")), 
                 "bulletCharacter": tokens.get("bullet-glyph", "\"\\2022\"").replace("\"\\\\", "").replace("\"", ""),
-                "spaceAfterPt": 3,
+                "spaceAfterPt": float(tokens.get("bullet-spacing-after", "0.15").replace("rem", "")) * 12,
                 "color": hex_to_rgb(tokens.get("color.bullet", "#3A3A3A"))
+            },
+            "roleDescription": {
+                "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
+                "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
+                "indentCm": float(tokens.get("role-description-indent-cm", "0")),
+                "spaceAfterPt": 6,
+                "color": hex_to_rgb(tokens.get("textColor", "#333")),
+                "fontStyle": "italic"
+            },
+            "positionBar": {
+                "spaceAfterPt": float(tokens.get("position-line-margin-bottom", "0.15").replace("rem", "")) * 12
+            },
+            "sectionSpacing": {
+                "spacingCm": float(tokens.get("section-spacing-vertical", "0.8").replace("rem", "")) / 2.54
             }
         }
         

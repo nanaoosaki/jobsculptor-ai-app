@@ -56,5 +56,18 @@
   "color.bullet": "#3A3A3A",
   "font.weight.bold": 700,
   "space.section.y": "0.2rem",
-  "space.bullet.y": "0.15rem"
+  "space.bullet.y": "0.15rem",
+  
+  "bullet-list-hanging-indent-cm": "0.25",
+  "bullet-list-indent-cm": "0.75",
+  "role-description-indent-cm": "0",
+  "tab-stop-position-cm": "15",
+  "content-left-alignment": "0",
+  "content-left-margin": "0",
+  "section-content-padding-left": "0",
+  "role-description-padding-left": "0",
+  "section-box-margin-bottom": "0.5rem",
+  "position-line-margin-bottom": "0.15rem",
+  "section-spacing-vertical": "0.8rem",
+  "bullet-spacing-after": "0.15rem"
 } 

@@ -165,16 +165,21 @@ hr {
   line-height: 1;
   break-inside: avoid;
   break-after: avoid;
+  margin-bottom: 0.5rem;
+  margin-left: 0;
 }
 
 .resume-section {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .position-bar {
   background: #FFFFFF;
   padding: 0.25rem 0.45rem;
   margin-top: 0.4rem;
+  margin-bottom: 0.15rem;
   display: flex;
   justify-content: space-between;
 }
@@ -196,11 +201,13 @@ hr {
 
 .job, .education, .project {
   margin-bottom: 1rem;
+  margin-left: 0;
 }
 .job .job-title-line, .job .education-title-line, .job .project-title-line, .job .degree-line, .job .position-line, .education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line, .project .job-title-line, .project .education-title-line, .project .project-title-line, .project .degree-line, .project .position-line {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
+  padding-left: 0;
 }
 .job .company, .job .institution, .job .project-title, .job .position, .job .degree, .education .company, .education .institution, .education .project-title, .education .position, .education .degree, .project .company, .project .institution, .project .project-title, .project .position, .project .degree {
   font-weight: 700;
@@ -213,9 +220,23 @@ hr {
 }
 .job .job-content, .job .education-content, .job .project-content, .education .job-content, .education .education-content, .education .project-content, .project .job-content, .project .education-content, .project .project-content {
   margin-top: 0.5rem;
+  margin-left: 0;
+  padding-left: 0;
 }
-.job .job-content p, .job .job-content ul, .job .education-content p, .job .education-content ul, .job .project-content p, .job .project-content ul, .education .job-content p, .education .job-content ul, .education .education-content p, .education .education-content ul, .education .project-content p, .education .project-content ul, .project .job-content p, .project .job-content ul, .project .education-content p, .project .education-content ul, .project .project-content p, .project .project-content ul {
+.job .job-content p, .job .education-content p, .job .project-content p, .education .job-content p, .education .education-content p, .education .project-content p, .project .job-content p, .project .education-content p, .project .project-content p {
   margin-bottom: 0.25rem;
+  padding-left: 0;
+  margin-left: 0;
+}
+.job .job-content .role-description-text, .job .education-content .role-description-text, .job .project-content .role-description-text, .education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text, .project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
+  font-style: italic;
+  margin-top: 0.2em;
+  margin-bottom: 0.5em;
+  color: #555;
+  padding-left: 0;
+  margin-left: 0;
+  display: block;
+  width: 100%;
 }
 .job .job-content ul, .job .education-content ul, .job .project-content ul, .education .job-content ul, .education .education-content ul, .education .project-content ul, .project .job-content ul, .project .education-content ul, .project .project-content ul {
   list-style-type: none;
@@ -226,7 +247,7 @@ hr {
   position: relative;
   padding-left: 1em;
   text-indent: -1em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
   line-height: 1.2;
 }
 .job .job-content li::before, .job .education-content li::before, .job .project-content li::before, .education .job-content li::before, .education .education-content li::before, .education .project-content li::before, .project .job-content li::before, .project .education-content li::before, .project .project-content li::before {
@@ -235,13 +256,14 @@ hr {
   left: 0;
   top: 0;
   font-size: 1em;
-  color: #333;
+  color: #3A3A3A;
 }
 
 ul.bullets {
   margin: 0.25rem 0 0.15rem 0;
   padding-left: 1.5em;
   list-style-type: none;
+  margin-left: 0;
 }
 ul.bullets li {
   position: relative;
@@ -258,6 +280,9 @@ ul.bullets li::before {
   color: #3A3A3A;
 }
 
+.skills-content {
+  margin-left: 0;
+}
 .skills-content p, .skills-content ul {
   margin-bottom: 0.25rem;
 }
@@ -267,7 +292,7 @@ ul.bullets li::before {
 }
 .skills-content li {
   position: relative;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
   line-height: 1.2;
   padding-left: 1em;
   text-indent: -1em;
@@ -278,88 +303,6 @@ ul.bullets li::before {
   left: 0;
   top: 0;
   color: #3A3A3A;
-}
-
-.role-description-text {
-  font-style: italic;
-  margin-top: 0.2em;
-  margin-bottom: 0.5em;
-  color: #555;
-}
-
-.education,
-.project {
-  margin-bottom: 1rem;
-}
-.education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line,
-.project .job-title-line,
-.project .education-title-line,
-.project .project-title-line,
-.project .degree-line,
-.project .position-line {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.25rem;
-}
-.education .company, .education .institution, .education .project-title, .education .position, .education .degree,
-.project .company,
-.project .institution,
-.project .project-title,
-.project .position,
-.project .degree {
-  font-weight: 700;
-  color: #495057;
-}
-.education .location, .education .dates,
-.project .location,
-.project .dates {
-  font-style: italic;
-  color: #6c757d;
-  text-align: right;
-}
-.education .job-content, .education .education-content, .education .project-content,
-.project .job-content,
-.project .education-content,
-.project .project-content {
-  margin-top: 0.5rem;
-}
-.education .job-content p, .education .job-content ul, .education .education-content p, .education .education-content ul, .education .project-content p, .education .project-content ul,
-.project .job-content p,
-.project .job-content ul,
-.project .education-content p,
-.project .education-content ul,
-.project .project-content p,
-.project .project-content ul {
-  margin-bottom: 0.25rem;
-}
-.education .job-content ul, .education .education-content ul, .education .project-content ul,
-.project .job-content ul,
-.project .education-content ul,
-.project .project-content ul {
-  list-style-type: none;
-  margin-left: 0;
-  padding-left: 1.5em;
-}
-.education .job-content li, .education .education-content li, .education .project-content li,
-.project .job-content li,
-.project .education-content li,
-.project .project-content li {
-  position: relative;
-  padding-left: 1em;
-  text-indent: -1em;
-  margin-bottom: 0.25rem;
-  line-height: 1.2;
-}
-.education .job-content li::before, .education .education-content li::before, .education .project-content li::before,
-.project .job-content li::before,
-.project .education-content li::before,
-.project .project-content li::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-size: 1em;
-  color: #333;
 }
 
 @page {

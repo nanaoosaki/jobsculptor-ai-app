@@ -1,35 +1,61 @@
 # File Dependencies for Resume Tailoring Application
 
 ## Overview
-This document outlines the dependencies and interactions between various modules in the resume tailoring application, focusing on the newly implemented `resume_index.py` module.
+This document outlines the dependencies and interactions between various modules in the resume tailoring application, focusing on the newly implemented features and scripts.
 
-## resume_index.py
+## New and Renamed Scripts
 
-### Purpose
+### resume_index.py
+
+#### Purpose
 The `resume_index.py` module is responsible for tracking and logging resume processing details. It maintains a simple index of resumes and associated metadata like processing notes and job targeting information.
 
-### Key Functions
+#### Key Functions
 - **add_resume**: Adds a resume to the index with metadata.
 - **add_note**: Adds a processing note to a resume.
 - **add_processing_record**: Adds a processing record to a resume.
 - **get_resume_info**: Retrieves information about a resume.
 
-### Interactions
+#### Interactions
 - **tailoring_handler.py**: Utilizes `get_resume_index` to log resumes and processing notes.
 - **claude_integration.py**: May interact indirectly by providing data that is logged in the index.
 
-### Dependencies
+#### Dependencies
 - **os**: For file path operations.
 - **json**: For reading and writing the index file.
 - **logging**: For logging operations.
 - **datetime**: For timestamping entries.
 - **threading**: For ensuring thread safety with locks.
 
-### File Structure
-- **resume_index.json**: The default file where the index is stored. It is created in the same directory as `resume_index.py` if not specified otherwise.
+### docx_builder.py
 
-## Runtime Reload Caveat
-`html_generator.py`, `style_manager.py`, and any other imported Python modules are **only loaded at Flask startup**.  The development reloader detects template changes but *not* deep imports.  After editing these files you must restart the server (`Ctrl-C` then `python app.py`).
+#### Purpose
+The `docx_builder.py` module generates Microsoft Word (.docx) files with consistent styling based on design tokens. It formats resume data into a structured DOCX format.
+
+#### Key Functions
+- **load_section_json**: Loads JSON data for a specific section of the resume.
+- **_apply_paragraph_style**: Applies styles to paragraphs based on DOCX style definitions.
+- **build_docx**: Constructs the DOCX file from the resume data.
+
+#### Dependencies
+- **os**: For file path operations.
+- **json**: For reading and writing JSON data.
+- **logging**: For logging operations.
+- **BytesIO**: For handling in-memory byte streams.
+- **docx**: For creating and manipulating DOCX files.
+
+### Updated Workflow for DOCX Download Button Process
+
+1. **User Interaction**: The user clicks the DOCX download button in the `index.html` template.
+2. **Route Handling**: The request is sent to the `/download/docx/<request_id>` route in `app.py`.
+3. **DOCX Generation**:
+   - The `download_docx_resume` function in `app.py` calls the `build_docx` function from `docx_builder.py`.
+   - The `build_docx` function retrieves the necessary resume data from temporary session files and applies styles based on the design tokens.
+4. **File Creation**: The generated DOCX file is created in memory and returned as a response to the user.
+5. **File Download**: The user receives the DOCX file as a downloadable attachment.
+
+### Conclusion
+The recent updates and additions to the resume tailoring application enhance its functionality and maintainability. The `resume_index.py` and `docx_builder.py` modules play critical roles in managing resume processing and generating downloadable documents, respectively. Keeping this documentation up-to-date ensures clarity and understanding of the application's structure and workflow.
 
 ## Updated I/O and Workflow
 
@@ -92,26 +118,68 @@ Recent optimizations have focused on ensuring that every achievement bullet poin
 
 ## Token Generation Script
 
-### tools/generate_tokens_css.py
+### tools/generate_tokens_css.py (Renamed to generate_tokens.py)
 
-- Purpose: Reads `design_tokens.json` and writes SCSS variable definitions to `static/scss/_tokens.scss`.
-- Input: `design_tokens.json` (design tokens for colors, spacing, margins, fonts, etc.).
-- Output: `static/scss/_tokens.scss` containing SCSS `$` variables that are imported by other SCSS files.
-- Usage: Run `python tools/generate_tokens_css.py` whenever `design_tokens.json` changes to regenerate token variables.
+- **Original Purpose**: Reads `design_tokens.json` and writes SCSS variable definitions to `static/scss/_tokens.scss`.
+- **New Purpose**: Expanded to also generate DOCX style mappings in addition to SCSS variables. The script has been renamed to reflect its broader functionality.
+- **Input**: `design_tokens.json` (design tokens for colors, spacing, margins, fonts, etc.).
+- **Outputs**:
+  - `static/scss/_tokens.scss` containing SCSS `$` variables
+  - `static/styles/_docx_styles.json` containing DOCX style mappings
+- **Usage**: Run `python tools/generate_tokens.py` whenever `design_tokens.json` changes to regenerate both SCSS and DOCX tokens.
+- **Functions**:
+  - `generate_scss_variables()`: Generates SCSS variables from design tokens
+  - `generate_docx_style_mappings()`: Generates DOCX style mappings from design tokens
+  - `hex_to_rgb()`: Helper function to convert hex colors to RGB for DOCX styles
 
-### SCSS Compilation Workflow
+### SCSS and DOCX Style Generation Workflow
 
-1. Regenerate Tokens:
-   - Run `python tools/generate_tokens_css.py` to update `_tokens.scss`.
-2. Compile SCSS:
+1. **Regenerate Tokens**:
+   - Run `python tools/generate_tokens.py` to update both `_tokens.scss` and `_docx_styles.json`.
+2. **Compile SCSS**:
    - Use Sass to compile SCSS to CSS:
      ```bash
      sass static/scss/preview.scss static/css/preview.css
      sass static/scss/print.scss static/css/print.css
      ```
-3. Restart Server:
-   - Restart the Flask dev server (`Ctrl-C` then `python app.py`) to load updated templates and CSS.
+3. **Restart Server**:
+   - Restart the Flask dev server (`Ctrl-C` then `python app.py`) to load updated templates, CSS, and DOCX styles.
 
-This workflow ensures that design token edits (including margin and padding adjustments) propagate through the SCSS build and into both the HTML preview and PDF output.
+This workflow ensures that design token edits propagate through to HTML preview, PDF output, and DOCX downloads, maintaining consistent styling across all formats.
+
+### DOCX Format Workflow
+
+1. **User Requests DOCX**:
+   - User clicks the DOCX download button in web UI
+   - Request is sent to `/download/docx/<request_id>` endpoint
+
+2. **Server Processing**:
+   - Flask route handler calls `utils.docx_builder.build_docx()`
+   - `build_docx()` loads section data from JSON files in temp session directory
+   - Section data is formatted according to DOCX styling rules
+   - Document is assembled with proper styles and formatting
+
+3. **File Delivery**:
+   - DOCX file is built in memory using python-docx
+   - File is sent as attachment with proper MIME type
+   - Browser triggers download for the user
+
+4. **Current Limitations**:
+   - Skills section formatting needs improvement to properly handle nested structures
+   - Section loading may have path or naming convention issues
+   - Some sections may not be properly loaded or formatted
+
+### utils/docx_builder.py
+
+- **Purpose**: Generates Microsoft Word (.docx) files with styling based on the project's design tokens.
+- **Key Functions**:
+  - `load_section_json()`: Loads resume section data from JSON files
+  - `_apply_paragraph_style()`: Applies styling to document paragraphs 
+  - `build_docx()`: Main function that builds the complete DOCX document
+- **Dependencies**:
+  - `python-docx`: For creating and styling Word documents
+  - `style_manager.py`: To access design token mappings
+- **Inputs**: Session data JSON files from `static/uploads/temp_session_data/`
+- **Output**: In-memory DOCX file as BytesIO object
 
 --- 

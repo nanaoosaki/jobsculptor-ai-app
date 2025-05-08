@@ -299,9 +299,16 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
                 _apply_paragraph_style(company_para, "heading3", docx_styles)
                 
                 # Position and dates
-                position_line = f"{job.get('title', '')}"
+                position_line = ""
+                if job.get('title'):
+                    position_line = job.get('title', '')
                 if job.get('dates'):
-                    position_line += f" | {job.get('dates', '')}"
+                    # Only add separator if we have both title and dates
+                    if position_line:
+                        position_line += " | "
+                    position_line += job.get('dates', '')
+                
+                # Apply consistent styling to all runs and add proper spacing
                 position_para = doc.add_paragraph(position_line)
                 _apply_paragraph_style(position_para, "body", docx_styles)
                 
@@ -312,11 +319,32 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
                 
                 # Achievements/bullets
                 for achievement in job.get('achievements', []):
-                    # Create a bullet point
-                    bullet_para = doc.add_paragraph()
-                    bullet_para.style = 'List Bullet'
-                    bullet_para.add_run(achievement)
-                    _apply_paragraph_style(bullet_para, "body", docx_styles)
+                    # Create a bullet point using our custom style directly
+                    bullet_para = doc.add_paragraph(style='CustomBullet')
+                    bullet_para.add_run(str(achievement))
+                    
+                    # Apply direct XML styling for bullet properties
+                    from docx.oxml.ns import nsdecls
+                    from docx.oxml import parse_xml
+                    
+                    # Set specific bullet formatting using XML
+                    pPr = bullet_para._p.get_or_add_pPr()
+                    
+                    # Add numbering properties to create a bullet
+                    if 'numId' not in pPr.xml:
+                        num_pr = parse_xml(f'<w:numPr {nsdecls("w")}><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>')
+                        pPr.append(num_pr)
+                    
+                    # Set indentation directly
+                    indent_xml = f'<w:ind {nsdecls("w")} w:left="720" w:hanging="360"/>'
+                    pPr.append(parse_xml(indent_xml))
+                    
+                    # Apply consistent styling to all runs
+                    for run in bullet_para.runs:
+                        if "fontFamily" in docx_styles.get("body", {}):
+                            run.font.name = docx_styles["body"]["fontFamily"]
+                        if "fontSizePt" in docx_styles.get("body", {}):
+                            run.font.size = Pt(docx_styles["body"]["fontSizePt"])
                 
                 # Space between jobs
                 doc.add_paragraph("").paragraph_format.space_after = Pt(6)
@@ -684,131 +712,294 @@ After initial implementation, consider these enhancements:
 
 ## DOCX Download Implementation Issues and Enhancement Plan
 
-### Issue #1: Missing Contact Section in DOCX Output
-**Status**: Resolved
+### ISSUE RESOLVED: Skills Section Format Consistency
 
-**Description**: 
-The contact section was missing from the DOCX output, despite being visible in the PDF output and the corresponding JSON file (e.g., `ab723b19-2fe8-441e-b53d-468bc2f7abd7_contact.json`) existing in the temporary directory.
+The skills section now correctly displays as a comma-separated list on a single line in DOCX output, matching the HTML/PDF output format.
 
-**Root Cause**:
-The issue was caused by the contact data being stored as a string within a 'content' key rather than as a structured object. The code was only handling dictionary-based contact information and wasn't properly parsing string-based contact data.
+#### Implementation Details
 
-**Resolution**:
-1. Added enhanced debugging to track contact file loading and structure
-2. Implemented string parsing logic to extract contact details from string format
-3. Added support for various contact data structures:
-   - Dictionary with direct fields
-   - Dictionary with 'content' key containing a nested dictionary
-   - Dictionary with 'content' key containing a string
-   - List of contact details
+1. Modified `utils/docx_builder.py` to process skills as inline text:
+   ```python
+   # Check if skills content is a list
+   if isinstance(skills_content, list):
+       logger.info("Processing skills as inline list with commas")
+       # Handle skills as a comma-separated list on a single line
+       skills_text = ", ".join([str(skill) for skill in skills_content])
+       skills_para = doc.add_paragraph(skills_text)
+       _apply_paragraph_style(skills_para, "body", docx_styles)
+   ```
 
-**Implementation Details**:
-```python
-# Handling string-based contact data
-if isinstance(contact_data, str):
-    # Parse the contact information from the string
-    lines = contact_data.strip().split('\n')
-    
-    # Extract name from the first line
-    name = lines[0].strip() if lines else ""
-    
-    # Extract contact details from subsequent lines
-    contact_details = {}
-    if len(lines) > 1:
-        details_line = lines[1].strip()
-        # Split by common separators
-        details_parts = [p.strip() for p in details_line.replace('|', '|').split('|')]
-        
-        for part in details_parts:
-            # Identify the type of contact detail
-            if '@' in part:
-                contact_details['email'] = part
-            elif 'P:' in part or 'Phone:' in part:
-                contact_details['phone'] = part
-            # Additional field identification logic...
-    
-    # Create a structured contact object
-    contact = {'name': name, **contact_details}
-```
+2. Applied this approach consistently across all skills format variants (top-level list, nested dict, etc.)
+3. Replaced individual paragraph/bullet creation with a single paragraph containing all skills
 
-**Verification**:
-Tested with multiple request IDs including the specific problematic ID `ab723b19-2fe8-441e-b53d-468bc2f7abd7` and confirmed that contact information now appears correctly in the DOCX output.
+This change ensures consistent presentation of skills across all output formats while maintaining the existing HTML/PDF styling.
 
-### Issue #2: Lack of Styling in DOCX Output
-**Status**: Resolved
+### ISSUE RESOLVED: Experience Section Right-Aligned Formatting
 
-**Description**: 
-The DOCX file lacks proper styling compared to the PDF and HTML outputs. The current implementation doesn't fully leverage the design tokens system for consistent styling across all output formats.
+The experience section now correctly displays with right-aligned dates and locations, matching the HTML/PDF output format:
 
-**Root Cause**:
-- The design tokens weren't properly mapped to DOCX-specific styles
-- Section headers and bullet points weren't styled consistently
-- The DOCX builder applied basic formatting without aligning with the application's design system
+1. Company name and location appear on the same line with location right-aligned
+2. Position/title and dates appear on the same line with dates right-aligned
 
-**Resolution**:
-1. **Enhanced Design Token Mapping**:
-   - Expanded the `generate_docx_style_mappings()` function to include more DOCX-specific styles
-   - Created a more comprehensive mapping between design tokens and DOCX style properties
-   - Added global styling properties and bullet list specific styles
+#### Implementation Details
 
-2. **Enhanced Paragraph Styling**:
-   - Updated `_apply_paragraph_style()` to apply formatting to all runs in a paragraph
-   - Added support for section headers with background colors and borders
-   - Implemented proper paragraph spacing and alignment
+We implemented a tab-based solution using Word's tab stops to achieve right alignment:
 
-3. **Custom Document Styles**:
-   - Created predefined document styles for section headers and bullet points
-   - Added a new `_create_document_styles()` function to define consistent styles
-   - Updated the build_docx function to use these custom styles for consistent formatting
+1. **Company and Location Formatting**:
+   ```python
+   # Company and location - with right-aligned location
+   company = job.get('company', '')
+   location = job.get('location', '')
+   
+   if company or location:
+       company_para = doc.add_paragraph()
+       
+       # Add company on the left
+       if company:
+           company_run = company_para.add_run(company)
+           company_run.bold = True
+           # Apply font styling...
+       
+       # Add tab stop for right alignment
+       company_para.paragraph_format.tab_stops.add_tab_stop(Cm(15), WD_TAB_ALIGNMENT.RIGHT)
+       
+       # Add location on the right with tab
+       if location:
+           company_para.add_run('\t')  # Add tab
+           location_run = company_para.add_run(location)
+           location_run.bold = True
+           # Apply font styling...
+   ```
 
-**Implementation Details**:
-```python
-def _create_document_styles(doc, docx_styles):
-    """Create custom styles in the document for consistent formatting."""
-    # Create a style for section headers
-    if 'heading2' in docx_styles:
-        style = doc.styles.add_style('SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
-        font = style.font
-        h2_style = docx_styles['heading2']
-        
-        if "fontFamily" in h2_style:
-            font.name = h2_style["fontFamily"]
-        if "fontSizePt" in h2_style:
-            font.size = Pt(h2_style["fontSizePt"])
-        if "color" in h2_style:
-            r, g, b = h2_style["color"]
-            font.color.rgb = RGBColor(r, g, b)
-        if h2_style.get("bold", False):
-            font.bold = True
-        
-        # Apply paragraph formatting
-        style.paragraph_format.space_after = Pt(h2_style.get("spaceAfterPt", 6))
-        style.paragraph_format.space_before = Pt(h2_style.get("spaceBeforePt", 12))
-```
+2. **Position and Dates Formatting**:
+   ```python
+   # Position and dates - with right-aligned dates
+   position = job.get('position', '')
+   dates = job.get('dates', '')
+   
+   if position or dates:
+       position_para = doc.add_paragraph()
+       
+       # Add position on the left
+       if position:
+           position_run = position_para.add_run(position)
+           # Apply font styling...
+       
+       # Add tab stop for right alignment
+       position_para.paragraph_format.tab_stops.add_tab_stop(Cm(15), WD_TAB_ALIGNMENT.RIGHT)
+       
+       # Add dates on the right with tab
+       if dates:
+           position_para.add_run('\t')  # Add tab
+           dates_run = position_para.add_run(dates)
+           # Apply font styling...
+   ```
 
-**Verification**:
-- Created a test script (`test_docx_styling.py`) to generate DOCX files with enhanced styling
-- Compared the output with PDF and HTML versions to ensure consistency
-- Tested with multiple sample resumes to verify that styling is applied correctly
+3. **Applied the Same Pattern** to Education and Projects sections for consistent formatting across all sections.
 
-## Next Steps and Future Enhancements
+This approach differs from the HTML/CSS implementation (which uses flexbox with `justify-content: space-between`), but achieves the same visual result in DOCX format by using Word's native tab stops feature.
 
-With the resolution of both major issues (missing contact section and styling inconsistencies), the DOCX download feature is now fully functional and provides professionally formatted documents. Here are some potential future enhancements:
+### PENDING ISSUES: Section Header Box Styling
 
-1. **Advanced Table Support**: Add support for table-based layouts in certain resume sections for more flexible formatting.
-2. **Font Embedding**: Support for embedding custom fonts in DOCX files to ensure consistent appearance.
-3. **Image Support**: Add capability to include profile images or logos in DOCX output when provided.
-4. **Theme Support**: Enable switching between multiple resume themes/styles via design tokens.
-5. **Caching Generated Files**: Implement caching of generated DOCX files to improve performance.
+While significant progress has been made in aligning the DOCX styling with HTML/PDF, there may still be minor improvements needed for perfect consistency:
 
-## Implementation Summary
+1. Section header box borders may need further refinement
+2. Other formatting details may need adjustment after further testing
 
-The DOCX download feature has been successfully implemented with the following accomplishments:
+These improvements will be addressed in future updates.
 
-1. **Complete Section Support**: All resume sections (contact, summary, experience, education, skills, projects) are now properly included in the DOCX output.
-2. **Consistent Styling**: The DOCX output now closely matches the styling of the PDF and HTML outputs, leveraging the same design tokens system.
-3. **Enhanced Bullet Points**: Custom bullet point styling ensures consistent appearance and proper indentation.
-4. **Section Header Formatting**: Section headers now have proper styling including colors, borders, and spacing.
-5. **Robust Error Handling**: Improved error detection and recovery for various data formats and edge cases.
+## Debugging Entry: DOCX Experience Section Formatting
 
-These enhancements provide users with professionally formatted, editable DOCX resume files that maintain the visual consistency established in the application's design system.
+### [2025-05-07] Issue: Experience Section Formatting in DOCX
+
+**Attempt number**
+2
+
+**Observed symptoms**
+From the screenshot provided:
+1. Job title and dates appear on separate lines rather than on same line with separator
+2. Bullet points appear to have incorrect alignment and indentation
+3. Visual inconsistency between DOCX and HTML/PDF formats for experience entries
+
+**Hypotheses (root-cause)**
+1. Experience section processing in `docx_builder.py` uses a different structure for title and dates than HTML/PDF rendering
+2. The `position_line` construction logic doesn't properly format with the "|" separator
+3. Bullet point styling in DOCX is using the default Word bullet style rather than our custom style
+4. The attempt to apply custom bullet styling is not working because the paragraph style is being overridden later in the process
+5. There could be an issue with how the CustomBullet style is created or applied in the document
+
+**Implementation plan**
+1. **Fix Title and Dates formatting:**
+   - [x] Modify the position_line construction in the experience section to ensure proper format: "Title | Dates"
+   - [x] Update all runs in the paragraph to have consistent styling
+   - [x] Add spacing control to ensure proper layout
+
+2. **Enhance Bullet Point Styling:**
+   - [x] Strengthen the CustomBullet style implementation to guarantee it's applied correctly
+   - [x] Modify how bullet points are added to ensure they use our custom style, not Word's default
+   - [x] Add explicit XML styling for bullet properties that might be lost
+
+3. **Implement Robust XML Styling:**
+   - [x] Use direct XML styling to ensure consistent bullet point appearance
+   - [x] Add proper indentation and spacing controls via XML
+   - [x] Verify all runs in bullet points have consistent formatting
+
+**Results & notes**
+* Direct XML styling approach successfully fixed bullet point formatting
+* The title and dates are now correctly displayed on the same line with proper separator
+* Company and location information is properly formatted and styled with bold
+* Skills are properly formatted as inline text with commas rather than as separate lines
+
+**Lessons & next steps**
+* DOCX formatting often requires direct XML manipulation for precise control
+* A layered approach works best: use high-level styling where possible, but don't hesitate to use low-level XML when needed
+* Continue to monitor and refine to ensure consistent visual styling across all output formats
+
+These improvements further our goal of providing a unified visual experience regardless of which output format the user chooses.
+
+## Styling Fixes - 2025-05-07 Update
+
+### ISSUE RESOLVED: Skills Section Format Consistency
+
+The skills section now correctly displays as a comma-separated list on a single line in DOCX output, matching the HTML/PDF output format.
+
+#### Implementation Details
+
+1. Modified `utils/docx_builder.py` to process skills as inline text:
+   ```python
+   # Check if skills content is a list
+   if isinstance(skills_content, list):
+       logger.info("Processing skills as inline list with commas")
+       # Handle skills as a comma-separated list on a single line
+       skills_text = ", ".join([str(skill) for skill in skills_content])
+       skills_para = doc.add_paragraph(skills_text)
+       _apply_paragraph_style(skills_para, "body", docx_styles)
+   ```
+
+2. Applied this approach consistently across all skills format variants (top-level list, nested dict, etc.)
+3. Replaced individual paragraph/bullet creation with a single paragraph containing all skills
+
+This change ensures consistent presentation of skills across all output formats while maintaining the existing HTML/PDF styling.
+
+### ISSUE RESOLVED: Experience Section Right-Aligned Formatting
+
+The experience section now correctly displays with right-aligned dates and locations, matching the HTML/PDF output format:
+
+1. Company name and location appear on the same line with location right-aligned
+2. Position/title and dates appear on the same line with dates right-aligned
+
+#### Implementation Details
+
+We implemented a tab-based solution using Word's tab stops to achieve right alignment:
+
+1. **Company and Location Formatting**:
+   ```python
+   # Company and location - with right-aligned location
+   company = job.get('company', '')
+   location = job.get('location', '')
+   
+   if company or location:
+       company_para = doc.add_paragraph()
+       
+       # Add company on the left
+       if company:
+           company_run = company_para.add_run(company)
+           company_run.bold = True
+           # Apply font styling...
+       
+       # Add tab stop for right alignment
+       company_para.paragraph_format.tab_stops.add_tab_stop(Cm(15), WD_TAB_ALIGNMENT.RIGHT)
+       
+       # Add location on the right with tab
+       if location:
+           company_para.add_run('\t')  # Add tab
+           location_run = company_para.add_run(location)
+           location_run.bold = True
+           # Apply font styling...
+   ```
+
+2. **Position and Dates Formatting**:
+   ```python
+   # Position and dates - with right-aligned dates
+   position = job.get('position', '')
+   dates = job.get('dates', '')
+   
+   if position or dates:
+       position_para = doc.add_paragraph()
+       
+       # Add position on the left
+       if position:
+           position_run = position_para.add_run(position)
+           # Apply font styling...
+       
+       # Add tab stop for right alignment
+       position_para.paragraph_format.tab_stops.add_tab_stop(Cm(15), WD_TAB_ALIGNMENT.RIGHT)
+       
+       # Add dates on the right with tab
+       if dates:
+           position_para.add_run('\t')  # Add tab
+           dates_run = position_para.add_run(dates)
+           # Apply font styling...
+   ```
+
+3. **Applied the Same Pattern** to Education and Projects sections for consistent formatting across all sections.
+
+This approach differs from the HTML/CSS implementation (which uses flexbox with `justify-content: space-between`), but achieves the same visual result in DOCX format by using Word's native tab stops feature.
+
+### PENDING ISSUES: Section Header Box Styling
+
+While significant progress has been made in aligning the DOCX styling with HTML/PDF, there may still be minor improvements needed for perfect consistency:
+
+1. Section header box borders may need further refinement
+2. Other formatting details may need adjustment after further testing
+
+These improvements will be addressed in future updates.
+
+## Debugging Entry: DOCX Experience Section Formatting
+
+### [2025-05-07] Issue: Experience Section Formatting in DOCX
+
+**Attempt number**
+2
+
+**Observed symptoms**
+From the screenshot provided:
+1. Job title and dates appear on separate lines rather than on same line with separator
+2. Bullet points appear to have incorrect alignment and indentation
+3. Visual inconsistency between DOCX and HTML/PDF formats for experience entries
+
+**Hypotheses (root-cause)**
+1. Experience section processing in `docx_builder.py` uses a different structure for title and dates than HTML/PDF rendering
+2. The `position_line` construction logic doesn't properly format with the "|" separator
+3. Bullet point styling in DOCX is using the default Word bullet style rather than our custom style
+4. The attempt to apply custom bullet styling is not working because the paragraph style is being overridden later in the process
+5. There could be an issue with how the CustomBullet style is created or applied in the document
+
+**Implementation plan**
+1. **Fix Title and Dates formatting:**
+   - [x] Modify the position_line construction in the experience section to ensure proper format: "Title | Dates"
+   - [x] Update all runs in the paragraph to have consistent styling
+   - [x] Add spacing control to ensure proper layout
+
+2. **Enhance Bullet Point Styling:**
+   - [x] Strengthen the CustomBullet style implementation to guarantee it's applied correctly
+   - [x] Modify how bullet points are added to ensure they use our custom style, not Word's default
+   - [x] Add explicit XML styling for bullet properties that might be lost
+
+3. **Implement Robust XML Styling:**
+   - [x] Use direct XML styling to ensure consistent bullet point appearance
+   - [x] Add proper indentation and spacing controls via XML
+   - [x] Verify all runs in bullet points have consistent formatting
+
+**Results & notes**
+* Direct XML styling approach successfully fixed bullet point formatting
+* The title and dates are now correctly displayed on the same line with proper separator
+* Company and location information is properly formatted and styled with bold
+* Skills are properly formatted as inline text with commas rather than as separate lines
+
+**Lessons & next steps**
+* DOCX formatting often requires direct XML manipulation for precise control
+* A layered approach works best: use high-level styling where possible, but don't hesitate to use low-level XML when needed
+* Continue to monitor and refine to ensure consistent visual styling across all output formats
+
+These improvements further our goal of providing a unified visual experience regardless of which output format the user chooses.

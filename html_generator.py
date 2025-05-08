@@ -158,13 +158,15 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     html_parts.append(f'<span class="dates">{dates}</span>')
     html_parts.append(f'</div>')
     
+    # Content div opened here
+    html_parts.append('<div class="job-content">')
+    
     # Add role description if available (below position/dates, before bullets)
     if role_description and role_description.strip():
         html_parts.append(f'<p class="role-description-text">{role_description.strip()}</p>')
     
     # Content as paragraphs
     if content:
-        html_parts.append('<div class="job-content">')
         # Determine if the content list should be bullets
         if len(content) > 1:
             html_parts.append('<ul class="bullets">')
@@ -173,8 +175,9 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
             html_parts.append('</ul>')
         else:
             html_parts.append(f'<p>{content[0]}</p>')
-        html_parts.append('</div>')
     
+    # Close the job-content div
+    html_parts.append('</div>')
     html_parts.append('</div>')
     
     return ''.join(html_parts)
