@@ -125,3 +125,87 @@ Next steps:
 1. Consider implementing visual regression testing for alignment issues
 2. Create a visual style guide for alignment patterns
 3. Review any remaining inconsistencies in section spacing
+
+### [2025-05-11] Issue: DOCX Section Header Box Alignment
+
+**Attempt number**
+4
+
+**Observed symptom / Desired behaviour**
+Section header boxes in the DOCX output are not properly aligned with the content text:
+- Section header boxes appear to have a different left indent than company/position text
+- Role descriptions and bullet points have their own alignment, creating a visually inconsistent document
+- Despite multiple attempts to fix with a global indent token, misalignment persists
+- Need all elements (section headers, company info, positions, role descriptions, bullets) to align consistently
+
+**Hypotheses (root-cause or design assumptions)**
+1. **DOCX Formatting Layer Conflicts**: Multiple layers of formatting (styles, direct paragraph formatting, XML manipulation) are competing and overriding each other
+2. **Inconsistent Formatting Approaches**: Some elements use direct paragraph properties, others use XML manipulation, creating inconsistencies 
+3. **DOCX Numbering System**: Bullet points use a separate numbering definition system with its own indentation rules, not inheriting from paragraph styles
+4. **Measurement Unit Conversion**: Inconsistent conversion between cm, points, and twips causes slight misalignments
+5. **Box Border Consideration**: The section header box border width might not be properly accounted for in alignment calculations
+
+**Implementation plan**
+- [ ] Create a debug mechanism to examine the true indentation values in the generated DOCX:
+  - [ ] Create helper function to output debugging info for all paragraph indents
+  - [ ] Generate a sample DOCX and extract its XML to analyze formatting
+  
+- [ ] Standardize on a single formatting approach across all elements:
+  - [ ] Choose either style-based or direct formatting
+  - [ ] Implement all indentation consistently through the chosen approach
+  - [ ] Remove any competing formatting methods
+
+- [ ] Focus on section header box implementation:
+  - [ ] Ensure section header uses same formatting method as content paragraphs
+  - [ ] Account for border width in left indent calculations
+  - [ ] Use style-level formatting as primary approach
+
+- [ ] Fix bullet point alignment:
+  - [ ] Review and update numbering definition system
+  - [ ] Adjust bullet point indentation to be consistent with other elements
+  - [ ] Ensure hanging indent is properly applied
+
+- [ ] Create verification tests:
+  - [ ] Generate and examine multiple DOCX outputs with different content types
+  - [ ] Verify consistent alignment in all cases
+
+**Automated test script**
+```bash
+# Regenerate tokens after changes
+python tools/generate_tokens.py
+
+# Create and save debugging output for DOCX generation
+python -c "
+import os
+from docx import Document
+from docx.shared import Cm
+from utils.docx_builder import build_docx
+from io import BytesIO
+
+# Sample test case
+request_id = os.listdir('static/uploads/temp_session_data')[0].split('_')[0]
+temp_dir = 'static/uploads/temp_session_data'
+
+# Build DOCX
+docx_bytes = build_docx(request_id, temp_dir)
+
+# Save for manual inspection
+with open('debug_output.docx', 'wb') as f:
+    f.write(docx_bytes.getvalue())
+
+print('Saved debug DOCX for manual inspection')
+"
+
+# Start the app to test changes
+python app.py
+```
+
+## **Results & notes**
+
+*
+
+**Lessons & next steps**
+
+* What we learn will determine our next approach
+* If we need to coordinate with HTML/PDF output alignment, we should ensure our tokenization process converts CSS units to DOCX units consistently
+* The ultimate goal is a single styling system that works across all output formats consistently

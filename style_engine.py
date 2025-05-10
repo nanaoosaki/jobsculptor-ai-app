@@ -60,7 +60,32 @@ class StyleEngine:
                     "borderColor": tokens.get("sectionHeaderBorder", "1px solid #0D2B7E").replace("px solid ", ""),
                     "borderSize": "1pt",
                     "paddingVertical": tokens.get("sectionHeaderPaddingVert", "1px").replace("px", "pt"),
-                    "paddingHorizontal": tokens.get("sectionHeaderPaddingHoriz", "12px").replace("px", "pt")
+                    "paddingHorizontal": tokens.get("sectionHeaderPaddingHoriz", "12px").replace("px", "pt"),
+                    "indentCm": tokens.get("docx-section-header-indent-cm", "0"),
+                    "fontSizePt": tokens.get("docx-section-header-font-size-pt", "14")
+                }
+            },
+            "content": {
+                "base": {
+                    "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif"),
+                    "fontSize": tokens.get("baseFontSize", "11pt")
+                },
+                "docx": {
+                    "indentCm": tokens.get("docx-company-name-indent-cm", "0.5"),
+                    "fontSizePt": tokens.get("docx-company-font-size-pt", "11"),
+                    "spacingPt": tokens.get("docx-paragraph-spacing-pt", "6")
+                }
+            },
+            "roleDescription": {
+                "base": {
+                    "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif"),
+                    "fontSize": tokens.get("baseFontSize", "11pt"),
+                    "fontStyle": "italic"
+                },
+                "docx": {
+                    "indentCm": tokens.get("docx-role-description-indent-cm", "0.5"),
+                    "fontSizePt": tokens.get("docx-role-font-size-pt", "11"),
+                    "spacingPt": tokens.get("docx-paragraph-spacing-pt", "6")
                 }
             },
             "bulletPoint": {
@@ -75,8 +100,10 @@ class StyleEngine:
                     "textIndent": tokens.get("bullet-item-text-indent", "-1em")
                 },
                 "docx": {
-                    "indentationCm": "0.75",
-                    "hangingIndentCm": "-0.25"
+                    "indentCm": tokens.get("docx-bullet-left-indent-cm", "0.5"),
+                    "hangingIndentCm": tokens.get("docx-bullet-hanging-indent-cm", "0.5"),
+                    "fontSizePt": tokens.get("docx-bullet-font-size-pt", "11"),
+                    "spacingPt": tokens.get("docx-bullet-spacing-pt", "6")
                 }
             }
         }
@@ -133,6 +160,245 @@ class StyleEngine:
             return (0, 0, 0)
             
         return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+    @staticmethod
+    def create_docx_custom_styles(doc, design_tokens=None):
+        """
+        Create all custom styles needed for consistent DOCX formatting.
+        
+        Args:
+            doc: The DOCX document
+            design_tokens: Optional design tokens dictionary
+        
+        Returns:
+            Dictionary of created styles
+        """
+        from docx.enum.style import WD_STYLE_TYPE
+        from docx.shared import Pt, Cm, RGBColor
+        from docx.oxml.ns import nsdecls
+        from docx.oxml import parse_xml
+        
+        if not design_tokens:
+            design_tokens = StyleEngine.load_tokens()
+        
+        structured_tokens = StyleEngine.get_structured_tokens()
+        created_styles = {}
+        
+        try:
+            # 1. Create MR_SectionHeader style
+            section_tokens = structured_tokens.get("sectionHeader", {})
+            section_docx = section_tokens.get("docx", {})
+            
+            # Check if the style already exists, if so, remove it
+            if 'MR_SectionHeader' in [s.name for s in doc.styles]:
+                doc.styles['MR_SectionHeader']._element.getparent().remove(doc.styles['MR_SectionHeader']._element)
+            
+            section_style = doc.styles.add_style('MR_SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
+            section_style.font.bold = True
+            section_style.font.size = Pt(float(section_docx.get("fontSizePt", 14)))
+            
+            # Set font name
+            font_family = section_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            section_style.font.name = font_family
+            
+            # Set color
+            color = section_tokens.get("base", {}).get("color", "rgb(0, 0, 102)")
+            rgb_color = StyleEngine.hex_to_rgb(color)
+            section_style.font.color.rgb = RGBColor(*rgb_color)
+            
+            # Make sure there's no indent for section headers
+            section_indent_cm = float(section_docx.get("indentCm", 0))
+            section_style.paragraph_format.left_indent = Cm(section_indent_cm)
+            section_style.paragraph_format.first_line_indent = Cm(0)
+            logger.info(f"TESTING: Applied left_indent Cm({section_indent_cm}) to MR_SectionHeader style")
+            
+            # Set spacing
+            section_spacing_pt = float(design_tokens.get("docx-section-spacing-pt", "12"))
+            section_style.paragraph_format.space_after = Pt(section_spacing_pt)
+            
+            # Border and background will be applied directly to the paragraph in docx_builder.py
+            # No XML for border or shading in the style definition itself.
+            
+            created_styles["MR_SectionHeader"] = section_style
+            
+            # 2. Create MR_Content style
+            content_tokens = structured_tokens.get("content", {})
+            content_docx = content_tokens.get("docx", {})
+            
+            # Check if the style already exists, if so, remove it
+            if 'MR_Content' in [s.name for s in doc.styles]:
+                doc.styles['MR_Content']._element.getparent().remove(doc.styles['MR_Content']._element)
+                
+            content_style = doc.styles.add_style('MR_Content', WD_STYLE_TYPE.PARAGRAPH)
+            content_style.font.size = Pt(float(content_docx.get("fontSizePt", 11)))
+            
+            # Set font name
+            font_family = content_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            content_style.font.name = font_family
+            
+            # Set indentation and spacing
+            indent_cm = float(content_docx.get("indentCm", 0.5))
+            spacing_pt = float(content_docx.get("spacingPt", 6))
+            
+            content_style.paragraph_format.left_indent = Cm(indent_cm)
+            content_style.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
+            content_style.paragraph_format.space_after = Pt(spacing_pt)
+            logger.info(f"TESTING: Applied left_indent Cm({indent_cm}) to MR_Content style")
+            
+            # Removed direct XML styling for indentation and spacing
+            
+            created_styles["MR_Content"] = content_style
+            
+            # 3. Create MR_RoleDescription style
+            role_tokens = structured_tokens.get("roleDescription", {})
+            role_docx = role_tokens.get("docx", {})
+            
+            # Check if the style already exists, if so, remove it
+            if 'MR_RoleDescription' in [s.name for s in doc.styles]:
+                doc.styles['MR_RoleDescription']._element.getparent().remove(doc.styles['MR_RoleDescription']._element)
+                
+            role_style = doc.styles.add_style('MR_RoleDescription', WD_STYLE_TYPE.PARAGRAPH)
+            role_style.font.size = Pt(float(role_docx.get("fontSizePt", 11)))
+            role_style.font.italic = True
+            
+            # Set font name
+            font_family = role_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            role_style.font.name = font_family
+            
+            # Set indentation and spacing
+            indent_cm = float(role_docx.get("indentCm", 0.5))
+            spacing_pt = float(role_docx.get("spacingPt", 6))
+            
+            role_style.paragraph_format.left_indent = Cm(indent_cm)
+            role_style.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
+            role_style.paragraph_format.space_after = Pt(spacing_pt)
+            logger.info(f"TESTING: Applied left_indent Cm({indent_cm}) to MR_RoleDescription style")
+            
+            # Removed direct XML styling for indentation and spacing
+            
+            created_styles["MR_RoleDescription"] = role_style
+            
+            # 4. Create MR_BulletPoint style
+            bullet_tokens = structured_tokens.get("bulletPoint", {})
+            bullet_docx = bullet_tokens.get("docx", {})
+            
+            # Check if the style already exists, if so, remove it
+            if 'MR_BulletPoint' in [s.name for s in doc.styles]:
+                doc.styles['MR_BulletPoint']._element.getparent().remove(doc.styles['MR_BulletPoint']._element)
+                
+            bullet_style = doc.styles.add_style('MR_BulletPoint', WD_STYLE_TYPE.PARAGRAPH)
+            bullet_style.font.size = Pt(float(bullet_docx.get("fontSizePt", 11)))
+            
+            # Set font name
+            font_family = bullet_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            bullet_style.font.name = font_family
+            
+            # Set indentation and spacing
+            indent_cm = float(bullet_docx.get("indentCm", 0.5))
+            hanging_cm = float(bullet_docx.get("hangingIndentCm", 0.5)) # This should be positive for hanging
+            spacing_pt = float(bullet_docx.get("spacingPt", 6))
+            
+            bullet_style.paragraph_format.left_indent = Cm(indent_cm)
+            bullet_style.paragraph_format.first_line_indent = Cm(-hanging_cm) # Negative for hanging
+            bullet_style.paragraph_format.space_after = Pt(spacing_pt)
+            logger.info(f"TESTING: Applied left_indent Cm({indent_cm}) with first_line_indent Cm({-hanging_cm}) to MR_BulletPoint style")
+            
+            # Removed direct XML styling for indentation and spacing
+            
+            created_styles["MR_BulletPoint"] = bullet_style
+            
+            # 5. Create MR_SummaryText style
+            # Check if the style already exists, if so, remove it
+            if 'MR_SummaryText' in [s.name for s in doc.styles]:
+                doc.styles['MR_SummaryText']._element.getparent().remove(doc.styles['MR_SummaryText']._element)
+                
+            summary_style = doc.styles.add_style('MR_SummaryText', WD_STYLE_TYPE.PARAGRAPH)
+            summary_style.font.size = Pt(float(content_docx.get("fontSizePt", 11)))
+            
+            # Set font name
+            font_family = content_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            summary_style.font.name = font_family
+            
+            # Set indentation and spacing - use same indent as section header for alignment
+            indent_cm = float(section_docx.get("indentCm", 0))
+            spacing_pt = float(content_docx.get("spacingPt", 6))
+            
+            summary_style.paragraph_format.left_indent = Cm(indent_cm)
+            summary_style.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
+            summary_style.paragraph_format.space_after = Pt(spacing_pt)
+            logger.info(f"TESTING: Applied left_indent Cm({indent_cm}) to MR_SummaryText style")
+            
+            created_styles["MR_SummaryText"] = summary_style
+            
+            # 6. Create MR_SkillCategory style
+            # Check if the style already exists, if so, remove it
+            if 'MR_SkillCategory' in [s.name for s in doc.styles]:
+                doc.styles['MR_SkillCategory']._element.getparent().remove(doc.styles['MR_SkillCategory']._element)
+                
+            skill_cat_style = doc.styles.add_style('MR_SkillCategory', WD_STYLE_TYPE.PARAGRAPH)
+            skill_cat_style.font.size = Pt(float(content_docx.get("fontSizePt", 11)))
+            skill_cat_style.font.bold = True
+            
+            # Set font name
+            font_family = content_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            skill_cat_style.font.name = font_family
+            
+            # Set indentation and spacing - use same indent as section header for alignment
+            indent_cm = float(section_docx.get("indentCm", 0))
+            spacing_pt = float(content_docx.get("spacingPt", 6))
+            
+            skill_cat_style.paragraph_format.left_indent = Cm(indent_cm)
+            skill_cat_style.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
+            skill_cat_style.paragraph_format.space_after = Pt(spacing_pt)
+            logger.info(f"TESTING: Applied left_indent Cm({indent_cm}) to MR_SkillCategory style")
+            
+            created_styles["MR_SkillCategory"] = skill_cat_style
+            
+            # 7. Create MR_SkillList style
+            # Check if the style already exists, if so, remove it
+            if 'MR_SkillList' in [s.name for s in doc.styles]:
+                doc.styles['MR_SkillList']._element.getparent().remove(doc.styles['MR_SkillList']._element)
+                
+            skill_list_style = doc.styles.add_style('MR_SkillList', WD_STYLE_TYPE.PARAGRAPH)
+            skill_list_style.font.size = Pt(float(content_docx.get("fontSizePt", 11)))
+            
+            # Set font name
+            font_family = content_tokens.get("base", {}).get("fontFamily", "'Calibri', Arial, sans-serif")
+            if "," in font_family:
+                font_family = font_family.split(",")[0].strip("'")
+            skill_list_style.font.name = font_family
+            
+            # Set indentation and spacing - use same indent as section header for alignment
+            indent_cm = float(section_docx.get("indentCm", 0))
+            spacing_pt = float(content_docx.get("spacingPt", 6))
+            
+            skill_list_style.paragraph_format.left_indent = Cm(indent_cm)
+            skill_list_style.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
+            skill_list_style.paragraph_format.space_after = Pt(spacing_pt)
+            logger.info(f"TESTING: Applied left_indent Cm({indent_cm}) to MR_SkillList style")
+            
+            created_styles["MR_SkillList"] = skill_list_style
+            
+            logger.info("Successfully created all custom DOCX styles")
+            return created_styles
+            
+        except Exception as e:
+            logger.error(f"Error creating custom DOCX styles: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return created_styles
     
     @staticmethod
     def create_docx_section_header_style(doc, tokens: Optional[Dict[str, Any]] = None):
@@ -157,8 +423,8 @@ class StyleEngine:
                 font_family = font_family.split(",")[0].strip("'")
             font.name = font_family
             
-            font_size = base.get("fontSize", "12pt")
-            if "pt" in font_size:
+            font_size = docx_specific.get("fontSizePt", base.get("fontSize", "12pt"))
+            if "pt" in str(font_size):
                 font_size = float(font_size.replace("pt", ""))
             font.size = Pt(font_size)
             
@@ -171,9 +437,13 @@ class StyleEngine:
             
             # Apply DOCX-specific properties for spacing
             margin_bottom = base.get("marginBottom", "0.5cm")
-            if "cm" in margin_bottom:
+            if "cm" in str(margin_bottom):
                 margin_bottom = float(margin_bottom.replace("cm", ""))
             style.paragraph_format.space_after = Cm(margin_bottom)
+            
+            # Apply indentation from tokens
+            indent_cm = docx_specific.get("indentCm", "0")
+            style.paragraph_format.left_indent = Cm(float(indent_cm))
             
             # Add specific settings to match HTML/PDF styles
             style.paragraph_format.alignment = 0  # 0 = left alignment
@@ -193,89 +463,161 @@ class StyleEngine:
         try:
             from docx.oxml.ns import nsdecls
             from docx.oxml import parse_xml
+            from docx.shared import Cm, Pt
             
-            structured_tokens = StyleEngine.get_structured_tokens()
-            docx_specific = structured_tokens.get("sectionHeader", {}).get("docx", {})
+            # Load tokens if not provided
+            if not tokens:
+                tokens = StyleEngine.load_tokens()
+                
+            # Check if paragraph has direct style setting or is using style reference
+            if hasattr(paragraph, 'style') and paragraph.style and paragraph.style.name in ['SectionHeader', 'MR_SectionHeader']:
+                # Already using a style - just add the border if needed
+                structured = StyleEngine.get_structured_tokens()
+                section_header = structured.get("sectionHeader", {})
+                docx_specific = section_header.get("docx", {})
+                
+                # Add border
+                border_color = docx_specific.get("borderColor", "#0D2B7E")
+                rgb_color = StyleEngine.hex_to_rgb(border_color)
+                border_hex = f"{rgb_color[0]:02x}{rgb_color[1]:02x}{rgb_color[2]:02x}"
+                border_size = int(float(docx_specific.get("borderSize", "1").replace("pt", "")))
+                
+                # Apply the border using XML - enhance with more specific border attributes
+                border_xml = f'''
+                    <w:pBdr {nsdecls("w")}>
+                        <w:bottom w:val="single" w:sz="{border_size * 8}" w:space="0" w:color="{border_hex}"/>
+                        <w:top w:val="nil"/>
+                        <w:left w:val="nil"/>
+                        <w:right w:val="nil"/>
+                    </w:pBdr>
+                '''
+                if hasattr(paragraph._p, 'get_or_add_pPr'):
+                    # Remove any existing border to prevent conflicts
+                    for pPr in paragraph._p.xpath('./w:pPr'):
+                        for pBdr in pPr.xpath('./w:pBdr'):
+                            pPr.remove(pBdr)
+                    # Add the new border
+                    paragraph._p.get_or_add_pPr().append(parse_xml(border_xml))
+                
+                # Set spacing and indentation 
+                section_spacing_pt = float(tokens.get("docx-section-spacing-pt", "12"))
+                if hasattr(paragraph, 'paragraph_format'):
+                    paragraph.paragraph_format.space_after = Pt(section_spacing_pt)
+                    
+                    # Set indentation from tokens if paragraph has style attribute
+                    indent_cm = float(docx_specific.get("indentCm", "0"))
+                    paragraph.paragraph_format.left_indent = Cm(indent_cm)
+                    
+                    # Ensure no first line indent to maintain alignment
+                    paragraph.paragraph_format.first_line_indent = Cm(0)
+                
+                # Add specific XML for indentation to ensure it's applied
+                indent_twips = int(indent_cm * 567)  # 567 twips per cm
+                ind_xml = f'<w:ind {nsdecls("w")} w:left="{indent_twips}" w:firstLine="0"/>'
+                if hasattr(paragraph._p, 'get_or_add_pPr'):
+                    # Remove any existing indentation to prevent conflicts
+                    for pPr in paragraph._p.xpath('./w:pPr'):
+                        for ind in pPr.xpath('./w:ind'):
+                            pPr.remove(ind)
+                    # Add the new indentation
+                    paragraph._p.get_or_add_pPr().append(parse_xml(ind_xml))
+                
+                # Add background color if specified
+                if "backgroundColor" in docx_specific:
+                    bg_color = docx_specific.get("backgroundColor", "#FFFFFF")
+                    bg_rgb = StyleEngine.hex_to_rgb(bg_color)
+                    bg_hex = f"{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x}"
+                    
+                    # Apply shading using XML
+                    shading_xml = f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="{bg_hex}"/>'
+                    if hasattr(paragraph._p, 'get_or_add_pPr'):
+                        # Remove any existing shading to prevent conflicts
+                        for pPr in paragraph._p.xpath('./w:pPr'):
+                            for shd in pPr.xpath('./w:shd'):
+                                pPr.remove(shd)
+                        # Add the new shading
+                        paragraph._p.get_or_add_pPr().append(parse_xml(shading_xml))
+                
+                # If using a new custom style, don't do anything else (style handles everything)
+                if paragraph.style.name == 'MR_SectionHeader':
+                    logger.info("Successfully applied DOCX section header box styling with MR_SectionHeader style")
+                    return
+                    
+            # For paragraphs without a style, or with the default style
+            # Get the values from design tokens
+            section_font_size_pt = float(tokens.get("docx-section-header-font-size-pt", "14"))
+            section_indent_cm = float(tokens.get("docx-section-header-indent-cm", "0"))
+            section_spacing_pt = float(tokens.get("docx-section-spacing-pt", "12"))
             
-            # Get background color
-            bg_color = docx_specific.get("backgroundColor", "#FFFFFF")
-            bg_rgb = StyleEngine.hex_to_rgb(bg_color)
+            # Apply direct formatting
+            for run in paragraph.runs:
+                run.bold = True
+                run.font.size = Pt(section_font_size_pt)
             
-            # Get border properties
-            border_color = docx_specific.get("borderColor", "#0D2B7E")
-            border_rgb = StyleEngine.hex_to_rgb(border_color)
+            # Set paragraph formatting
+            paragraph.paragraph_format.left_indent = Cm(section_indent_cm)
+            paragraph.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
+            paragraph.paragraph_format.space_after = Pt(section_spacing_pt)
             
-            border_size = docx_specific.get("borderSize", "1pt")
-            if "pt" in border_size:
-                border_size_pt = float(border_size.replace("pt", ""))
-            else:
-                border_size_pt = float(border_size)
+            # Add specific XML for indentation to ensure it's applied
+            indent_twips = int(section_indent_cm * 567)  # 567 twips per cm
+            ind_xml = f'<w:ind {nsdecls("w")} w:left="{indent_twips}" w:firstLine="0"/>'
             
-            # Apply background shading
-            hex_bg = f"{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x}"
-            shading_xml = f'<w:shd {nsdecls("w")} w:fill="{hex_bg}" w:val="clear"/>'
-            paragraph._element.get_or_add_pPr().append(parse_xml(shading_xml))
+            # Remove any existing indentation to prevent conflicts
+            if hasattr(paragraph._p, 'get_or_add_pPr'):
+                for pPr in paragraph._p.xpath('./w:pPr'):
+                    for ind in pPr.xpath('./w:ind'):
+                        pPr.remove(ind)
+                # Add the new indentation
+                paragraph._p.get_or_add_pPr().append(parse_xml(ind_xml))
             
-            # Apply border
-            hex_border = f"{border_rgb[0]:02x}{border_rgb[1]:02x}{border_rgb[2]:02x}"
+            # Add the border with enhanced attributes
+            border_color = tokens.get("sectionHeaderBorder", "1px solid #0D2B7E").replace("px solid ", "")
+            rgb_color = StyleEngine.hex_to_rgb(border_color)
+            border_hex = f"{rgb_color[0]:02x}{rgb_color[1]:02x}{rgb_color[2]:02x}"
+            
+            # Apply the border using XML with more specific attributes
             border_xml = f'''
                 <w:pBdr {nsdecls("w")}>
-                    <w:bottom w:val="single" w:sz="{int(border_size_pt*4)}" w:space="0" w:color="{hex_border}"/>
-                    <w:top w:val="single" w:sz="{int(border_size_pt*4)}" w:space="0" w:color="{hex_border}"/>
-                    <w:left w:val="single" w:sz="{int(border_size_pt*4)}" w:space="0" w:color="{hex_border}"/>
-                    <w:right w:val="single" w:sz="{int(border_size_pt*4)}" w:space="0" w:color="{hex_border}"/>
+                    <w:bottom w:val="single" w:sz="8" w:space="0" w:color="{border_hex}"/>
+                    <w:top w:val="nil"/>
+                    <w:left w:val="nil"/>
+                    <w:right w:val="nil"/>
                 </w:pBdr>
             '''
-            paragraph._element.get_or_add_pPr().append(parse_xml(border_xml))
+            # Remove any existing border to prevent conflicts
+            if hasattr(paragraph._p, 'get_or_add_pPr'):
+                for pPr in paragraph._p.xpath('./w:pPr'):
+                    for pBdr in pPr.xpath('./w:pBdr'):
+                        pPr.remove(pBdr)
+                # Add the new border
+                paragraph._p.get_or_add_pPr().append(parse_xml(border_xml))
             
-            # Apply padding
-            padding_h = docx_specific.get("paddingHorizontal", "12pt")
-            padding_v = docx_specific.get("paddingVertical", "1pt")
+            # Add background color if specified in design tokens
+            struct_tokens = StyleEngine.get_structured_tokens()
+            section_header = struct_tokens.get("sectionHeader", {})
+            docx_specific = section_header.get("docx", {})
             
-            if "pt" in padding_h:
-                padding_h_pt = float(padding_h.replace("pt", ""))
-            else:
-                padding_h_pt = float(padding_h)
+            if "backgroundColor" in docx_specific:
+                bg_color = docx_specific.get("backgroundColor", "#FFFFFF")
+                bg_rgb = StyleEngine.hex_to_rgb(bg_color)
+                bg_hex = f"{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x}"
                 
-            if "pt" in padding_v:
-                padding_v_pt = float(padding_v.replace("pt", ""))
-            else:
-                padding_v_pt = float(padding_v)
-            
-            # Convert to twips (twentieth of a point)
-            padding_left_twips = int(padding_h_pt * 20)
-            padding_right_twips = int(padding_h_pt * 20)
-            padding_top_twips = int(padding_v_pt * 20)
-            padding_bottom_twips = int(padding_v_pt * 20)
-            
-            # Apply spacing - keep paragraph tight
-            spacing_xml = f'''
-                <w:spacing {nsdecls("w")} w:before="{padding_top_twips}" 
-                w:after="{padding_bottom_twips}" w:line="240" w:lineRule="exact"/>
-            '''
-            paragraph._element.get_or_add_pPr().append(parse_xml(spacing_xml))
-            
-            # Apply indentation
-            indent_xml = f'''
-                <w:ind {nsdecls("w")} w:left="{padding_left_twips}" 
-                w:right="{padding_right_twips}"/>
-            '''
-            paragraph._element.get_or_add_pPr().append(parse_xml(indent_xml))
-            
-            # Set alignment to left (to match HTML/PDF)
-            align_xml = f'''
-                <w:jc {nsdecls("w")} w:val="left"/>
-            '''
-            paragraph._element.get_or_add_pPr().append(parse_xml(align_xml))
-            
-            # Adjust paragraph properties directly
-            paragraph.paragraph_format.space_before = 0
-            paragraph.paragraph_format.space_after = 0
+                # Apply shading using XML
+                shading_xml = f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="{bg_hex}"/>'
+                if hasattr(paragraph._p, 'get_or_add_pPr'):
+                    # Remove any existing shading to prevent conflicts
+                    for pPr in paragraph._p.xpath('./w:pPr'):
+                        for shd in pPr.xpath('./w:shd'):
+                            pPr.remove(shd)
+                    # Add the new shading
+                    paragraph._p.get_or_add_pPr().append(parse_xml(shading_xml))
             
             logger.info("Successfully applied DOCX section header box styling")
-            
         except Exception as e:
             logger.error(f"Error applying DOCX section header box styling: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
     
     @staticmethod
     def create_docx_bullet_style(doc, tokens: Optional[Dict[str, Any]] = None):
@@ -284,15 +626,15 @@ class StyleEngine:
         from docx.shared import Pt, Cm
         
         try:
-            structured_tokens = StyleEngine.get_structured_tokens()
-            bullet_point = structured_tokens.get("bulletPoint", {})
+            structured = StyleEngine.get_structured_tokens()
+            bullet_point = structured.get("bulletPoint", {})
             
             base = bullet_point.get("base", {})
             docx_specific = bullet_point.get("docx", {})
             
-            # Create custom bullet style
-            bullet_style = doc.styles.add_style('CustomBullet', WD_STYLE_TYPE.PARAGRAPH)
-            font = bullet_style.font
+            # Create the style
+            style = doc.styles.add_style('CustomBullet', WD_STYLE_TYPE.PARAGRAPH)
+            font = style.font
             
             # Apply base properties
             font_family = base.get("fontFamily", "'Calibri', Arial, sans-serif")
@@ -300,22 +642,27 @@ class StyleEngine:
                 font_family = font_family.split(",")[0].strip("'")
             font.name = font_family
             
-            font_size = base.get("fontSize", "11pt")
-            if "pt" in font_size:
+            # Get font size
+            font_size = docx_specific.get("fontSizePt", base.get("fontSize", "11pt"))
+            if "pt" in str(font_size):
                 font_size = float(font_size.replace("pt", ""))
             font.size = Pt(font_size)
             
-            # Apply DOCX-specific properties
-            indent_cm = float(docx_specific.get("indentationCm", "0.75"))
-            hanging_cm = float(docx_specific.get("hangingIndentCm", "-0.25"))
-            
             # Apply paragraph formatting
-            bullet_style.paragraph_format.left_indent = Cm(indent_cm)
-            bullet_style.paragraph_format.first_line_indent = Cm(hanging_cm)
+            indentation = float(docx_specific.get("indentCm", "0.75"))
+            hanging = float(docx_specific.get("hangingIndentCm", "0.25"))
             
-            logger.info("Successfully created DOCX bullet point style")
-            return bullet_style
+            # Apply indentation
+            style.paragraph_format.left_indent = Cm(indentation)
+            style.paragraph_format.first_line_indent = Cm(-hanging)
+            
+            # Apply spacing
+            if "spacingPt" in docx_specific:
+                style.paragraph_format.space_after = Pt(float(docx_specific.get("spacingPt", "6")))
+            
+            logger.info("Successfully created DOCX bullet style")
+            return style
             
         except Exception as e:
-            logger.error(f"Error creating DOCX bullet point style: {e}")
+            logger.error(f"Error creating DOCX bullet style: {e}")
             return None 

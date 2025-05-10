@@ -60,6 +60,22 @@ def generate_docx_style_mappings():
         
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Get the indent values directly from our new DOCX-specific tokens
+        docx_section_header_indent = float(tokens.get("docx-section-header-indent-cm", "0"))
+        docx_company_indent = float(tokens.get("docx-company-name-indent-cm", "0.5"))
+        docx_role_indent = float(tokens.get("docx-role-description-indent-cm", "0.5"))
+        docx_bullet_indent = float(tokens.get("docx-bullet-left-indent-cm", "0.5"))
+        docx_bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0.5"))
+        docx_section_spacing = int(tokens.get("docx-section-spacing-pt", "12"))
+        docx_bullet_spacing = int(tokens.get("docx-bullet-spacing-pt", "6"))
+        docx_paragraph_spacing = int(tokens.get("docx-paragraph-spacing-pt", "6"))
+        
+        # Font sizes
+        docx_section_header_font_size = int(tokens.get("docx-section-header-font-size-pt", "14"))
+        docx_company_font_size = int(tokens.get("docx-company-font-size-pt", "11"))
+        docx_role_font_size = int(tokens.get("docx-role-font-size-pt", "11"))
+        docx_bullet_font_size = int(tokens.get("docx-bullet-font-size-pt", "11"))
         
         # Enhanced mapping with more styling options
         docx_styles = {
@@ -75,63 +91,92 @@ def generate_docx_style_mappings():
                 "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
                 "color": hex_to_rgb(tokens.get("textColor", "#333")),
                 "backgroundColor": hex_to_rgb(tokens.get("backgroundColor", "#ffffff")),
-                "tabStopPosition": float(tokens.get("tab-stop-position-cm", "15"))
+                "tabStopPosition": float(tokens.get("tab-stop-position-cm", "15")),
+                "contentIndentCm": docx_company_indent  # Use the company indent as the global base
             },
             "heading1": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
                 "fontSizePt": int(tokens.get("nameFontSize", "16pt").replace("pt", "")),
                 "color": hex_to_rgb(tokens.get("textColor", "#333")),
                 "bold": True,
-                "spaceAfterPt": 12
+                "spaceAfterPt": docx_section_spacing
             },
             "heading2": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                "fontSizePt": int(tokens.get("sectionHeaderFontSize", "12pt").replace("pt", "")),
+                "fontSizePt": docx_section_header_font_size,
                 "color": hex_to_rgb(tokens.get("pdfHeaderColor", "rgb(0, 0, 102)")),
-                "spaceAfterPt": 6,
+                "spaceAfterPt": docx_section_spacing,
                 "bold": True,
                 "backgroundColor": hex_to_rgb(tokens.get("color.sectionBox.bg", "#FFFFFF")),
                 "borderColor": hex_to_rgb(tokens.get("sectionHeaderBorder", "#0D2B7E").replace("px solid ", "")),
                 "borderSize": 1,
                 "paddingVertical": float(tokens.get("sectionHeaderPaddingVert", "1px").replace("px", "")),
                 "paddingHorizontal": float(tokens.get("sectionHeaderPaddingHoriz", "12px").replace("px", "")),
-                "marginBottom": float(tokens.get("section-box-margin-bottom", "0.5rem").replace("rem", "")) * 16
+                "marginBottom": float(tokens.get("section-box-margin-bottom", "0.5rem").replace("rem", "")) * 16,
+                "indentCm": docx_section_header_indent  # Use dedicated section header indent
             },
             "heading3": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
+                "fontSizePt": docx_company_font_size,
                 "bold": True,
-                "spaceAfterPt": 4
+                "spaceAfterPt": docx_paragraph_spacing
             },
             "body": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
+                "fontSizePt": docx_company_font_size,
                 "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
                 "color": hex_to_rgb(tokens.get("textColor", "#333")),
-                "marginLeft": float(tokens.get("content-left-margin", "0").replace("rem", "").replace("em", "").replace("px", ""))
+                "spaceAfterPt": docx_paragraph_spacing,
+                "indentCm": docx_company_indent  # Use company indent for body text
             },
             "bulletList": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                "indentCm": float(tokens.get("bullet-list-indent-cm", "0.75")),
-                "hangingIndentCm": float(tokens.get("bullet-list-hanging-indent-cm", "0.25")), 
+                "fontSizePt": docx_bullet_font_size,
+                "indentCm": docx_bullet_indent,
+                "hangingIndentCm": docx_bullet_hanging, 
                 "bulletCharacter": tokens.get("bullet-glyph", "\"\\2022\"").replace("\"\\\\", "").replace("\"", ""),
-                "spaceAfterPt": float(tokens.get("bullet-spacing-after", "0.15").replace("rem", "")) * 12,
+                "spaceAfterPt": docx_bullet_spacing,
                 "color": hex_to_rgb(tokens.get("color.bullet", "#3A3A3A"))
             },
             "roleDescription": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),
-                "fontSizePt": int(tokens.get("baseFontSize", "11pt").replace("pt", "")),
-                "indentCm": float(tokens.get("role-description-indent-cm", "0")),
-                "spaceAfterPt": 6,
+                "fontSizePt": docx_role_font_size,
+                "indentCm": docx_role_indent,
+                "spaceAfterPt": docx_paragraph_spacing,
                 "color": hex_to_rgb(tokens.get("textColor", "#333")),
                 "fontStyle": "italic"
             },
             "positionBar": {
-                "spaceAfterPt": float(tokens.get("position-line-margin-bottom", "0.15").replace("rem", "")) * 12
+                "spaceAfterPt": docx_paragraph_spacing,
+                "indentCm": docx_company_indent
             },
             "sectionSpacing": {
-                "spacingCm": float(tokens.get("section-spacing-vertical", "0.8").replace("rem", "")) / 2.54
+                "spacingPt": docx_section_spacing
+            },
+            "styles": {
+                "MR_SectionHeader": {
+                    "fontSizePt": docx_section_header_font_size,
+                    "indentCm": docx_section_header_indent,
+                    "spaceAfterPt": docx_section_spacing,
+                    "bold": True
+                },
+                "MR_Content": {
+                    "fontSizePt": docx_company_font_size,
+                    "indentCm": docx_company_indent,
+                    "spaceAfterPt": docx_paragraph_spacing
+                },
+                "MR_RoleDescription": {
+                    "fontSizePt": docx_role_font_size,
+                    "indentCm": docx_role_indent,
+                    "spaceAfterPt": docx_paragraph_spacing,
+                    "italic": True
+                },
+                "MR_BulletPoint": {
+                    "fontSizePt": docx_bullet_font_size,
+                    "indentCm": docx_bullet_indent,
+                    "hangingIndentCm": docx_bullet_hanging,
+                    "spaceAfterPt": docx_bullet_spacing
+                }
             }
         }
         

@@ -99,8 +99,14 @@ $font-size-h2: 1.75rem !default;
 // Resume Section Styling
 .resume-section {
     margin-bottom: $section-spacing-vertical;
-    margin-left: $content-left-margin; // Ensure consistent left margin
-    padding-left: $section-content-padding-left; // Ensure consistent left padding
+    margin-left: 0; // No margin at section level to prevent stacking
+    padding-left: 0; // No padding at section level to prevent stacking
+    
+    // All section content containers need the same left margin
+    .summary-content, .experience-content, .education-content,
+    .skills-content, .projects-content {
+        margin-left: $content-left-margin; // Use the same token as section-box
+    }
 }
 
 // Position Bar Styling - New

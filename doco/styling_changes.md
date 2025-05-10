@@ -19,6 +19,29 @@ Based on successful tests (including changing section header color to pink), fol
 
 **IMPORTANT**: Missing any of these steps, especially #4 (restarting Flask), will result in styling changes not being applied.
 
+## Recent Styling Changes
+
+### Role Description Alignment Fix
+- **Date**: 2025-05-08
+- **Issue**: Role descriptions were misaligned in the HTML/PDF preview.
+- **Solution**: 
+  - Updated the `html_generator.py` to ensure the role description is placed correctly within the `job-content` div.
+  - Adjusted the CSS for the `.role-description-text` class in `_resume.scss` to ensure proper alignment with job content.
+  - Verified changes in both HTML preview and PDF outputs.
+
+### Section Header Height Adjustment
+- **Date**: 2025-05-08
+- **Issue**: Section headers were rendering with excessive height.
+- **Solution**: 
+  - Modified the HTML structure in `html_generator.py` to remove unnecessary `<h2>` tags, allowing for a tighter fit around the text.
+  - Adjusted the CSS in `_resume.scss` to set the section box to `display: inline-block;` and removed `width: 100%;` to allow the header to fit its content.
+  - Verified changes in both HTML preview and PDF outputs.
+
+### Key Lessons Learned
+1. **HTML Structure Consistency**: Ensuring that the HTML structure is consistent across different outputs is crucial for styling to apply correctly.
+2. **CSS Specificity**: Be mindful of CSS specificity and how different rendering engines (like WeasyPrint) interpret styles.
+3. **Thorough Testing**: Always verify changes in both HTML preview and PDF outputs to ensure consistent appearance.
+
 ## Correct Steps for Adjusting Margins
 
 To adjust the margins for both the HTML preview and PDF outputs, follow these steps:
@@ -31,10 +54,10 @@ To adjust the margins for both the HTML preview and PDF outputs, follow these st
 
 3. **Compile SCSS**:
    - Use `sass` to compile the SCSS files into CSS:
-     ```bash
-     sass static/scss/preview.scss static/css/preview.css
-     sass static/scss/print.scss static/css/print.css
-     ```
+   ```bash
+   sass static/scss/preview.scss static/css/preview.css
+   sass static/scss/print.scss static/css/print.css
+   ```
 
 4. **Restart Flask**:
    - Restart the Flask application to apply the changes.
@@ -279,7 +302,7 @@ C. Wrong paper width.
 2. ✅ Reset UI inheritance and update paper width:
    • Added style isolation in `_resume.scss` to prevent Bootstrap styles from leaking in.
    • Changed `$paper-width-a4` from 8.5in to 8.27in (standard A4 width).
-   • Updated `@page` rule in `print.scss` with proper A4 size and margins.
+   - Updated `@page` rule in `print.scss` with proper A4 size and margins.
 
 *Implementation complete*: CSS rebuilt with all changes.
 
@@ -375,262 +398,85 @@ The recent changes successfully adjusted the section header box styling to align
 - **Regular Workflow**: Follow the validated workflow for styling changes to ensure all steps are completed.
 - **Documentation**: Keep detailed records of changes and lessons learned to streamline future updates.
 
-## ISSUE RESOLVED: Horizontal Grey Bar in PDF Output
+## ISSUE: Section Header Box Misalignment with Content - May 2025
 
-### Overview
-An issue was identified where a horizontal grey bar appeared above the name in the PDF output but was not visible in the HTML preview.
+### Observed Issue
+- Section header boxes (like "PROFESSIONAL SUMMARY" and "EXPERIENCE") have inconsistent alignment with the content text
+- The left edge of the section header boxes doesn't align with the left edge of the content text
+- This creates a visual inconsistency that affects the professional appearance of the resume
 
-### Root Cause Analysis
-The issue was caused by the `contact-divider` element being rendered incorrectly in the PDF output. While in the HTML preview it appeared correctly below the contact information, WeasyPrint was rendering it above the name in the PDF.
+### Previous Attempts Analysis
+While we previously addressed various alignment issues, the specific misalignment between section header boxes and content text remained. Our recent attempts focused on:
 
-### Implementation Details
-To fix the issue, the following changes were made:
+1. **Role Description Alignment Fix** (May 8, 2025):
+   - Fixed role descriptions being inside the job-content div
+   - This addressed alignment within job content but not the relationship between section headers and content
 
-1. **Updated Print CSS**:
-   - Added a specific override for the `contact-divider` in `print.scss` to hide it in the PDF output:
-   ```scss
-   .contact-divider {
-     // Override for PDF: hide the divider to prevent it from appearing above the name
-     display: none;
-   }
-   ```
+2. **CSS Margin Adjustment Attempt** (May 9, 2025):
+   - Updated CSS rules in _resume.scss to provide consistent content-left-margin
+   - Added section-box left margin to match content
+   - However, this only fixed the HTML/PDF output, not the DOCX alignment
 
-2. **Regenerated CSS Files**:
-   - Rebuilt both print and preview CSS files using sass.
+3. **Global DOCX Indent Token Approach** (May 10, 2025):
+   - Added `docx-content-left-indent-cm: 0.5` token to design_tokens.json
+   - Modified generate_tokens.py to apply this as a global indent to all style configurations
+   - Updated format_right_aligned_pair, add_role_description, create_bullet_point, and apply_docx_section_header_box_style to use this value
+   - Result: Still inconsistent alignment in DOCX output
 
-3. **Restarted Flask Server**:
-   - Restarted the server to ensure all changes were applied.
+### Detailed Technical Analysis After Code Review
 
-### Validation
-The fix was tested by generating a new PDF and verifying that the horizontal grey bar no longer appears above the name.
+Through detailed log analysis and code inspection, we've identified potential issues in our previous approach:
 
-### Lessons Learned
-1. **PDF vs HTML Rendering Differences**: WeasyPrint may interpret HTML structure differently than browsers, requiring specific overrides for PDF output.
-2. **Targeted CSS Fixes**: Using print-specific CSS rules helps solve PDF-only issues without affecting the HTML preview.
-3. **Document Structure Importance**: HTML element order and positioning can have different effects in WeasyPrint vs browser rendering.
+1. **XML vs. Direct Property Setting**:
+   - Some functions use direct property setting via `paragraph_format.left_indent = Cm(value)`
+   - Others use XML manipulation via custom XML strings and parse_xml
+   - These two approaches might lead to conflicting values being applied
 
-## 2025-04-27  – Bullet-cleanup Attempt #1 Post-Mortem
+2. **Style vs. Direct Formatting**:
+   - DOCX has both style-level formatting and direct paragraph-level formatting
+   - Our approach mixed these, potentially causing direct formatting to override style-level settings
 
-We centralised bullet stripping in `utils/bullet_utils.py` and wired the new
-`strip_bullet_prefix()` helper through all formatter paths. While this removed
-many stray glyphs, **textual escapes `u2022` are still leaking into the final
-HTML/PDF**. Our latest run (see log excerpt below) shows the cleaned HTML still
-contains literal `u2022` at the start of some achievements.
+3. **DOCX Numbering Definitions**:
+   - Bullet points use the numbering definition system in DOCX, which has its own indentation mechanism
+   - This system may not be correctly inheriting our global indent values
 
-```
-… <li>u2022 Led cross-functional AI initiative that …</li>
-```
+4. **Twips Conversion Inconsistency**:
+   - We used a conversion factor of 567 twips per cm in some places
+   - This might not be consistent with how python-docx handles unit conversions internally
 
-### Findings
-1. **Whitespace-prefixed escapes**   If the LLM returns `"  u2022 Achievement"`
-   (note the two spaces) our regex fails because it is anchored to column 0.
-2. **Down-stream re-injection**   Some content is concatenated _after_ we strip
-   bullets (e.g. during `format_section_content` when building `<li>` tags), so
-   any bullet prefix that survives earlier stages becomes visible next to the
-   rendered list marker.
-3. **Validation gap**   `validate_bullet_point_cleaning()` only runs on raw
-   _section text_, not on the final HTML fragment. It therefore misses any
-   bullets that survive formatting.
+### New Hypothesis: DOCX Formatting Layer Precedence
 
-### Impact on Logic / Flow
-The current cleaning pipeline is **still too early in the data-flow**. We need
-an **end-of-pipeline gate** that scans the fully rendered HTML _before_ it is
-sent to the client or converted to PDF.
+The core issue may be related to how formatting is applied at different layers in the DOCX document. Word uses a cascading approach similar to CSS, but with specific precedence rules:
 
----
+1. Document defaults define the base formatting
+2. Styles (paragraph styles, character styles) override document defaults
+3. Direct formatting (applied directly to paragraphs) overrides styles
+4. XML direct manipulation can override or conflict with direct formatting
 
-## Bullet-cleanup Attempt #2 – Detailed Implementation Plan
+Our implementation tried to apply the same indent at multiple levels, but these may have been overridden or conflicted with each other in the DOCX output.
 
-| # | Task | Owner | Notes |
-|---|------|-------|-------|
-| 1 | Expand `BULLET_ESCAPE_RE` to allow leading whitespace (`^\s*`) and fix a bug where the trailing `\s*` was stripped _after_ we already called `.lstrip()` | BE | Single-line change in `utils/bullet_utils.py` |
-| 2 | Add **HTML-level sanitiser** `html_generator.scrub_bullets_from_html()` that runs the regex across the _entire_ HTML fragment/doc right before it is returned. | BE | Guarantees no bullets make it past this point |
-| 3 | Call the sanitiser from `generate_preview_from_llm_responses()` and from `pdf_exporter` before PDF conversion. | BE | Two call-sites |
-| 4 | Strengthen `validate_bullet_point_cleaning()` to optionally accept HTML and scan **after formatting**. | BE | Keeps runtime logging useful |
-| 5 | Unit tests: | QA | 1) raw line with `"  u2022 Foo"` 2) HTML `<li>u2022 Bar</li>` – both must emerge bullet-free |
-| 6 | Regression script: tailor a known problematic resume and assert that `u2022` does **not** appear in the resulting PDF text layer (`pdftotext`). | QA | CI step |
-| 7 | Documentation update (this file) once confirmed fixed. | Tech W |  |
+### Revised Implementation Plan
 
-### Roll-back Plan
-Set env var `RESUMEGEN_SKIP_HTML_BULLET_SCRUB=1` to bypass the new sanitizer if
-it causes accidental data loss.
+To resolve this issue, we'll implement a more systematic approach focusing on a single layer of formatting:
 
-### ETA & Risk
-Small patch (<50 LOC) but touches core HTML path – low risk, <1 hr coding, 30 m
-validation.
+1. **Standardize on Style-Level Formatting**:
+   - Create custom styles for all elements (section headers, company lines, role descriptions, bullets)
+   - Apply the global indent consistently at the style level first
+   - Avoid direct paragraph formatting for indent unless absolutely necessary
 
---- 
+2. **Debug DOCX Structure**:
+   - Save a sample DOCX and examine its XML structure to understand how our changes are being applied
+   - Use this to identify which layer of formatting is taking precedence
 
-## ISSUE RESOLVED: Bullet Point Display Issue
+3. **Refine Section Header Box Implementation**:
+   - Focus on the specific relationship between section header box left edge and first content line
+   - Ensure they use compatible formatting approaches (both style-based or both direct)
 
-The issue where bullet points were incorrectly displayed as "u2022" in the CSS has been resolved. The key fix was to ensure proper SCSS string escaping in `design_tokens.json` and to follow the complete styling update workflow.
+4. **Address Paragraph vs. Run Properties**:
+   - Ensure we're applying indentation at the paragraph level consistently
+   - Distinguish between paragraph properties and run properties in our implementation
 
-## Correct Steps for Fixing Bullet Point Display
-
-To fix the bullet point display issue, follow these steps:
-
-1. **Edit `design_tokens.json`**:
-   - Update the `bullet-glyph` to use proper SCSS string escaping.
-
-2. **Generate Updated Tokens**:
-   - Run `python tools/generate_tokens_css.py` to regenerate the SCSS tokens.
-
-3. **Compile SCSS**:
-   - Use `sass` to compile the SCSS files into CSS:
-     ```bash
-     sass static/scss/preview.scss static/css/preview.css
-     sass static/scss/print.scss static/css/print.css
-     ```
-
-4. **Restart Flask**:
-   - Restart the Flask application to apply the changes.
-
-By following these steps, you ensure that both the HTML preview and PDF outputs reflect the updated bullet point settings.
-
-## Key Lessons Learned
-
-1. **Proper String Escaping**: Ensure all special characters are properly escaped in `design_tokens.json`.
-2. **Token Regeneration**: Always regenerate tokens after making changes to `design_tokens.json`.
-3. **SCSS Compilation**: Compile SCSS files to apply changes to CSS.
-4. **Flask Restart**: Restart the Flask server to ensure all changes are applied.
-
-These steps ensure that styling changes are consistently applied across both the preview and PDF outputs, maintaining a unified appearance.
-
-## NEW ISSUE: Bullet Point Overlapping with Text
-
-A new issue has been identified where bullet points are overlapping with the text in the resume, as shown in the provided image. This issue arose after the previous changes to correct the bullet point display.
-
-### Description
-- The bullet points are correctly processed and compiled in the CSS file, but they are not aligning properly with the text, causing an overlap.
-
-### Impact
-- The visual appearance of the resume is affected, making it look unprofessional.
-
-### Next Steps
-1. Investigate the CSS rules related to bullet point alignment and spacing.
-2. Adjust the CSS to ensure proper alignment and spacing of bullet points relative to the text.
-3. Verify the changes in both the HTML preview and PDF output to ensure the issue is resolved.
-
-### Priority
-- Medium
-
-This issue needs to be addressed to maintain the professional appearance of the resume and ensure that the text is readable and well-aligned.
-
-## NEW ISSUE RESOLVED: Bullet Point Overlapping with Text
-
-The issue where bullet points were overlapping with the text in the resume has been resolved. The key fix was to implement proper CSS spacing and positioning for bullet points.
-
-### Root Cause Analysis
-
-The bullet points were properly displayed with the correct symbol, but the CSS styling lacked proper spacing and positioning between the bullet and the text. This was due to:
-
-1. Insufficient padding and indentation in the list items
-2. Inconsistent positioning of the bullet points
-3. Lack of proper text indentation to align the text correctly with the bullet
-
-### Implementation Details
-
-To fix the issue, the following changes were made:
-
-1. **Added New Design Tokens**:
-   - `bullet-list-padding-left`: Controls the left padding of bullet lists
-   - `bullet-item-padding-left`: Controls the left padding of list items
-   - `bullet-item-text-indent`: Controls the text indentation of list items
-
-2. **Updated SCSS Styling**:
-   - Applied a consistent approach to bullet point styling across all list types
-   - Used the `::before` pseudo-element for bullet placement with proper positioning
-   - Applied proper padding and text-indent to ensure correct text alignment
-
-### Validation
-
-The fix was tested in both the HTML preview and PDF output, confirming that bullet points no longer overlap with text and are properly aligned.
-
-## Correct Steps for Fixing Bullet Point Alignment
-
-To fix bullet point alignment issues, follow these steps:
-
-1. **Edit `design_tokens.json`**:
-   - Add or update bullet-point related tokens:
-   ```json
-   {
-     "bullet-list-padding-left": "1.5em",
-     "bullet-item-padding-left": "1em",
-     "bullet-item-text-indent": "-1em"
-   }
-   ```
-
-2. **Update SCSS Files**:
-   - Ensure list items use consistent styling with proper positioning
-   - Use the `::before` pseudo-element with absolute positioning for custom bullets
-   - Apply proper padding and indentation
-
-3. **Generate Updated Tokens**:
-   - Run `python tools/generate_tokens_css.py` to regenerate the SCSS tokens
-
-4. **Compile SCSS**:
-   - Use `sass` to compile the SCSS files into CSS:
-   ```bash
-   sass static/scss/preview.scss static/css/preview.css
-   sass static/scss/print.scss static/css/print.css
-   ```
-
-5. **Restart Flask**:
-   - Restart the Flask application to apply the changes
-
-6. **Validate Changes**:
-   - Check both HTML preview and PDF output to ensure consistent bullet point alignment
-
-## Key Lessons Learned
-
-1. **Consistent Bullet Point Approach**: Use the same technique for all bullet points in the resume for consistent appearance.
-2. **Proper CSS Positioning**: For custom bullets, use absolute positioning with proper offsets.
-3. **Text Indentation Control**: Use both padding and text-indent to align text properly with bullets.
-4. **Single Source of Truth**: Keep spacing values in design tokens for consistency and easier maintenance.
-5. **Test Both Outputs**: Always verify changes in both HTML preview and PDF output to ensure consistent appearance.
-
-## ISSUE: Adjusting Section Header Box Height
-
-**Goal**: Reduce the vertical height of the section header boxes (e.g., "PROFESSIONAL SUMMARY") to be a tighter fit around the text content, similar to Image 2 provided earlier.
-
-**Status**: Unresolved (after multiple failed attempts).
-
-### Attempt 1 (Width Fix with `fit-content` - Failed)
-*   **Changes**: Introduced `sectionBoxWidth: fit-content`, `sectionBoxDisplay: inline-block` tokens and updated SCSS.
-*   **Result**: Failed, created unexpected brackets/boxes in HTML preview and PDF.
-*   **Reason**: Likely `fit-content` incompatibility with WeasyPrint and conflicts arising from changing `display` type without addressing HTML structure differences (`div > h2` vs `div > text`).
-
-### Attempt 2 (Width Fix with `inline-block` - Partially Successful, Height Unchanged)
-*   **Changes**: Used `display: inline-block`, `max-width: var(--sectionBoxMaxWidth, auto)`. Updated padding/line-height/font-size tokens.
-*   **Result**: Successfully fixed width to fit content, but **height remained unchanged**. Also caused WeasyPrint warnings for `max-width: auto`.
-*   **Reason**: Width constraint worked. Height issue persisted, indicating padding/line-height changes weren't targeting the correct element or were overridden. CSS variables and WeasyPrint incompatibility were likely factors.
-
-### Attempt 3 (Height Focus with CSS Variables - Failed)
-*   **Changes**: Reduced vertical padding token (`2px`), added line-height (`1.1`) and font-size (`12pt`) tokens. Applied these using `var()` to `.section-box` and `.resume-section h2`. Changed `max-width` fallback to `none`.
-*   **Result**: Height still unchanged.
-*   **Reason**: Applying styles with `var()` to both `.section-box` and the nested `h2` likely caused conflicts or specificity issues. The underlying HTML structure difference wasn't addressed. WeasyPrint's potential lack of support for these CSS variables could also explain the failure in the PDF.
-
-### Root Cause Analysis Summary
-*   **HTML Structure Discrepancy**: The primary issue is the difference between the preview (`div > h2`) and PDF (`div > text`) structures. The `h2` tag in the preview introduces default styles (margins, line-height) that interfere with height control.
-*   **CSS Variable Incompatibility**: WeasyPrint has limited support for CSS custom properties (`var(...)`), making them unreliable for consistent styling between preview and PDF.
-*   **Targeting Issues**: Previous attempts didn't correctly target or override the element controlling the final rendered height, especially due to the nested `h2`.
-
-### Plan for Attempt 4 (Unify HTML & Use SCSS Vars)
-1.  **Unify HTML**: Modify `html_generator.py` to remove the `<h2>` tags inside `.section-box`, making preview match PDF.
-2.  **Refine Tokens**: Use specific SCSS tokens for padding, line-height, font-size, and max-width.
-3.  **Update SCSS**: Apply styles directly to `.section-box` using SCSS variables only. Remove separate `h2` rules.
-4.  **Standard Workflow**: Regenerate tokens, compile CSS, restart server.
-5.  **Test**: Verify height reduction in both preview and PDF.
-
-This approach aims for consistency by fixing the HTML structure and avoiding potential WeasyPrint issues with CSS variables.
-
-## Successful Implementation: Attempt 4 – Adjusting Section Header Height
-
-### Overview
-The fourth attempt to adjust the section header height was successful. The changes ensured that the section headers fit tightly around the text content, as shown in the provided image.
-
-### Key Changes
-1. **Unified HTML Structure**: Modified `html_generator.py` to remove `<h2>`
+We'll implement and test these changes systematically, focusing first on aligning section headers with company/role text, and then ensuring bullet points align correctly.
 
 ## ISSUE RESOLVED: Grey Bar in PDF Output
 
@@ -696,3 +542,133 @@ The issue of a grey horizontal bar appearing in the PDF output, but not in the H
 - **Documentation**: Maintain detailed documentation of changes and their impacts to aid future troubleshooting and development.
 
 **Conclusion**: The final solution of using `display: block;` with `width: auto;` aligns with the natural document flow and ensures consistent rendering across both HTML and PDF outputs.
+
+## DOCX Indentation Control and Alignment (2023-07-02)
+
+### Observed Issue
+DOCX output had inconsistent alignment between different content elements:
+- Section headers and bullet points were aligned at one position
+- Company/title information and role descriptions were indented further to the right
+- This created a visually jarring and unprofessional appearance
+
+### Root Cause Analysis
+After extensive testing, we discovered that indentation in DOCX files is controlled by multiple mechanisms working in a specific hierarchy:
+
+1. **Style Definitions**:
+   - Each paragraph type (section headers, company info, role descriptions, bullets) used a custom style (`MR_SectionHeader`, `MR_Content`, etc.)
+   - Each style had its own `left_indent` property set based on design tokens
+   - By default, these values were inconsistent (`0 cm` for section headers, `0.5 cm` for other elements)
+
+2. **Control Hierarchy**:
+   - Style-level formatting is the primary control mechanism for indentation
+   - Direct paragraph formatting could override this but was avoided in our implementation
+   - XML manipulation could provide the lowest-level control but was unnecessary for indentation
+
+3. **Design Token Application**:
+   - All indentation values were stored in `design_tokens.json`
+   - The `StyleEngine` correctly applied these values to styles
+   - No direct formatting in `docx_builder.py` functions was overriding these values
+
+### Testing Approach
+We implemented a systematic testing approach:
+1. **Phase 1**: Set dramatically different indentation values for each element type:
+   - Section headers: `0.2 cm`
+   - Company/title information: `5.0 cm`
+   - Role descriptions: `7.0 cm`
+   - Bullet points: `0.2 cm` (with `0.0 cm` hanging indent)
+
+2. **Observations**:
+   - All elements respected their defined indentation values
+   - This confirmed that style-level formatting was indeed controlling indentation
+   - No unintended direct formatting was overriding the styles
+
+### Solution Implemented
+We standardized all indentation values to create a clean left edge:
+1. **Uniform Left Alignment**:
+   - Set all `left_indent` values to `0 cm` in `design_tokens.json`:
+     ```json
+     "docx-section-header-indent-cm": "0",
+     "docx-company-name-indent-cm": "0",
+     "docx-role-description-indent-cm": "0",
+     "docx-bullet-left-indent-cm": "0",
+     "docx-bullet-hanging-indent-cm": "0",
+     ```
+   - This created a clean left alignment for all elements
+
+2. **StyleEngine Application**:
+   - The `StyleEngine` correctly applied these values to the respective styles
+   - No changes to the style application logic were needed
+
+### Key Learnings
+1. **Single Source of Truth**: All indentation values should be defined in a single place (`design_tokens.json`) to ensure consistency
+2. **Style-First Approach**: Using style-level formatting is the most reliable way to control indentation in DOCX files
+3. **Avoid Mixed Formatting**: Mixing style-level, direct paragraph, and XML-level formatting leads to inconsistent results
+4. **Testing Methodology**: Dramatic value testing is an effective way to verify control mechanisms in document formatting
+
+### Next Steps
+1. **Professional Summary Alignment**: Ensure the text in the Professional Summary section aligns with the section header
+2. **Skills Section Alignment**: Ensure the skills section and its text align properly with other sections
+3. **Documentation**: Update the style guide to reflect our understanding of DOCX indentation control
+4. **Best Practices**: Implement a consistent approach to formatting all future elements
+
+This update resolves the longstanding issue of inconsistent indentation in DOCX output and provides a foundation for reliable formatting in the future.
+
+## Professional Summary and Skills Section Alignment Fix (2023-07-02)
+
+### Observed Issues
+After standardizing all indentation values to 0 cm, we noticed two remaining areas with alignment inconsistencies:
+
+1. **Professional Summary Text**: The summary text was using the generic "body" style applied through `_apply_paragraph_style`, which may not consistently align with section headers.
+
+2. **Skills Section**: Both category headers (using "heading3" style) and skills lists (using "body" style) were not consistently aligned with other document elements.
+
+### Implementation Solution
+We implemented a systematic solution by creating custom styles specifically for these elements and applying them consistently:
+
+1. **Custom Styles Created**:
+   - `MR_SummaryText`: For Professional Summary content with same indentation as section headers
+   - `MR_SkillCategory`: For skill category headings with consistent alignment and bold formatting
+   - `MR_SkillList`: For skill lists (both comma-separated and regular lists) with consistent alignment
+
+2. **Style Engine Updates**:
+   ```python
+   # Created styles with explicit indentation from section header tokens
+   indent_cm = float(section_docx.get("indentCm", 0))
+   
+   # Apply to summary style
+   summary_style.paragraph_format.left_indent = Cm(indent_cm)
+   
+   # Apply to skill category and list styles
+   skill_cat_style.paragraph_format.left_indent = Cm(indent_cm)
+   skill_list_style.paragraph_format.left_indent = Cm(indent_cm)
+   ```
+
+3. **DocxBuilder Updates**:
+   - Replaced generic paragraph creation and style application with direct style application:
+   ```python
+   # Summary section
+   summary_para = doc.add_paragraph(summary_text, style='MR_SummaryText')
+   
+   # Skills section - categories
+   category_para = doc.add_paragraph(category.upper(), style='MR_SkillCategory')
+   
+   # Skills section - skill lists
+   skills_para = doc.add_paragraph(skills_text, style='MR_SkillList')
+   ```
+
+### Results
+This implementation ensures consistent alignment across all document elements:
+- Section headers
+- Professional summary text
+- Experience entries (company, title, role descriptions, bullet points)
+- Skills categories and lists
+
+All elements now share the same left alignment (0 cm), creating a clean, professional appearance throughout the document.
+
+### Key Insights
+1. **Importance of Custom Styles**: Creating dedicated styles for each content type ensures consistent formatting
+2. **Style Inheritance**: All styles reference the same indentation value from the section header token
+3. **Direct Style Application**: Applying styles directly during paragraph creation is more reliable than post-creation styling
+4. **Consistent Approach**: Using the same style-based approach for all document elements creates a unified appearance
+
+This completes our alignment standardization, ensuring all DOCX output elements maintain a consistent and professional appearance.

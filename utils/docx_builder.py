@@ -151,173 +151,150 @@ def _apply_paragraph_style(p, style_name: str, docx_styles: Dict[str, Any]):
 
 def _create_document_styles(doc, docx_styles):
     """Create custom styles in the document for consistent formatting."""
-    # Create a style for section headers using StyleEngine instead of direct styling
+    # Create all custom styles using the StyleEngine
     try:
+        # Create all custom styles at once
+        custom_styles = StyleEngine.create_docx_custom_styles(doc)
+        logger.info(f"Successfully created custom DOCX styles: {list(custom_styles.keys())}")
+        return custom_styles
+    except Exception as e:
+        logger.warning(f"Error creating custom styles: {e}")
+        logger.warning("Falling back to legacy style creation")
+        
+        # Fallback to original implementation
+        styles = {}
+        
         # Create section header style
-        StyleEngine.create_docx_section_header_style(doc)
-        logger.info("Successfully created custom SectionHeader style using StyleEngine")
-    except Exception as e:
-        logger.warning(f"Error creating SectionHeader style using StyleEngine: {e}")
-        logger.warning("Falling back to legacy style creation")
+        try:
+            section_style = StyleEngine.create_docx_section_header_style(doc)
+            styles["SectionHeader"] = section_style
+            logger.info("Successfully created custom SectionHeader style with fallback method")
+        except Exception as e:
+            logger.warning(f"Error creating SectionHeader style with fallback method: {e}")
         
-        # Fallback to original implementation
-        if 'heading2' in docx_styles:
-            try:
-                style = doc.styles.add_style('SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
-                font = style.font
-                h2_style = docx_styles['heading2']
-                
-                if "fontFamily" in h2_style:
-                    font.name = h2_style["fontFamily"]
-                if "fontSizePt" in h2_style:
-                    font.size = Pt(h2_style["fontSizePt"])
-                if "color" in h2_style:
-                    r, g, b = h2_style["color"]
-                    font.color.rgb = RGBColor(r, g, b)
-                if h2_style.get("bold", False):
-                    font.bold = True
-                
-                # Apply paragraph formatting
-                style.paragraph_format.space_after = Pt(h2_style.get("spaceAfterPt", 6))
-                style.paragraph_format.space_before = Pt(h2_style.get("spaceBeforePt", 12) if "spaceBeforePt" in h2_style else 12)
-                
-                logger.info("Successfully created custom SectionHeader style with fallback method")
-            except Exception as e:
-                logger.warning(f"Error creating SectionHeader style with fallback method: {e}")
-    
-    # Create a style for bullet lists using StyleEngine
-    try:
         # Create bullet style
-        StyleEngine.create_docx_bullet_style(doc)
-        logger.info("Successfully created custom bullet style using StyleEngine")
-    except Exception as e:
-        logger.warning(f"Error creating CustomBullet style using StyleEngine: {e}")
-        logger.warning("Falling back to legacy style creation")
-        
-        # Fallback to original implementation
-        if 'bulletList' in docx_styles:
-            try:
-                style = doc.styles.add_style('CustomBullet', WD_STYLE_TYPE.PARAGRAPH)
-                font = style.font
-                bullet_style = docx_styles['bulletList']
-                
-                if "fontFamily" in bullet_style:
-                    font.name = bullet_style["fontFamily"]
-                if "fontSizePt" in bullet_style:
-                    font.size = Pt(bullet_style["fontSizePt"])
-                if "color" in bullet_style:
-                    r, g, b = bullet_style["color"]
-                    font.color.rgb = RGBColor(r, g, b)
-                
-                # Add custom bullet format
-                style.paragraph_format.left_indent = Cm(bullet_style.get("indentCm", 0.5))
-                style.paragraph_format.first_line_indent = Cm(-0.25)  # Hanging indent for bullet
-                
-                logger.info("Successfully created custom bullet style with fallback method")
-            except Exception as e:
-                logger.warning(f"Error creating CustomBullet style with fallback method: {e}")
+        try:
+            bullet_style = StyleEngine.create_docx_bullet_style(doc)
+            styles["CustomBullet"] = bullet_style
+            logger.info("Successfully created custom CustomBullet style with fallback method")
+        except Exception as e:
+            logger.warning(f"Error creating CustomBullet style with fallback method: {e}")
+            
+        return styles
 
 def format_right_aligned_pair(doc, left_text, right_text, left_style, right_style, docx_styles):
     """Creates a paragraph with left-aligned and right-aligned text using tab stops."""
-    para = doc.add_paragraph()
+    para = doc.add_paragraph(style='MR_Content')  # Use our new custom style
     
     # Add left-aligned text
     if left_text:
         left_run = para.add_run(left_text)
-        # Apply styling from docx_styles
-        if left_style and left_style in docx_styles:
-            style_props = docx_styles[left_style]
-            if "fontFamily" in style_props:
-                left_run.font.name = style_props["fontFamily"]
-            if "fontSizePt" in style_props:
-                left_run.font.size = Pt(style_props["fontSizePt"])
-            if style_props.get("bold", False):
-                left_run.bold = True
+        # Apply styling for the left text (always bold)
+        left_run.bold = True
     
     # Add tab stop for right alignment - use a consistent value from design tokens
     tab_position = 15  # Default 15cm
     if "tabStopPosition" in docx_styles.get("global", {}):
         tab_position = docx_styles["global"]["tabStopPosition"]
+    
+    # Remove any existing tab stops to prevent conflicts
+    para.paragraph_format.tab_stops.clear_all()
+    
+    # Add the new tab stop
     para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position), WD_TAB_ALIGNMENT.RIGHT)
     
     # Add right-aligned text with tab
     if right_text:
         para.add_run('\t')  # Add tab
         right_run = para.add_run(right_text)
-        # Apply styling from docx_styles
-        if right_style and right_style in docx_styles:
-            style_props = docx_styles[right_style]
-            if "fontFamily" in style_props:
-                right_run.font.name = style_props["fontFamily"]
-            if "fontSizePt" in style_props:
-                right_run.font.size = Pt(style_props["fontSizePt"])
-            if style_props.get("bold", False):
-                right_run.bold = True
     
-    # Apply spacing if specified in the positionBar style
-    if "positionBar" in docx_styles and "spaceAfterPt" in docx_styles["positionBar"]:
-        para.paragraph_format.space_after = Pt(docx_styles["positionBar"]["spaceAfterPt"])
+    # Spacing and indentation are now handled by the 'MR_Content' style.
+    # Removed direct formatting for left_indent and space_after.
+    # Removed direct XML formatting for indentation and spacing.
     
     return para
 
 def create_bullet_point(doc, text, docx_styles):
     """Creates a properly styled bullet point with consistent formatting."""
-    # Create a bullet point with custom style
-    bullet_para = doc.add_paragraph(style='CustomBullet')
-    bullet_para.add_run(str(text))
+    # from docx.oxml.ns import nsdecls # Not needed if XML is removed
+    # from docx.oxml import parse_xml # Not needed if XML is removed
+    # from docx.shared import Cm, Pt # Not needed if direct formatting is removed
     
-    # Apply direct XML styling for bullet properties based on design tokens
-    from docx.oxml.ns import nsdecls
-    from docx.oxml import parse_xml
+    # Use our new custom style
+    bullet_para = doc.add_paragraph(style='MR_BulletPoint')
     
-    # Get bullet configuration from design tokens
-    bullet_config = docx_styles.get("bulletList", {})
-    left_indent = int(round(float(bullet_config.get("indentCm", 0.75)) * 567))  # Convert cm to twips (567 twips per cm)
-    hanging_indent = int(round(float(bullet_config.get("hangingIndentCm", 0.25)) * 567))  # Convert cm to twips
+    # Add the text content with the bullet character
+    bullet_para.add_run(f"• {text}")
     
-    # Set specific bullet formatting using XML with values from tokens
-    pPr = bullet_para._p.get_or_add_pPr()
+    # Indentation, hanging indent, and spacing are now handled by the 'MR_BulletPoint' style.
+    # Removed direct paragraph formatting for left_indent, first_line_indent.
+    # Removed direct XML formatting for indentation (w:ind) and spacing (w:spacing).
     
-    # Add numbering properties to create a bullet
-    if 'numId' not in str(pPr.xml):
-        num_pr = parse_xml(f'<w:numPr {nsdecls("w")}><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>')
-        pPr.append(num_pr)
-    
-    # Set indentation directly using token-derived values
-    indent_xml = f'<w:ind {nsdecls("w")} w:left="{left_indent}" w:hanging="{hanging_indent}"/>'
-    pPr.append(parse_xml(indent_xml))
-    
-    # Apply consistent styling to all runs
-    for run in bullet_para.runs:
-        if "fontFamily" in docx_styles.get("body", {}):
-            run.font.name = docx_styles["body"]["fontFamily"]
-        if "fontSizePt" in docx_styles.get("body", {}):
-            run.font.size = Pt(docx_styles["body"]["fontSizePt"])
-    
-    # Apply spacing after if specified
-    if "spaceAfterPt" in bullet_config:
-        bullet_para.paragraph_format.space_after = Pt(bullet_config["spaceAfterPt"])
-    
-    logger.info(f"Applied consistent bullet point styling to: {str(text)[:30]}...")
+    logger.info(f"Applied MR_BulletPoint style to: {str(text)[:30]}...")
     return bullet_para
 
 def add_section_header(doc, header_text, docx_styles):
     """Adds a consistently styled section header with box styling."""
-    # Add section header
-    header_para = doc.add_paragraph(header_text, style='SectionHeader')
-    _apply_paragraph_style(header_para, "heading2", docx_styles)
+    # Add section header with our custom style
+    header_para = doc.add_paragraph(style='MR_SectionHeader')
     
-    # Apply box styling to the section header
-    try:
-        StyleEngine.apply_docx_section_header_box_style(header_para)
-        logger.info(f"Successfully applied DOCX section header box styling")
-    except Exception as e:
-        logger.warning(f"Error applying box styling to section header: {e}")
+    # Add the text as a Run with proper formatting
+    run = header_para.add_run(header_text.upper())
+    # Font properties like bold, size, color are handled by 'MR_SectionHeader' style.
+    # run.bold = True # This is handled by the style
+
+    # Indentation and spacing are handled by the 'MR_SectionHeader' style.
+    # Removed direct paragraph_format settings for left_indent, first_line_indent, space_after.
     
-    # Add proper spacing after section header
-    if "marginBottom" in docx_styles.get("heading2", {}):
-        header_para.paragraph_format.space_after = Pt(docx_styles["heading2"]["marginBottom"])
+    # Directly apply border and background using XML to the paragraph properties (pPr)
+    # This is the most reliable way to ensure Word displays them correctly,
+    # and aligns with previous successful fixes.
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls # w, etc.
     
+    tokens = StyleEngine.load_tokens() # Load if needed for specific values not in structured_tokens
+    structured_tokens = StyleEngine.get_structured_tokens()
+    section_tokens = structured_tokens.get("sectionHeader", {})
+    section_docx = section_tokens.get("docx", {})
+
+    pPr = header_para._p.get_or_add_pPr()
+    
+    # Remove any existing border and shading elements from pPr to prevent conflicts
+    for border_el in pPr.xpath('./w:pBdr'):
+        pPr.remove(border_el)
+    for shading_el in pPr.xpath('./w:shd'):
+        pPr.remove(shading_el)
+    
+    # Add single bottom border
+    # Ensure border color and size are correctly fetched from tokens
+    border_color_hex = section_docx.get("borderColor", "#0D2B7E") # Should be just hex or need parsing
+    # Assuming borderColor token is already a hex string like "0D2B7E" or "#0D2B7E"
+    # If it's "1px solid #0D2B7E", it needs parsing. get_structured_tokens suggests it's "#0D2B7E"
+    
+    final_border_color_str = StyleEngine.hex_to_rgb(border_color_hex) # returns tuple
+    final_border_color_xml_hex = f"{final_border_color_str[0]:02x}{final_border_color_str[1]:02x}{final_border_color_str[2]:02x}"
+
+    border_size_pt_str = section_docx.get("borderSize", "1pt") # e.g. "1pt"
+    border_size_val = int(float(border_size_pt_str.replace("pt", ""))) # Convert to int, e.g. 1
+    border_size_xml = border_size_val * 8 # Eighths of a point for w:sz
+
+    border_xml_str = f'''
+        <w:pBdr {nsdecls("w")}>
+            <w:bottom w:val="single" w:sz="{border_size_xml}" w:space="0" w:color="{final_border_color_xml_hex}"/>
+        </w:pBdr>
+    '''
+    pPr.append(parse_xml(border_xml_str))
+    
+    # Add background color if specified
+    if "backgroundColor" in section_docx:
+        bg_color_hex = section_docx.get("backgroundColor", "#FFFFFF") # e.g. "#FFFFFF"
+        final_bg_color_str = StyleEngine.hex_to_rgb(bg_color_hex) # returns tuple
+        final_bg_color_xml_hex = f"{final_bg_color_str[0]:02x}{final_bg_color_str[1]:02x}{final_bg_color_str[2]:02x}"
+        
+        shading_xml_str = f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="{final_bg_color_xml_hex}"/>'
+        pPr.append(parse_xml(shading_xml_str))
+    
+    logger.info(f"Applied MR_SectionHeader style and direct XML formatting to: {header_text}")
     return header_para
 
 def add_role_description(doc, text, docx_styles):
@@ -325,42 +302,25 @@ def add_role_description(doc, text, docx_styles):
     if not text:
         return None
     
-    role_para = doc.add_paragraph()
-    role_run = role_para.add_run(text)
+    # Use our new custom style
+    role_para = doc.add_paragraph(text, style='MR_RoleDescription')
     
-    # Apply role description styling
-    role_style = docx_styles.get("roleDescription", {})
+    # Indentation and spacing are now handled by the 'MR_RoleDescription' style.
+    # Font properties (italic, size) are also handled by the style.
+    # Removed direct paragraph formatting for left_indent, space_after.
+    # Removed direct XML formatting for indentation (w:ind) and spacing (w:spacing).
     
-    # Apply font properties
-    if "fontFamily" in role_style:
-        role_run.font.name = role_style["fontFamily"]
-    if "fontSizePt" in role_style:
-        role_run.font.size = Pt(role_style["fontSizePt"])
-    if "color" in role_style:
-        r, g, b = role_style["color"]
-        role_run.font.color.rgb = RGBColor(r, g, b)
-    
-    # Apply italic style if specified
-    if role_style.get("fontStyle") == "italic":
-        role_run.italic = True
-    
-    # Set proper indentation to match content alignment
-    if "indentCm" in role_style and float(role_style["indentCm"]) > 0:
-        role_para.paragraph_format.left_indent = Cm(float(role_style["indentCm"]))
-    
-    # Add proper spacing
-    if "spaceAfterPt" in role_style:
-        role_para.paragraph_format.space_after = Pt(role_style["spaceAfterPt"])
-    
+    logger.info(f"Applied MR_RoleDescription style to: {str(text)[:30]}...")
     return role_para
 
-def build_docx(request_id: str, temp_dir: str) -> BytesIO:
+def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
     """
     Build a DOCX file from the resume data for the given request ID.
     
     Args:
         request_id: The unique request ID for the resume
         temp_dir: Directory containing the temp session data files
+        debug: Whether to enable debugging output
         
     Returns:
         BytesIO object containing the DOCX file data
@@ -368,6 +328,7 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
     try:
         logger.info(f"Building DOCX for request ID: {request_id}")
         logger.info(f"Temp directory path: {temp_dir}")
+        logger.info(f"Debug mode: {debug}")
         
         # Check for files related to this request_id
         try:
@@ -393,7 +354,7 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
         doc = Document()
         
         # Create custom document styles
-        _create_document_styles(doc, docx_styles)
+        custom_styles = _create_document_styles(doc, docx_styles)
         
         # Configure page margins
         section = doc.sections[0]
@@ -572,8 +533,7 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
                 summary_header = add_section_header(doc, "PROFESSIONAL SUMMARY", docx_styles)
                 
                 # Add summary content
-                summary_para = doc.add_paragraph(summary_text)
-                _apply_paragraph_style(summary_para, "body", docx_styles)
+                summary_para = doc.add_paragraph(summary_text, style='MR_SummaryText')
                 
                 # Space after section
                 doc.add_paragraph("").paragraph_format.space_after = Pt(6)
@@ -753,58 +713,58 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
                     logger.info("Processing skills as inline list with commas")
                     # Handle skills as a comma-separated list on a single line
                     skills_text = ", ".join([str(skill) for skill in skills_content])
-                    skills_para = doc.add_paragraph(skills_text)
-                    _apply_paragraph_style(skills_para, "body", docx_styles)
+                    skills_para = doc.add_paragraph(skills_text, style='MR_SkillList')
+                    logger.info(f"Applied MR_SkillList style to skills list")
                 elif isinstance(skills_content, dict):
                     logger.info("Processing skills as dict")
                     # Handle skills as dictionary with categories
                     for category, skill_list in skills_content.items():
                         # Add category as subheading
-                        category_para = doc.add_paragraph(category.upper())
-                        _apply_paragraph_style(category_para, "heading3", docx_styles)
+                        category_para = doc.add_paragraph(category.upper(), style='MR_SkillCategory')
+                        logger.info(f"Applied MR_SkillCategory style to category: {category}")
                         
                         # Add skills in this category as a comma-separated list
                         if isinstance(skill_list, list):
                             skills_text = ", ".join([str(skill) for skill in skill_list])
-                            skills_para = doc.add_paragraph(skills_text)
-                            _apply_paragraph_style(skills_para, "body", docx_styles)
+                            skills_para = doc.add_paragraph(skills_text, style='MR_SkillList')
+                            logger.info(f"Applied MR_SkillList style to skills in category: {category}")
                         else:
                             # Not a list, just add as text
-                            skill_para = doc.add_paragraph(str(skill_list))
-                            _apply_paragraph_style(skill_para, "body", docx_styles)
+                            skill_para = doc.add_paragraph(str(skill_list), style='MR_SkillList')
+                            logger.info(f"Applied MR_SkillList style to non-list skills in category: {category}")
                 else:
                     logger.info("Processing skills as string")
                     # Handle skills as string or any other type
-                    skills_para = doc.add_paragraph(str(skills_content))
-                    _apply_paragraph_style(skills_para, "body", docx_styles)
+                    skills_para = doc.add_paragraph(str(skills_content), style='MR_SkillList')
+                    logger.info(f"Applied MR_SkillList style to skills string")
             elif isinstance(skills, dict):
                 logger.info("Processing skills dict directly")
                 # Direct display of skills object if it doesn't have "skills" key
                 for category, skill_list in skills.items():
                     # Add category as subheading
-                    category_para = doc.add_paragraph(category.upper())
-                    _apply_paragraph_style(category_para, "heading3", docx_styles)
+                    category_para = doc.add_paragraph(category.upper(), style='MR_SkillCategory')
+                    logger.info(f"Applied MR_SkillCategory style to category: {category}")
                     
                     # Add skills in this category as a comma-separated list
                     if isinstance(skill_list, list):
                         skills_text = ", ".join([str(skill) for skill in skill_list])
-                        skills_para = doc.add_paragraph(skills_text)
-                        _apply_paragraph_style(skills_para, "body", docx_styles)
+                        skills_para = doc.add_paragraph(skills_text, style='MR_SkillList')
+                        logger.info(f"Applied MR_SkillList style to skills in category: {category}")
                     else:
                         # Not a list, just add as text
-                        skill_para = doc.add_paragraph(str(skill_list))
-                        _apply_paragraph_style(skill_para, "body", docx_styles)
+                        skill_para = doc.add_paragraph(str(skill_list), style='MR_SkillList')
+                        logger.info(f"Applied MR_SkillList style to non-list skills in category: {category}")
             elif isinstance(skills, list):
                 logger.info("Processing skills as top-level list")
                 # Handle the case where skills is a list directly
                 skills_text = ", ".join([str(skill) for skill in skills])
-                skills_para = doc.add_paragraph(skills_text)
-                _apply_paragraph_style(skills_para, "body", docx_styles)
+                skills_para = doc.add_paragraph(skills_text, style='MR_SkillList')
+                logger.info(f"Applied MR_SkillList style to top-level skills list")
             else:
                 logger.info(f"Processing skills as fallback type: {type(skills)}")
                 # Fallback for any other format
-                skills_para = doc.add_paragraph(str(skills))
-                _apply_paragraph_style(skills_para, "body", docx_styles)
+                skills_para = doc.add_paragraph(str(skills), style='MR_SkillList')
+                logger.info(f"Applied MR_SkillList style to fallback skills content")
         
         # ------ PROJECTS SECTION ------
         logger.info("Processing Projects section...")
@@ -892,14 +852,42 @@ def build_docx(request_id: str, temp_dir: str) -> BytesIO:
                 
                 doc.add_paragraph("").paragraph_format.space_after = Pt(space_after)
         
-        # Save the document to BytesIO
+        # Save DOCX to BytesIO
         logger.info("Saving DOCX to BytesIO...")
-        docx_bytes = BytesIO()
-        doc.save(docx_bytes)
-        docx_bytes.seek(0)
+        output = BytesIO()
+        doc.save(output)
+        output.seek(0)
+        
+        # Generate debug report if requested
+        if debug:
+            try:
+                from utils.docx_debug import generate_debug_report
+                import json
+                
+                # Generate debug report
+                debug_report = generate_debug_report(doc)
+                
+                # Save debug report to file
+                debug_path = Path(__file__).parent.parent / f'debug_{request_id}.json'
+                with open(debug_path, 'w') as f:
+                    json.dump(debug_report, f, indent=2)
+                
+                logger.info(f"Debug report saved to {debug_path}")
+                
+                # Also save a copy of the DOCX for inspection
+                debug_docx_path = Path(__file__).parent.parent / f'debug_{request_id}.docx'
+                with open(debug_docx_path, 'wb') as f:
+                    f.write(output.getvalue())
+                
+                logger.info(f"Debug DOCX saved to {debug_docx_path}")
+                
+                # Reset the output buffer position
+                output.seek(0)
+            except Exception as e:
+                logger.error(f"Error generating debug report: {e}")
         
         logger.info(f"Successfully built DOCX for request ID: {request_id}")
-        return docx_bytes
+        return output
     
     except Exception as e:
         # Enhanced error reporting

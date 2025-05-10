@@ -63,11 +63,25 @@
   "role-description-indent-cm": "0",
   "tab-stop-position-cm": "15",
   "content-left-alignment": "0",
-  "content-left-margin": "0",
+  "content-left-margin": "0.5em",
+  "docx-content-left-indent-cm": "0.5",
   "section-content-padding-left": "0",
   "role-description-padding-left": "0",
   "section-box-margin-bottom": "0.5rem",
   "position-line-margin-bottom": "0.15rem",
   "section-spacing-vertical": "0.8rem",
-  "bullet-spacing-after": "0.15rem"
+  "bullet-spacing-after": "0.15rem",
+  
+  "docx-section-header-indent-cm": "0",
+  "docx-company-name-indent-cm": "0",
+  "docx-role-description-indent-cm": "0",
+  "docx-bullet-left-indent-cm": "0",
+  "docx-bullet-hanging-indent-cm": "0",
+  "docx-section-spacing-pt": "12",
+  "docx-bullet-spacing-pt": "6",
+  "docx-paragraph-spacing-pt": "6",
+  "docx-section-header-font-size-pt": "14",
+  "docx-company-font-size-pt": "11",
+  "docx-role-font-size-pt": "11",
+  "docx-bullet-font-size-pt": "11"
 } 

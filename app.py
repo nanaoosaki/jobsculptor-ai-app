@@ -123,11 +123,14 @@ def download_docx_resume(request_id):
         # Get temp directory path
         temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_session_data')
         
+        # Check for debug flag
+        debug = request.args.get('debug', '').lower() == 'true'
+        
         # Import the docx builder
         from utils.docx_builder import build_docx
         
-        # Build the DOCX file
-        docx_bytes = build_docx(request_id, temp_dir)
+        # Build the DOCX file with debug flag
+        docx_bytes = build_docx(request_id, temp_dir, debug=debug)
         
         # Set the output filename
         filename = f"tailored_resume_{request_id}.docx"
