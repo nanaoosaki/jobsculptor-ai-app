@@ -105,6 +105,108 @@ With this fix, all alignment issues in the DOCX output have been resolved:
 
 These improvements create a professional, polished appearance for the DOCX output that matches the quality of the HTML and PDF outputs.
 
+## Unified Margin Control in DOCX Output (2025-07-XX)
+
+### Current Implementation Analysis
+
+We've successfully implemented two different approaches for controlling alignment in DOCX:
+
+1. **Left Alignment Control**:
+   - Uses style-based approach through custom styles (`MR_SectionHeader`, `MR_Content`, etc.)
+   - All left indentation controlled by design tokens:
+     ```json
+     "docx-section-header-indent-cm": "0",
+     "docx-company-name-indent-cm": "0",
+     "docx-role-description-indent-cm": "0",
+     "docx-bullet-left-indent-cm": "0"
+     ```
+   - Applied consistently through StyleEngine to all paragraph styles
+
+2. **Right Alignment Control**:
+   - Uses dynamic calculation based on page dimensions
+   - Tab stops positioned relative to page width, margins, and content area
+   - Implemented in `format_right_aligned_pair` function
+   - Calculates position using:
+     ```python
+     page_width_emu = section.page_width
+     left_margin_emu = section.left_margin
+     right_margin_emu = section.right_margin
+     content_width = page_width_emu - (left_margin_emu + right_margin_emu)
+     ```
+
+### Unified Margin Control Strategy
+
+To make future margin adjustments easier, we can implement a unified approach:
+
+1. **Centralized Margin Control**:
+   Add new design tokens for global margin control:
+   ```json
+   {
+     "docx-global-left-margin-cm": "2.0",
+     "docx-global-right-margin-cm": "2.0"
+   }
+   ```
+
+2. **Implementation Points**:
+   - **Left Alignment**: All left indentation tokens would be calculated relative to `docx-global-left-margin-cm`
+   - **Right Alignment**: Tab stop calculation would use `docx-global-right-margin-cm` instead of extracting from section properties
+   - **Page Setup**: Section margins would be set using these global values
+
+3. **Adjustment Process**:
+   To adjust margins, simply update the global margin tokens and:
+   1. Run `python tools/generate_tokens.py` to update style definitions
+   2. Restart the Flask server
+   3. Generate a new document to verify changes
+
+### Benefits of This Approach
+
+1. **Single Source of Truth**: 
+   - All margin-related values controlled by two tokens
+   - No need to modify multiple style definitions or code paths
+
+2. **Consistent Behavior**:
+   - Left and right margins will always be symmetrical
+   - All content elements will respect the same margins
+
+3. **Easy Maintenance**:
+   - Simple token updates instead of code changes
+   - No need to understand the underlying DOCX structure
+
+4. **Predictable Results**:
+   - Changes will affect all document elements consistently
+   - No risk of misaligned elements
+
+### Implementation Checklist
+
+When implementing margin changes:
+
+1. **Update Design Tokens**:
+   - Modify `docx-global-left-margin-cm` and `docx-global-right-margin-cm` in `design_tokens.json`
+
+2. **Regenerate Styles**:
+   ```bash
+   python tools/generate_tokens.py
+   ```
+
+3. **Restart Services**:
+   - Restart Flask server to apply changes
+
+4. **Verify Changes**:
+   - Generate test document
+   - Check all elements respect new margins:
+     - Section headers
+     - Company/role information
+     - Bullet points
+     - Right-aligned dates/locations
+     - Professional summary
+     - Skills sections
+
+5. **Document Updates**:
+   - Record changes in version history
+   - Update any relevant documentation
+
+This unified approach makes margin adjustments straightforward and maintainable, without requiring deep knowledge of the DOCX formatting architecture.
+
 ## Revised Workflow for Styling Changes
 
 | Step | Action | Command / Tool |

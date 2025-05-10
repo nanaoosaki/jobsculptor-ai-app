@@ -83,5 +83,7 @@
   "docx-section-header-font-size-pt": "14",
   "docx-company-font-size-pt": "11",
   "docx-role-font-size-pt": "11",
-  "docx-bullet-font-size-pt": "11"
+  "docx-bullet-font-size-pt": "11",
+  "docx-global-left-margin-cm": "2.0",
+  "docx-global-right-margin-cm": "2.0"
 } 

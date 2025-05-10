@@ -42,6 +42,12 @@ class StyleEngine:
         
         # Create structured tokens dictionary
         structured = {
+            "global": {
+                "margins": {
+                    "leftCm": tokens.get("docx-global-left-margin-cm", "2.0"),
+                    "rightCm": tokens.get("docx-global-right-margin-cm", "2.0")
+                }
+            },
             "sectionHeader": {
                 "base": {
                     "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif"),

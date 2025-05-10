@@ -192,42 +192,50 @@ def format_right_aligned_pair(doc, left_text, right_text, left_style, right_styl
         # Apply styling for the left text (always bold)
         left_run.bold = True
     
-    # Dynamically calculate tab stop position for right alignment
+    # Get global margin values from design tokens
+    structured_tokens = StyleEngine.get_structured_tokens()
+    global_margins = structured_tokens.get("global", {}).get("margins", {})
+    global_left_margin_cm = float(global_margins.get("leftCm", "2.0"))
+    global_right_margin_cm = float(global_margins.get("rightCm", "2.0"))
+    
+    # Fallback to section properties if needed for compatibility
     section = doc.sections[0]
     page_width_emu = section.page_width if section.page_width is not None else 0
-    left_margin_emu = section.left_margin if section.left_margin is not None else 0
-    right_margin_emu = section.right_margin if section.right_margin is not None else 0
-
-    # Content width calculation: This is the width of the printable area.
-    # The tab stop is set from the paragraph's left edge (which is at the left margin due to MR_Content style).
-    # So, the tab position should be this content width.
-    content_width_emu = page_width_emu - left_margin_emu - right_margin_emu
     
-    if content_width_emu <= 0: # Fallback if page dimensions are unusual
-        logger.warning(f"Calculated non-positive content_width_emu ({content_width_emu}). Defaulting tab stop to 19cm.")
-        tab_position_cm_val = 19.0 # A reasonable default for A4-like pages
+    # Convert page width from EMU to cm
+    if page_width_emu > 0:
+        page_width_cm = page_width_emu / 360000.0  # 1 cm = 360000 EMUs
     else:
-        # 1 cm = 360000 EMUs. (EMU = English Metric Unit)
-        tab_position_cm_val = content_width_emu / 360000.0
+        # Fallback to A4 width if page_width not available
+        page_width_cm = 21.0  # Standard A4 width
     
-    logger.info(f"Dynamic tab stop: PW_EMU={page_width_emu}, LM_EMU={left_margin_emu}, RM_EMU={right_margin_emu}, ContentW_EMU={content_width_emu}, TabPos_CM={tab_position_cm_val:.2f}")
-
+    # Calculate content width in cm using global margins
+    content_width_cm = page_width_cm - global_left_margin_cm - global_right_margin_cm
+    
+    # Set tab position at the right edge of content area
+    if content_width_cm <= 0:  # Fallback if dimensions are invalid
+        logger.warning(f"Calculated non-positive content_width_cm ({content_width_cm}). Defaulting tab stop to 16cm.")
+        tab_position_cm = 16.0  # A reasonable default
+    else:
+        tab_position_cm = content_width_cm
+    
+    logger.info(f"Global margins: L={global_left_margin_cm}cm, R={global_right_margin_cm}cm, PW={page_width_cm:.2f}cm, Content={content_width_cm:.2f}cm, TabPos={tab_position_cm:.2f}cm")
+    
     # Remove any existing tab stops to prevent conflicts
     para.paragraph_format.tab_stops.clear_all()
     
-    # Add the new tab stop
-    # Ensure tab_position_cm_val is not negative, which can happen if margins are larger than page_width
-    if tab_position_cm_val > 0:
-        para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position_cm_val), WD_TAB_ALIGNMENT.RIGHT)
+    # Add the new tab stop at the calculated position
+    if tab_position_cm > 0:
+        para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position_cm), WD_TAB_ALIGNMENT.RIGHT)
     else:
-        logger.warning(f"Calculated tab position {tab_position_cm_val:.2f}cm is not positive. Skipping tab stop addition.")
-
+        logger.warning(f"Calculated tab position {tab_position_cm:.2f}cm is not positive. Skipping tab stop addition.")
+    
     # Add right-aligned text with tab
     if right_text:
         para.add_run('\t')  # Add tab
         right_run = para.add_run(right_text)
     
-    # Spacing and indentation are now handled by the 'MR_Content' style.
+    # Spacing and indentation are handled by the 'MR_Content' style
     return para
 
 def create_bullet_point(doc, text, docx_styles):
@@ -372,13 +380,23 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         # Create custom document styles
         custom_styles = _create_document_styles(doc, docx_styles)
         
-        # Configure page margins
+        # Configure page margins using global margin tokens
         section = doc.sections[0]
         page_config = docx_styles.get("page", {})
+        
+        # Get margin values from global tokens
+        structured_tokens = StyleEngine.get_structured_tokens()
+        global_margins = structured_tokens.get("global", {}).get("margins", {})
+        global_left_margin_cm = float(global_margins.get("leftCm", "2.0"))
+        global_right_margin_cm = float(global_margins.get("rightCm", "2.0"))
+        
+        # Set margins from tokens and style config
         section.top_margin = Cm(page_config.get("marginTopCm", 1.0))
         section.bottom_margin = Cm(page_config.get("marginBottomCm", 1.0))
-        section.left_margin = Cm(page_config.get("marginLeftCm", 2.0))
-        section.right_margin = Cm(page_config.get("marginRightCm", 2.0))
+        section.left_margin = Cm(global_left_margin_cm)  # Use global token
+        section.right_margin = Cm(global_right_margin_cm)  # Use global token
+        
+        logger.info(f"Applied document margins from global tokens: Left={global_left_margin_cm}cm, Right={global_right_margin_cm}cm")
         
         # ------ CONTACT SECTION ------
         logger.info("Processing Contact section...")

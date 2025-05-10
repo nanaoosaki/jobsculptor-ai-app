@@ -77,13 +77,17 @@ def generate_docx_style_mappings():
         docx_role_font_size = int(tokens.get("docx-role-font-size-pt", "11"))
         docx_bullet_font_size = int(tokens.get("docx-bullet-font-size-pt", "11"))
         
+        # Get global margin values
+        global_left_margin_cm = float(tokens.get("docx-global-left-margin-cm", "2.0"))
+        global_right_margin_cm = float(tokens.get("docx-global-right-margin-cm", "2.0"))
+        
         # Enhanced mapping with more styling options
         docx_styles = {
             "page": {
                 "marginTopCm": float(tokens.get("pageMarginVertical", "0.8cm").replace("cm", "")),
                 "marginBottomCm": float(tokens.get("pageMarginVertical", "0.8cm").replace("cm", "")),
-                "marginLeftCm": float(tokens.get("pageMarginHorizontal", "0.8cm").replace("cm", "")),
-                "marginRightCm": float(tokens.get("pageMarginHorizontal", "0.8cm").replace("cm", ""))
+                "marginLeftCm": global_left_margin_cm,  # Use global left margin
+                "marginRightCm": global_right_margin_cm  # Use global right margin
             },
             "global": {
                 "fontFamily": tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip(),

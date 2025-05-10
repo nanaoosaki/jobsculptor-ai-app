@@ -2,8 +2,8 @@
   "page": {
     "marginTopCm": 0.8,
     "marginBottomCm": 0.8,
-    "marginLeftCm": 0.8,
-    "marginRightCm": 0.8
+    "marginLeftCm": 2.5,
+    "marginRightCm": 2.5
   },
   "global": {
     "fontFamily": "Calibri",
