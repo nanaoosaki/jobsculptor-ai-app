@@ -54,6 +54,58 @@ To complete the DOCX styling refactoring, we need to:
    - Test with real resume data across various content types
    - Document the final approach for consistency across all output formats
 
+## DOCX Right Alignment Fix - 2025-05-10
+
+### Right-Aligned Text Inconsistency
+
+After implementing the left alignment fixes, an issue with right-aligned content (dates and locations) was observed. These elements showed inconsistent positioning, with some appearing at different positions than others, creating an unprofessional appearance.
+
+**Root Cause:**
+- Right-aligned elements in DOCX files are implemented using tab stops
+- The tab stop position was not consistently defined through a dedicated design token
+- Different parts of the code were using different tab stop positions
+
+### Implementation Solution
+
+Building on the successful style-first approach used for left alignment, we implemented a consistent solution for right alignment:
+
+1. **New Design Token:**
+   - Added `docx-right-tab-stop-position-cm`: `13` to `design_tokens.json`
+   - This centralizes the control of right-aligned tab stops in a single place
+
+2. **Updated Tab Stop Handling:**
+   - Modified `format_right_aligned_pair` function to use the new design token directly:
+   ```python
+   # Get the tab stop position from the new dedicated design token
+   tokens = StyleEngine.load_tokens()
+   tab_position = float(tokens.get("docx-right-tab-stop-position-cm", "13"))
+   
+   # Remove any existing tab stops to prevent conflicts
+   para.paragraph_format.tab_stops.clear_all()
+   
+   # Add the new tab stop
+   para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position), WD_TAB_ALIGNMENT.RIGHT)
+   ```
+
+3. **Eliminated Legacy Tab Stop Handling:**
+   - Removed the old code that used the `tabStopPosition` from `docx_styles["global"]`
+   - Updated `generate_tokens.py` to use our new token in `docx_styles`
+
+4. **Verified Results:**
+   - Created a test script `test_right_alignment.py` to generate sample content
+   - Verified that dates and locations consistently align at the same position
+
+This implementation maintains the same style-first methodology used throughout the DOCX styling refactoring, ensuring that all formatting values are driven by centralized design tokens for consistency and easy customization.
+
+### Current Status
+
+With this fix, all alignment issues in the DOCX output have been resolved:
+1. Left alignment is consistent across all content elements (left edge)
+2. Right alignment is consistent for all dates and locations (right edge)
+3. The style-first approach ensures reliable and customizable formatting
+
+These improvements create a professional, polished appearance for the DOCX output that matches the quality of the HTML and PDF outputs.
+
 ## Revised Workflow for Styling Changes
 
 | Step | Action | Command / Tool |

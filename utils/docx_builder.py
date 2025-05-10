@@ -193,9 +193,9 @@ def format_right_aligned_pair(doc, left_text, right_text, left_style, right_styl
         left_run.bold = True
     
     # Add tab stop for right alignment - use a consistent value from design tokens
-    tab_position = 15  # Default 15cm
-    if "tabStopPosition" in docx_styles.get("global", {}):
-        tab_position = docx_styles["global"]["tabStopPosition"]
+    # Get the tab stop position from the new dedicated design token
+    tokens = StyleEngine.load_tokens()
+    tab_position = float(tokens.get("docx-right-tab-stop-position-cm", "13"))
     
     # Remove any existing tab stops to prevent conflicts
     para.paragraph_format.tab_stops.clear_all()

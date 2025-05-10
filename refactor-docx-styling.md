@@ -776,3 +776,43 @@ All elements share the same left indentation value (`0 cm`), creating a clean, p
 4. **Style Extension**: Consider extending the style system for other formatting properties (spacing, fonts, colors)
 
 This implementation establishes a solid foundation for consistent DOCX formatting going forward, making it easy to maintain and extend the document styling.
+
+## Implementation Details for Right-Alignment Fix (YYYY-MM-DD)
+
+Based on the same style-first approach we used for left alignment, we implemented a solution for consistent right alignment of dates and locations in the DOCX output:
+
+**Observed Issue:**
+- Dates and location text in the resume were inconsistently aligned on the right side
+- These elements are implemented using tab stops in the DOCX format, but the tab stop position wasn't properly defined
+
+**Implementation Steps:**
+
+1. **Added a Dedicated Design Token for Tab Stop Position:**
+   - Created a new token in `design_tokens.json`: `"docx-right-tab-stop-position-cm": "13"`
+   - This provides a single source of truth for the tab stop position used for right alignment
+
+2. **Updated the `format_right_aligned_pair` Function:**
+   - Modified the function to read the tab stop position directly from our design tokens:
+   ```python
+   # Get the tab stop position from the new dedicated design token
+   tokens = StyleEngine.load_tokens()
+   tab_position = float(tokens.get("docx-right-tab-stop-position-cm", "13"))
+   
+   # Remove any existing tab stops to prevent conflicts
+   para.paragraph_format.tab_stops.clear_all()
+   
+   # Add the new tab stop
+   para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position), WD_TAB_ALIGNMENT.RIGHT)
+   ```
+   - This change ensures consistent right alignment across all elements in the document
+
+3. **Removed Legacy Tab Stop Position Handling:**
+   - Removed the old code that used the `tabStopPosition` from `docx_styles["global"]`
+   - This simplifies the code and ensures all alignment values come from design tokens
+
+**Benefits of This Approach:**
+1. **Consistent Alignment:** All date and location elements now align at the same position
+2. **Single Source of Truth:** The tab stop position is centralized in the design tokens
+3. **Easy Customization:** Changing the right alignment position only requires updating the design token value
+
+This change maintains the same style-first methodology used for left alignment, ensuring that all formatting is driven by tokens and applied consistently throughout the document.

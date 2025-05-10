@@ -91,7 +91,7 @@ def generate_docx_style_mappings():
                 "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
                 "color": hex_to_rgb(tokens.get("textColor", "#333")),
                 "backgroundColor": hex_to_rgb(tokens.get("backgroundColor", "#ffffff")),
-                "tabStopPosition": float(tokens.get("tab-stop-position-cm", "15")),
+                "tabStopPosition": float(tokens.get("docx-right-tab-stop-position-cm", "13")),
                 "contentIndentCm": docx_company_indent  # Use the company indent as the global base
             },
             "heading1": {

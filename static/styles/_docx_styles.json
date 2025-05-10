@@ -19,8 +19,8 @@
       255,
       255
     ],
-    "tabStopPosition": 15.0,
-    "contentIndentCm": 0.5
+    "tabStopPosition": 13.0,
+    "contentIndentCm": 0.0
   },
   "heading1": {
     "fontFamily": "Calibri",
@@ -35,13 +35,13 @@
   },
   "heading2": {
     "fontFamily": "Calibri",
-    "fontSizePt": 12,
+    "fontSizePt": 14,
     "color": [
       0,
       0,
       102
     ],
-    "spaceAfterPt": 6,
+    "spaceAfterPt": 12,
     "bold": true,
     "backgroundColor": [
       255,
@@ -57,13 +57,13 @@
     "paddingVertical": 1.0,
     "paddingHorizontal": 12.0,
     "marginBottom": 8.0,
-    "indentCm": 0.5
+    "indentCm": 0.0
   },
   "heading3": {
     "fontFamily": "Calibri",
     "fontSizePt": 11,
     "bold": true,
-    "spaceAfterPt": 4
+    "spaceAfterPt": 6
   },
   "body": {
     "fontFamily": "Calibri",
@@ -74,16 +74,16 @@
       51,
       51
     ],
-    "marginLeft": 0.5,
-    "indentCm": 0.5
+    "spaceAfterPt": 6,
+    "indentCm": 0.0
   },
   "bulletList": {
     "fontFamily": "Calibri",
     "fontSizePt": 11,
-    "indentCm": 1.25,
-    "hangingIndentCm": 0.25,
+    "indentCm": 0.0,
+    "hangingIndentCm": 0.0,
     "bulletCharacter": "\\2022",
-    "spaceAfterPt": 1.7999999999999998,
+    "spaceAfterPt": 6,
     "color": [
       58,
       58,
@@ -93,7 +93,7 @@
   "roleDescription": {
     "fontFamily": "Calibri",
     "fontSizePt": 11,
-    "indentCm": 0.5,
+    "indentCm": 0.0,
     "spaceAfterPt": 6,
     "color": [
       51,
@@ -103,10 +103,35 @@
     "fontStyle": "italic"
   },
   "positionBar": {
-    "spaceAfterPt": 1.7999999999999998,
-    "indentCm": 0.5
+    "spaceAfterPt": 6,
+    "indentCm": 0.0
   },
   "sectionSpacing": {
-    "spacingCm": 0.31496062992125984
+    "spacingPt": 12
+  },
+  "styles": {
+    "MR_SectionHeader": {
+      "fontSizePt": 14,
+      "indentCm": 0.0,
+      "spaceAfterPt": 12,
+      "bold": true
+    },
+    "MR_Content": {
+      "fontSizePt": 11,
+      "indentCm": 0.0,
+      "spaceAfterPt": 6
+    },
+    "MR_RoleDescription": {
+      "fontSizePt": 11,
+      "indentCm": 0.0,
+      "spaceAfterPt": 6,
+      "italic": true
+    },
+    "MR_BulletPoint": {
+      "fontSizePt": 11,
+      "indentCm": 0.0,
+      "hangingIndentCm": 0.0,
+      "spaceAfterPt": 6
+    }
   }
 }
