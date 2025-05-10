@@ -777,42 +777,76 @@ All elements share the same left indentation value (`0 cm`), creating a clean, p
 
 This implementation establishes a solid foundation for consistent DOCX formatting going forward, making it easy to maintain and extend the document styling.
 
-## Implementation Details for Right-Alignment Fix (YYYY-MM-DD)
+## Failed Attempt: Right-Alignment with Fixed Tab Stop (YYYY-MM-DD - Fill in Current Date)
 
-Based on the same style-first approach we used for left alignment, we implemented a solution for consistent right alignment of dates and locations in the DOCX output:
+**Observed Issue (Post Previous Fix):**
+The attempt to fix right-alignment for dates/locations using a dedicated design token (`docx-right-tab-stop-position-cm` set to "13") did not result in the desired alignment. The dates and locations were still not aligned with the right page margin or the visual right edge of the section headers.
 
-**Observed Issue:**
-- Dates and location text in the resume were inconsistently aligned on the right side
-- These elements are implemented using tab stops in the DOCX format, but the tab stop position wasn't properly defined
+**Root Cause Analysis of Failure:**
+1.  **Static Tab Value:** Using a fixed absolute value (e.g., 13cm) for the right tab stop does not dynamically adapt to the document's actual page width and margins. For example, on an A4 page (21cm wide) with 0.8cm left/right margins, the content area is 19.4cm wide. A tab stop at 13cm from the left margin would not reach the right margin.
+2.  **Misinterpretation of Alignment Target:** The fixed value might have been chosen without precise calculation of the target right margin based on actual page dimensions used in the DOCX generation.
 
-**Implementation Steps:**
+This indicates that a dynamic calculation of the tab stop position, based on the document's section properties (page width, left margin, right margin), is necessary.
 
-1. **Added a Dedicated Design Token for Tab Stop Position:**
-   - Created a new token in `design_tokens.json`: `"docx-right-tab-stop-position-cm": "13"`
-   - This provides a single source of truth for the tab stop position used for right alignment
+## Revised Plan for Right-Alignment (YYYY-MM-DD - Fill in Current Date)
 
-2. **Updated the `format_right_aligned_pair` Function:**
-   - Modified the function to read the tab stop position directly from our design tokens:
-   ```python
-   # Get the tab stop position from the new dedicated design token
-   tokens = StyleEngine.load_tokens()
-   tab_position = float(tokens.get("docx-right-tab-stop-position-cm", "13"))
-   
-   # Remove any existing tab stops to prevent conflicts
-   para.paragraph_format.tab_stops.clear_all()
-   
-   # Add the new tab stop
-   para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position), WD_TAB_ALIGNMENT.RIGHT)
-   ```
-   - This change ensures consistent right alignment across all elements in the document
+**Goal:** Ensure dates and locations in `format_right_aligned_pair` are precisely aligned to the right page margin, consistent with the visual right edge of full-width section headers.
 
-3. **Removed Legacy Tab Stop Position Handling:**
-   - Removed the old code that used the `tabStopPosition` from `docx_styles["global"]`
-   - This simplifies the code and ensures all alignment values come from design tokens
+**Approach:** Dynamically calculate the right tab stop position based on the actual page dimensions of the DOCX document.
 
-**Benefits of This Approach:**
-1. **Consistent Alignment:** All date and location elements now align at the same position
-2. **Single Source of Truth:** The tab stop position is centralized in the design tokens
-3. **Easy Customization:** Changing the right alignment position only requires updating the design token value
+1.  **Modify `format_right_aligned_pair` in `utils/docx_builder.py`:**
+    *   The function takes the `doc` object as an argument.
+    *   Access `doc.sections[0]` to get the current section's properties.
+    *   Calculate the content width: `content_width_emu = section.page_width - section.left_margin - section.right_margin`. (Note: these properties are in EMUs).
+    *   Convert this `content_width_emu` to centimeters, as the `MR_Content` style (which this paragraph uses) has a `left_indent` of 0 relative to the page margin. This content width will be the correct position for the right tab stop from the paragraph's start.
+        *   `1 cm = 360000 EMU`.
+        *   `tab_position_cm_val = content_width_emu / 360000.0`.
+    *   Use `Cm(tab_position_cm_val)` when adding the tab stop: `para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position_cm_val), WD_TAB_ALIGNMENT.RIGHT)`.
+    *   Remove the reliance on the `docx-right-tab-stop-position-cm` design token for this calculation.
 
-This change maintains the same style-first methodology used for left alignment, ensuring that all formatting is driven by tokens and applied consistently throughout the document.
+2.  **Testing:**
+    *   Utilize the existing `test_right_alignment.py` script to generate a test document.
+    *   Visually inspect `right_alignment_test.docx` to confirm that dates and locations are aligned flush with the right margin.
+
+3.  **Documentation & Cleanup (If Successful):**
+    *   Update `refactor-docx-styling.md` and `styling_changes.md` with the details of the successful implementation.
+    *   Remove the now-obsolete `docx-right-tab-stop-position-cm` token from `design_tokens.json`.
+    *   Update `tools/generate_tokens.py` to remove any references or usage of the obsolete token (specifically where it might have been used for `docx_styles["global"]["tabStopPosition"]`).
+
+This dynamic approach ensures that the right alignment correctly adapts to the document's specific layout settings, mirroring the robustness we achieved for left alignment.
+
+## Success: Dynamic Right-Alignment Implementation (YYYY-MM-DD)
+
+Our implementation of the dynamic right-alignment strategy proved successful in testing. The approach dynamically calculates the tab stop position based on the actual page dimensions of the document, ensuring that dates and locations are consistently aligned with the right page margin.
+
+**Key Implementation Components:**
+
+1. **Page Dimensions Extraction:**
+   - The function accesses the document section's properties: `page_width`, `left_margin`, and `right_margin` (all measured in EMUs - English Metric Units).
+   - These values provide the actual document dimensions regardless of page size (A4, Letter, etc.).
+
+2. **Content Width Calculation:**
+   - The printable area width is calculated as: `content_width_emu = page_width_emu - left_margin_emu - right_margin_emu`
+   - This represents the width of the area available for text, from left margin to right margin.
+
+3. **Tab Stop Positioning:**
+   - The content width (in EMUs) is converted to centimeters: `tab_position_cm_val = content_width_emu / 360000.0` (where 360000 EMUs = 1 cm)
+   - This value is used to position the right-aligned tab stop at the right margin edge.
+
+4. **Robust Error Handling:**
+   - Fallback value (19cm) if dimensions are unusual or invalid
+   - Validation to ensure the tab position is positive
+
+**Observed Results:**
+- Dates and locations are precisely aligned with the right page margin
+- Alignment is maintained regardless of content length (short names vs. very long company names)
+- The solution adapts to different page sizes and margin settings
+- The visual alignment matches the right edge of section headers, creating a clean and professional appearance
+
+**Key Benefits Over Fixed Approach:**
+1. **Adaptability:** Works with any page size or margin setting
+2. **Consistency:** Creates a true right-aligned effect regardless of content
+3. **Maintainability:** Removes dependency on hard-coded design token values
+4. **Robustness:** Includes error handling for edge cases
+
+The success of this approach validates our strategy of leveraging document properties directly rather than relying on fixed measurements. This completes our comprehensive solution for consistent alignment throughout the DOCX document, addressing both left and right alignment challenges.

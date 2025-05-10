@@ -192,26 +192,42 @@ def format_right_aligned_pair(doc, left_text, right_text, left_style, right_styl
         # Apply styling for the left text (always bold)
         left_run.bold = True
     
-    # Add tab stop for right alignment - use a consistent value from design tokens
-    # Get the tab stop position from the new dedicated design token
-    tokens = StyleEngine.load_tokens()
-    tab_position = float(tokens.get("docx-right-tab-stop-position-cm", "13"))
+    # Dynamically calculate tab stop position for right alignment
+    section = doc.sections[0]
+    page_width_emu = section.page_width if section.page_width is not None else 0
+    left_margin_emu = section.left_margin if section.left_margin is not None else 0
+    right_margin_emu = section.right_margin if section.right_margin is not None else 0
+
+    # Content width calculation: This is the width of the printable area.
+    # The tab stop is set from the paragraph's left edge (which is at the left margin due to MR_Content style).
+    # So, the tab position should be this content width.
+    content_width_emu = page_width_emu - left_margin_emu - right_margin_emu
     
+    if content_width_emu <= 0: # Fallback if page dimensions are unusual
+        logger.warning(f"Calculated non-positive content_width_emu ({content_width_emu}). Defaulting tab stop to 19cm.")
+        tab_position_cm_val = 19.0 # A reasonable default for A4-like pages
+    else:
+        # 1 cm = 360000 EMUs. (EMU = English Metric Unit)
+        tab_position_cm_val = content_width_emu / 360000.0
+    
+    logger.info(f"Dynamic tab stop: PW_EMU={page_width_emu}, LM_EMU={left_margin_emu}, RM_EMU={right_margin_emu}, ContentW_EMU={content_width_emu}, TabPos_CM={tab_position_cm_val:.2f}")
+
     # Remove any existing tab stops to prevent conflicts
     para.paragraph_format.tab_stops.clear_all()
     
     # Add the new tab stop
-    para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position), WD_TAB_ALIGNMENT.RIGHT)
-    
+    # Ensure tab_position_cm_val is not negative, which can happen if margins are larger than page_width
+    if tab_position_cm_val > 0:
+        para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position_cm_val), WD_TAB_ALIGNMENT.RIGHT)
+    else:
+        logger.warning(f"Calculated tab position {tab_position_cm_val:.2f}cm is not positive. Skipping tab stop addition.")
+
     # Add right-aligned text with tab
     if right_text:
         para.add_run('\t')  # Add tab
         right_run = para.add_run(right_text)
     
     # Spacing and indentation are now handled by the 'MR_Content' style.
-    # Removed direct formatting for left_indent and space_after.
-    # Removed direct XML formatting for indentation and spacing.
-    
     return para
 
 def create_bullet_point(doc, text, docx_styles):

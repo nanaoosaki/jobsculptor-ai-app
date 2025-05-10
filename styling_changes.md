@@ -62,40 +62,39 @@ After implementing the left alignment fixes, an issue with right-aligned content
 
 **Root Cause:**
 - Right-aligned elements in DOCX files are implemented using tab stops
-- The tab stop position was not consistently defined through a dedicated design token
+- Fixed tab stop positions don't adapt to different page dimensions and margin settings
 - Different parts of the code were using different tab stop positions
 
 ### Implementation Solution
 
-Building on the successful style-first approach used for left alignment, we implemented a consistent solution for right alignment:
+Building on the successful style-first approach used for left alignment, we implemented a more advanced solution for right alignment:
 
-1. **New Design Token:**
-   - Added `docx-right-tab-stop-position-cm`: `13` to `design_tokens.json`
-   - This centralizes the control of right-aligned tab stops in a single place
+1. **Dynamic Tab Stop Calculation**
+   - Replaced the static tab stop position with dynamic calculation based on document properties
+   - Extracted actual page width and margins from the document section
+   - Calculated content width as: `page_width - left_margin - right_margin`
+   - Positioned the tab stop at this precise width to align with the right margin
 
-2. **Updated Tab Stop Handling:**
-   - Modified `format_right_aligned_pair` function to use the new design token directly:
-   ```python
-   # Get the tab stop position from the new dedicated design token
-   tokens = StyleEngine.load_tokens()
-   tab_position = float(tokens.get("docx-right-tab-stop-position-cm", "13"))
-   
-   # Remove any existing tab stops to prevent conflicts
-   para.paragraph_format.tab_stops.clear_all()
-   
-   # Add the new tab stop
-   para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position), WD_TAB_ALIGNMENT.RIGHT)
-   ```
+2. **Unit Conversion**
+   - Properly converted internal EMU measurements (1/914400 of an inch) to centimeters
+   - Used formula: `tab_position_cm = content_width_emu / 360000.0`
 
-3. **Eliminated Legacy Tab Stop Handling:**
-   - Removed the old code that used the `tabStopPosition` from `docx_styles["global"]`
-   - Updated `generate_tokens.py` to use our new token in `docx_styles`
+3. **Error Handling**
+   - Added fallback for unusual document dimensions
+   - Implemented validation to ensure positive tab stop positions
+   - Added detailed logging for debugging
 
-4. **Verified Results:**
-   - Created a test script `test_right_alignment.py` to generate sample content
-   - Verified that dates and locations consistently align at the same position
+**Results:**
+- Dates and locations now align perfectly with the right margin
+- Alignment is consistent regardless of content length
+- Solution adapts to different page sizes and margin settings
 
-This implementation maintains the same style-first methodology used throughout the DOCX styling refactoring, ensuring that all formatting values are driven by centralized design tokens for consistency and easy customization.
+**Lessons Learned:**
+- Document properties provide more reliable positioning than fixed measurements
+- Direct calculation from page dimensions ensures consistent alignment
+- Dynamic approaches are more maintainable than hard-coded values
+
+This implementation established a robust solution for right alignment that complements our left alignment fixes, resulting in a professionally formatted document with consistent alignment throughout.
 
 ### Current Status
 
