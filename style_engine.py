@@ -13,6 +13,59 @@ from typing import Dict, Any, List, Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
+class TokenAccessor:
+    """
+    Utility class for safely accessing nested tokens with fallbacks and warning logging.
+    
+    This class provides a safe way to access tokens in a nested dictionary structure
+    using dot notation, with fallback values if the token doesn't exist. It also logs
+    warnings when tokens are missing, but only once per token key to avoid log spam.
+    
+    Example usage:
+        tokens_data = {"sectionHeader": {"border": {"widthPt": 1}}}
+        accessor = TokenAccessor(tokens_data)
+        
+        # Access existing token
+        width = accessor.get("sectionHeader.border.widthPt", 0.5)  # Returns 1
+        
+        # Access missing token with fallback
+        color = accessor.get("sectionHeader.border.color", "#000000")  # Returns "#000000" with warning
+    """
+    
+    def __init__(self, tokens_data):
+        """
+        Initialize with a tokens dictionary.
+        
+        Args:
+            tokens_data: Dictionary containing design tokens
+        """
+        self.tokens = tokens_data
+        self.warnings = set()  # Track warned keys to avoid repetition
+    
+    def get(self, key_path, default=None):
+        """
+        Access a token by dot-notation path with fallback.
+        
+        Args:
+            key_path: Dot-separated path to the token (e.g., "sectionHeader.border.widthPt")
+            default: Default value to return if token doesn't exist
+            
+        Returns:
+            The token value if found, otherwise the default value
+        """
+        parts = key_path.split('.')
+        current = self.tokens
+        
+        try:
+            for part in parts:
+                current = current[part]
+            return current
+        except (KeyError, TypeError):
+            if key_path not in self.warnings:
+                logger.warning(f"Missing token: {key_path}, using default: {default}")
+                self.warnings.add(key_path)
+            return default
+
 class StyleEngine:
     """
     Unified style engine for consistent styling across all output formats.
@@ -475,153 +528,56 @@ class StyleEngine:
             if not tokens:
                 tokens = StyleEngine.load_tokens()
                 
-            # Check if paragraph has direct style setting or is using style reference
-            if hasattr(paragraph, 'style') and paragraph.style and paragraph.style.name in ['SectionHeader', 'MR_SectionHeader']:
-                # Already using a style - just add the border if needed
-                structured = StyleEngine.get_structured_tokens()
-                section_header = structured.get("sectionHeader", {})
-                docx_specific = section_header.get("docx", {})
+            # Create token accessor for safe nested access
+            tokens_access = TokenAccessor(tokens)
                 
-                # Add border
-                border_color = docx_specific.get("borderColor", "#0D2B7E")
-                rgb_color = StyleEngine.hex_to_rgb(border_color)
-                border_hex = f"{rgb_color[0]:02x}{rgb_color[1]:02x}{rgb_color[2]:02x}"
-                border_size = int(float(docx_specific.get("borderSize", "1").replace("pt", "")))
-                
-                # Apply the border using XML - enhance with more specific border attributes
-                border_xml = f'''
-                    <w:pBdr {nsdecls("w")}>
-                        <w:bottom w:val="single" w:sz="{border_size * 8}" w:space="0" w:color="{border_hex}"/>
-                        <w:top w:val="nil"/>
-                        <w:left w:val="nil"/>
-                        <w:right w:val="nil"/>
-                    </w:pBdr>
-                '''
-                if hasattr(paragraph._p, 'get_or_add_pPr'):
-                    # Remove any existing border to prevent conflicts
-                    for pPr in paragraph._p.xpath('./w:pPr'):
-                        for pBdr in pPr.xpath('./w:pBdr'):
-                            pPr.remove(pBdr)
-                    # Add the new border
-                    paragraph._p.get_or_add_pPr().append(parse_xml(border_xml))
-                
-                # Set spacing and indentation 
-                section_spacing_pt = float(tokens.get("docx-section-spacing-pt", "12"))
-                if hasattr(paragraph, 'paragraph_format'):
-                    paragraph.paragraph_format.space_after = Pt(section_spacing_pt)
-                    
-                    # Set indentation from tokens if paragraph has style attribute
-                    indent_cm = float(docx_specific.get("indentCm", "0"))
-                    paragraph.paragraph_format.left_indent = Cm(indent_cm)
-                    
-                    # Ensure no first line indent to maintain alignment
-                    paragraph.paragraph_format.first_line_indent = Cm(0)
-                
-                # Add specific XML for indentation to ensure it's applied
-                indent_twips = int(indent_cm * 567)  # 567 twips per cm
-                ind_xml = f'<w:ind {nsdecls("w")} w:left="{indent_twips}" w:firstLine="0"/>'
-                if hasattr(paragraph._p, 'get_or_add_pPr'):
-                    # Remove any existing indentation to prevent conflicts
-                    for pPr in paragraph._p.xpath('./w:pPr'):
-                        for ind in pPr.xpath('./w:ind'):
-                            pPr.remove(ind)
-                    # Add the new indentation
-                    paragraph._p.get_or_add_pPr().append(parse_xml(ind_xml))
-                
-                # Add background color if specified
-                if "backgroundColor" in docx_specific:
-                    bg_color = docx_specific.get("backgroundColor", "#FFFFFF")
-                    bg_rgb = StyleEngine.hex_to_rgb(bg_color)
-                    bg_hex = f"{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x}"
-                    
-                    # Apply shading using XML
-                    shading_xml = f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="{bg_hex}"/>'
-                    if hasattr(paragraph._p, 'get_or_add_pPr'):
-                        # Remove any existing shading to prevent conflicts
-                        for pPr in paragraph._p.xpath('./w:pPr'):
-                            for shd in pPr.xpath('./w:shd'):
-                                pPr.remove(shd)
-                        # Add the new shading
-                        paragraph._p.get_or_add_pPr().append(parse_xml(shading_xml))
-                
-                # If using a new custom style, don't do anything else (style handles everything)
-                if paragraph.style.name == 'MR_SectionHeader':
-                    logger.info("Successfully applied DOCX section header box styling with MR_SectionHeader style")
-                    return
-                    
-            # For paragraphs without a style, or with the default style
-            # Get the values from design tokens
-            section_font_size_pt = float(tokens.get("docx-section-header-font-size-pt", "14"))
-            section_indent_cm = float(tokens.get("docx-section-header-indent-cm", "0"))
-            section_spacing_pt = float(tokens.get("docx-section-spacing-pt", "12"))
+            # Get border properties from the new token structure
+            border_width_pt = tokens_access.get("sectionHeader.border.widthPt", 1)
+            border_color = tokens_access.get("sectionHeader.border.color", "#000000")
+            border_style = tokens_access.get("sectionHeader.border.style", "single")
+            padding_pt = tokens_access.get("sectionHeader.paddingPt", 5)
+            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 8)
             
-            # Apply direct formatting
+            # Strip # prefix from hex color
+            border_color = border_color.lstrip('#')
+            
+            # Apply direct formatting to runs
             for run in paragraph.runs:
                 run.bold = True
-                run.font.size = Pt(section_font_size_pt)
+                run.font.size = Pt(14)  # Default size for section headers
             
             # Set paragraph formatting
-            paragraph.paragraph_format.left_indent = Cm(section_indent_cm)
-            paragraph.paragraph_format.first_line_indent = Cm(0)  # Ensure no first line indent
-            paragraph.paragraph_format.space_after = Pt(section_spacing_pt)
+            paragraph.paragraph_format.space_after = Pt(spacing_after_pt)
+            paragraph.paragraph_format.left_indent = Cm(0)  # No indent
+            paragraph.paragraph_format.first_line_indent = Cm(0)  # No first line indent
             
-            # Add specific XML for indentation to ensure it's applied
-            indent_twips = int(section_indent_cm * 567)  # 567 twips per cm
-            ind_xml = f'<w:ind {nsdecls("w")} w:left="{indent_twips}" w:firstLine="0"/>'
-            
-            # Remove any existing indentation to prevent conflicts
-            if hasattr(paragraph._p, 'get_or_add_pPr'):
-                for pPr in paragraph._p.xpath('./w:pPr'):
-                    for ind in pPr.xpath('./w:ind'):
-                        pPr.remove(ind)
-                # Add the new indentation
-                paragraph._p.get_or_add_pPr().append(parse_xml(ind_xml))
-            
-            # Add the border with enhanced attributes
-            border_color = tokens.get("sectionHeaderBorder", "1px solid #0D2B7E").replace("px solid ", "")
-            rgb_color = StyleEngine.hex_to_rgb(border_color)
-            border_hex = f"{rgb_color[0]:02x}{rgb_color[1]:02x}{rgb_color[2]:02x}"
-            
-            # Apply the border using XML with more specific attributes
+            # Apply borders directly using XML
             border_xml = f'''
-                <w:pBdr {nsdecls("w")}>
-                    <w:bottom w:val="single" w:sz="8" w:space="0" w:color="{border_hex}"/>
-                    <w:top w:val="nil"/>
-                    <w:left w:val="nil"/>
-                    <w:right w:val="nil"/>
-                </w:pBdr>
+            <w:pBdr {nsdecls("w")}>
+                <w:top w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+                <w:left w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+                <w:bottom w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+                <w:right w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+            </w:pBdr>
             '''
-            # Remove any existing border to prevent conflicts
+            
+            # Get paragraph properties
             if hasattr(paragraph._p, 'get_or_add_pPr'):
-                for pPr in paragraph._p.xpath('./w:pPr'):
-                    for pBdr in pPr.xpath('./w:pBdr'):
-                        pPr.remove(pBdr)
-                # Add the new border
-                paragraph._p.get_or_add_pPr().append(parse_xml(border_xml))
-            
-            # Add background color if specified in design tokens
-            struct_tokens = StyleEngine.get_structured_tokens()
-            section_header = struct_tokens.get("sectionHeader", {})
-            docx_specific = section_header.get("docx", {})
-            
-            if "backgroundColor" in docx_specific:
-                bg_color = docx_specific.get("backgroundColor", "#FFFFFF")
-                bg_rgb = StyleEngine.hex_to_rgb(bg_color)
-                bg_hex = f"{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x}"
+                pPr = paragraph._p.get_or_add_pPr()
                 
-                # Apply shading using XML
-                shading_xml = f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="{bg_hex}"/>'
-                if hasattr(paragraph._p, 'get_or_add_pPr'):
-                    # Remove any existing shading to prevent conflicts
-                    for pPr in paragraph._p.xpath('./w:pPr'):
-                        for shd in pPr.xpath('./w:shd'):
-                            pPr.remove(shd)
-                    # Add the new shading
-                    paragraph._p.get_or_add_pPr().append(parse_xml(shading_xml))
-            
-            logger.info("Successfully applied DOCX section header box styling")
+                # Remove any existing borders to prevent conflicts
+                for existing in pPr.xpath('./w:pBdr'):
+                    pPr.remove(existing)
+                
+                # Add new borders
+                pPr.append(parse_xml(border_xml))
+                
+                logger.info("Successfully applied DOCX section header box styling")
+            else:
+                logger.warning("Could not access paragraph properties to apply borders")
+                
         except Exception as e:
-            logger.error(f"Error applying DOCX section header box styling: {e}")
+            logger.error(f"Error applying DOCX section header box style: {e}")
             import traceback
             logger.error(traceback.format_exc())
     
@@ -671,4 +627,172 @@ class StyleEngine:
             
         except Exception as e:
             logger.error(f"Error creating DOCX bullet style: {e}")
-            return None 
+            return None
+    
+    @staticmethod
+    def create_boxed_heading_style(doc, tokens=None):
+        """
+        Create a BoxedHeading2 style for section headers with borders on all four sides.
+        
+        This implementation follows the recommendations from the styling improvements plan:
+        1. Uses paragraph borders rather than tables for better:
+           - Accessibility (preserve document outline)
+           - Copy-paste behavior
+           - Style consistency
+        
+        2. Creates a named style that inherits from Heading 2, maintaining the document hierarchy
+           while adding box borders on all sides.
+           
+        3. Sets the outline level explicitly to ensure proper TOC generation.
+        
+        4. Uses direct XML manipulation for aspects that aren't exposed through the python-docx API.
+        
+        The style is created once per document and then applied to all section headers.
+        
+        Args:
+            doc: The DOCX document object
+            tokens: Optional design tokens dictionary (loads from file if not provided)
+            
+        Returns:
+            str: The name of the created style ('BoxedHeading2' or fallback 'Heading 2')
+        """
+        # Import DOCX-specific modules
+        from docx.enum.style import WD_STYLE_TYPE
+        from docx.shared import Pt
+        from docx.oxml.ns import nsdecls
+        from docx.oxml import parse_xml
+        
+        # Load tokens if not provided
+        if not tokens:
+            tokens = StyleEngine.load_tokens()
+            
+        # Create a token accessor for safe nested access
+        tokens_access = TokenAccessor(tokens)
+        
+        # Check if style already exists to avoid ValueError on repeated runs
+        if 'BoxedHeading2' in doc.styles:
+            logger.info("BoxedHeading2 style already exists, skipping creation")
+            return 'BoxedHeading2'
+            
+        # Create a new style based on Heading 2
+        try:
+            boxed_heading = doc.styles.add_style('BoxedHeading2', WD_STYLE_TYPE.PARAGRAPH)
+            
+            # Check if Heading 2 exists, if not, base on Normal
+            if 'Heading 2' in doc.styles:
+                boxed_heading.base_style = doc.styles['Heading 2']
+            else:
+                logger.warning("'Heading 2' style not found, basing BoxedHeading2 on 'Normal'")
+                boxed_heading.base_style = doc.styles['Normal']
+                # Add heading-like properties
+                boxed_heading.font.bold = True
+                boxed_heading.font.size = Pt(14)
+                
+            # Set outline level for accessibility and TOC inclusion
+            try:
+                # Use proper namespace declaration with nsdecls
+                outline_xml = f'<w:outlineLvl {nsdecls("w")} w:val="1"/>'
+                pPr = boxed_heading._element.get_or_add_pPr()
+                
+                # Remove any existing outlineLvl to prevent conflicts
+                for existing in pPr.xpath('./w:outlineLvl'):
+                    pPr.remove(existing)
+                    
+                pPr.append(parse_xml(outline_xml))
+                logger.info("Successfully set outline level for section header")
+            except Exception as e:
+                logger.warning(f"Could not set outline level: {e}. Document TOC may not work properly.")
+            
+            # Get token values or use defaults
+            border_width_pt = tokens_access.get("sectionHeader.border.widthPt", 1)
+            border_color = tokens_access.get("sectionHeader.border.color", "#000000")
+            # Strip # prefix from hex color for python-docx
+            border_color = border_color.lstrip('#')
+            border_style = tokens_access.get("sectionHeader.border.style", "single")
+            padding_pt = tokens_access.get("sectionHeader.paddingPt", 5)
+            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 8)
+            
+            # Set spacing after (reduced spacing)
+            boxed_heading.paragraph_format.space_after = Pt(spacing_after_pt)
+            
+            # Apply border to the style using XML with proper namespace declaration
+            border_xml = f'''
+            <w:pBdr {nsdecls("w")}>
+                <w:top w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+                <w:left w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+                <w:bottom w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+                <w:right w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
+            </w:pBdr>
+            '''
+            
+            # Get or create paragraph properties
+            pPr = boxed_heading._element.get_or_add_pPr()
+            
+            # Remove any existing borders to prevent conflicts
+            for existing in pPr.xpath('./w:pBdr'):
+                pPr.remove(existing)
+                
+            # Add new border
+            pPr.append(parse_xml(border_xml))
+            
+            logger.info("Successfully created BoxedHeading2 style with borders")
+            return 'BoxedHeading2'
+            
+        except Exception as e:
+            logger.error(f"Failed to apply BoxedHeading2 style: {e}")
+            # Default to regular heading if style creation fails
+            logger.warning("Using regular 'Heading 2' style as fallback")
+            return 'Heading 2'
+            
+    @staticmethod
+    def apply_boxed_section_header_style(doc, paragraph, tokens=None):
+        """
+        Apply the BoxedHeading2 style to a section header paragraph.
+        
+        This method ensures that the BoxedHeading2 style exists in the document
+        and then applies it to the provided paragraph. It also sets additional
+        paragraph formatting properties for consistent spacing.
+        
+        This is the preferred method for applying box styling to section headers
+        as it leverages a named style which preserves document structure and
+        accessibility features like outline levels.
+        
+        If the BoxedHeading2 style application fails, it will fall back to direct
+        paragraph formatting using apply_docx_section_header_box_style.
+        
+        Args:
+            doc: The DOCX document object
+            paragraph: The paragraph to style as a section header with box
+            tokens: Optional design tokens dictionary (loads from file if not provided)
+            
+        Returns:
+            The styled paragraph
+        """
+        # Import required modules
+        from docx.shared import Pt
+        
+        # Load tokens if not provided
+        if not tokens:
+            tokens = StyleEngine.load_tokens()
+            
+        # Create token accessor
+        tokens_access = TokenAccessor(tokens)
+        
+        try:
+            # Ensure the style exists in the document
+            style_name = StyleEngine.create_boxed_heading_style(doc, tokens)
+            
+            # Apply the style to the paragraph
+            paragraph.style = style_name
+            
+            # Set spacing after (reduced spacing)
+            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 8)
+            paragraph.paragraph_format.space_after = Pt(spacing_after_pt)
+            
+            return paragraph
+            
+        except Exception as e:
+            logger.error(f"Failed to apply boxed section header style: {e}")
+            # Apply fallback styling if the style application failed
+            StyleEngine.apply_docx_section_header_box_style(paragraph, tokens)
+            return paragraph 

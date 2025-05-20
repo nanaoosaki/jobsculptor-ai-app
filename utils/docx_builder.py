@@ -259,66 +259,22 @@ def create_bullet_point(doc, text, docx_styles):
 
 def add_section_header(doc, header_text, docx_styles):
     """Adds a consistently styled section header with box styling."""
-    # Add section header with our custom style
-    header_para = doc.add_paragraph(style='MR_SectionHeader')
+    # Import needed modules
+    from style_engine import StyleEngine
     
-    # Add the text as a Run with proper formatting
+    # Load tokens
+    tokens = StyleEngine.load_tokens()
+    
+    # Create a new paragraph
+    header_para = doc.add_paragraph()
+    
+    # Add the text
     run = header_para.add_run(header_text.upper())
-    # Font properties like bold, size, color are handled by 'MR_SectionHeader' style.
-    # run.bold = True # This is handled by the style
-
-    # Indentation and spacing are handled by the 'MR_SectionHeader' style.
-    # Removed direct paragraph_format settings for left_indent, first_line_indent, space_after.
     
-    # Directly apply border and background using XML to the paragraph properties (pPr)
-    # This is the most reliable way to ensure Word displays them correctly,
-    # and aligns with previous successful fixes.
-    from docx.oxml import parse_xml
-    from docx.oxml.ns import nsdecls # w, etc.
+    # Apply the BoxedHeading2 style which includes border styling on all sides
+    StyleEngine.apply_boxed_section_header_style(doc, header_para, tokens)
     
-    tokens = StyleEngine.load_tokens() # Load if needed for specific values not in structured_tokens
-    structured_tokens = StyleEngine.get_structured_tokens()
-    section_tokens = structured_tokens.get("sectionHeader", {})
-    section_docx = section_tokens.get("docx", {})
-
-    pPr = header_para._p.get_or_add_pPr()
-    
-    # Remove any existing border and shading elements from pPr to prevent conflicts
-    for border_el in pPr.xpath('./w:pBdr'):
-        pPr.remove(border_el)
-    for shading_el in pPr.xpath('./w:shd'):
-        pPr.remove(shading_el)
-    
-    # Add single bottom border
-    # Ensure border color and size are correctly fetched from tokens
-    border_color_hex = section_docx.get("borderColor", "#0D2B7E") # Should be just hex or need parsing
-    # Assuming borderColor token is already a hex string like "0D2B7E" or "#0D2B7E"
-    # If it's "1px solid #0D2B7E", it needs parsing. get_structured_tokens suggests it's "#0D2B7E"
-    
-    final_border_color_str = StyleEngine.hex_to_rgb(border_color_hex) # returns tuple
-    final_border_color_xml_hex = f"{final_border_color_str[0]:02x}{final_border_color_str[1]:02x}{final_border_color_str[2]:02x}"
-
-    border_size_pt_str = section_docx.get("borderSize", "1pt") # e.g. "1pt"
-    border_size_val = int(float(border_size_pt_str.replace("pt", ""))) # Convert to int, e.g. 1
-    border_size_xml = border_size_val * 8 # Eighths of a point for w:sz
-
-    border_xml_str = f'''
-        <w:pBdr {nsdecls("w")}>
-            <w:bottom w:val="single" w:sz="{border_size_xml}" w:space="0" w:color="{final_border_color_xml_hex}"/>
-        </w:pBdr>
-    '''
-    pPr.append(parse_xml(border_xml_str))
-    
-    # Add background color if specified
-    if "backgroundColor" in section_docx:
-        bg_color_hex = section_docx.get("backgroundColor", "#FFFFFF") # e.g. "#FFFFFF"
-        final_bg_color_str = StyleEngine.hex_to_rgb(bg_color_hex) # returns tuple
-        final_bg_color_xml_hex = f"{final_bg_color_str[0]:02x}{final_bg_color_str[1]:02x}{final_bg_color_str[2]:02x}"
-        
-        shading_xml_str = f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="{final_bg_color_xml_hex}"/>'
-        pPr.append(parse_xml(shading_xml_str))
-    
-    logger.info(f"Applied MR_SectionHeader style and direct XML formatting to: {header_text}")
+    logger.info(f"Applied BoxedHeading2 style to section header: {header_text}")
     return header_para
 
 def add_role_description(doc, text, docx_styles):

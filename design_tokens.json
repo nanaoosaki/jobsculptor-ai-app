@@ -85,5 +85,15 @@
   "docx-role-font-size-pt": "11",
   "docx-bullet-font-size-pt": "11",
   "docx-global-left-margin-cm": "2.0",
-  "docx-global-right-margin-cm": "2.0"
+  "docx-global-right-margin-cm": "2.0",
+  
+  "sectionHeader": {
+    "border": {
+      "widthPt": 1,
+      "color": "#000000",
+      "style": "single"
+    },
+    "paddingPt": 5,
+    "spacingAfterPt": 8
+  }
 } 
