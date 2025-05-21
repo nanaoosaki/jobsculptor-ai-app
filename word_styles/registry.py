@@ -100,8 +100,8 @@ class StyleRegistry:
             border_padding_pt=1.0,  # 20 twips
             space_before_pt=0.0,
             space_after_pt=4.0,
-            line_rule="auto",
-            line_height_pt=13.8,  # 276 twips
+            line_rule="exact",
+            line_height_pt=15.0,  # 14pt font + 1pt extra = 15pt (300 twips)
             keep_with_next=True,
             has_border=True
         ))

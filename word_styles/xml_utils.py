@@ -64,6 +64,8 @@ def make_spacing_node(before=0, after=0, line=None, line_rule="auto",
         attrs.append(f'w:line="{line}"')
         attrs.append(f'w:lineRule="{line_rule}"')
     
+    # Always explicitly set autospacing flags to prevent Word's default behavior
+    # For boxed headers we want these OFF to ensure precise control
     if before_auto:
         attrs.append('w:beforeAutospacing="1"')
     else:
