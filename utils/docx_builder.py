@@ -16,9 +16,27 @@ from docx import Document
 from docx.shared import Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.enum.style import WD_STYLE_TYPE
+from docx.text.paragraph import Paragraph
+from docx.oxml.ns import qn
 
 from style_manager import StyleManager
 from style_engine import StyleEngine
+
+# Import our new style registry
+try:
+    from word_styles.registry import StyleRegistry, get_or_create_style, apply_direct_paragraph_formatting
+    from word_styles.section_builder import add_section_header as registry_add_section_header
+    from word_styles.section_builder import add_content_paragraph, add_bullet_point, remove_empty_paragraphs
+    USE_STYLE_REGISTRY = True
+except ImportError:
+    USE_STYLE_REGISTRY = False
+
+# Use style engine if available, otherwise fall back to old approach
+try:
+    from style_engine import StyleEngine
+    USE_STYLE_ENGINE = True
+except ImportError:
+    USE_STYLE_ENGINE = False
 
 logger = logging.getLogger(__name__)
 
@@ -257,25 +275,42 @@ def create_bullet_point(doc, text, docx_styles):
     logger.info(f"Applied MR_BulletPoint style to: {str(text)[:30]}...")
     return bullet_para
 
-def add_section_header(doc, header_text, docx_styles):
-    """Adds a consistently styled section header with box styling."""
-    # Import needed modules
-    from style_engine import StyleEngine
+def add_section_header(doc: Document, section_name: str) -> Paragraph:
+    """
+    Add a section header with proper styling.
     
-    # Load tokens
-    tokens = StyleEngine.load_tokens()
+    This function uses the new style registry approach if available,
+    otherwise it falls back to the previous approach.
     
-    # Create a new paragraph
-    header_para = doc.add_paragraph()
-    
-    # Add the text
-    run = header_para.add_run(header_text.upper())
-    
-    # Apply the BoxedHeading2 style which includes border styling on all sides
-    StyleEngine.apply_boxed_section_header_style(doc, header_para, tokens)
-    
-    logger.info(f"Applied BoxedHeading2 style to section header: {header_text}")
-    return header_para
+    Args:
+        doc: The document to add the section header to
+        section_name: The section header text
+        
+    Returns:
+        The added paragraph
+    """
+    if USE_STYLE_REGISTRY:
+        # Use the new registry-based approach
+        section_para = registry_add_section_header(doc, section_name)
+        logger.info(f"Applied BoxedHeading2 style to section header: {section_name}")
+        return section_para
+    else:
+        # Fall back to the old approach
+        section_para = doc.add_paragraph(section_name)
+        
+        # Apply styling using StyleEngine if available
+        if USE_STYLE_ENGINE:
+            boxed_heading_style = StyleEngine.create_boxed_heading_style(doc)
+            section_para.style = boxed_heading_style
+            StyleEngine.apply_boxed_section_header_style(doc, section_para)
+        else:
+            # Basic fallback styling
+            section_para.style = "Heading 2"
+            for run in section_para.runs:
+                run.bold = True
+        
+        logger.info(f"Applied style to section header: {section_name}")
+        return section_para
 
 def add_role_description(doc, text, docx_styles):
     """Adds a consistently formatted role description paragraph."""
@@ -292,6 +327,84 @@ def add_role_description(doc, text, docx_styles):
     
     logger.info(f"Applied MR_RoleDescription style to: {str(text)[:30]}...")
     return role_para
+
+def tighten_before_headers(doc):
+    """
+    Finds paragraphs before section headers and sets spacing to zero.
+    
+    This enhanced implementation addresses the issues identified:
+    1. Properly detects empty paragraphs that might cause unwanted spacing
+    2. Applies spacing changes directly to XML for maximum compatibility
+    3. Handles various paragraph types correctly
+    
+    Args:
+        doc: The document to process
+        
+    Returns:
+        Number of paragraphs fixed
+    """
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    
+    logger.info("Starting tighten_before_headers process...")
+    fixed_instances_count = 0
+    
+    # If using style registry, first remove any unwanted empty paragraphs
+    if USE_STYLE_REGISTRY:
+        # This doesn't delete intentional EmptyParagraph style paragraphs
+        remove_count = remove_empty_paragraphs(doc)
+        logger.info(f"Removed {remove_count} unwanted empty paragraphs")
+    
+    # Find all section headers
+    header_indices = []
+    for i, para in enumerate(doc.paragraphs):
+        # Check by style name first (most reliable)
+        if para.style and para.style.name in ['BoxedHeading2', 'Heading 2']:
+            header_indices.append(i)
+            continue
+            
+        # Check by borders (also reliable)
+        p_pr = para._element.get_or_add_pPr()
+        if p_pr.find(qn('w:pBdr')) is not None:
+            header_indices.append(i)
+            continue
+            
+        # Check by common section header names as fallback
+        section_keywords = ["PROFESSIONAL SUMMARY", "SUMMARY", "EXPERIENCE", 
+                            "EDUCATION", "SKILLS", "PROJECTS"]
+        if any(keyword in para.text.upper() for keyword in section_keywords):
+            header_indices.append(i)
+            
+    logger.info(f"Found {len(header_indices)} section headers")
+    
+    # Process paragraphs before each header (skip first header)
+    for header_idx in header_indices[1:]:  # Skip first header (no content before it)
+        if header_idx > 0:  # Safety check
+            prev_para = doc.paragraphs[header_idx - 1]
+            
+            # Apply spacing change
+            p_pr = prev_para._element.get_or_add_pPr()
+            
+            # Create spacing node with zero space after
+            spacing_xml = f'<w:spacing {nsdecls("w")} w:after="0"/>'
+            
+            # Remove existing spacing element to avoid conflicts
+            for existing in p_pr.xpath('./w:spacing'):
+                p_pr.remove(existing)
+                
+            # Add new spacing element
+            p_pr.append(parse_xml(spacing_xml))
+            
+            # Also set via API for maximum compatibility
+            prev_para.paragraph_format.space_after = Pt(0)
+            
+            logger.info(f"Fixed spacing: Set space_after=0 on paragraph before section header at index {header_idx}")
+            fixed_instances_count += 1
+    
+    return fixed_instances_count
+
+# Replace old _fix_spacing_between_sections with new implementation
+_fix_spacing_between_sections = tighten_before_headers
 
 def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
     """
@@ -520,7 +633,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 
             if summary_text:
                 # Add section header with helper function
-                summary_header = add_section_header(doc, "PROFESSIONAL SUMMARY", docx_styles)
+                summary_header = add_section_header(doc, "PROFESSIONAL SUMMARY")
                 
                 # Add summary content
                 summary_para = doc.add_paragraph(summary_text, style='MR_SummaryText')
@@ -547,7 +660,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 
             if experiences_list:
                 # Add section header with helper function
-                exp_header = add_section_header(doc, "EXPERIENCE", docx_styles)
+                exp_header = add_section_header(doc, "EXPERIENCE")
                 
                 # Verify experiences is a list
                 if not isinstance(experiences_list, list):
@@ -620,7 +733,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 
             if institutions_list:
                 # Add section header with helper function
-                edu_header = add_section_header(doc, "EDUCATION", docx_styles)
+                edu_header = add_section_header(doc, "EDUCATION")
                 
                 # Verify institutions is a list
                 if not isinstance(institutions_list, list):
@@ -677,7 +790,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         
         if skills:
             # Add section header with helper function 
-            skills_header = add_section_header(doc, "SKILLS", docx_styles)
+            skills_header = add_section_header(doc, "SKILLS")
             
             # Add skills content - handle different possible formats
             if isinstance(skills, dict) and "skills" in skills:
@@ -765,7 +878,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     # In some cases, content might be a string
                     logger.info("Projects content is a string, adding as single project")
                     # Add projects section header using helper function
-                    projects_header = add_section_header(doc, "PROJECTS", docx_styles)
+                    projects_header = add_section_header(doc, "PROJECTS")
                     
                     # Add the string content directly as paragraph
                     projects_para = doc.add_paragraph(content)
@@ -783,7 +896,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 
             if projects_list:
                 # Add section header with helper function
-                projects_header = add_section_header(doc, "PROJECTS", docx_styles)
+                projects_header = add_section_header(doc, "PROJECTS")
                 
                 # Verify projects is a list
                 if not isinstance(projects_list, list):
@@ -821,12 +934,14 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     for detail in project.get('details', []):
                         bullet_para = create_bullet_point(doc, detail, docx_styles)
         
+        # Fix spacing between sections - use our enhanced implementation
+        if USE_STYLE_REGISTRY:
+            tighten_before_headers(doc)
+        else:
+            _fix_spacing_between_sections(doc)
+        
         # Save DOCX to BytesIO
         logger.info("Saving DOCX to BytesIO...")
-        
-        # IMPORTANT FIX: Fix the spacing between sections by finding the last paragraph 
-        # before each section header and setting its space_after to 0
-        _fix_spacing_between_sections(doc)
         
         output = BytesIO()
         doc.save(output)
@@ -869,71 +984,4 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         logger.error(f"Error type: {type(e).__name__}")
         logger.error(f"Error details: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
-        raise
-
-def _fix_spacing_between_sections(doc):
-    """
-    Fix spacing between sections by setting space_after=0 on paragraphs
-    that appear right before a section header.
-    
-    This addresses the issue of excessive space between the last content
-    paragraph of one section and the next section header.
-    
-    Args:
-        doc: The DOCX document to fix
-    """
-    try:
-        from docx.shared import Pt
-        
-        # Find all section headers by style
-        section_headers = []
-        for i, para in enumerate(doc.paragraphs):
-            if para.style and para.style.name == 'BoxedHeading2':
-                section_headers.append(i)
-        
-        # No section headers or only one (no "between" to fix)
-        if len(section_headers) < 2:
-            return
-        
-        # For each section header (except the first), fix the paragraph right before it
-        for header_idx in section_headers[1:]:  # Skip the first header
-            # Find the paragraph right before this header
-            prev_para_idx = header_idx - 1
-            
-            # Skip if it's an invalid index
-            if prev_para_idx < 0 or prev_para_idx >= len(doc.paragraphs):
-                continue
-                
-            # Get the paragraph before the section header
-            prev_para = doc.paragraphs[prev_para_idx]
-            
-            # Skip if it's another section header (would be unusual but possible)
-            if prev_para.style and prev_para.style.name == 'BoxedHeading2':
-                continue
-                
-            # Set space_after to 0
-            prev_para.paragraph_format.space_after = Pt(0)
-            
-            # Apply the change through XML as well for maximum control
-            if hasattr(prev_para._element, 'get_or_add_pPr'):
-                p_pr = prev_para._element.get_or_add_pPr()
-                
-                # Find existing spacing element or create it
-                from docx.oxml.ns import qn
-                spacing = p_pr.find(qn('w:spacing'))
-                
-                if spacing is not None:
-                    # Set the w:after attribute to 0
-                    spacing.set(qn('w:after'), '0')
-                else:
-                    # Create a new spacing element
-                    from docx.oxml import parse_xml
-                    from docx.oxml.ns import nsdecls
-                    spacing_xml = f'<w:spacing {nsdecls("w")} w:after="0"/>'
-                    p_pr.append(parse_xml(spacing_xml))
-            
-            logger.info(f"Fixed spacing: Set space_after=0 on paragraph before section header at index {header_idx}")
-    
-    except Exception as e:
-        logger.error(f"Error fixing spacing between sections: {e}")
-        # Continue execution - this is a fix attempt, not critical functionality 
+        raise 
