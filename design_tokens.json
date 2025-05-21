@@ -77,7 +77,7 @@
   "docx-role-description-indent-cm": "0",
   "docx-bullet-left-indent-cm": "0",
   "docx-bullet-hanging-indent-cm": "0",
-  "docx-section-spacing-pt": "12",
+  "docx-section-spacing-pt": "4",
   "docx-bullet-spacing-pt": "6",
   "docx-paragraph-spacing-pt": "6",
   "docx-section-header-font-size-pt": "14",
@@ -93,7 +93,11 @@
       "color": "#000000",
       "style": "single"
     },
-    "paddingPt": 5,
-    "spacingAfterPt": 8
+    "paddingPt": 1,
+    "spacingAfterPt": 4,
+    "lineHeight": {
+      "value": 276,
+      "rule": "auto"
+    }
   }
 } 

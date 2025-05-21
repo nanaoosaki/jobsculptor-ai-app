@@ -3,7 +3,31 @@
 ## Overview
 This document outlines the dependencies and interactions between various modules in the resume tailoring application, focusing on the newly implemented features and scripts.
 
-## New and Renamed Scripts
+## Core Application Modules
+
+### app.py
+
+#### Purpose
+The `app.py` module serves as the main Flask application, handling all web routes, user interactions, and orchestrating the entire resume tailoring process.
+
+#### Key Functions
+- **index**: Main route for displaying the UI
+- **upload_resume**: Handles resume file uploads
+- **parse_job**: Processes job listing URLs/text
+- **tailor_resume**: Coordinates the tailoring process
+- **preview_resume**: Serves HTML previews of tailored resumes
+- **download_resume**: Generates and serves PDF downloads
+- **download_docx_resume**: Generates and serves DOCX downloads
+
+#### Dependencies
+- **Flask**: For web server and routing
+- **tailoring_handler.py**: For resume tailoring coordination
+- **upload_handler.py**: For file upload processing
+- **job_parser_handler.py**: For job analysis
+- **resume_index.py**: For tracking processed resumes
+- **pdf_exporter.py**: For PDF generation
+- **html_generator.py**: For HTML preview generation
+- **docx_builder.py**: For DOCX generation
 
 ### resume_index.py
 
@@ -43,143 +67,599 @@ The `docx_builder.py` module generates Microsoft Word (.docx) files with consist
 - **logging**: For logging operations.
 - **BytesIO**: For handling in-memory byte streams.
 - **docx**: For creating and manipulating DOCX files.
+- **word_styles**: Package for advanced DOCX styling
 
-### Updated Workflow for DOCX Download Button Process
-
-1. **User Interaction**: The user clicks the DOCX download button in the `index.html` template.
-2. **Route Handling**: The request is sent to the `/download/docx/<request_id>` route in `app.py`.
-3. **DOCX Generation**:
-   - The `download_docx_resume` function in `app.py` calls the `build_docx` function from `docx_builder.py`.
-   - The `build_docx` function retrieves the necessary resume data from temporary session files and applies styles based on the design tokens.
-4. **File Creation**: The generated DOCX file is created in memory and returned as a response to the user.
-5. **File Download**: The user receives the DOCX file as a downloadable attachment.
-
-### Conclusion
-The recent updates and additions to the resume tailoring application enhance its functionality and maintainability. The `resume_index.py` and `docx_builder.py` modules play critical roles in managing resume processing and generating downloadable documents, respectively. Keeping this documentation up-to-date ensures clarity and understanding of the application's structure and workflow.
-
-## Updated I/O and Workflow
-
-- **Session-Specific Data Storage**: All cleaned resume data is now stored using UUIDs in `static/uploads/temp_session_data/`, ensuring data isolation and multi-user compatibility.
-- **Raw LLM Responses**: Continue to be stored with timestamps in `static/uploads/api_responses/` for logging and debugging.
-- **Log Messages**: Updated to accurately reflect file operations and enhance traceability.
-- **Data Flow**: LLM -> Structured JSON -> Save Structured JSON with UUID -> Load Structured JSON with UUID -> Format to HTML and PDF.
-- **PDF Export Process**: Enhanced with WeasyPrint for consistent and professional output, ensuring alignment with HTML preview and inclusion of role descriptions.
-
-## Conclusion
-The `resume_index.py` module is a critical component for maintaining a history of resume processing activities, providing valuable insights and traceability for the application. The recent updates ensure a more robust and consistent data handling process, improving both functionality and user experience.
-
----
-
-## Learnings from Recent Fixes
-
-### Key Learnings:
-
-1. **Understanding Data Types:**
-   - Ensure all functions handling data are aware of potential multiple types (e.g., strings, lists, dictionaries) and can process them correctly.
-   - Implement type-aware checks to prevent errors like `AttributeError` when methods assume a specific type.
-
-2. **Modular Code Review:**
-   - Review all related functions and modules that interact with the data when fixing an issue. Ensure changes in one part of the codebase don't introduce errors elsewhere.
-
-3. **Testing and Validation:**
-   - Thoroughly test the application with various inputs after implementing a fix to ensure the issue is resolved and no new issues are introduced.
-   - Use logs to trace the flow of data and identify where errors occur.
-
-4. **Documentation:**
-   - Keep documentation up-to-date with changes in the codebase, including updating any dependencies or interactions between modules.
-   - Documenting solutions and learnings helps future developers understand the context and reasoning behind changes.
-
----
-
-## Updated Dependencies and Interactions
-
-### sample_experience_snippet.py
+### html_generator.py
 
 #### Purpose
-The `sample_experience_snippet.py` script provides example data for the LLM to follow, ensuring consistency in the output of tailored achievements. It includes examples with '??' placeholders to guide the LLM in generating quantifiable achievements.
+Generates HTML previews of tailored resumes for browser display and PDF generation, ensuring consistent styling across formats.
 
-#### Interactions
-- **claude_integration.py**: Utilizes examples from `sample_experience_snippet.py` to improve the consistency and structure of the tailored achievements.
+#### Key Functions
+- **generate_preview_from_llm_responses**: Creates HTML from tailored resume sections
+- **format_section_for_html**: Formats specific resume sections into HTML
+- **format_skill_for_html**: Formats skill entries into HTML
+- **create_full_html_document**: Wraps HTML fragment in complete HTML document for PDF export
 
-### Optimizations for Quantifiable Achievements
+#### Dependencies
+- **os**: For file path operations
+- **json**: For reading section data
+- **logging**: For error tracking
+- **style_manager.py**: For accessing styling information
+- **metric_utils.py**: For handling quantifiable metrics
 
-#### Overview
-Recent optimizations have focused on ensuring that every achievement bullet point in the experience section contains a quantifiable metric, either as a number or using the '??' placeholder.
+#### I/O
+- **Input**: JSON files from `static/uploads/temp_session_data/{request_id}_{section}.json`
+- **Output**: HTML fragments for browser preview or complete HTML documents for PDF generation
 
-#### Key Changes
-- **Guardrail Logic**: Updated to inject '??' when no digit or placeholder is present, without relying on unit words or placement tokens.
-- **Prompt Optimization**: Emphasizes the action-impact-influence structure, generating concise and structured achievements with a character limit of 130 characters.
-- **Example Inclusion**: Examples with '??' in `sample_experience_snippet.py` provide a pattern for the LLM to follow, improving the consistency of the output.
+### config.py
 
-#### Implications
-- **Structured Output**: Future optimizations should focus on clear, structured prompts with explicit rules, maintaining a balance between flexibility and strict guidelines.
-- **System Message Reinforcement**: Reinforcing key rules in the system message can further improve compliance with the desired output format.
-- **Post-Processing Checks**: Implementing post-processing checks, such as assertions for character limits, can serve as an additional safeguard to catch any deviations from the expected output.
+#### Purpose
+Central configuration management for the entire application, handling environment variables, API keys, and application settings.
 
-## Token Generation Script
+#### Key Functions
+- **load_config**: Loads configuration from environment variables
+- **get_api_key**: Retrieves API keys safely
+- **is_development**: Detects if running in development mode
 
-### tools/generate_tokens_css.py (Renamed to generate_tokens.py)
+#### Dependencies
+- **os**: For environment variable access
+- **dotenv**: For loading .env files in development
 
-- **Original Purpose**: Reads `design_tokens.json` and writes SCSS variable definitions to `static/scss/_tokens.scss`.
-- **New Purpose**: Expanded to also generate DOCX style mappings in addition to SCSS variables. The script has been renamed to reflect its broader functionality.
-- **Input**: `design_tokens.json` (design tokens for colors, spacing, margins, fonts, etc.).
-- **Outputs**:
-  - `static/scss/_tokens.scss` containing SCSS `$` variables
-  - `static/styles/_docx_styles.json` containing DOCX style mappings
-- **Usage**: Run `python tools/generate_tokens.py` whenever `design_tokens.json` changes to regenerate both SCSS and DOCX tokens.
-- **Functions**:
-  - `generate_scss_variables()`: Generates SCSS variables from design tokens
-  - `generate_docx_style_mappings()`: Generates DOCX style mappings from design tokens
-  - `hex_to_rgb()`: Helper function to convert hex colors to RGB for DOCX styles
+#### I/O
+- **Input**: Environment variables, .env files
+- **Output**: Configuration settings used throughout the application
 
-### SCSS and DOCX Style Generation Workflow
+### claude_integration.py
 
-1. **Regenerate Tokens**:
-   - Run `python tools/generate_tokens.py` to update both `_tokens.scss` and `_docx_styles.json`.
-2. **Compile SCSS**:
-   - Use Sass to compile SCSS to CSS:
-     ```bash
-     sass static/scss/preview.scss static/css/preview.css
-     sass static/scss/print.scss static/css/print.css
-     ```
-3. **Restart Server**:
-   - Restart the Flask dev server (`Ctrl-C` then `python app.py`) to load updated templates, CSS, and DOCX styles.
+#### Purpose
+Handles all interactions with Claude API, providing tailored resume content based on job requirements.
 
-This workflow ensures that design token edits propagate through to HTML preview, PDF output, and DOCX downloads, maintaining consistent styling across all formats.
+#### Key Functions
+- **tailor_resume_with_claude**: Main function for resume tailoring via Claude
+- **tailor_section**: Tailors individual resume sections
+- **prepare_prompt**: Creates specialized prompts for different sections
+- **process_achievements**: Ensures achievements contain quantifiable metrics
 
-### DOCX Format Workflow
+#### Dependencies
+- **anthropic**: For Claude API access
+- **claude_api_logger.py**: For logging API requests and responses
+- **sample_experience_snippet.py**: For example achievement structures
+- **metric_utils.py**: For handling quantifiable metrics
+
+#### I/O
+- **Input**: Resume sections, job details
+- **Output**: Tailored content, saved API responses to `static/uploads/api_responses/`
+
+### resume_processor.py
+
+#### Purpose
+Processes uploaded resume files, extracting text and structuring sections for tailoring.
+
+#### Key Functions
+- **process_resume**: Main function for resume processing
+- **extract_text**: Extracts plain text from DOCX or PDF files
+- **detect_sections**: Identifies standard resume sections
+
+#### Dependencies
+- **docx2txt**: For DOCX text extraction
+- **pdf_parser.py**: For PDF text extraction
+- **llm_resume_parser.py**: For advanced section parsing
+
+#### I/O
+- **Input**: Uploaded resume files (DOCX/PDF)
+- **Output**: Structured resume sections for tailoring
+
+### job_parser.py
+
+#### Purpose
+Extracts job details from various sources, including LinkedIn URLs and plain text.
+
+#### Key Functions
+- **parse_job_url**: Extracts job details from URLs
+- **parse_job_text**: Processes plain text job descriptions
+- **extract_linkedin_job**: Special handling for LinkedIn job posts
+
+#### Dependencies
+- **requests**: For URL fetching
+- **BeautifulSoup**: For HTML parsing
+- **llm_job_analyzer.py**: For deep job requirement analysis
+
+#### I/O
+- **Input**: Job URLs or text
+- **Output**: Structured job details, requirements, and key skills
+
+### llm_job_analyzer.py
+
+#### Purpose
+Uses LLMs to analyze job postings for requirements, skills, and candidate profiles.
+
+#### Key Functions
+- **analyze_job**: Main function for job analysis
+- **extract_requirements**: Identifies key job requirements
+- **create_candidate_profile**: Builds ideal candidate profile
+
+#### Dependencies
+- **anthropic/openai**: For LLM access
+- **claude_api_logger.py**: For logging API interactions
+
+#### I/O
+- **Input**: Raw job posting text
+- **Output**: Structured job analysis JSON
+
+### llm_resume_parser.py
+
+#### Purpose
+Uses LLMs to intelligently parse resume content into structured sections.
+
+#### Key Functions
+- **parse_resume_with_llm**: Main parsing function
+- **identify_sections**: Detects standard resume sections
+- **structure_sections**: Organizes content into structured format
+
+#### Dependencies
+- **anthropic/openai**: For LLM access
+- **claude_api_logger.py**: For logging API interactions
+
+#### I/O
+- **Input**: Raw resume text
+- **Output**: Structured resume sections JSON
+
+## Utility Modules
+
+### claude_api_logger.py
+
+#### Purpose
+Provides logging functionality for Claude API interactions, helpful for debugging and auditing.
+
+#### Key Functions
+- **log_request**: Logs API requests with timestamps
+- **log_response**: Logs API responses with tracking information
+- **get_log_path**: Generates standardized log file paths
+
+#### Dependencies
+- **logging**: For log management
+- **os**: For file operations
+- **json**: For structured data logging
+
+#### I/O
+- **Input**: API requests and responses
+- **Output**: Log files in the logs directory
+
+### format_handler.py
+
+#### Purpose
+Handles different document formats and conversions between formats.
+
+#### Key Functions
+- **detect_format**: Identifies file formats
+- **convert_to_text**: Converts various formats to plain text
+- **is_supported_format**: Checks if a format is supported
+
+#### Dependencies
+- **docx2txt**: For DOCX handling
+- **pdf_parser.py**: For PDF handling
+
+#### I/O
+- **Input**: Files in various formats
+- **Output**: Normalized text content
+
+### job_parser_handler.py
+
+#### Purpose
+Orchestrates the job parsing process, coordinating between different parsers.
+
+#### Key Functions
+- **handle_job_url**: Processes job URLs
+- **handle_job_text**: Processes job description text
+- **save_job_data**: Stores parsed job information
+
+#### Dependencies
+- **job_parser.py**: For basic job parsing
+- **llm_job_analyzer.py**: For advanced job analysis
+
+#### I/O
+- **Input**: Job URLs or text from web interface
+- **Output**: Structured job data in JSON format
+
+### metric_utils.py
+
+#### Purpose
+Handles quantifiable metrics in achievements, ensuring all bullets have measurable impact.
+
+#### Key Functions
+- **normalize_metrics**: Ensures consistent metric format
+- **inject_placeholder**: Adds placeholder metrics when needed
+- **clean_achievement**: Formats achievement bullets
+
+#### Dependencies
+- **re**: For regex pattern matching
+
+#### I/O
+- **Input**: Achievement text with varying metric formats
+- **Output**: Standardized achievement text with proper metrics
+
+### pdf_exporter.py
+
+#### Purpose
+Converts HTML resume previews into downloadable PDF documents.
+
+#### Key Functions
+- **create_pdf_from_html**: Main function for PDF generation
+- **apply_pdf_styles**: Applies print-specific styles to the HTML
+
+#### Dependencies
+- **weasyprint**: For HTML to PDF conversion
+- **style_manager.py**: For accessing styling information
+
+#### I/O
+- **Input**: HTML document from html_generator.py
+- **Output**: PDF file saved to static/uploads/
+
+### pdf_parser.py
+
+#### Purpose
+Extracts text and structure from PDF resume files.
+
+#### Key Functions
+- **extract_text_from_pdf**: Main function for text extraction
+- **analyze_pdf_structure**: Identifies document structure
+
+#### Dependencies
+- **pypdf**: For PDF processing
+- **pdfminer**: For advanced text extraction
+
+#### I/O
+- **Input**: PDF resume files
+- **Output**: Extracted text content
+
+### restart_app.py
+
+#### Purpose
+Utility script for restarting the application after changes, particularly useful in development.
+
+#### Key Functions
+- **restart_flask_app**: Restarts the Flask development server
+- **check_file_changes**: Monitors file changes to trigger restarts
+
+#### Dependencies
+- **os**: For process management
+- **subprocess**: For executing commands
+
+#### I/O
+- **Input**: File system changes
+- **Output**: Application restart actions
+
+### resume_formatter.py
+
+#### Purpose
+Formats parsed resume content into standardized structure for processing.
+
+#### Key Functions
+- **format_resume**: Main formatting function
+- **standardize_sections**: Converts various section formats to standard
+- **clean_bullet_points**: Ensures consistent bullet point format
+
+#### Dependencies
+- **re**: For pattern matching
+
+#### I/O
+- **Input**: Raw parsed resume sections
+- **Output**: Standardized resume structure
+
+### resume_styler.py
+
+#### Purpose
+Applies YC-Eddie styling to resume content for consistent formatting.
+
+#### Key Functions
+- **style_resume**: Main styling function
+- **apply_header_style**: Formats section headers
+- **style_bullet_points**: Formats achievement bullets
+
+#### Dependencies
+- **docx**: For document styling
+- **style_engine.py**: For accessing design tokens
+
+#### I/O
+- **Input**: Resume content
+- **Output**: Styled resume structure
+
+### style_engine.py
+
+#### Purpose
+Manages styling rules and token application across different output formats.
+
+#### Key Functions
+- **load_design_tokens**: Loads styling variables from design_tokens.json
+- **apply_style**: Applies styles to different elements
+- **get_docx_style**: Retrieves DOCX-specific styling values
+
+#### Dependencies
+- **json**: For reading design tokens
+- **os**: For file operations
+
+#### I/O
+- **Input**: design_tokens.json configuration
+- **Output**: Applied styling rules
+
+### style_manager.py
+
+#### Purpose
+High-level style management interface for the application, ensuring consistent styling.
+
+#### Key Functions
+- **get_style**: Retrieves style values for different formats
+- **get_tokens**: Gets raw design tokens
+- **apply_html_style**: Applies styles to HTML elements
+- **apply_docx_style**: Applies styles to DOCX elements
+
+#### Dependencies
+- **style_engine.py**: For low-level styling operations
+- **design_tokens.json**: For style definitions
+
+#### I/O
+- **Input**: Style requests from various output generators
+- **Output**: Consistent style application across formats
+
+### tailoring_handler.py
+
+#### Purpose
+Orchestrates the overall resume tailoring process.
+
+#### Key Functions
+- **handle_tailoring**: Main function for tailoring coordination
+- **prepare_resume_data**: Gets resume data ready for LLM processing
+- **process_llm_responses**: Handles returned tailored content
+
+#### Dependencies
+- **claude_integration.py**: For LLM interactions
+- **resume_processor.py**: For resume data
+- **job_parser.py**: For job requirement data
+- **html_generator.py**: For preview generation
+
+#### I/O
+- **Input**: Resume and job data
+- **Output**: Tailored resume sections saved as JSON files
+
+### token_counts.py
+
+#### Purpose
+Utility for counting tokens in various text inputs, important for LLM interactions.
+
+#### Key Functions
+- **count_tokens**: Estimates token count for text
+- **check_token_limits**: Verifies text is within token limits
+
+#### Dependencies
+- **tiktoken**: For OpenAI-compatible tokenization
+
+#### I/O
+- **Input**: Text content
+- **Output**: Token count estimates
+
+### upload_handler.py
+
+#### Purpose
+Handles file uploads and session management.
+
+#### Key Functions
+- **handle_resume_upload**: Processes resume file uploads
+- **save_uploaded_file**: Saves files with proper naming
+- **manage_session**: Handles user session data
+
+#### Dependencies
+- **flask**: For session management
+- **resume_processor.py**: For processing uploaded resumes
+
+#### I/O
+- **Input**: Uploaded files from web interface
+- **Output**: Saved files and session information
+
+### yc_eddie_styler.py
+
+#### Purpose
+Applies YC-Eddie specific styling guidelines to resume documents.
+
+#### Key Functions
+- **style_resume_yc**: Main function for YC-specific styling
+- **format_headers**: Applies box styling to headers
+- **apply_yc_typography**: Sets font styles per YC guidelines
+
+#### Dependencies
+- **docx**: For document manipulation
+- **style_engine.py**: For style configuration
+
+#### I/O
+- **Input**: Resume document
+- **Output**: YC-Eddie styled document
+
+### yc_resume_generator.py
+
+#### Purpose
+Generates resumes specifically formatted according to YC-Eddie guidelines.
+
+#### Key Functions
+- **generate_resume**: Main generation function
+- **build_sections**: Creates properly formatted sections
+- **apply_yc_guidelines**: Ensures adherence to YC standards
+
+#### Dependencies
+- **docx**: For document creation
+- **yc_eddie_styler.py**: For styling application
+
+#### I/O
+- **Input**: Tailored resume content
+- **Output**: Complete YC-formatted resume document
+
+## word_styles Package
+
+The `word_styles` package was implemented to provide a more reliable and maintainable approach to styling DOCX documents, particularly focused on solving issues with section header spacing and box height.
+
+### word_styles/registry.py
+
+- **Purpose**: Central registry for paragraph and box styles in DOCX documents.
+- **Key Classes**: 
+  - `ParagraphBoxStyle`: Dataclass representing styling attributes for paragraphs and boxes.
+  - `StyleRegistry`: Manages a collection of styles and applies them to documents.
+- **Key Functions**:
+  - `get_or_create_style()`: Retrieves or creates a style in a document based on a registered style.
+  - `apply_direct_paragraph_formatting()`: Applies formatting directly to paragraphs.
+  - `apply_compatibility_settings()`: Applies Word compatibility settings for cross-platform consistency.
+- **Dependencies**:
+  - `docx`: For creating and manipulating DOCX files.
+  - `xml_utils.py`: For XML node creation and manipulation.
+- **Used by**: `docx_builder.py`, `section_builder.py`
+
+### word_styles/section_builder.py
+
+- **Purpose**: Creates section headers with table-based wrappers and manages content spacing.
+- **Key Functions**:
+  - `add_section_header()`: Adds a section header with proper styling and spacing.
+  - `_add_table_section_header()`: Implements table-based headers with controlled margins.
+  - `_set_cell_margins()`: Sets custom margins for table cells.
+  - `_set_cell_vertical_alignment()`: Controls vertical alignment within cells.
+  - `add_content_paragraph()`: Adds content with consistent styling.
+  - `remove_empty_paragraphs()`: Cleans up unwanted paragraphs.
+- **Dependencies**:
+  - `docx`: For DOCX document manipulation.
+  - `registry.py`: For style retrieval and application.
+- **Used by**: `docx_builder.py`
+
+### word_styles/xml_utils.py
+
+- **Purpose**: Utilities for direct XML manipulation in DOCX files.
+- **Key Functions**:
+  - `make_spacing_node()`: Creates XML nodes for paragraph spacing.
+  - `make_border_node()`: Creates XML nodes for borders.
+  - `make_outline_level_node()`: Creates XML nodes for document structure.
+  - `make_compatibility_node()`: Creates XML nodes for Word compatibility settings.
+  - `twips_from_pt()`: Converts points to twips (1/20th of a point).
+- **Dependencies**:
+  - `docx.oxml`: For XML manipulation within DOCX.
+- **Used by**: `registry.py`, `section_builder.py`
+
+## Updated Workflows
+
+### Resume Upload and Parsing Workflow
+
+1. **User Uploads Resume**:
+   - User submits resume through web interface
+   - `app.py` receives request and passes to `upload_handler.py`
+   - `upload_handler.py` saves file and initiates processing
+
+2. **Resume Processing**:
+   - `resume_processor.py` extracts text using `format_handler.py` (which selects appropriate parser)
+   - For DOCX: Uses `docx2txt`
+   - For PDF: Uses `pdf_parser.py` 
+   - `llm_resume_parser.py` analyzes text using Claude/OpenAI to identify sections
+   - `resume_formatter.py` standardizes the sections
+
+3. **Data Storage**:
+   - Structured sections saved to `static/uploads/temp_session_data/`
+   - Session information updated with resume data
+   - `resume_index.py` logs the processed resume
+
+### Job Analysis Workflow
+
+1. **User Provides Job Details**:
+   - User enters URL or text through web interface
+   - `app.py` passes to `job_parser_handler.py`
+
+2. **Job Analysis**:
+   - `job_parser.py` extracts job content (URL or text)
+   - `llm_job_analyzer.py` analyzes content with Claude/OpenAI
+   - Analysis extracts requirements, skills, and candidate profile
+
+3. **Data Storage**:
+   - Job analysis saved to `static/uploads/temp_session_data/`
+   - `job_parser_handler.py` coordinates saving job data
+   - Session information updated with job details
+
+### Resume Tailoring Workflow
+
+1. **User Requests Tailoring**:
+   - User clicks "Tailor Resume" in web interface
+   - `app.py` passes request to `tailoring_handler.py`
+
+2. **Data Preparation**:
+   - `tailoring_handler.py` retrieves resume and job data
+   - Sections prepared for LLM processing
+
+3. **LLM Processing**:
+   - `claude_integration.py` tailors each section individually:
+     - Uses specialized prompts for each section
+     - Incorporates job requirements into prompts
+     - Applies `sample_experience_snippet.py` for achievement formatting
+     - Enforces quantifiable metrics with `metric_utils.py`
+   - API interactions logged by `claude_api_logger.py`
+
+4. **Response Processing**:
+   - Tailored content validated and structured
+   - `metric_utils.py` ensures all achievements have metrics
+   - Sections saved as JSON to `static/uploads/temp_session_data/{request_id}_{section}.json`
+   - Raw LLM responses saved to `static/uploads/api_responses/`
+
+### Preview Generation Workflow
+
+1. **User Views Preview**:
+   - Preview automatically shown after tailoring
+   - `app.py` routes to `/preview/{request_id}`
+
+2. **HTML Generation**:
+   - `html_generator.py` loads section JSON files
+   - `generate_preview_from_llm_responses()` creates HTML fragment
+   - `style_manager.py` ensures consistent styling
+   - HTML fragment returned to browser
+
+### PDF Export Workflow
+
+1. **User Requests PDF**:
+   - User clicks "Download PDF" button
+   - `app.py` routes to `/download/{request_id}`
+
+2. **PDF Generation**:
+   - `html_generator.py` creates complete HTML document (not just fragment)
+   - `pdf_exporter.py` converts HTML to PDF using WeasyPrint
+   - Applies styling from `static/css/print.css` and `static/css/preview.css`
+   - PDF saved to `static/uploads/tailored_resume_{request_id}.pdf`
+   - PDF served to user via `send_from_directory`
+
+### DOCX Export Workflow
 
 1. **User Requests DOCX**:
-   - User clicks the DOCX download button in web UI
-   - Request is sent to `/download/docx/<request_id>` endpoint
+   - User clicks "Download DOCX" button
+   - `app.py` routes to `/download/docx/{request_id}`
 
-2. **Server Processing**:
-   - Flask route handler calls `utils.docx_builder.build_docx()`
-   - `build_docx()` loads section data from JSON files in temp session directory
-   - Section data is formatted according to DOCX styling rules
-   - Document is assembled with proper styles and formatting
+2. **DOCX Generation**:
+   - `docx_builder.py` coordinates DOCX creation
+   - Loads section JSON files from temp_session_data
+   - Creates document with proper styles
 
-3. **File Delivery**:
-   - DOCX file is built in memory using python-docx
-   - File is sent as attachment with proper MIME type
-   - Browser triggers download for the user
+3. **Style Application**:
+   - `StyleRegistry` from `word_styles.registry` defines styles
+   - Section headers created via `section_builder.py` using table-based approach
+   - `style_engine.py` and `style_manager.py` provide styling values
 
-4. **Current Limitations**:
-   - Skills section formatting needs improvement to properly handle nested structures
-   - Section loading may have path or naming convention issues
-   - Some sections may not be properly loaded or formatted
+4. **Post-Processing**:
+   - Empty paragraphs removed via `remove_empty_paragraphs()`
+   - Spacing adjusted via `tighten_before_headers()`
+   - DOCX file served directly to user's browser
 
-### utils/docx_builder.py
+### Configuration and Styling Workflow
 
-- **Purpose**: Generates Microsoft Word (.docx) files with styling based on the project's design tokens.
-- **Key Functions**:
-  - `load_section_json()`: Loads resume section data from JSON files
-  - `_apply_paragraph_style()`: Applies styling to document paragraphs 
-  - `build_docx()`: Main function that builds the complete DOCX document
-- **Dependencies**:
-  - `python-docx`: For creating and styling Word documents
-  - `style_manager.py`: To access design token mappings
-- **Inputs**: Session data JSON files from `static/uploads/temp_session_data/`
-- **Output**: In-memory DOCX file as BytesIO object
+1. **Configuration Loading**:
+   - `config.py` loads environment variables and settings
+   - Application adapts based on environment (development/production)
+
+2. **Style Definition**:
+   - `design_tokens.json` contains all styling values
+   - `tools/generate_tokens.py` converts to SCSS and DOCX mappings
+
+3. **Style Application**:
+   - `style_engine.py` provides low-level styling operations
+   - `style_manager.py` coordinates consistent style application
+   - Styles applied to HTML via CSS and DOCX via `word_styles`
+
+This architecture provides a clean separation of concerns and ensures consistent styling across all document formats, with a specific focus on resolving styling issues and maintaining consistent user experience.
 
 --- 

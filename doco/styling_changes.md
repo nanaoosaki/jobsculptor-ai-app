@@ -672,3 +672,200 @@ All elements now share the same left alignment (0 cm), creating a clean, profess
 4. **Consistent Approach**: Using the same style-based approach for all document elements creates a unified appearance
 
 This completes our alignment standardization, ensuring all DOCX output elements maintain a consistent and professional appearance.
+
+## DOCX Header Box Styling Implementation (May 2025)
+
+### Overview
+We've successfully implemented a table-based approach for DOCX section headers to address persistent issues with excessive spacing. This approach completely bypasses Word's problematic paragraph spacing model.
+
+### Technical Implementation
+
+The solution consists of several key components:
+
+1. **Custom Style for Table Cell Content**
+   ```python
+   # In registry.py
+   self.register(ParagraphBoxStyle(
+       name="HeaderBoxH2",
+       base_style_name="Normal",  # Important: Based on Normal, not Heading 2
+       outline_level=1,
+       font_name="Calibri",
+       font_size_pt=14.0,
+       font_bold=True,
+       font_color="0D2B7E",
+       space_before_pt=0.0,  # Zero spacing is critical
+       space_after_pt=0.0,
+       line_rule="exact",
+       line_height_pt=14.0,  # Exact font size for tight layout
+       has_border=False      # No border on paragraph (table handles it)
+   ))
+   ```
+
+2. **Table-Based Section Headers**
+   ```python
+   # In section_builder.py
+   def _add_table_section_header(doc, text, style_def):
+       # Create a 1x1 table
+       tbl = doc.add_table(rows=1, cols=1)
+       tbl.autofit = False
+       
+       # Get the cell and apply styling
+       cell = tbl.rows[0].cells[0]
+       _apply_cell_border(cell, style_def)
+       _set_cell_vertical_alignment(cell, 'top')
+       
+       # Set asymmetric cell margins (less on top)
+       margins = {
+           'top': 10,     # Half the side margins
+           'left': 20,
+           'bottom': 20,
+           'right': 20
+       }
+       _set_cell_margins(cell, margins)
+       
+       # Apply our custom style to the paragraph
+       para = cell.paragraphs[0]
+       para.style = get_or_create_style("HeaderBoxH2", doc)
+       para.text = text
+       
+       # Maintain document structure
+       _promote_outline_level(para, style_def.outline_level)
+       return tbl
+   ```
+
+3. **Cell Margin and Alignment Control**
+   ```python
+   def _set_cell_margins(cell, margins):
+       # Handle different margin formats
+       if isinstance(margins, int):
+           top = margins
+           left = margins
+           bottom = margins
+           right = margins
+       else:
+           # Use dict with defaults
+           top = margins.get('top', 10)  # Less on top by default
+           left = margins.get('left', 20)
+           bottom = margins.get('bottom', 20)
+           right = margins.get('right', 20)
+       
+       # Apply to cell via XML
+       tcPr = cell._tc.get_or_add_tcPr()
+       # ... XML creation and application
+   
+   def _set_cell_vertical_alignment(cell, alignment='top'):
+       # Set vertical alignment for cell content
+       tcPr = cell._tc.get_or_add_tcPr()
+       # ... XML creation and application
+   ```
+
+### How to Modify DOCX Header Styling
+
+To adjust the appearance of section headers in DOCX output, there are several control points:
+
+#### 1. Adjusting Header Text Style
+
+To change font properties (size, color, weight):
+
+1. Edit `HeaderBoxH2` style in `word_styles/registry.py`:
+   ```python
+   self.register(ParagraphBoxStyle(
+       # ... other properties
+       font_name="Calibri",          # Change font family
+       font_size_pt=14.0,            # Change font size
+       font_bold=True,               # Toggle bold
+       font_color="0D2B7E",          # Change color (hex without #)
+       # ... other properties
+   ))
+   ```
+
+2. Rebuild/restart the application
+
+#### 2. Adjusting Header Box Spacing
+
+To modify the spacing around header text within the box:
+
+1. Edit cell margins in `_add_table_section_header()` in `section_builder.py`:
+   ```python
+   margins = {
+       'top': 10,     # Adjust top margin (in twips, 20 twips = 1pt)
+       'left': 20,    # Adjust left margin
+       'bottom': 20,  # Adjust bottom margin
+       'right': 20    # Adjust right margin
+   }
+   ```
+
+#### 3. Adjusting Border Appearance
+
+To modify the border style, width, or color:
+
+1. Edit the border properties in `BoxedHeading2Table` style:
+   ```python
+   self.register(ParagraphBoxStyle(
+       # ... other properties
+       border_twips=20,  # Border width (1pt = 20 twips)
+       padding_top_twips=10,  # Top padding
+       padding_side_twips=20, # Side padding
+       # ... other properties
+   ))
+   ```
+
+#### 4. Optional: Fixed Height Headers
+
+For absolute height control (when headers won't wrap):
+
+```python
+def _add_table_section_header(doc, text, style_def):
+    # ... existing code ...
+    
+    # Set fixed row height (optional)
+    from docx.enum.table import WD_ROW_HEIGHT_RULE
+    row = tbl.rows[0]
+    row.height_rule = WD_ROW_HEIGHT_RULE.EXACT
+    row.height = Pt(style_def.font_size_pt + 2)  # font size + 2pt padding
+    
+    # ... rest of existing code ...
+```
+
+### Workflow for DOCX Styling Changes
+
+When making changes to DOCX section header styling:
+
+1. **Edit Style Definitions**:
+   - Modify style properties in `word_styles/registry.py`
+   - For header box appearance, edit `BoxedHeading2Table` style
+   - For header text appearance, edit `HeaderBoxH2` style
+
+2. **Adjust Cell Properties** (if needed):
+   - For cell margins and alignment, modify `_add_table_section_header()` in `section_builder.py`
+   - For border appearance, modify `_apply_cell_border()` in `section_builder.py`
+
+3. **Test Changes**:
+   - Run test scripts in `tests/docx_spacing/` to validate changes
+   - Examine test output in `tests/docx_spacing/output/`
+   - Verify changes in Word on both Windows and Mac if possible
+
+4. **Integration Testing**:
+   - Run the full application and generate a real resume
+   - Verify section headers appear as expected
+
+### Key Technical Insights for Future Changes
+
+1. **Styling Hierarchy**:
+   - Base styles on Normal instead of Heading styles to avoid inheriting unwanted spacing
+   - Apply outline level explicitly to maintain document structure
+
+2. **Table Cell Controls**:
+   - Use asymmetric cell margins for optimal appearance (less on top)
+   - Set vertical alignment to "top" to prevent excess space
+   - Use consistent border properties for all sides
+
+3. **XML Manipulation**:
+   - Direct XML control provides the most reliable way to set specific properties
+   - Be careful with namespaces and attribute formats
+
+4. **Testing Strategy**:
+   - Create simple, focused test documents to validate changes
+   - Verify with real documents to ensure changes work in context
+
+By following these guidelines, you can make reliable changes to DOCX section header styling with predictable results across platforms.
