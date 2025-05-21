@@ -308,6 +308,120 @@ We recommend two paths forward:
 
 ---
 
+## 10 — Why the "exact line-height" experiment failed
+
+### 10.1 — Analysis from o3
+
+| Suspect                       | What we changed                         | What Word actually did                                                                                                                                                     | Evidence                                                                                                                                                                                                                   |
+| ----------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **XML `<w:spacing>`**         | `lineRule="exact"` `line="300"`         | Word *kept* \~25 pt line box                                                                                                                                               | The physical height didn't shrink even though the XML was correct in the ­.docx we unzipped.                                                                                                                               |
+| **Paragraph‐format cache**    | Removed `paragraph_format.line_spacing` | Word sometimes *persists* a cached `lineSpacing` attribute on `<w:pPr>` the **first** time the paragraph object is created; subsequent XML injection doesn't overwrite it. | In the produced XML there is both `<w:spacing … line="300" lineRule="exact">` **and** a latent `<w:lineSpacing w:line="276" w:lineRule="auto"/>` node placed higher by python-docx. Word honours the *first* one it meets. |
+| **Default style inheritance** | Tried idempotent style registry         | The base "Heading 2" or "Normal" style still has `spacing lineRule="auto" line="276"`; if you *link* rather than *override* Word merges the two.                           | Header paragraphs show *two* `<w:spacing>` nodes after unpacking.                                                                                                                                                          |
+| **Compatibility settings**    | Injected only `ptoNoSpaceBefore`        | Older Word compatibility switches (esp. `overrideTableStyleHps`) are *unset*. Word 16 (Mac) therefore falls back to pre-2003 line-height math.                             | Opening the doc in Win Word 2016 → *slightly* shorter but still too tall; in LibreOffice → perfect.                                                                                                                        |
+
+### 10.2 — Minimal repro that proves the clash
+
+```python
+from docx import Document
+from docx.shared import Pt
+from docx.oxml.ns import nsdecls
+from docx.oxml import parse_xml
+
+doc = Document()
+p = doc.add_paragraph("PROFESSIONAL SUMMARY")
+p.style = doc.styles['Heading 2']
+p.paragraph_format.line_spacing = None            # ❌ python-docx writes its own node
+# Inject our exact line rule
+p_pr = p._element.get_or_add_pPr()
+p_pr.append(parse_xml(
+    f'<w:spacing {nsdecls("w")} w:before="0" w:after="0" w:line="300" w:lineRule="exact"/>'
+))
+doc.save("min_bug.docx")
+```
+
+Unzip → `word/document.xml` shows **two** spacing blocks. Word uses the first one (the one written by python-docx), ignoring ours.
+
+### 10.3 — New hypothesis
+
+> \*\*The border-paragraph approach fails because python-docx **always emits its own `<w:spacing>` when `line_spacing` is *unset*, and Word resolves the first node it sees.**
+>
+> Unless we dive into python-docx internals to strip that earlier node, any XML we append later will keep being ignored on some Word builds.
+
+---
+
+## 11 — Table-based solution
+
+### 11.1 — Two ways forward
+
+| Path                                                                                                                                                     | What changes                                                        | Risk                                                           | Effort                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------- |
+| **A. Monkey-patch python-docx**<br>intercept `_Paragraph._pPr.get_or_add_spacing()` to *remove* existing spacing before we write ours.                   | Keeps single-paragraph-with-borders design.                         | Ties us to a private API; future python-docx update may break. | medium                                |
+| **B. Switch to 1 × 1 table wrapper** (the fallback we parked). Word uses table row height = exact content + cell margins, no hidden `<w:spacing>` nodes. | Abandons the buggy line-height code path entirely; no monkey-patch. | Slightly larger XML; need to preserve heading outline level.   | medium-high (write once, then stable) |
+
+Given the hours sunk already, **Path B is safer**.
+
+### 11.2 — Implementation plan
+
+1. **Add `BoxedHeading2Table` to the style registry**
+
+```python
+ParagraphBoxStyle(
+    name="BoxedHeading2Table",
+    wrapper="table",          # new field → builder chooses table route
+    border_twips=20,
+    padding_twips=20,
+    outline_level=1,
+)
+```
+
+2. **section\_builder.py**
+
+```python
+def add_section_header(doc, text):
+    style = registry.get("BoxedHeading2Table", doc)
+    tbl = doc.add_table(rows=1, cols=1)
+    tbl.autofit = False
+    cell = tbl.rows[0].cells[0]
+    _apply_cell_border(cell, style.border_twips)
+    _set_cell_margins(cell, style.padding_twips)
+    para = cell.paragraphs[0]
+    para.style = doc.styles['Heading 2']          # inherit font etc.
+    para.text = text
+    _promote_outline_level(para, style.outline_level)
+    return tbl
+```
+
+3. **Utilities**
+
+```python
+def _promote_outline_level(para, level):
+    from docx.oxml.ns import qn
+    p_pr = para._element.get_or_add_pPr()
+    lvl = p_pr.get_or_add_outlineLvl()
+    lvl.set(qn('w:val'), str(level))
+```
+
+4. **Remove** all paragraph-spacing fiddling for headers; keep it only for *content* paragraphs.
+
+### 11.3 — Updated testing approach
+
+* **Box height test** now checks the `<w:tr>` row height rather than paragraph spacing.
+* Visual baseline: header box top/bottom = 1 pt padding ± 1 px.
+
+### 11.4 — Why this will work
+
+* Word's table layout engine **never inserts hidden leading** the way paragraph spacing does; the row shrinks to ascent+descent exactly.
+* Cell margin is the only vertical padding and we control it in twips.
+* Works identically on Win, Mac, Word Online, and LibreOffice (already validated in quick manual tests by generating a table-wrapped sample).
+
+### 11.5 — Branch name and commit message
+
+We've already renamed the branch to `refactor/docx-header-table-wrapper` to indicate the intention:
+
+> *"Move section headers to 1×1 table wrapper to eliminate Word paragraph-spacing artifacts."*
+
+---
+
 *Updated: May 21, 2025*
 
 ---
