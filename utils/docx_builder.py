@@ -600,14 +600,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     # Achievements/bullets - use the helper function for consistent formatting
                     for achievement in job.get('achievements', []):
                         bullet_para = create_bullet_point(doc, achievement, docx_styles)
-                    
-                    # Space between jobs - use value from design tokens if available
-                    space_after = 6  # Default spacing
-                    if "sectionSpacing" in docx_styles and "spacingCm" in docx_styles["sectionSpacing"]:
-                        space_after = int(docx_styles["sectionSpacing"]["spacingCm"] * 28.35)  # Convert cm to points
-                    
-                    doc.add_paragraph("").paragraph_format.space_after = Pt(space_after)
-        
+                
         # ------ EDUCATION SECTION ------
         logger.info("Processing Education section...")
         education = load_section_json(request_id, "education", temp_dir)
@@ -674,13 +667,6 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     # Highlights/bullets - use the helper function for consistent formatting
                     for highlight in school.get('highlights', []):
                         bullet_para = create_bullet_point(doc, highlight, docx_styles)
-                    
-                    # Space between institutions - use value from design tokens if available
-                    space_after = 6  # Default spacing
-                    if "sectionSpacing" in docx_styles and "spacingCm" in docx_styles["sectionSpacing"]:
-                        space_after = int(docx_styles["sectionSpacing"]["spacingCm"] * 28.35)  # Convert cm to points
-                    
-                    doc.add_paragraph("").paragraph_format.space_after = Pt(space_after)
         
         # ------ SKILLS SECTION ------
         logger.info("Processing Skills section...")
@@ -834,16 +820,14 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     # Project details - use the helper function for consistent formatting
                     for detail in project.get('details', []):
                         bullet_para = create_bullet_point(doc, detail, docx_styles)
-                
-                # Space between projects - use value from design tokens if available
-                space_after = 6  # Default spacing
-                if "sectionSpacing" in docx_styles and "spacingCm" in docx_styles["sectionSpacing"]:
-                    space_after = int(docx_styles["sectionSpacing"]["spacingCm"] * 28.35)  # Convert cm to points
-                
-                doc.add_paragraph("").paragraph_format.space_after = Pt(space_after)
         
         # Save DOCX to BytesIO
         logger.info("Saving DOCX to BytesIO...")
+        
+        # IMPORTANT FIX: Fix the spacing between sections by finding the last paragraph 
+        # before each section header and setting its space_after to 0
+        _fix_spacing_between_sections(doc)
+        
         output = BytesIO()
         doc.save(output)
         output.seek(0)
@@ -885,4 +869,71 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         logger.error(f"Error type: {type(e).__name__}")
         logger.error(f"Error details: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
-        raise 
+        raise
+
+def _fix_spacing_between_sections(doc):
+    """
+    Fix spacing between sections by setting space_after=0 on paragraphs
+    that appear right before a section header.
+    
+    This addresses the issue of excessive space between the last content
+    paragraph of one section and the next section header.
+    
+    Args:
+        doc: The DOCX document to fix
+    """
+    try:
+        from docx.shared import Pt
+        
+        # Find all section headers by style
+        section_headers = []
+        for i, para in enumerate(doc.paragraphs):
+            if para.style and para.style.name == 'BoxedHeading2':
+                section_headers.append(i)
+        
+        # No section headers or only one (no "between" to fix)
+        if len(section_headers) < 2:
+            return
+        
+        # For each section header (except the first), fix the paragraph right before it
+        for header_idx in section_headers[1:]:  # Skip the first header
+            # Find the paragraph right before this header
+            prev_para_idx = header_idx - 1
+            
+            # Skip if it's an invalid index
+            if prev_para_idx < 0 or prev_para_idx >= len(doc.paragraphs):
+                continue
+                
+            # Get the paragraph before the section header
+            prev_para = doc.paragraphs[prev_para_idx]
+            
+            # Skip if it's another section header (would be unusual but possible)
+            if prev_para.style and prev_para.style.name == 'BoxedHeading2':
+                continue
+                
+            # Set space_after to 0
+            prev_para.paragraph_format.space_after = Pt(0)
+            
+            # Apply the change through XML as well for maximum control
+            if hasattr(prev_para._element, 'get_or_add_pPr'):
+                p_pr = prev_para._element.get_or_add_pPr()
+                
+                # Find existing spacing element or create it
+                from docx.oxml.ns import qn
+                spacing = p_pr.find(qn('w:spacing'))
+                
+                if spacing is not None:
+                    # Set the w:after attribute to 0
+                    spacing.set(qn('w:after'), '0')
+                else:
+                    # Create a new spacing element
+                    from docx.oxml import parse_xml
+                    from docx.oxml.ns import nsdecls
+                    spacing_xml = f'<w:spacing {nsdecls("w")} w:after="0"/>'
+                    p_pr.append(parse_xml(spacing_xml))
+            
+            logger.info(f"Fixed spacing: Set space_after=0 on paragraph before section header at index {header_idx}")
+    
+    except Exception as e:
+        logger.error(f"Error fixing spacing between sections: {e}")
+        # Continue execution - this is a fix attempt, not critical functionality 

@@ -75,3 +75,31 @@ The issue appears to be related to how paragraph border and background styling i
 Work will be tracked in the continuation of the DOCX styling refactoring project (Phase 5 and 6) with an emphasis on fixing the section header box styling while maintaining the alignment improvements already achieved.
 
 **Priority**: Medium 
+
+## DOCX Section Header Styling and Spacing
+
+### Key Insights for Section Header Box Styling
+
+1. **Line Rule and Line Height Matter**: 
+   - For optimal section header box height, use `lineRule="auto"` with `line="276"` (13.8pt)
+   - Using `exact` line rule with low values can cause text to wrap unexpectedly
+   - Using `auto` without a line value doesn't give consistent results
+
+2. **Border Padding Control**:
+   - Always use exact twip values for border padding: `w:space="20"` equals 1pt
+   - Apply borders to all four sides consistently for a clean box
+
+3. **Spacing Between Sections**:
+   - The main cause of unwanted spacing is empty paragraphs between sections
+   - Use the `tighten_before_headers` function to find and set `space_after=0` on all paragraphs preceding section headers
+   - Apply both API-level changes (`paragraph_format.space_after = Pt(0)`) and XML-level changes for maximum compatibility
+
+4. **Style vs. Direct Formatting**:
+   - Create a named style like `BoxedHeading2` based on `Heading 2` for best accessibility
+   - Direct paragraph borders offer better copy-paste behavior than table-based approaches
+   - Set outline level explicitly for proper TOC generation and screen reader accessibility
+
+5. **Validation Best Practices**:
+   - Always validate both the box height and inter-section spacing aspects
+   - Test with single-line headers and multi-line headers to ensure consistent appearance
+   - Check border padding and spacing values directly in the XML for verification 

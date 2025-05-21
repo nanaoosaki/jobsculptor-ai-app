@@ -535,8 +535,8 @@ class StyleEngine:
             border_width_pt = tokens_access.get("sectionHeader.border.widthPt", 1)
             border_color = tokens_access.get("sectionHeader.border.color", "#000000")
             border_style = tokens_access.get("sectionHeader.border.style", "single")
-            padding_pt = tokens_access.get("sectionHeader.paddingPt", 5)
-            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 8)
+            padding_pt = tokens_access.get("sectionHeader.paddingPt", 3)
+            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 4)
             
             # Strip # prefix from hex color
             border_color = border_color.lstrip('#')
@@ -546,10 +546,23 @@ class StyleEngine:
                 run.bold = True
                 run.font.size = Pt(14)  # Default size for section headers
             
-            # Set paragraph formatting
+            # Set paragraph formatting for consistent spacing
+            paragraph.paragraph_format.space_before = Pt(0)
             paragraph.paragraph_format.space_after = Pt(spacing_after_pt)
+            paragraph.paragraph_format.line_spacing = 1.0
             paragraph.paragraph_format.left_indent = Cm(0)  # No indent
             paragraph.paragraph_format.first_line_indent = Cm(0)  # No first line indent
+            
+            # Apply direct XML for spacing to ensure it's applied consistently
+            spacing_xml = f'''
+            <w:spacing {nsdecls("w")} 
+                w:before="0" 
+                w:after="{int(spacing_after_pt * 20)}" 
+                w:line="276"
+                w:lineRule="auto" 
+                w:beforeAutospacing="0" 
+                w:afterAutospacing="0"/>
+            '''
             
             # Apply borders directly using XML
             border_xml = f'''
@@ -564,6 +577,13 @@ class StyleEngine:
             # Get paragraph properties
             if hasattr(paragraph._p, 'get_or_add_pPr'):
                 pPr = paragraph._p.get_or_add_pPr()
+                
+                # Remove any existing spacing to prevent conflicts
+                for existing in pPr.xpath('./w:spacing'):
+                    pPr.remove(existing)
+                
+                # Add new spacing
+                pPr.append(parse_xml(spacing_xml))
                 
                 # Remove any existing borders to prevent conflicts
                 for existing in pPr.xpath('./w:pBdr'):
@@ -658,7 +678,7 @@ class StyleEngine:
         """
         # Import DOCX-specific modules
         from docx.enum.style import WD_STYLE_TYPE
-        from docx.shared import Pt
+        from docx.shared import Pt, Cm
         from docx.oxml.ns import nsdecls
         from docx.oxml import parse_xml
         
@@ -709,24 +729,49 @@ class StyleEngine:
             # Strip # prefix from hex color for python-docx
             border_color = border_color.lstrip('#')
             border_style = tokens_access.get("sectionHeader.border.style", "single")
-            padding_pt = tokens_access.get("sectionHeader.paddingPt", 5)
-            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 8)
+            padding_pt = tokens_access.get("sectionHeader.paddingPt", 1)
+            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 4)
             
-            # Set spacing after (reduced spacing)
+            # Set spacing properties for the paragraph format
+            # Set space before to 0 to eliminate unwanted spacing
+            boxed_heading.paragraph_format.space_before = Pt(0)
             boxed_heading.paragraph_format.space_after = Pt(spacing_after_pt)
             
-            # Apply border to the style using XML with proper namespace declaration
-            border_xml = f'''
-            <w:pBdr {nsdecls("w")}>
-                <w:top w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
-                <w:left w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
-                <w:bottom w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
-                <w:right w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="{int(padding_pt * 20)}" w:color="{border_color}"/>
-            </w:pBdr>
+            # Set single line spacing (1.0) - using direct assignment instead of WD_LINE_SPACING enum
+            # boxed_heading.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE # This import doesn't exist
+            boxed_heading.paragraph_format.line_spacing = 1.0 # Value for SINGLE line spacing
+
+            # Apply explicit XML for spacing control with auto spacing disabled
+            # Using lineRule="auto" for optimal box height, removing w:line attribute
+            spacing_xml = f'''
+            <w:spacing {nsdecls("w")} 
+                w:before="0" 
+                w:after="{int(spacing_after_pt * 20)}" 
+                w:line="276"
+                w:lineRule="auto" 
+                w:beforeAutospacing="0" 
+                w:afterAutospacing="0"/>
             '''
             
             # Get or create paragraph properties
             pPr = boxed_heading._element.get_or_add_pPr()
+            
+            # Remove any existing spacing to prevent conflicts
+            for existing in pPr.xpath('./w:spacing'):
+                pPr.remove(existing)
+                
+            # Add new spacing
+            pPr.append(parse_xml(spacing_xml))
+            
+            # Apply border to the style using XML with proper namespace declaration
+            border_xml = f'''
+            <w:pBdr {nsdecls("w")}>
+                <w:top w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+                <w:left w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+                <w:bottom w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+                <w:right w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+            </w:pBdr>
+            '''
             
             # Remove any existing borders to prevent conflicts
             for existing in pPr.xpath('./w:pBdr'):
@@ -770,6 +815,8 @@ class StyleEngine:
         """
         # Import required modules
         from docx.shared import Pt
+        from docx.oxml.ns import nsdecls
+        from docx.oxml import parse_xml
         
         # Load tokens if not provided
         if not tokens:
@@ -785,9 +832,60 @@ class StyleEngine:
             # Apply the style to the paragraph
             paragraph.style = style_name
             
-            # Set spacing after (reduced spacing)
-            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 8)
+            # Get spacing values from tokens
+            spacing_after_pt = tokens_access.get("sectionHeader.spacingAfterPt", 4)
+            
+            # Set paragraph formatting explicitly to override any base style issues
+            paragraph.paragraph_format.space_before = Pt(0)
             paragraph.paragraph_format.space_after = Pt(spacing_after_pt)
+
+            # Apply direct XML for spacing to ensure it's applied consistently
+            # Using lineRule="auto", removing w:line attribute
+            spacing_xml = f'''
+            <w:spacing {nsdecls("w")} 
+                w:before="0" 
+                w:after="{int(spacing_after_pt * 20)}" 
+                w:line="276"
+                w:lineRule="auto" 
+                w:beforeAutospacing="0" 
+                w:afterAutospacing="0"/>
+            '''
+            
+            # Get paragraph properties
+            p_pr = paragraph._element.get_or_add_pPr()
+            
+            # Remove any existing spacing to prevent conflicts
+            for existing in p_pr.xpath('./w:spacing'):
+                p_pr.remove(existing)
+                
+            # Add new spacing
+            p_pr.append(parse_xml(spacing_xml))
+            
+            # Get border values from tokens
+            border_width_pt = tokens_access.get("sectionHeader.border.widthPt", 1)
+            border_color = tokens_access.get("sectionHeader.border.color", "#000000")
+            # Strip # prefix from hex color for python-docx
+            border_color = border_color.lstrip('#')
+            border_style = tokens_access.get("sectionHeader.border.style", "single")
+            
+            # Apply borders to the paragraph element directly
+            border_xml = f'''
+            <w:pBdr {nsdecls("w")}>
+                <w:top w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+                <w:left w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+                <w:bottom w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+                <w:right w:val="{border_style}" w:sz="{int(border_width_pt * 8)}" w:space="20" w:color="{border_color}"/>
+            </w:pBdr>
+            '''
+            
+            # Remove any existing borders to prevent conflicts
+            for existing in p_pr.xpath('./w:pBdr'):
+                p_pr.remove(existing)
+                
+            # Add borders directly to the paragraph
+            p_pr.append(parse_xml(border_xml))
+            
+            logger.info(f"Applied BoxedHeading2 style and direct border to paragraph: '{paragraph.text[:30]}'")
             
             return paragraph
             
