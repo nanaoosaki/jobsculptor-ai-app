@@ -39,6 +39,9 @@ class ParagraphBoxStyle:
     base_style_name: str = "Normal"
     outline_level: Optional[int] = None
     
+    # Container type
+    wrapper: str = "paragraph"  # "paragraph" or "table"
+    
     # Font properties
     font_name: str = "Calibri"
     font_size_pt: float = 11.0
@@ -57,6 +60,10 @@ class ParagraphBoxStyle:
     space_after_pt: float = 6.0
     line_rule: str = "auto"
     line_height_pt: Optional[float] = 13.8  # 276 twips
+    
+    # Table-specific properties (for wrapper="table")
+    border_twips: int = 20  # 1pt = 20 twips
+    padding_twips: int = 20  # 1pt = 20 twips
     
     # Paragraph properties
     keep_with_next: bool = False
@@ -90,6 +97,7 @@ class StyleRegistry:
             name="BoxedHeading2",
             base_style_name="Heading 2",
             outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
+            wrapper="paragraph",
             font_name="Calibri",
             font_size_pt=14.0,
             font_bold=True,
@@ -100,10 +108,50 @@ class StyleRegistry:
             border_padding_pt=1.0,  # 20 twips
             space_before_pt=0.0,
             space_after_pt=4.0,
+            # Changed from "auto" to "exact" and calculate line height based on font size + 1pt
             line_rule="exact",
             line_height_pt=15.0,  # 14pt font + 1pt extra = 15pt (300 twips)
             keep_with_next=True,
             has_border=True
+        ))
+        
+        # BoxedHeading2Table - Section header with border using table wrapper
+        self.register(ParagraphBoxStyle(
+            name="BoxedHeading2Table",
+            base_style_name="Heading 2",
+            outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
+            wrapper="table",  # Use table wrapper instead of paragraph
+            font_name="Calibri",
+            font_size_pt=14.0,
+            font_bold=True,
+            font_color="0D2B7E",  # Navy blue
+            border_width_pt=1.0,
+            border_color="0D2B7E",  # Match font color
+            border_style="single",
+            border_twips=20,  # 1pt
+            padding_twips=20,  # 1pt
+            space_before_pt=0.0,
+            space_after_pt=4.0,
+            keep_with_next=True,
+            has_border=True
+        ))
+        
+        # HeaderBoxH2 - New purpose-built style for table cell content
+        self.register(ParagraphBoxStyle(
+            name="HeaderBoxH2",
+            base_style_name="Normal",  # Important: Based on Normal, not Heading 2
+            outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
+            wrapper="paragraph",  # This is for the paragraph inside the table cell
+            font_name="Calibri",
+            font_size_pt=14.0,
+            font_bold=True,
+            font_color="0D2B7E",  # Navy blue
+            space_before_pt=0.0,  # Zero spacing, critical for tight layout
+            space_after_pt=0.0,   # Zero spacing, critical for tight layout
+            line_rule="exact",
+            line_height_pt=14.0,  # Exact font size with no extra space
+            keep_with_next=True,
+            has_border=False      # No border on paragraph itself (table handles that)
         ))
         
         # ContentParagraph - Regular content paragraph

@@ -9,13 +9,15 @@ import logging
 from typing import Optional
 
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, Twips
+from docx.table import Table, _Cell
+from docx.oxml.ns import qn
 
 from .registry import get_or_create_style, apply_direct_paragraph_formatting
 
 logger = logging.getLogger(__name__)
 
-def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading2") -> None:
+def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading2Table") -> None:
     """
     Add a section header with proper styling and spacing.
     
@@ -29,7 +31,7 @@ def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading
         style_name: The name of the style to apply (must be in registry)
     
     Returns:
-        The added paragraph
+        The added paragraph or table, depending on the style wrapper type
     """
     # Ensure the style exists
     style_name = get_or_create_style(style_name, doc)
@@ -52,6 +54,29 @@ def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading
             apply_direct_paragraph_formatting(empty_para, "EmptyParagraph")
             logger.info("Added empty control paragraph before section header")
     
+    # Get the style details to determine if we should use table or paragraph
+    from .registry import _registry
+    style_def = _registry.get(style_name)
+    
+    if style_def and style_def.wrapper == "table":
+        # Use table-based approach
+        return _add_table_section_header(doc, text, style_def)
+    else:
+        # Use paragraph-based approach
+        return _add_paragraph_section_header(doc, text, style_name)
+
+def _add_paragraph_section_header(doc: Document, text: str, style_name: str):
+    """
+    Add a section header using a paragraph with border.
+    
+    Args:
+        doc: The document to add the section header to
+        text: The section header text
+        style_name: The name of the style to apply
+        
+    Returns:
+        The added paragraph
+    """
     # Now add the section header
     header_para = doc.add_paragraph()
     header_para.text = text
@@ -65,6 +90,200 @@ def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading
     
     logger.info(f"Added section header: {text} with style {style_name}")
     return header_para
+
+def _add_table_section_header(doc: Document, text: str, style_def):
+    """
+    Add a section header using a 1x1 table with borders.
+    
+    This approach avoids Word's paragraph spacing issues by using a table,
+    which has more reliable height control.
+    
+    Args:
+        doc: The document to add the section header to
+        text: The section header text
+        style_def: The style definition from the registry
+        
+    Returns:
+        The added table
+    """
+    # Create a 1x1 table
+    tbl = doc.add_table(rows=1, cols=1)
+    
+    # Disable autofit to prevent Word from resizing
+    tbl.autofit = False
+    
+    # Get the cell
+    cell = tbl.rows[0].cells[0]
+    
+    # Apply border to the cell
+    _apply_cell_border(cell, style_def)
+    
+    # Set cell vertical alignment to top
+    _set_cell_vertical_alignment(cell, 'top')
+    
+    # Set asymmetric cell margins (less on top)
+    margins = {
+        'top': 10,     # Half the side margins for minimal top padding
+        'left': 20,
+        'bottom': 20,
+        'right': 20
+    }
+    _set_cell_margins(cell, margins)
+    
+    # Get the existing paragraph in the cell
+    para = cell.paragraphs[0]
+    
+    # Apply our purpose-built HeaderBoxH2 style instead of Heading 2
+    # This avoids inheriting unwanted spacing from Heading 2
+    header_style = get_or_create_style("HeaderBoxH2", doc)
+    para.style = header_style
+    
+    # Add the text
+    para.text = text
+    
+    # Promote outline level to maintain document structure
+    _promote_outline_level(para, style_def.outline_level)
+    
+    logger.info(f"Added table section header: {text} with style {style_def.name}")
+    return tbl
+
+def _apply_cell_border(cell: _Cell, style_def):
+    """
+    Apply border to a table cell based on style definition.
+    
+    Args:
+        cell: The cell to apply border to
+        style_def: The style definition with border properties
+    """
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    
+    # Convert style's border width to 1/8th points for Word
+    width_8th_pt = int(style_def.border_width_pt * 8)
+    
+    # Get cell properties
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    
+    # Remove any existing borders
+    tcBorders_elements = tcPr.xpath('./w:tcBorders')
+    for element in tcBorders_elements:
+        tcPr.remove(element)
+    
+    # Create border XML
+    tcBorders_xml = f'''
+    <w:tcBorders {nsdecls("w")}>
+        <w:top w:val="{style_def.border_style}" w:sz="{width_8th_pt}" w:color="{style_def.border_color}"/>
+        <w:left w:val="{style_def.border_style}" w:sz="{width_8th_pt}" w:color="{style_def.border_color}"/>
+        <w:bottom w:val="{style_def.border_style}" w:sz="{width_8th_pt}" w:color="{style_def.border_color}"/>
+        <w:right w:val="{style_def.border_style}" w:sz="{width_8th_pt}" w:color="{style_def.border_color}"/>
+    </w:tcBorders>
+    '''
+    
+    # Add borders to cell
+    tcBorders = parse_xml(tcBorders_xml)
+    tcPr.append(tcBorders)
+
+def _set_cell_margins(cell: _Cell, margins):
+    """
+    Set custom margins for each side of a table cell.
+    
+    Args:
+        cell: The cell to set margins for
+        margins: Either an int (all sides equal) or dict with 'top', 'left', etc.
+    """
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    
+    # Handle different margin formats
+    if isinstance(margins, int):
+        top = margins
+        left = margins
+        bottom = margins
+        right = margins
+    else:
+        # Use dict with defaults
+        top = margins.get('top', 10)  # Less on top by default
+        left = margins.get('left', 20)
+        bottom = margins.get('bottom', 20)
+        right = margins.get('right', 20)
+    
+    # Get cell properties
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    
+    # Remove any existing margins
+    tcMar_elements = tcPr.xpath('./w:tcMar')
+    for element in tcMar_elements:
+        tcPr.remove(element)
+    
+    # Create margins XML
+    tcMar_xml = f'''
+    <w:tcMar {nsdecls("w")}>
+        <w:top w:w="{top}" w:type="dxa"/>
+        <w:left w:w="{left}" w:type="dxa"/>
+        <w:bottom w:w="{bottom}" w:type="dxa"/>
+        <w:right w:w="{right}" w:type="dxa"/>
+    </w:tcMar>
+    '''
+    
+    # Add margins to cell
+    tcMar = parse_xml(tcMar_xml)
+    tcPr.append(tcMar)
+
+def _set_cell_vertical_alignment(cell: _Cell, alignment='top'):
+    """
+    Set vertical alignment for cell content.
+    
+    Args:
+        cell: The cell to set alignment for
+        alignment: The vertical alignment ('top', 'center', 'bottom')
+    """
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    
+    # Get cell properties
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    
+    # Remove any existing vertical alignment
+    for va in tcPr.xpath('./w:vAlign'):
+        tcPr.remove(va)
+    
+    # Add vertical alignment
+    vAlign = parse_xml(f'<w:vAlign {nsdecls("w")} w:val="{alignment}"/>')
+    tcPr.append(vAlign)
+
+def _promote_outline_level(para, level: int):
+    """
+    Set the outline level for a paragraph to maintain document structure.
+    
+    This is important for tables, as paragraphs in tables don't inherit
+    outline level from styles automatically.
+    
+    Args:
+        para: The paragraph to set outline level for
+        level: The outline level (0 for Heading 1, 1 for Heading 2, etc.)
+    """
+    from docx.oxml.ns import qn
+    
+    # Get paragraph properties
+    p_pr = para._element.get_or_add_pPr()
+    
+    # Remove any existing outline level
+    for existing in p_pr.xpath('./w:outlineLvl'):
+        p_pr.remove(existing)
+    
+    # Create new outline level
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    
+    # Create outline level XML
+    outlineLvl_xml = f'<w:outlineLvl {nsdecls("w")} w:val="{level}"/>'
+    
+    # Add outline level to paragraph
+    outlineLvl = parse_xml(outlineLvl_xml)
+    p_pr.append(outlineLvl)
 
 def add_content_paragraph(doc: Document, text: str, style_name: str = "ContentParagraph") -> None:
     """
