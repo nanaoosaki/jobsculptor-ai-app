@@ -109,36 +109,14 @@ $font-size-h2: 1.75rem !default;
     }
 }
 
-// Job Title Box Styling
-.job-title-box {
-  all: unset; // Reset any existing styles to prevent conflicts
-  background-color: var(--job-title-box-backgroundColor);
-  color: var(--job-title-box-color);
-  border: var(--job-title-box-borderWidth) var(--job-title-box-borderStyle) var(--job-title-box-borderColor);
-  border-radius: var(--job-title-box-borderRadius, 3px); // Fallback for backward compatibility
-  padding: var(--job-title-box-paddingVertical, 0.2rem) var(--job-title-box-paddingHorizontal, 0.4rem);
-  margin-top: var(--job-title-box-marginTop, 0.1rem);
-  margin-bottom: var(--job-title-box-marginBottom, 0.1rem);
-  font-weight: var(--job-title-box-fontWeight, 600);
-  line-height: var(--job-title-box-lineHeight, 1.2);
-  font-family: var(--job-title-box-fontFamily, $font-family-body);
-  flex: 1 1 auto; // Allow title to shrink when needed
-  overflow-wrap: anywhere; // Prevent horizontal scrolling with long words
-  break-inside: avoid; // Prevent box breaking across pages
-  display: inline-block; // Maintain box model for styling
-}
-
-// Position Bar Styling - Updated
+// Position Bar Styling - New
 .position-bar {
     background: $color-positionBar-bg;
     padding: 0.25rem 0.45rem;
     margin-top: 0.4rem;
-    margin-bottom: $position-line-margin-bottom; // Token for consistent spacing
+    margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
     display: flex;
-    justify-content: space-between; // title left, dates right
-    align-items: center; // Vertically center content
-    flex-wrap: wrap; // Allow wrapping for very long titles
-    break-inside: avoid; // Prevent position bar breaking across pages
+    justify-content: space-between; // company left, dates right
     
     .role,
     .company-name,
@@ -155,36 +133,7 @@ $font-size-h2: 1.75rem !default;
         font-weight: $font-weight-bold; // make bold
         color: $text-color-secondary;
         text-align: right;
-        margin-left: 0.5rem; // Ensure space between title and dates
     }
-}
-
-// Dark mode / high-contrast support
-@media (prefers-color-scheme: dark) {
-  .job-title-box {
-    // Invert colors for dark mode while maintaining contrast
-    background-color: #1a365d; // Darker blue background
-    color: #f0f8ff; // Lighter text for contrast
-    border-color: #4a6fdc; // Keep border color similar for recognition
-  }
-}
-
-// Responsive handling for very long titles
-@media screen and (max-width: 768px) {
-  .position-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    
-    .dates {
-      margin-top: 0.25rem;
-      text-align: left;
-      margin-left: 0;
-    }
-  }
-  
-  .job-title-box {
-    max-width: 100%;
-  }
 }
 
 // Experience and Education Entry Formatting

@@ -128,8 +128,7 @@ def format_section_content(content: str) -> str:
     return html
 
 
-def format_job_entry(company: str, location: str, position: str, dates: str = None, content: List[str] = None, 
-                  role_description: Optional[str] = None, job_index: int = 0) -> str:
+def format_job_entry(company: str, location: str, position: str, dates: str, content: List[str], role_description: Optional[str] = None) -> str:
     """
     Format a job entry into HTML.
     
@@ -140,37 +139,23 @@ def format_job_entry(company: str, location: str, position: str, dates: str = No
         dates: Employment dates
         content: Job details/bullets
         role_description: Optional job role description
-        job_index: Index of job for unique ID generation
     
     Returns:
         Formatted HTML for job entry
     """
     html_parts = []
-    content = content or []
     
     # Company name and location on the first line
     html_parts.append(f'<div class="job">')
     html_parts.append(f'<div class="job-title-line">')
-    
-    # Add lazy loading to company logo if present
-    if 'logo' in locals():
-        html_parts.append(f'<img src="{logo}" alt="{company} logo" loading="lazy" class="company-logo">')
-    
     html_parts.append(f'<span class="company">{company}</span>')
     html_parts.append(f'<span class="location">{location}</span>')
     html_parts.append(f'</div>')
     
-    # Position and dates on the second line with accessibility attributes and ID hook
-    html_parts.append(f'<div id="job-{job_index}" class="position-bar position-line" role="group">')
-    
-    # Add job-title-box class and aria-label to position span
-    html_parts.append(f'<span class="position job-title-box" aria-label="Job title">{position}</span>')
-    
-    # Only add dates span if there are dates (for internships still in progress, etc.)
-    if dates:
-        # Add dir="ltr" for RTL language compatibility
-        html_parts.append(f'<span class="dates" dir="ltr">{dates}</span>')
-    
+    # Position and dates on the second line
+    html_parts.append(f'<div class="position-bar position-line">')
+    html_parts.append(f'<span class="position">{position}</span>')
+    html_parts.append(f'<span class="dates">{dates}</span>')
     html_parts.append(f'</div>')
     
     # Content div opened here
