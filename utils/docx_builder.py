@@ -27,6 +27,7 @@ try:
     from word_styles.registry import StyleRegistry, get_or_create_style, apply_direct_paragraph_formatting
     from word_styles.section_builder import add_section_header as registry_add_section_header
     from word_styles.section_builder import add_content_paragraph, add_bullet_point, remove_empty_paragraphs
+    from word_styles.section_builder import add_role_box  # Add role box function for title/position formatting
     USE_STYLE_REGISTRY = True
 except ImportError:
     USE_STYLE_REGISTRY = False
@@ -688,21 +689,28 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                             docx_styles
                         )
                     
-                    # Position and dates - use the helper function for consistent formatting
+                    # Position and dates - use role box for consistent styling with HTML/PDF
                     position = job.get('position', '')
                     if not position and job.get('title'):  # Fallback to 'title' if 'position' is not available
                         position = job.get('title', '')
                     dates = job.get('dates', '')
                     
                     if position or dates:
-                        position_para = format_right_aligned_pair(
-                            doc,
-                            position,
-                            dates,
-                            "body",
-                            "body",
-                            docx_styles
-                        )
+                        # Use role box instead of format_right_aligned_pair for consistent styling
+                        if USE_STYLE_REGISTRY:
+                            role_box_table = add_role_box(doc, position, dates)
+                            logger.info(f"Added role box for position: '{position}' with dates: '{dates}'")
+                        else:
+                            # Fallback to original approach if style registry is not available
+                            position_para = format_right_aligned_pair(
+                                doc,
+                                position,
+                                dates,
+                                "body",
+                                "body",
+                                docx_styles
+                            )
+                            logger.info(f"Used fallback formatting for position: '{position}' with dates: '{dates}'")
                     
                     logger.info(f"Formatted experience entry: '{company} - {position}'")
                     
@@ -761,19 +769,26 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                             docx_styles
                         )
                     
-                    # Degree and dates - use the helper function for consistent formatting
+                    # Degree and dates - use role box for consistent styling with HTML/PDF
                     degree = school.get('degree', '')
                     dates = school.get('dates', '')
                     
                     if degree or dates:
-                        degree_para = format_right_aligned_pair(
-                            doc,
-                            degree,
-                            dates,
-                            "body",
-                            "body",
-                            docx_styles
-                        )
+                        # Use role box instead of format_right_aligned_pair for consistent styling
+                        if USE_STYLE_REGISTRY:
+                            role_box_table = add_role_box(doc, degree, dates)
+                            logger.info(f"Added role box for degree: '{degree}' with dates: '{dates}'")
+                        else:
+                            # Fallback to original approach if style registry is not available
+                            degree_para = format_right_aligned_pair(
+                                doc,
+                                degree,
+                                dates,
+                                "body",
+                                "body",
+                                docx_styles
+                            )
+                            logger.info(f"Used fallback formatting for degree: '{degree}' with dates: '{dates}'")
                     
                     logger.info(f"Formatted education entry: '{institution} - {degree}'")
                     
@@ -910,7 +925,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                         logger.warning(f"Project is not a dictionary: {type(project)}")
                         continue
                         
-                    # Project title and dates - use the helper function for consistent formatting
+                    # Project title and dates - use role box for consistent styling with HTML/PDF
                     title = project.get('title', '')
                     if not title and project.get('name'):  # Fallback to 'name' if 'title' is not available
                         title = project.get('name', '')
@@ -919,14 +934,21 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                         dates = project.get('date', '')
                     
                     if title or dates:
-                        title_para = format_right_aligned_pair(
-                            doc,
-                            title,
-                            dates,
-                            "heading3",
-                            "body",
-                            docx_styles
-                        )
+                        # Use role box instead of format_right_aligned_pair for consistent styling
+                        if USE_STYLE_REGISTRY:
+                            role_box_table = add_role_box(doc, title, dates)
+                            logger.info(f"Added role box for project title: '{title}' with dates: '{dates}'")
+                        else:
+                            # Fallback to original approach if style registry is not available
+                            title_para = format_right_aligned_pair(
+                                doc,
+                                title,
+                                dates,
+                                "heading3",
+                                "body",
+                                docx_styles
+                            )
+                            logger.info(f"Used fallback formatting for project title: '{title}' with dates: '{dates}'")
                     
                     logger.info(f"Formatted project entry: '{title}'")
                     

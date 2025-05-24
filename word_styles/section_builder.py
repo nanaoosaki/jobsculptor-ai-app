@@ -380,83 +380,95 @@ def remove_empty_paragraphs(doc: Document) -> int:
 
 def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table:
     """
-    Add a role box using a table with borders, reusing the header-box table helper.
+    Add a role box using a table with borders around the entire line.
+    Creates a single unified box containing both role and dates, similar to section headers.
     
     Args:
         doc: The document to add the role box to
         role: The role/position text
-        dates: Optional dates text (if provided, creates 2-column table)
+        dates: Optional dates text (if provided, displays right-aligned within the same box)
         
     Returns:
         The added table
     """
-    # Determine number of columns based on whether dates are provided
-    cols = 2 if dates else 1
-    
-    # Create table
-    tbl = doc.add_table(rows=1, cols=cols)
+    # Always create a single-column table for unified border
+    tbl = doc.add_table(rows=1, cols=1)
     
     # Disable autofit to prevent Word from resizing
     tbl.autofit = False
     
-    # Get the first cell for role
-    role_cell = tbl.rows[0].cells[0]
+    # Apply border to the entire table using roleBox tokens
+    _apply_role_box_table_border(tbl)
     
-    # Apply border to the role cell using roleBox tokens
-    _apply_role_box_border(role_cell)
+    # Get the single cell
+    cell = tbl.rows[0].cells[0]
     
     # Set cell vertical alignment to top
-    _set_cell_vertical_alignment(role_cell, 'top')
+    _set_cell_vertical_alignment(cell, 'top')
     
-    # Set cell margins for role box (smaller than section headers)
-    role_margins = {
+    # Set cell margins for role box (consistent with design tokens)
+    cell_margins = {
         'top': 5,      # Minimal top padding
         'left': 15,    # Moderate side padding
         'bottom': 15,
         'right': 15
     }
-    _set_cell_margins(role_cell, role_margins)
+    _set_cell_margins(cell, cell_margins)
     
-    # Get the existing paragraph in the role cell
-    role_para = role_cell.paragraphs[0]
+    # Get the existing paragraph in the cell
+    para = cell.paragraphs[0]
     
     # Apply role box style
     from .registry import get_or_create_style
     role_style = get_or_create_style("RoleBoxText", doc)
-    role_para.style = role_style
+    para.style = role_style
     
-    # Add the role text
-    role_para.text = role
-    
-    # Handle dates cell if provided
-    if dates and cols == 2:
-        dates_cell = tbl.rows[0].cells[1]
+    # Create the content with role on left and dates on right (like HTML flex layout)
+    if dates:
+        # Calculate the correct tab position to align with location text (same logic as format_right_aligned_pair)
+        from docx.shared import Cm
+        from docx.enum.text import WD_TAB_ALIGNMENT
         
-        # No border for dates cell
-        _set_cell_vertical_alignment(dates_cell, 'top')
+        # Get document margins and page width (same calculation as in format_right_aligned_pair)
+        sections = doc.sections
+        section = sections[0] if sections else None
         
-        # Set minimal margins for dates cell
-        dates_margins = {
-            'top': 5,
-            'left': 10,
-            'bottom': 15,
-            'right': 5
-        }
-        _set_cell_margins(dates_cell, dates_margins)
+        if section:
+            # Page width and margins in cm
+            page_width_cm = section.page_width.cm
+            global_left_margin_cm = section.left_margin.cm
+            global_right_margin_cm = section.right_margin.cm
+            
+            # Calculate content width in cm using global margins
+            content_width_cm = page_width_cm - global_left_margin_cm - global_right_margin_cm
+            
+            # Set tab position at the right edge of content area (same as format_right_aligned_pair)
+            if content_width_cm <= 0:  # Fallback if dimensions are invalid
+                tab_position_cm = 16.0  # A reasonable default
+            else:
+                tab_position_cm = content_width_cm
+        else:
+            # Fallback if no section found
+            tab_position_cm = 16.0
         
-        # Get the existing paragraph in the dates cell
-        dates_para = dates_cell.paragraphs[0]
+        # Clear any existing tab stops
+        para.paragraph_format.tab_stops.clear_all()
         
-        # Apply normal text style to dates
-        dates_style = get_or_create_style("ContentParagraph", doc)
-        dates_para.style = dates_style
+        # Add tab stop for right alignment at the calculated position (matches location alignment)
+        para.paragraph_format.tab_stops.add_tab_stop(Cm(tab_position_cm), WD_TAB_ALIGNMENT.RIGHT)
         
-        # Add the dates text
-        dates_para.text = dates
+        # Add role text (left-aligned)
+        role_run = para.add_run(role)
+        role_run.bold = True
         
-        # Right-align dates
-        from docx.enum.text import WD_ALIGN_PARAGRAPH
-        dates_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        # Add tab and dates text (right-aligned)
+        para.add_run('\t')  # Tab to push dates to the right
+        dates_run = para.add_run(dates)
+        dates_run.italic = True
+    else:
+        # Just add the role text
+        role_run = para.add_run(role)
+        role_run.bold = True
     
     # O3: Prevent border merging in LibreOffice
     tbl.allow_overlap = False  # Word ignores, LibreOffice respects
@@ -464,12 +476,12 @@ def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table
     logger.info(f"Added role box: {role}" + (f" with dates: {dates}" if dates else ""))
     return tbl
 
-def _apply_role_box_border(cell: _Cell):
+def _apply_role_box_table_border(tbl: Table):
     """
-    Apply border to a role box cell based on roleBox design tokens.
+    Apply border to the entire role box table based on roleBox design tokens.
     
     Args:
-        cell: The cell to apply border to
+        tbl: The table to apply border to
     """
     from docx.oxml import parse_xml
     from docx.oxml.ns import nsdecls
@@ -479,25 +491,35 @@ def _apply_role_box_border(cell: _Cell):
     width_8th_pt = int(0.75 * 8)  # roleBox.docx.borderWidthPt = 0.75
     border_color = "4A6FDC"  # roleBox.docx.borderColor (without #)
     
-    # Get cell properties
-    tc = cell._tc
-    tcPr = tc.get_or_add_tcPr()
+    # Get table element and its properties
+    tbl_element = tbl._tbl
+    
+    # Get or create tblPr element using proper XML approach
+    tblPr = tbl_element.find('.//w:tblPr', {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'})
+    if tblPr is None:
+        # Create tblPr element if it doesn't exist
+        tblPr_xml = f'<w:tblPr {nsdecls("w")}></w:tblPr>'
+        tblPr = parse_xml(tblPr_xml)
+        # Insert tblPr as the first child of tbl (after any range markup elements)
+        tbl_element.insert(0, tblPr)
     
     # Remove any existing borders
-    tcBorders_elements = tcPr.xpath('./w:tcBorders')
-    for element in tcBorders_elements:
-        tcPr.remove(element)
+    tblBorders_elements = tblPr.xpath('./w:tblBorders')
+    for element in tblBorders_elements:
+        tblPr.remove(element)
     
-    # Create border XML
-    tcBorders_xml = f'''
-    <w:tcBorders {nsdecls("w")}>
+    # Create table border XML for all sides
+    tblBorders_xml = f'''
+    <w:tblBorders {nsdecls("w")}>
         <w:top w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
         <w:left w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
         <w:bottom w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
         <w:right w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
-    </w:tcBorders>
+        <w:insideH w:val="none"/>
+        <w:insideV w:val="none"/>
+    </w:tblBorders>
     '''
     
-    # Add borders to cell
-    tcBorders = parse_xml(tcBorders_xml)
-    tcPr.append(tcBorders) 
+    # Add borders to table
+    tblBorders = parse_xml(tblBorders_xml)
+    tblPr.append(tblBorders) 
