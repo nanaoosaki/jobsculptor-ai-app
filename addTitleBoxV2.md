@@ -34,190 +34,23 @@ This document outlines the implementation plan for adding a background box to ro
 
 Add the following tokens to `design_tokens.json`, ensuring all values are strings:
 
-```json
-{
-  "roleBox": {
-    "borderColor": "#4A6FDC",
-    "borderWidthPx": "1",
-    "paddingPx": "4",
-    "background": "transparent",
-    "backgroundColor": "transparent",
-    "borderRadiusPx": "0.5",
-    "textColor": "#333333",
+```json{  "roleBox": {    "borderColor": "#4A6FDC",    "borderWidth": "1",    "padding": "4",    "background": "transparent",    "backgroundColor": "transparent",    "borderRadius": "0.5",    "textColor": "#333333",    "docx": {      "borderWidthPt": "0.75",      "borderColor": "#4A6FDC",      "borderThemeColor": "accent1",      "paddingTopTwips": "40",      "paddingSideTwips": "80"    }  }}```
 
-    "docx": {
-      "borderWidthPt": "0.75",
-      "borderColor": "#4A6FDC",
-      "borderThemeColor": "accent1",
-      "paddingTopTwips": "40",
-      "paddingSideTwips": "80"
-    }
-  }
-}
-```
-
-#### 2.2 Token Generator Update
-
-Verify `generate_tokens_css.py` correctly handles token conversion:
-
-```python
-# Add to the token mapping section if needed
-token_groups_to_process = [
-    "sectionBox", 
-    "roleBox"  # Add this line if token groups are explicitly listed
-]
-
-# Ensure camelCase to kebab-case conversion happens
-# If unsure, output both formats for safety
-def generate_css_var_name(key, prefix=""):
-    """Generate both camelCase and kebab-case versions of CSS variables"""
-    camel = f"--{prefix}{key}"
-    kebab = camel.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
-    return [camel, kebab]  # Return both formats if needed
-
-# Add warning for missing token groups in non-default palettes
-def check_token_groups_in_palettes(tokens, palettes):
-    for palette_name, palette in palettes.items():
-        if palette_name == "default":
-            continue
-        for group_name in ["roleBox"]:  # List of required groups
-            if group_name not in palette:
-                logger.warning(f"{group_name} missing in palette {palette_name} – falling back to default")
-```
+#### 2.2 Token Generator UpdateVerify `generate_tokens_css.py` correctly handles token conversion and fallback logic:```python# Add to the token mapping section if neededtoken_groups_to_process = [    "sectionBox",     "roleBox"  # Add this line if token groups are explicitly listed]# Generate fallback CSS variables for automatic inheritancedef generate_fallback_vars(css_output):    """Generate sectionBox fallback variables for roleBox properties"""    fallback_mappings = {        '--roleBox-borderColor': '--sectionBox-borderColor',        '--roleBox-borderWidth': '--sectionBox-borderWidth',         '--roleBox-padding': '--sectionBox-padding',        '--roleBox-borderRadius': '--sectionBox-borderRadius',        '--roleBox-backgroundColor': '--sectionBox-backgroundColor',        '--roleBox-textColor': '--sectionBox-textColor'    }        fallback_css = "\n/* Automatic fallback from sectionBox to roleBox */\n"    for role_var, section_var in fallback_mappings.items():        fallback_css += f"{section_var}: var({role_var}, {get_default_value(role_var)});\n"        return css_output + fallback_css# Ensure camelCase to kebab-case conversion happens# If unsure, output both formats for safetydef generate_css_var_name(key, prefix=""):    """Generate both camelCase and kebab-case versions of CSS variables"""    camel = f"--{prefix}{key}"    kebab = camel.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()    return [camel, kebab]  # Return both formats if needed# Add warning for missing token groups in non-default palettesdef check_token_groups_in_palettes(tokens, palettes):    for palette_name, palette in palettes.items():        if palette_name == "default":            continue        for group_name in ["roleBox"]:  # List of required groups            if group_name not in palette:                logger.warning(f"{group_name} missing in palette {palette_name} – falling back to default")```
 
 #### 2.3 SCSS Update
 
 Update `_resume.scss` to extend the existing section box with proper specificity:
 
-```scss
-// after .section-box rules
-.position-bar {
-  gap: 0.25rem;  // Add spacing between role box and dates
-  break-inside: avoid;  // Prevent page breaks in PDF/print
-  
-  .role-box {
-    @extend .section-box;              // Reuse borders/padding logic
-    display: inline-block;             // Allow it to fit content
-    border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
-    border-width: calc(var(--roleBox-borderWidthPx, 1) * 1px + 0px);  // Force calc evaluation for WeasyPrint
-    padding: calc(var(--roleBox-paddingPx, 4) * 1px + 0px);
-    color: var(--roleBox-textColor, #333333);
-    border-radius: calc(var(--roleBox-borderRadiusPx, 0.5) * 1px + 0px);
-    background-color: var(--roleBox-backgroundColor, transparent);
-    
-    // Dark mode support
-    @media (prefers-color-scheme: dark) {
-      background: transparent;
-      border-color: currentColor;
-    }
-    
-    // Print-specific adjustments
-    @media print {
-      line-height: 1.1;  // Match DOCX exact line height
-    }
-  }
-}
-```
+```scss// after .section-box rules.position-bar {  break-inside: avoid;      // Prevent page breaks in PDF/print  page-break-inside: avoid; // Legacy compatibility for older print engines    .role-box {    @extend .section-box;              // Reuse borders/padding logic    display: flex;                     // Use flex to align role and dates    justify-content: space-between;    // Role on left, dates on right    align-items: center;               // Vertically center content    border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));    border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);  // Force calc evaluation for WeasyPrint    padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);  // top/bottom vs sides    color: var(--roleBox-textColor, #333333);    border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);    background-color: var(--roleBox-backgroundColor, transparent);        // Style the role text    .role {      font-weight: bold;      flex-grow: 1;    // Take up available space      min-width: 0;    // Allow truncation on narrow screens    }        // Style the dates    .dates {      font-style: italic;      margin-left: 1rem;     // Add some space between role and dates      white-space: nowrap;   // Prevent dates from wrapping    }        // Dark mode support    @media (prefers-color-scheme: dark) {      background: transparent;      border-color: currentColor;    }        // Print-specific adjustments    @media print {      line-height: 1.1;  // Match DOCX exact line height    }  }}```
 
-#### 2.4 HTML Generation Update
-
-Update `html_generator.py` to add a role box span with improved accessibility:
-
-```python
-def format_experience_for_html(experience_item):
-    """Format experience with role box styling"""
-    company = experience_item.get('company', '')
-    location = experience_item.get('location', '')
-    dates = experience_item.get('dates', '')
-    role = experience_item.get('title', '')
-    
-    # Add ID for accessibility linking
-    html = f'<div class="company-location" id="company-location">{company}, {location}</div>'
-    html += f'<div class="position-bar" aria-labelledby="company-location">'
-    html += f'<span class="role-box" role="presentation" aria-label="Job title: {role}">{role}</span>'
-    
-    # Add non-breaking space for screen reader pause
-    html += f'&nbsp;<span class="dates">{dates}</span>' if dates else ''
-    html += '</div>'
-    
-    # Continue with existing achievements formatting...
-```
+#### 2.4 HTML Generation UpdateUpdate `html_generator.py` to wrap both role and dates in the role box with improved accessibility:```pythondef format_experience_for_html(experience_item):    """Format experience with role box styling that encompasses both role and dates"""    company = experience_item.get('company', '')    location = experience_item.get('location', '')    dates = experience_item.get('dates', '')    role = experience_item.get('title', '')        # Add ID for accessibility linking    html = f'<div class="company-location" id="company-location">{company}, {location}</div>'    html += f'<div class="position-bar" aria-labelledby="company-location">'        # Role box now contains both role and dates    html += f'<div class="role-box" role="presentation" aria-label="Position: {role}, {dates if dates else ''}">'    html += f'<span class="role">{role}</span>'        # Add non-breaking space for screen reader pause between role and dates    if dates:        html += f'&nbsp;<span class="dates">{dates}</span>'        html += '</div>'  # Close role-box    html += '</div>'  # Close position-bar        # Continue with existing achievements formatting...```
 
 #### 2.5 DOCX Implementation
 
 Create a robust shim that handles theme colors and uses percentage-based widths:
 
-```python
-def add_role_box(doc, role, dates=None):
-    """
-    Reuse the header-box table helper with proper handling of theme colors and widths.
-    """
-    # If add_box_table doesn't accept token_group, create a shim
-    def add_box_table_with_tokens(doc, cols, token_group):
-        tokens = TOKENS[token_group]['docx']
-        
-        # Handle theme color vs hex color
-        border_color = tokens['borderColor']
-        theme_color = tokens.get('borderThemeColor', None)
-        
-        # Call the original function with explicit args from tokens
-        table = add_box_table(doc, cols=cols, 
-                           border_width_pt=float(tokens['borderWidthPt']),
-                           border_color=border_color,
-                           border_theme_color=theme_color,  # Pass theme color if supported
-                           padding_top_twips=int(tokens['paddingTopTwips']),
-                           padding_side_twips=int(tokens['paddingSideTwips']))
-        
-        # Manual theme color fallback if needed
-        if theme_color and not hasattr(add_box_table, 'supports_theme_color'):
-            try:
-                manually_apply_theme_color(table, theme_color, 
-                                         float(tokens['borderWidthPt']))
-            except Exception as e:
-                logger.warning(f"Failed to apply theme color: {e}")
-        
-        return table
-    
-    # Use the shim or the original function depending on implementation
-    cols = 2 if dates else 1
-    tbl = add_box_table_with_tokens(doc, cols=cols, token_group="roleBox")
-    
-    # Apply percentage-based column widths instead of fixed inches
-    if cols == 2:
-        # Use the preferred width percentage helper if available
-        if hasattr(doc, 'set_preferred_width_percent'):
-            doc.set_preferred_width_percent(tbl.columns[0], 70)
-            doc.set_preferred_width_percent(tbl.columns[1], 30)
-        else:
-            # Fallback to direct width setting
-            from docx.shared import Inches
-            tbl.columns[0].width = Inches(4.5)  # Role column
-            tbl.columns[1].width = Inches(2)    # Dates column
-    
-    # Check for RTL support
-    language_dir = get_document_language_direction(doc)
-    if language_dir == 'rtl':
-        set_table_rtl(tbl)  # Apply RTL setting if needed
-    
-    _fill_cell(tbl.cell(0, 0), role, bold=True)
-    
-    if dates:
-        # Add a non-breaking hyphen for screen reader pause
-        from docx.oxml.ns import qn
-        para = tbl.cell(0, 1).paragraphs[0]
-        
-        # Add text with proper formatting
-        run = para.add_run()
-        run.font.italic = True
-        
-        # Insert non-breaking hyphen before dates for screen reader pause
-        no_break = OxmlElement('w:noBreakHyphen')
-        run._r.append(no_break)
-        
-        run.text = dates
-        para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    
-    return tbl
+```pythondef add_role_box(doc, role, dates=None):    """    Create a single-cell table that contains both role and dates, mimicking the flex layout.    """    # If add_box_table doesn't accept token_group, create a shim    def add_box_table_with_tokens(doc, cols, token_group):        tokens = TOKENS[token_group]['docx']                # Handle theme color vs hex color        border_color = tokens['borderColor']        theme_color = tokens.get('borderThemeColor', None)                # Call the original function with explicit args from tokens        table = add_box_table(doc, cols=cols,                            border_width_pt=float(tokens['borderWidthPt']),                           border_color=border_color,                           border_theme_color=theme_color,  # Pass theme color if supported                           padding_top_twips=int(tokens['paddingTopTwips']),                           padding_side_twips=int(tokens['paddingSideTwips']))                # Manual theme color fallback if needed        if theme_color and not hasattr(add_box_table, 'supports_theme_color'):            try:                manually_apply_theme_color(table, theme_color,                                          float(tokens['borderWidthPt']))            except Exception as e:                logger.warning(f"Failed to apply theme color: {e}")                return table        # Always use single column since everything goes in one cell    tbl = add_box_table_with_tokens(doc, cols=1, token_group="roleBox")        # Check for RTL support    language_dir = get_document_language_direction(doc)    if language_dir == 'rtl':        set_table_rtl(tbl)  # Apply RTL setting if needed        # Create a single cell with role and dates formatted like flex layout    cell = tbl.cell(0, 0)    para = cell.paragraphs[0]        # Add the role (bold)    role_run = para.add_run(role)    role_run.font.bold = True        if dates:        # Add some space and the dates (italic, right-aligned effect using tabs)        space_run = para.add_run("\t")  # Tab to push dates to the right                # Add a non-breaking hyphen for screen reader pause        from docx.oxml.ns import qn        no_break = OxmlElement('w:noBreakHyphen')        space_run._r.append(no_break)                dates_run = para.add_run(dates)        dates_run.font.italic = True                # Set up tab stop to simulate right alignment within the cell        from docx.shared import Inches        from docx.enum.text import WD_TAB_ALIGNMENT        tab_stops = para.paragraph_format.tab_stops        tab_stops.add_tab_stop(Inches(6), WD_TAB_ALIGNMENT.RIGHT)        return tbl```
 
 def set_table_rtl(table):
     """Set the table to RTL mode for right-to-left languages"""
@@ -281,8 +114,7 @@ def test_role_box_styling():
     pdf_output = generate_pdf(test_resume)
     docx_output = generate_docx(test_resume)
     
-    # Verify role box appears in HTML
-    assert '<span class="role-box" role="presentation" aria-label="Job title:' in html_output
+        # Verify role box appears in HTML with both role and dates    assert '<div class="role-box" role="presentation" aria-label="Position:' in html_output    assert '<span class="role">' in html_output    assert '<span class="dates">' in html_output
     
     # For PDF/DOCX, use visual comparison with previous golden images
     # Set SSIM threshold to 0.96 to allow for minor anti-aliasing variations
@@ -297,24 +129,7 @@ def test_role_box_styling():
 ```
 
 ```python
-def test_role_box_helper():
-    """Fast Python-only test for the add_role_box helper"""
-    # Create a minimal document
-    from docx import Document
-    doc = Document()
-    
-    # Test without dates
-    tbl1 = add_role_box(doc, "Senior Engineer")
-    assert len(tbl1.columns) == 1
-    assert tbl1.cell(0, 0).text == "Senior Engineer"
-    
-    # Test with dates
-    tbl2 = add_role_box(doc, "Senior Engineer", "2020-Present")
-    assert len(tbl2.columns) == 2
-    assert tbl2.cell(0, 0).text == "Senior Engineer"
-    assert "2020-Present" in tbl2.cell(0, 1).text
-    
-    # No need to save/open the document - just checking structure
+def test_role_box_helper():    """Fast Python-only test for the add_role_box helper"""    # Create a minimal document    from docx import Document    doc = Document()        # Test without dates (single column with just role)    tbl1 = add_role_box(doc, "Senior Engineer")    assert len(tbl1.columns) == 1    assert "Senior Engineer" in tbl1.cell(0, 0).text        # Test with dates (single column with role + tab + dates)    tbl2 = add_role_box(doc, "Senior Engineer", "2020-Present")    assert len(tbl2.columns) == 1  # Still single column    cell_text = tbl2.cell(0, 0).text    assert "Senior Engineer" in cell_text    assert "2020-Present" in cell_text        # No need to save/open the document - just checking structure
 ```
 
 ### 5. Integration Plan
@@ -425,4 +240,259 @@ def test_role_box_helper():
 4. Run fast Python-only unit tests
 5. Deploy when verified
 
-This comprehensive approach addresses all technical edge cases while maintaining the core simplicity of extending existing stable components. It ensures consistent styling across all output formats while considering accessibility, internationalization, and different rendering environments. 
+This comprehensive approach addresses all technical edge cases while maintaining the core simplicity of extending existing stable components. It ensures consistent styling across all output formats while considering accessibility, internationalization, and different rendering environments.
+
+### 9. O3 Polish Improvements
+
+The following refinements address edge cases and improve compatibility:
+
+#### 9.1 Token Naming Consistency
+- Renamed `borderWidthPx` → `borderWidth` (drive units in SCSS)
+- Renamed `borderRadiusPx` → `borderRadius` (drive units in SCSS) 
+- Renamed `paddingPx` → `padding` (drive units in SCSS)
+
+#### 9.2 Automatic Theme Inheritance
+- Generate fallback CSS variables: `--sectionBox-borderColor: var(--roleBox-borderColor, #4A6FDC);`
+- Allows custom themes that override `sectionBox` to automatically influence `roleBox`
+
+#### 9.3 SCSS Calc Bug Fixes
+- Apply WeasyPrint calc workaround to padding: `calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px)`
+- Ensures identical padding in PDF and HTML
+
+#### 9.4 Layout Stability
+- Add `min-width: 0` to `.role` to prevent layout breaks on narrow screens
+- Allows long titles to truncate rather than pushing dates off-screen
+
+#### 9.5 DOCX Tab Stop Polish
+- Call `para.paragraph_format.tab_stops.clear_all()` before adding custom tab stop
+- Prevents tiny gaps in Word Mac caused by default tab widths
+
+#### 9.6 RTL Date Handling
+- Wrap dashes in RTL marks when `language_dir == 'rtl'`:
+  - `dates.replace('–', '\u200F–\u200F')` (en-dash)
+  - `dates.replace('—', '\u200F—\u200F')` (em-dash) 
+  - `dates.replace('-', '\u200F-\u200F')` (hyphen)
+- Prevents "2020–2019" reversal bug in Hebrew/Arabic Word
+
+#### 9.7 Legacy Print Engine Support
+- Add `page-break-inside: avoid;` alongside `break-inside: avoid;`
+- Wider compatibility with older print engines
+
+#### 9.8 Linting and Cleanup
+- Run `ruff check --fix` after implementation
+- Catches unused imports like `Pt`, `qn` when theme-color path isn't hit
+- Ensures CI passes on first try
+
+### Updated Implementation Notes
+
+Apply these improvements during implementation:
+
+1. **Token Generator**: Include fallback variable generation
+2. **SCSS**: Use updated token names, add legacy print properties, padding calc fix
+3. **HTML**: No changes needed from O3 feedback
+4. **DOCX**: Add RTL date processing and tab stop clearing
+5. **Testing**: Include linting in the verification step
+
+These micro-refinements ensure production-ready quality with edge case handling for international users, legacy systems, and various Word versions. 
+
+### 10. Final O3 Micro-Refinements
+
+The following tiny additions ensure bulletproof rollout with graceful degradation:
+
+#### 10.1 Token Backward Compatibility
+```python
+# In generate_tokens_css.py
+def ensure_roleBox_exists(tokens, palettes):
+    """Auto-clone sectionBox to roleBox if missing for backward compatibility"""
+    for palette_name, palette in palettes.items():
+        if "roleBox" not in palette and "sectionBox" in palette:
+            logger.warning(f"Auto-cloning sectionBox to roleBox in palette {palette_name} for backward compatibility")
+            palette["roleBox"] = palette["sectionBox"].copy()
+            # Update any sectionBox-specific properties that should differ
+            if "docx" in palette["roleBox"]:
+                palette["roleBox"]["docx"] = palette["sectionBox"]["docx"].copy()
+```
+
+#### 10.2 Token Documentation
+Add to top of `design_tokens.json`:
+```json
+{
+  "_comment": "Token naming convention: width/radius/padding values are unit-less strings. CSS applies units (px) via calc() multiplication. This prevents WeasyPrint calc() bugs and maintains clean token schema.",
+  
+  "sectionBox": {
+    // ... existing tokens
+  },
+  "roleBox": {
+    // ... new tokens  
+  }
+}
+```
+
+#### 10.3 Dark Mode Color Inheritance
+```scss
+// In dark mode media query, add:
+@media (prefers-color-scheme: dark) {
+  .role-box {
+    background: transparent;
+    border-color: currentColor;
+    color: inherit;  // Ensure text inherits dark theme color
+    
+    .dates {
+      color: inherit;  // Prevent #333 on dark backgrounds
+    }
+  }
+}
+```
+
+#### 10.4 HTML Sanitizer Fallback
+```python
+# In format_experience_for_html(), add fallback:
+html += f'<div class="role-box" role="presentation" aria-label="Position: {role}, {dates if dates else ''}">'
+html += f'<span class="role">{role}</span>'
+if dates:
+    html += f'&nbsp;<span class="dates">{dates}</span>'
+html += '</div>'
+
+# Add noscript fallback for aggressive email clients
+html += f'<noscript><div class="visually-hidden" aria-hidden="true">{role} {dates if dates else ""}</div></noscript>'
+```
+
+#### 10.5 PDF Hyphenation Control
+```scss
+.role-box {
+  // ... existing styles ...
+  hyphens: manual;  // Prevent auto-hyphenation of long German job titles
+}
+```
+
+#### 10.6 DOCX AutoFit Prevention
+```python
+# In add_role_box(), after table creation:
+tbl = add_box_table_with_tokens(doc, cols=1, token_group="roleBox")
+
+# Prevent Word 2010 "Optimize for compatibility" stretching
+tbl.allow_autofit = False
+tbl.autofit = False  # Both flags needed for full protection
+
+# ... rest of implementation
+```
+
+#### 10.7 Fast CI Smoke Test
+```python
+# Add to CI pipeline before SSIM tests:
+def test_pdf_smoke_generation():
+    """Fast smoke test to catch blank-page regressions before heavy SSIM tests"""
+    minimal_resume = {"experience": [{"title": "Test Role", "company": "Test Co", "dates": "2020"}]}
+    
+    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+        pdf_output = generate_pdf(minimal_resume)
+        tmp.write(pdf_output)
+        tmp.flush()
+        
+        # Assert PDF is non-empty and reasonable size
+        file_size = os.path.getsize(tmp.name)
+        assert file_size > 5120, f"PDF too small ({file_size} bytes), likely blank page regression"
+        
+        os.unlink(tmp.name)
+```
+
+### Implementation Checklist with Micro-Refinements
+
+1. **Design Tokens** ✅
+   - Add roleBox token group with unit-less values
+   - Add documentation comment explaining naming convention
+   - Implement auto-cloning fallback for missing roleBox
+
+2. **CSS Generation** ✅  
+   - Generate fallback variables for theme inheritance
+   - Handle missing token groups gracefully
+   - Emit warnings for backward compatibility
+
+3. **SCSS Updates** ✅
+   - Use updated token names (borderWidth, borderRadius, padding)
+   - Add legacy print properties (page-break-inside)
+   - Fix calc padding for WeasyPrint
+   - Add min-width: 0 for layout stability
+   - Add hyphens: manual for PDF
+   - Improve dark mode with color inheritance
+
+4. **HTML Generator** ✅
+   - Wrap role and dates in unified role-box
+   - Add accessibility attributes
+   - Include noscript fallback for sanitizers
+
+5. **DOCX Builder** ✅
+   - Single-cell table with tab stops
+   - Clear default tabs before custom ones
+   - RTL date processing with Unicode marks
+   - Disable autofit for Word 2010 compatibility
+
+6. **Testing & CI** ✅
+   - Add fast PDF smoke test (5KB minimum)
+   - Visual regression with 0.96 SSIM threshold
+   - Linting with ruff check --fix
+   - Unit tests for helper functions
+
+### Rollout Confidence
+
+With these micro-refinements, the implementation handles:
+- ✅ Ancient third-party themes (auto-cloning)
+- ✅ Future contributors (clear documentation)  
+- ✅ Dark mode accessibility (color inheritance)
+- ✅ Aggressive email clients (noscript fallback)
+- ✅ International typography (German hyphenation)
+- ✅ Legacy Word versions (autofit prevention)
+- ✅ Fast CI feedback (smoke test before SSIM)
+
+**Status: Bulletproof and ready to implement** 🚀 
+
+### 11. Final O3 Micro-Nits
+
+Two tiny tweaks for 100% implementation readiness:
+
+#### 11.1 CSS Variable Cascade Order
+```python
+# In generate_fallback_vars() - append fallbacks at END of CSS file
+def generate_fallback_vars(css_output):
+    """Generate sectionBox fallback variables at end to prevent override"""
+    fallback_mappings = {
+        '--roleBox-borderColor': '--sectionBox-borderColor',
+        '--roleBox-borderWidth': '--sectionBox-borderWidth', 
+        '--roleBox-padding': '--sectionBox-padding',
+        '--roleBox-borderRadius': '--sectionBox-borderRadius',
+        '--roleBox-backgroundColor': '--sectionBox-backgroundColor',
+        '--roleBox-textColor': '--sectionBox-textColor'
+    }
+    
+    fallback_css = "\n/* Automatic fallback from sectionBox to roleBox - at end to prevent override */\n:root {\n"
+    for role_var, section_var in fallback_mappings.items():
+        fallback_css += f"  {section_var}: var({role_var}, {get_default_value(role_var)});\n"
+    fallback_css += "}\n"
+    
+    return css_output + fallback_css  # APPEND at end, not prepend
+```
+
+#### 11.2 WeasyPrint Version-Aware Calc Fix
+```scss
+// In SCSS, version-check the calc workaround
+.role-box {
+  @extend .section-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
+  
+  // Version-aware calc fix for WeasyPrint < 58
+  @if function-exists(weasyprint-version) and weasyprint-version() < 58 {
+    border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);
+    padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);
+    border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);
+  } @else {
+    border-width: calc(var(--roleBox-borderWidth, 1) * 1px);
+    padding: calc(var(--roleBox-padding, 4) * 1px) calc(var(--roleBox-padding, 4) * 2px);
+    border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px);
+  }
+  
+  // ... rest of styles
+}
+```
