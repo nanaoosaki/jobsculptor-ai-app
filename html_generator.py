@@ -158,7 +158,11 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     html_parts.append(f'<div class="position-bar position-line" aria-labelledby="company-location">')
     
     # Role box now contains both role and dates
-    html_parts.append(f'<div class="role-box" role="presentation" aria-label="Position: {position}, {dates if dates else ''}">')
+    # O3: Fix double comma in ARIA label
+    aria_label = f"Position: {position}"
+    if dates:
+        aria_label += f", {dates}"
+    html_parts.append(f'<div class="role-box" role="presentation" aria-label="{aria_label}">')
     html_parts.append(f'<span class="role">{position}</span>')
     
     # Add non-breaking space for screen reader pause between role and dates

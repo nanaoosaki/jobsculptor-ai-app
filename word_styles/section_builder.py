@@ -458,6 +458,9 @@ def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         dates_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     
+    # O3: Prevent border merging in LibreOffice
+    tbl.allow_overlap = False  # Word ignores, LibreOffice respects
+    
     logger.info(f"Added role box: {role}" + (f" with dates: {dates}" if dates else ""))
     return tbl
 

@@ -120,9 +120,15 @@ $font-size-h2: 1.75rem !default;
     
     .role-box {
         @extend .section-box;              // Reuse borders/padding logic
+        margin-left: 0 !important;        // Override inherited margin for clean left alignment
         display: flex;                     // Use flex to align role and dates
         justify-content: space-between;    // Role on left, dates on right
         align-items: center;               // Vertically center content
+        
+        // O3: Full-width spanning with Chromium ≤ 90 compatibility
+        flex: 1 1 100%;                    // Stretch to full width with percentage basis
+        box-sizing: border-box;            // Include padding/borders in width calculations
+        
         border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
         border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);  // Force calc evaluation for WeasyPrint
         padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);  // top/bottom vs sides
@@ -134,31 +140,32 @@ $font-size-h2: 1.75rem !default;
         // Style the role text
         .role {
             font-weight: bold;
-            flex-grow: 1;    // Take up available space
-            min-width: 0;    // Allow truncation on narrow screens
+            flex-grow: 1;                  // Take up available space
+            min-width: 0;                  // Allow truncation on narrow screens
+            overflow-wrap: anywhere;       // O3: Handle long URLs and single words
         }
         
         // Style the dates
         .dates {
             font-style: italic;
-            margin-left: 1rem;     // Add some space between role and dates
-            white-space: nowrap;   // Prevent dates from wrapping
+            margin-left: 1rem;             // Add some space between role and dates
+            white-space: nowrap;           // Prevent dates from wrapping
         }
         
         // Dark mode support
         @media (prefers-color-scheme: dark) {
             background: transparent;
             border-color: currentColor;
-            color: inherit;  // Ensure text inherits dark theme color
+            color: inherit;                // O3: Ensure text inherits dark theme color
             
             .dates {
-                color: inherit;  // Prevent #333 on dark backgrounds
+                color: inherit;            // O3: Prevent #333 on dark backgrounds
             }
         }
         
         // Print-specific adjustments
         @media print {
-            line-height: 1.1;  // Match DOCX exact line height
+            line-height: 1.1;             // Match DOCX exact line height
         }
     }
     
@@ -229,23 +236,20 @@ $font-size-h2: 1.75rem !default;
         ul {
             list-style-type: none; // Remove default bullets
             margin-left: 0; // flush with parent text block
-            padding-left: $bullet-list-padding-left; // use token value for indent
+            padding-left: 0; // No padding for clean left alignment
         }
 
         li {
             position: relative;
-            padding-left: $bullet-item-padding-left; // space between bullet and text
-            text-indent: $bullet-item-text-indent; // pull text back to align properly
+            padding-left: 0; // No padding for clean left alignment
+            text-indent: 0; // No hanging indent
             margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
             line-height: $line-height-tight;
 
             &::before {
-                content: $bullet-glyph;
-                position: absolute;
-                left: 0; // align with UL padding start
-                top: 0; // align with text top
-                font-size: 1em;
+                content: "• "; // Bullet with space, inline approach
                 color: $color-bullet;
+                font-weight: normal; // Ensure bullet isn't bold
             }
         }
     }
@@ -253,8 +257,8 @@ $font-size-h2: 1.75rem !default;
 
 // Tight Bullet Spacing - New
 ul.bullets {
-    margin: 0.25rem 0 0.15rem 0;  // no left indent (handled by padding)
-    padding-left: $bullet-list-padding-left;  // proper left indent from token
+    margin: 0.25rem 0 0.15rem 0;  // no left indent
+    padding-left: 0;  // No padding for clean left alignment
     list-style-type: none;  // no default bullets
     margin-left: 0; // No additional margin to maintain alignment
 
@@ -262,15 +266,13 @@ ul.bullets {
         position: relative;
         margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
         line-height: $font-lineHeight-tight;
-        padding-left: $bullet-item-padding-left;  // space for bullet
-        text-indent: $bullet-item-text-indent;  // negative indent to pull text back
+        padding-left: 0;  // No padding for clean left alignment
+        text-indent: 0;  // No hanging indent
         
         &::before {
-            content: $bullet-glyph;  // custom bullet from token
-            position: absolute;
-            left: 0;
-            top: 0;
+            content: "• ";  // Bullet with space, inline approach
             color: $color-bullet;
+            font-weight: normal; // Ensure bullet isn't bold
         }
     }
 }
@@ -285,21 +287,24 @@ ul.bullets {
     }
     ul {
         list-style-type: none;
-        padding-left: $bullet-list-padding-left;
+        padding-left: 0; // No padding for clean left alignment
     }
     li {
          position: relative;
          margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
          line-height: $line-height-tight; // Use tighter line height
-         padding-left: $bullet-item-padding-left;  // space for bullet
-         text-indent: $bullet-item-text-indent;  // negative indent to pull text back
+         padding-left: 0;  // No padding for clean left alignment
+         text-indent: 0;  // No hanging indent
          
          &::before {
-             content: $bullet-glyph;  // custom bullet from token
-             position: absolute;
-             left: 0;
-             top: 0;
+             content: "• ";  // Bullet with space, inline approach
              color: $color-bullet;
+             font-weight: normal; // Ensure bullet isn't bold
          }
     }
+}
+
+// O3: Prevent touching borders between role box and immediate bullet lists
+.role-box + ul {
+    margin-top: 0.25rem;
 } 
