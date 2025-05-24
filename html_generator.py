@@ -154,14 +154,23 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     html_parts.append(f'<span class="location">{location}</span>')
     html_parts.append(f'</div>')
     
-    # Position and dates on the second line with role box
+    # Position and dates on the second line with unified role box
     html_parts.append(f'<div class="position-bar position-line" aria-labelledby="company-location">')
-    html_parts.append(f'<span class="role-box" role="presentation" aria-label="Job title: {position}">{position}</span>')
     
-    # Add non-breaking space for screen reader pause
+    # Role box now contains both role and dates
+    html_parts.append(f'<div class="role-box" role="presentation" aria-label="Position: {position}, {dates if dates else ''}">')
+    html_parts.append(f'<span class="role">{position}</span>')
+    
+    # Add non-breaking space for screen reader pause between role and dates
     if dates:
         html_parts.append(f'&nbsp;<span class="dates">{dates}</span>')
-    html_parts.append(f'</div>')
+    
+    html_parts.append('</div>')  # Close role-box
+    
+    # Add noscript fallback for aggressive email clients
+    html_parts.append(f'<noscript><div class="visually-hidden" aria-hidden="true">{position} {dates if dates else ""}</div></noscript>')
+    
+    html_parts.append('</div>')  # Close position-bar
     
     # Content div opened here
     html_parts.append('<div class="job-content">')

@@ -109,31 +109,51 @@ $font-size-h2: 1.75rem !default;
     }
 }
 
-// Position Bar Styling - New
+// Position Bar Styling - Updated for unified role+dates box
 .position-bar {
     background: $color-positionBar-bg;
     padding: 0.25rem 0.45rem;
     margin-top: 0.4rem;
     margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
-    display: flex;
-    justify-content: space-between; // company left, dates right
-    gap: 0.25rem;  // Add spacing between role box and dates
-    break-inside: avoid;  // Prevent page breaks in PDF/print
+    break-inside: avoid;      // Prevent page breaks in PDF/print
+    page-break-inside: avoid; // Legacy compatibility for older print engines
     
     .role-box {
         @extend .section-box;              // Reuse borders/padding logic
-        display: inline-block;             // Allow it to fit content
-        border-color: var(--roleBox-borderColor, #{$roleBox-borderColor});
-        border-width: calc(var(--roleBox-borderWidthPx, #{$roleBox-borderWidthPx}) * 1px + 0px);  // Force calc evaluation for WeasyPrint
-        padding: calc(var(--roleBox-paddingPx, #{$roleBox-paddingPx}) * 1px + 0px);
-        color: var(--roleBox-textColor, #{$roleBox-textColor});
-        border-radius: calc(var(--roleBox-borderRadiusPx, #{$roleBox-borderRadiusPx}) * 1px + 0px);
-        background-color: var(--roleBox-backgroundColor, #{$roleBox-backgroundColor});
+        display: flex;                     // Use flex to align role and dates
+        justify-content: space-between;    // Role on left, dates on right
+        align-items: center;               // Vertically center content
+        border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
+        border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);  // Force calc evaluation for WeasyPrint
+        padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);  // top/bottom vs sides
+        color: var(--roleBox-textColor, #333333);
+        border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);
+        background-color: var(--roleBox-backgroundColor, transparent);
+        hyphens: manual;  // Prevent auto-hyphenation of long German job titles
+        
+        // Style the role text
+        .role {
+            font-weight: bold;
+            flex-grow: 1;    // Take up available space
+            min-width: 0;    // Allow truncation on narrow screens
+        }
+        
+        // Style the dates
+        .dates {
+            font-style: italic;
+            margin-left: 1rem;     // Add some space between role and dates
+            white-space: nowrap;   // Prevent dates from wrapping
+        }
         
         // Dark mode support
         @media (prefers-color-scheme: dark) {
             background: transparent;
             border-color: currentColor;
+            color: inherit;  // Ensure text inherits dark theme color
+            
+            .dates {
+                color: inherit;  // Prevent #333 on dark backgrounds
+            }
         }
         
         // Print-specific adjustments

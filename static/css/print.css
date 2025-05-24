@@ -184,24 +184,39 @@ hr {
   padding: 0.25rem 0.45rem;
   margin-top: 0.4rem;
   margin-bottom: 0.15rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.25rem;
   break-inside: avoid;
+  page-break-inside: avoid;
 }
 .position-bar .role-box {
-  display: inline-block;
-  border-color: var(--roleBox-borderColor, #4A6FDC);
-  border-width: calc(var(--roleBox-borderWidthPx, 1) * 1px + 0px);
-  padding: calc(var(--roleBox-paddingPx, 4) * 1px + 0px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
+  border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);
+  padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);
   color: var(--roleBox-textColor, #333333);
-  border-radius: calc(var(--roleBox-borderRadiusPx, 0.5) * 1px + 0px);
+  border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);
   background-color: var(--roleBox-backgroundColor, transparent);
+  hyphens: manual;
+}
+.position-bar .role-box .role {
+  font-weight: bold;
+  flex-grow: 1;
+  min-width: 0;
+}
+.position-bar .role-box .dates {
+  font-style: italic;
+  margin-left: 1rem;
+  white-space: nowrap;
 }
 @media (prefers-color-scheme: dark) {
   .position-bar .role-box {
     background: transparent;
     border-color: currentColor;
+    color: inherit;
+  }
+  .position-bar .role-box .dates {
+    color: inherit;
   }
 }
 @media print {

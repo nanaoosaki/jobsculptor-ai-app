@@ -1,5 +1,4 @@
-{
-  "contentWidth": "95%",
+{  "_comment": "Token naming convention: width/radius/padding values are unit-less strings. CSS applies units (px) via calc() multiplication. This prevents WeasyPrint calc() bugs and maintains clean token schema.",    "contentWidth": "95%",
   "contentPadding": "0.5in",
   "pageMarginVertical": "0.8cm",
   "pageMarginHorizontal": "0.8cm", 
@@ -87,23 +86,7 @@
   "docx-global-left-margin-cm": "2.0",
   "docx-global-right-margin-cm": "2.0",
   
-  "roleBox": {
-    "borderColor": "#4A6FDC",
-    "borderWidthPx": "1",
-    "paddingPx": "4",
-    "background": "transparent",
-    "backgroundColor": "transparent",
-    "borderRadiusPx": "0.5",
-    "textColor": "#333333",
-
-    "docx": {
-      "borderWidthPt": "0.75",
-      "borderColor": "#4A6FDC",
-      "borderThemeColor": "accent1",
-      "paddingTopTwips": "40",
-      "paddingSideTwips": "80"
-    }
-  },
+    "roleBox": {    "borderColor": "#4A6FDC",    "borderWidth": "1",    "padding": "4",    "background": "transparent",    "backgroundColor": "transparent",    "borderRadius": "0.5",    "textColor": "#333333",    "docx": {      "borderWidthPt": "0.75",      "borderColor": "#4A6FDC",      "borderThemeColor": "accent1",      "paddingTopTwips": "40",      "paddingSideTwips": "80"    }  },
   
   "sectionHeader": {
     "border": {

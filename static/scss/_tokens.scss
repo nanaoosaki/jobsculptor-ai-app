@@ -1,5 +1,6 @@
 // Auto-generated from design_tokens.json. Do not edit directly.
 
+// Token naming convention: width/radius/padding values are unit-less strings. CSS applies units (px) via calc() multiplication. This prevents WeasyPrint calc() bugs and maintains clean token schema.
 $contentWidth: 95%;
 $contentPadding: 0.5in;
 $pageMarginVertical: 0.8cm;
@@ -85,11 +86,11 @@ $docx-bullet-font-size-pt: 11;
 $docx-global-left-margin-cm: 2.0;
 $docx-global-right-margin-cm: 2.0;
 $roleBox-borderColor: #4A6FDC;
-$roleBox-borderWidthPx: 1;
-$roleBox-paddingPx: 4;
+$roleBox-borderWidth: 1;
+$roleBox-padding: 4;
 $roleBox-background: transparent;
 $roleBox-backgroundColor: transparent;
-$roleBox-borderRadiusPx: 0.5;
+$roleBox-borderRadius: 0.5;
 $roleBox-textColor: #333333;
 $roleBox-docx-borderWidthPt: 0.75;
 $roleBox-docx-borderColor: #4A6FDC;
