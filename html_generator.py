@@ -135,27 +135,32 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     Args:
         company: Company name
         location: Job location
-        position: Job position
+        position: Job title/position
         dates: Employment dates
-        content: Job details/bullets
-        role_description: Optional job role description
+        content: Job content/achievements
+        role_description: Optional role description
     
     Returns:
         Formatted HTML for job entry
     """
     html_parts = []
     
-    # Company name and location on the first line
+    # Job entry container
     html_parts.append(f'<div class="job">')
-    html_parts.append(f'<div class="job-title-line">')
+    
+    # Company and location on the first line
+    html_parts.append(f'<div class="job-title-line" id="company-location">')
     html_parts.append(f'<span class="company">{company}</span>')
     html_parts.append(f'<span class="location">{location}</span>')
     html_parts.append(f'</div>')
     
-    # Position and dates on the second line
-    html_parts.append(f'<div class="position-bar position-line">')
-    html_parts.append(f'<span class="position">{position}</span>')
-    html_parts.append(f'<span class="dates">{dates}</span>')
+    # Position and dates on the second line with role box
+    html_parts.append(f'<div class="position-bar position-line" aria-labelledby="company-location">')
+    html_parts.append(f'<span class="role-box" role="presentation" aria-label="Job title: {position}">{position}</span>')
+    
+    # Add non-breaking space for screen reader pause
+    if dates:
+        html_parts.append(f'&nbsp;<span class="dates">{dates}</span>')
     html_parts.append(f'</div>')
     
     # Content div opened here

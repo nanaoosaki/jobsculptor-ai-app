@@ -1,0 +1,1748 @@
+WEBVTT
+
+1
+00:00:05.385 --> 00:00:06.645
+Yan Wang: Welcome everyone.
+
+
+2
+00:00:07.015 --> 00:00:17.054
+Yan Wang: Thanks for joining today's lighting lesson. Since we have a relatively packed agenda with quite a few demos, we'll start sharp at one Pm. While waiting for other people to join.
+
+
+3
+00:00:17.535 --> 00:00:30.104
+Yan Wang: And my name is Yan. Today we're going to dive deep into something that's become increasingly central and often confusing in the engine. AI world, the model context, protocol or Mcp.
+
+
+4
+00:00:30.325 --> 00:00:43.564
+Yan Wang: And before we get started a few logistic things, the meeting is being recorded. If you have any questions feel free to ask them in the chat window. I will summarize and address them one by one after the presentation. If time permits, we'll also have a live Q&A session.
+
+
+5
+00:00:44.855 --> 00:00:46.934
+Yan Wang: So let's start with a simple question.
+
+
+6
+00:00:47.105 --> 00:00:58.855
+Yan Wang: Have you ever read through the official docs on Mcp maybe watched a few Demos, and still walked away, thinking, oh, this seems important, but I'm not sure how it fits into my work.
+
+
+7
+00:00:59.345 --> 00:01:06.425
+Yan Wang: or maybe you've seen people use it too early, hit weird bugs and walk away thinking the AI doesn't work
+
+
+8
+00:01:06.785 --> 00:01:11.365
+Yan Wang: where the real issue wasn't the protocol itself. It was using it at the wrong time
+
+
+9
+00:01:11.825 --> 00:01:25.815
+Yan Wang: you're not alone. If either of this resonates that uncertainty doesn't mean you're behind, it actually means you're asking the right questions, using a good tool at the wrong time can be worse than not using it at all.
+
+
+10
+00:01:25.925 --> 00:01:32.675
+Yan Wang: And this learning course is designed to reframe that experience and rebuild strategic confidence.
+
+
+11
+00:01:33.835 --> 00:01:50.614
+Yan Wang: Right now we are living in a moment of protocol, overload land chain, openai plugins, claw tools, function calling autogen open. Api Mcp have using all these tool names, maybe nodded along, but never really understood the differences.
+
+
+12
+00:01:50.805 --> 00:02:07.064
+Yan Wang: It feels like every Major Llm. Provider or Open Source group is pushing its own standard. For how models should talk to tools. The challenge isn't just a lack of options, but too many, all with overlapping capabilities, but different assumptions.
+
+
+13
+00:02:07.505 --> 00:02:20.464
+Yan Wang: If you're building agents or integrating Llms into applications. The question isn't, can I build this? It's which tool chain shall I commit to? And what happens when the next protocol comes along?
+
+
+14
+00:02:20.875 --> 00:02:35.175
+Yan Wang: So today we're not just going to explain what Mcp is we're going to explore when it's useful, what trade-offs it introduces, and how to make an informed decision, not a reflective one, a reactive one.
+
+
+15
+00:02:35.895 --> 00:02:43.124
+Yan Wang: All right. Theory is great. But let's make this tangible to kick things off. I want to show you something concrete.
+
+
+16
+00:02:43.325 --> 00:02:47.594
+Yan Wang: Imagine a common scenario. We need to build a relatively simple agent.
+
+
+17
+00:02:47.715 --> 00:02:51.084
+Yan Wang: its job to interact with the local sqlite database.
+
+
+18
+00:02:51.305 --> 00:03:07.374
+Yan Wang: We're not talking about a massive complex system here the core tasks are straightforward. We wanted to be able to list the tables within that database allow us, or allow the Llm. To inspect the schema of those tables, and perhaps even execute a basic SQL query directly.
+
+
+19
+00:03:07.585 --> 00:03:09.514
+Yan Wang: So let's jump right into the demo
+
+
+20
+00:03:09.715 --> 00:03:21.485
+Yan Wang: here. I will use this tool. I also developed it to dictate the prompts so that we can save the time typing the potentially long prompts into cursor. We will also use cursor as the tool to build all this.
+
+
+21
+00:03:21.735 --> 00:03:27.124
+Yan Wang: and let's click. Stop to see whether that works or not. Great. It works. Then let's dictate the prompt.
+
+
+22
+00:03:27.915 --> 00:03:47.885
+Yan Wang: I wanted to build an agent to allow, say, Gpt. 4.0, to understand or explore a local sqlite database. We already have the database ready with the name of ecommerce underscore data dot. dB, this file in the current folder, and I would like to provide 3 tools to gpt.
+
+
+23
+00:03:48.015 --> 00:03:55.595
+Yan Wang: The 1st tool is called listed tables. It would list all the tables in that circular database and return string.
+
+
+24
+00:03:55.785 --> 00:04:08.134
+Yan Wang: The second is called get schema. It accepts a string parameter of the table name, and then return another string describing the table schema, which may contain the
+
+
+25
+00:04:08.515 --> 00:04:14.738
+Yan Wang: the A column name, column type, and in the end we could also include a
+
+
+26
+00:04:15.345 --> 00:04:22.194
+Yan Wang: example data row to it, so that Lm has more context. So the return value is also a string.
+
+
+27
+00:04:22.375 --> 00:04:32.835
+Yan Wang: and the 3rd is a the tool is called executed circle. It accepts a string of circle statements as input and outputs the execution result
+
+
+28
+00:04:32.975 --> 00:04:36.485
+Yan Wang: probably in a Csv format to the Lm.
+
+
+29
+00:04:37.045 --> 00:04:56.424
+Yan Wang: And we would like to use the latest Openai SDK, to do all of this use. Gpt. 4.0, as the Lm. And the task we ask Lm. To do is explore this database and provide a markdown report describing the basic facts of the table. For example, the data schemas of each table.
+
+
+30
+00:04:58.105 --> 00:05:12.325
+Yan Wang: Alright, click! Stop here, so we will get all of it. Speech recognized. Copy it here. Check for any potential misspelling or or speech recognition error. Nope, so we'll just submit it
+
+
+31
+00:05:12.795 --> 00:05:19.555
+Yan Wang: here. I'm using cursor, together with the Gemini, 2.5, which I found pretty effective in doing some engineering work.
+
+
+32
+00:05:19.995 --> 00:05:26.884
+Yan Wang: and it understand the task. So it come us come up with a plan.
+
+
+33
+00:05:27.305 --> 00:05:29.994
+Yan Wang: and even knows to update the cursor rules
+
+
+34
+00:05:30.275 --> 00:05:45.125
+Yan Wang: on this specific plan will accept it. Here it will. It has a pretty pretty clear goal. Build an agent to enable Gpt. 4 0. To explore a local sqlite database, and it divided into it into 5 steps
+
+
+35
+00:05:45.595 --> 00:05:49.335
+Yan Wang: setup and planning tool implementation.
+
+
+36
+00:05:49.685 --> 00:05:59.994
+Yan Wang: It already gets. Oh, looks like it goes a detour, create a dummy database which is not necessary, so we will correct it. Here, stop the execution and ask it.
+
+
+37
+00:06:00.135 --> 00:06:05.905
+Yan Wang: Actually, you don't need to create a dummy database. We already have an existing database called ecommerce underscore data. Dot. dB,
+
+
+38
+00:06:07.545 --> 00:06:14.964
+Yan Wang: all right, copy paste. Enter hopefully, this will correct this route.
+
+
+39
+00:06:17.625 --> 00:06:29.225
+Yan Wang: Accept, and then it will implement the tools and perform an open AI integration
+
+
+40
+00:06:29.395 --> 00:06:38.925
+Yan Wang: and then do the main script and reporting generation ensure Gpd. For ensure producer, markdown report and testing and requirement looks pretty professional.
+
+
+41
+00:06:39.185 --> 00:06:44.035
+Yan Wang: So move on to implementing the python function. This is the framework
+
+
+42
+00:06:44.265 --> 00:07:09.345
+Yan Wang: of the python function. It implements, has list tables only this one, and now it probably will implement other functions one by one. This is a tendency of Gemini, which knows to decompose a complicated task into stages, so that it has better success rate in terms of implementation as well as calling cursor to do the editing
+
+
+43
+00:07:09.875 --> 00:07:17.464
+Yan Wang: and the final tool of executor, SQL. At this time we can also take a closer look at how it implements all of this.
+
+
+44
+00:07:18.505 --> 00:07:27.404
+Yan Wang: This table is essentially just around a SQL. Query on the meta database of the sqlite. The gas schema also get this
+
+
+45
+00:07:29.595 --> 00:07:36.224
+Yan Wang: use. Use this pragma statement and execute a circle
+
+
+46
+00:07:38.375 --> 00:07:47.074
+Yan Wang: all right. It knows to test it in the middle of development, which is good so that we could discover any bugs before we go into production.
+
+
+47
+00:07:47.915 --> 00:07:56.895
+Yan Wang: and then it adjusted the examples, steal a syntax error, and
+
+
+48
+00:07:57.495 --> 00:08:03.835
+Yan Wang: seems to be working as intended for this syntax area. Looks like it's intentional because it knows it is invalid.
+
+
+49
+00:08:04.775 --> 00:08:05.895
+Yan Wang: and then
+
+
+50
+00:08:06.295 --> 00:08:19.914
+Yan Wang: it will install the open AI library. It's super fun to watch AI doing all of this work for us like it. It get a pretty comprehensive plan, update its progress stage by stage.
+
+
+51
+00:08:20.685 --> 00:08:25.995
+Yan Wang: write hundreds of lines of code in no time, manage the dependencies smartly.
+
+
+52
+00:08:27.725 --> 00:08:40.334
+Yan Wang: and it decides to split the implementation of the Circle light Agent here with the general dB tools so that we could reuse the functions in the future. That's also a smart move.
+
+
+53
+00:08:40.505 --> 00:08:41.735
+Yan Wang: And here's the key.
+
+
+54
+00:08:41.965 --> 00:08:45.855
+Yan Wang: This is how we will describe to the Openai Api
+
+
+55
+00:08:46.135 --> 00:08:48.424
+Yan Wang: what tools are available to Gpt. 4. O,
+
+
+56
+00:08:48.605 --> 00:08:55.574
+Yan Wang: essentially, they are in the form of functions which is called tools in anthropic world. But it's called functions in open AI world.
+
+
+57
+00:08:55.855 --> 00:09:07.155
+Yan Wang: It describes the name of the function, the parameters, and the return value. The description is also provided to tell the AI when you need to use that and what it is for.
+
+
+58
+00:09:07.255 --> 00:09:23.904
+Yan Wang: So essentially, you can see that we use a specific Json schema to describe our intent, our provided tools to the Gbt. 4 0. And then, so that the AI knows when to invoke which tool, and in which format.
+
+
+59
+00:09:25.055 --> 00:09:31.595
+Yan Wang: So what happened is it caused this python script.
+
+
+60
+00:09:31.775 --> 00:09:38.655
+Yan Wang: the Python script, or the Ap. The Gpt. 4. 0 1st receives this
+
+
+61
+00:09:38.785 --> 00:09:47.944
+Yan Wang: prompt which is reading my cursor. Essentially it ask it to do some initial exploration, using the tools against this database.
+
+
+62
+00:09:48.345 --> 00:09:54.434
+Yan Wang: and the 1st term the Gpt. 4. 0. Decides. Let's invoke listtables tool
+
+
+63
+00:09:54.715 --> 00:10:06.664
+Yan Wang: with 0 arguments which is expected, and it got the results of channels, customer types, daily metrics, etc, which is exactly the the tables in this sqlite database.
+
+
+64
+00:10:07.015 --> 00:10:13.475
+Yan Wang: and then it knows to invoke tools of gas schema
+
+
+65
+00:10:13.595 --> 00:10:18.865
+Yan Wang: with table name of channels, and get this result and invoke other
+
+
+66
+00:10:19.275 --> 00:10:24.675
+Yan Wang: for other tables. Using this same tool one by one, and collect all of this information.
+
+
+67
+00:10:25.185 --> 00:10:34.075
+Yan Wang: After it gets all this information it knows to produce a final response, which is a markdown result of the table
+
+
+68
+00:10:34.535 --> 00:10:37.194
+Yan Wang: of description of the table.
+
+
+69
+00:10:37.315 --> 00:10:46.034
+Yan Wang: So that concludes this entire task, it is able to generate such a markdown.
+
+
+70
+00:10:46.305 --> 00:11:02.414
+Yan Wang: I want to point out that although this this Markdown looks trivial, it's nothing more than just doing some exploration of the table. Imagine if you could automate it, if you could ask it to generate an insightful deep analysis on the example data
+
+
+71
+00:11:02.555 --> 00:11:08.944
+Yan Wang: which is totally possible, then how much easier. It will make your work like
+
+
+72
+00:11:09.095 --> 00:11:10.635
+Yan Wang: your work will be much easier.
+
+
+73
+00:11:11.765 --> 00:11:23.164
+Yan Wang: So then, this actually gives us a pretty good foundation that it shows how to build an agent capable of querying local database.
+
+
+74
+00:11:23.305 --> 00:11:31.585
+Yan Wang: and that agent, in its interaction with the database tools followed exactly this core invocation flow. We see here
+
+
+75
+00:11:31.855 --> 00:11:49.065
+Yan Wang: the the Llm. In our case is open AI model decided to use a tool like list tables or gas schema, and it then formulated and sent a structured tool call which our client code executed against the circular database. And this client code is
+
+
+76
+00:11:49.445 --> 00:11:53.555
+Yan Wang: implemented as a python code in our implementation.
+
+
+77
+00:11:53.895 --> 00:12:16.565
+Yan Wang: and that is that result. It queries against the circle, I database and get a result that result. Like the table names schema information were returned to the Lm. And then the Lm. Will do another round of decision making which tool I need to call? Or shall I stop here and begin generating the final report? And this is the fundamental cycle of agentic tool use.
+
+
+78
+00:12:17.365 --> 00:12:28.325
+Yan Wang: It's important to recognize that for this kind of straightforward single tool, interaction or single Ilm interaction, you likely didn't need to implement a comprehensive or overarching framework.
+
+
+79
+00:12:28.615 --> 00:12:34.764
+Yan Wang: You probably didn't even need to bring something like the model context protocol or Mcp that we'll be discussing more
+
+
+80
+00:12:35.055 --> 00:12:43.735
+Yan Wang: for this basic scenario, the native function calling capabilities provided by your Llm. Were likely sufficient to get the job done effectively.
+
+
+81
+00:12:45.365 --> 00:12:49.994
+Yan Wang: But then comes the inevitable next step, after considering simple.
+
+
+82
+00:12:50.075 --> 00:12:52.835
+Chuanxi’s iPhone: I am ashu mat.
+
+
+83
+00:12:52.835 --> 00:12:56.835
+Yan Wang: I'll just mute alright.
+
+
+84
+00:12:56.945 --> 00:13:04.045
+Yan Wang: And then here is a consider a another perspective that may be inevitable.
+
+
+85
+00:13:04.285 --> 00:13:20.314
+Yan Wang: After considering the simple single model scenarios. Perhaps you want to experiment with a different model, like anthropic Claude. Or maybe a client has a specific requirement on Google's Gemini, or you're interested in exploring another open source alternative.
+
+
+86
+00:13:20.445 --> 00:13:37.725
+Yan Wang: So suddenly, you take that perfectly good tool you developed for one model and try to use it with another, and you hit a wall. It's not just that. It doesn't work out of the box. Often the entire way. The tool is defined and expected to interact simply doesn't fit the new model's paradigm.
+
+
+87
+00:13:38.265 --> 00:13:59.185
+Yan Wang: So the core of the issue is that the different models from different providers often employ their own unique schemas for defining tools. They can have varied calling conventions, for how those tools are invoked, and how arguments are passed. Furthermore, their error, handling patterns and the way expected results to be returned can also differ significantly.
+
+
+88
+00:13:59.555 --> 00:14:10.384
+Yan Wang: What was once a straightforward call function in one ecosystem can quickly devolve into a tedious process of rewriting and rewrapping this tool for every single platform I want to support.
+
+
+89
+00:14:10.935 --> 00:14:16.324
+Yan Wang: And that is the real friction point we often encounter in agenic AI development
+
+
+90
+00:14:16.435 --> 00:14:28.775
+Yan Wang: this frustrating lack of portability for our tools and capabilities across different models is a significant hurdle to building truly flexible and future-proof AI applications.
+
+
+91
+00:14:29.905 --> 00:14:54.234
+Yan Wang: Indeed, when we want to scale our agent or switch to a different model provider. Perhaps Claude, or another open source alternative. That simple agent we build often starts to fork, the dream of tool reuse quickly fades, and our development surface area multiplies increasing complexity and maintenance. This is the common pain point that Mcp tries to address
+
+
+92
+00:14:54.925 --> 00:14:59.874
+Yan Wang: the model context. Protocol or Mcp was designed to tackle this very challenge
+
+
+93
+00:15:00.265 --> 00:15:15.044
+Yan Wang: at its heart. The the Protocol was meticulously designed to establish a consistent and standardized interface between AI models, the clients that interact with them and the various tools and resources these models might need to use.
+
+
+94
+00:15:15.465 --> 00:15:29.744
+Yan Wang: It's crucial to understand that Mcp isn't another heavyweight framework you need to learn instead, think of it as a lightweight wire format, an effective abstraction layer and a clear contract that governs those interactions.
+
+
+95
+00:15:30.175 --> 00:15:42.454
+Yan Wang: The diagram you see on the slide is a great visual metaphor. Mcb acts as a central hub, a standard that allows many different tools in various AI models to connect and communicate seamlessly
+
+
+96
+00:15:43.275 --> 00:15:55.224
+Yan Wang: the real power of Mcp lies in its ability to make your tool definitions, your carefully crafted, prompt templates, and even your references to external resources truly model agnostic.
+
+
+97
+00:15:55.535 --> 00:16:08.005
+Yan Wang: The philosophy is simple but profound. Define these components once, and then reuse them everywhere across different AI models and platforms, and this directly supports the core goal we mentioned earlier
+
+
+98
+00:16:08.205 --> 00:16:17.064
+Yan Wang: to foster and enable a rich, interoperable ecosystem where tools can be developed independently and used broadly.
+
+
+99
+00:16:18.195 --> 00:16:28.964
+Yan Wang: and Mcp is gaining serious traction cloud desktop supports it out of the box cursor has built in integration. Openai is rolling now. Google has signal to support.
+
+
+100
+00:16:29.135 --> 00:16:34.804
+Yan Wang: and Srpic is the originator. But the adoption curve now spans the entire Lm ecosystem.
+
+
+101
+00:16:35.185 --> 00:16:41.665
+Yan Wang: This isn't just the one company's vision. It's being adopted across multiple Lm providers and tooling platforms.
+
+
+102
+00:16:41.875 --> 00:16:43.565
+Yan Wang: Mcp is not French.
+
+
+103
+00:16:44.265 --> 00:16:51.035
+Yan Wang: But remember, just because it's supported or because it's popular, doesn't mean you must use it now.
+
+
+104
+00:16:51.515 --> 00:16:57.484
+Yan Wang: So you might be wondering if Mcp is so powerful. Why is this still controversial?
+
+
+105
+00:16:58.725 --> 00:17:06.244
+Yan Wang: Let me show you. We will take the same circleite agent we discussed, and this time we'll expose it via a fast Mcp server
+
+
+106
+00:17:06.505 --> 00:17:10.684
+Yan Wang: fast. Mcp is a community SDK, that helps implement the protocol.
+
+
+107
+00:17:11.075 --> 00:17:16.964
+Yan Wang: Then we'll call it from cursor and from cloud desktop. Same tool implementation, different clients.
+
+
+108
+00:17:17.275 --> 00:17:25.825
+Yan Wang: This would highlight the right ones use anywhere. Idea. And this is a real scenario. Many team want model model agnostic tool development.
+
+
+109
+00:17:26.165 --> 00:17:29.494
+Yan Wang: So we'll come back here and begin from this dB tools.
+
+
+110
+00:17:30.125 --> 00:17:32.145
+Yan Wang: Probably the cyclide agent.
+
+
+111
+00:17:32.355 --> 00:17:34.555
+Yan Wang: We will just tell the AI.
+
+
+112
+00:17:35.185 --> 00:17:46.334
+Yan Wang: Now take another look at the super light agent. We wanted to convert it into Mcp server. We want to use the fast Mcp as the SDK. And probably you need to search online on how to use that
+
+
+113
+00:17:47.137 --> 00:17:53.975
+Yan Wang: in this process. Let's make sure all of the paths mentioned in the file is absolute path.
+
+
+114
+00:17:58.795 --> 00:18:02.714
+Yan Wang: and then paste it here. Probably we also need to give it our current
+
+
+115
+00:18:03.155 --> 00:18:06.095
+Yan Wang: root. I'll just copy, paste it here.
+
+
+116
+00:18:14.065 --> 00:18:15.705
+Yan Wang: Now begin generating.
+
+
+117
+00:18:16.375 --> 00:18:19.944
+Yan Wang: Let's take a look at the cursor rules. Probably it's already Updated.
+
+
+118
+00:18:20.445 --> 00:18:26.685
+Yan Wang: And then Gemini begins to plan several phases, update
+
+
+119
+00:18:26.805 --> 00:18:29.254
+Yan Wang: the current progress and the plan
+
+
+120
+00:18:41.390 --> 00:19:08.994
+Yan Wang: the goal of this project. I guess the project is the project we're we're using here. The overall goal of this project is to to enable the AI to explore a database, a circular database specifically on its own, so that we don't need to tell it. Hey, this is the table that is the structure the AI would need to would know, to use different tools to actually autonomously discover all the details. This is the goal
+
+
+121
+00:19:10.525 --> 00:19:16.905
+Yan Wang: alright. And then we have the dB tools revised here
+
+
+122
+00:19:17.645 --> 00:19:22.775
+Yan Wang: and deleting. Actually, I don't really want to delete it as well rejected.
+
+
+123
+00:19:26.075 --> 00:19:27.774
+Yan Wang: and we have.
+
+
+124
+00:19:29.285 --> 00:19:34.355
+Yan Wang: Where is our code? Mcb. Server, are still to be created.
+
+
+125
+00:19:34.485 --> 00:19:41.165
+Yan Wang: So accept the changes here, take a look at the cursor, rules to see where we are
+
+
+126
+00:19:41.725 --> 00:19:44.104
+Yan Wang: still implementing the Mcp server.
+
+
+127
+00:19:47.425 --> 00:19:52.235
+Yan Wang: Directly we use the existing database tools which makes it pretty clear
+
+
+128
+00:20:01.145 --> 00:20:02.395
+Yan Wang: and know that
+
+
+129
+00:20:02.615 --> 00:20:27.955
+Yan Wang: how we ask it to do online search to understand how to use Mcp. Actually, if we don't include that, it will try to hallucinate because it has no knowledge about this pretty new library. However, in the case that it learns online, it knows A how to write a code and B how to actually launch this debugging proxy. So let's take a look at this port
+
+
+130
+00:20:30.985 --> 00:20:34.035
+Yan Wang: follow the link here and click, connect.
+
+
+131
+00:20:34.145 --> 00:20:42.394
+Yan Wang: This will connect to our Mcp. Server our newly authored Mcp server. And just to give an overview of the what the code looks looks like.
+
+
+132
+00:20:42.655 --> 00:20:45.374
+Yan Wang: It basically is pretty simple. 3 functions.
+
+
+133
+00:20:45.565 --> 00:21:06.905
+Yan Wang: The key here is, you just decorate it with Mcptool. That's it. After that we'll be able to go to the inspector. This is called Mcp Inspector. It's some tool coming with Mcp. SDK, and then we can go to tools, list the tools. Then we'll be able to see the 3 tools available, the tools exposed to AI,
+
+
+134
+00:21:06.985 --> 00:21:19.285
+Yan Wang: and if we click into each tool, it will give us more information like this tool is to list all the tables and circular database, and in this case we can directly click wrong tool, it will be able to just run the tool
+
+
+135
+00:21:19.425 --> 00:21:20.915
+Yan Wang: and give us the result.
+
+
+136
+00:21:21.085 --> 00:21:23.845
+Yan Wang: So now we are. We just have an Mcp server.
+
+
+137
+00:21:23.955 --> 00:21:29.904
+Yan Wang: and we also expect to see it really works using the common debugging tool. It's that easy.
+
+
+138
+00:21:30.065 --> 00:21:41.065
+Yan Wang: But how can we connect it with the clients? Here we have the clients. One example is cursor. I will also show claw desktop. So what we'll do here is ask to do online search again.
+
+
+139
+00:21:41.605 --> 00:21:54.904
+Yan Wang: Now, I'd like to connect this Mcp server with cursor. Could you please do some online search? We need to be client. We need to be applied to the AI and then potentially generate a cursor. Slash Mcp. Dot Json.
+
+
+140
+00:21:55.825 --> 00:22:00.455
+Yan Wang: to allow me to use this Mcp server encursor.
+
+
+141
+00:22:07.955 --> 00:22:10.595
+Yan Wang: We need to be be polite.
+
+
+142
+00:22:10.875 --> 00:22:31.485
+Yan Wang: Remove this. This shouldn't be one part of the the prompt. And let's see how to connect it with cursor. And you can see here one pattern is how extensively I delegate the the task to AI. Actually, I don't need to know. I don't need to remember how to connect it to cursor. AI could just do the search for me.
+
+
+143
+00:22:32.035 --> 00:22:40.274
+Yan Wang: This is like the the mindset of delegating the task to AI to to maximize. Your brainpower.
+
+
+144
+00:22:40.445 --> 00:22:48.255
+Yan Wang: It's like you have a team doing all the low level work for you. And you can really focus on the real creative things that require your expertise.
+
+
+145
+00:22:49.375 --> 00:22:59.345
+Yan Wang: Alright. So it did its research. And to begin generate this file. Okay, it generated this file. I'll just
+
+
+146
+00:22:59.905 --> 00:23:01.095
+Yan Wang: accepted.
+
+
+147
+00:23:01.845 --> 00:23:07.665
+Yan Wang: And then we can go to this Icon go to Mcp
+
+
+148
+00:23:07.815 --> 00:23:12.734
+Yan Wang: and we can find this tool, this Mcp server available.
+
+
+149
+00:23:13.245 --> 00:23:20.664
+Yan Wang: We also see this pop up window here. We can enable here, or enable here possibly work. Let's just enable it.
+
+
+150
+00:23:20.875 --> 00:23:23.305
+Yan Wang: and it says, client closed.
+
+
+151
+00:23:24.195 --> 00:23:27.635
+Yan Wang: That's then that means we need to do some debugging.
+
+
+152
+00:23:29.035 --> 00:23:33.014
+Yan Wang: In most of the cases. That's just the means we
+
+
+153
+00:23:33.275 --> 00:23:38.725
+Yan Wang: we probably would have some issue in the python execution, because we already
+
+
+154
+00:23:38.875 --> 00:23:44.135
+Yan Wang: checked this Mcb server worked. So I'll tell cursor to to do that
+
+
+155
+00:23:44.925 --> 00:23:55.165
+Yan Wang: instead of 1st use the Sh to activate the virtual environment. Could you please just use the the full path of the python
+
+
+156
+00:23:55.485 --> 00:24:02.105
+Yan Wang: as the executable, and let's see whether we could correct it.
+
+
+157
+00:24:12.865 --> 00:24:16.785
+Yan Wang: All right, we will accept and
+
+
+158
+00:24:17.445 --> 00:24:22.055
+Yan Wang: refresh and re-enable. Now the error is gone.
+
+
+159
+00:24:22.255 --> 00:24:23.394
+Yan Wang: It works now.
+
+
+160
+00:24:23.505 --> 00:24:27.184
+Yan Wang: So then, we'll see. How can we use that in cursor.
+
+
+161
+00:24:28.355 --> 00:24:30.394
+Yan Wang: Now we'll just ask it.
+
+
+162
+00:24:31.055 --> 00:24:35.454
+Yan Wang: Use the Mcp. Server of sukulite, database explorer and
+
+
+163
+00:24:35.585 --> 00:24:38.915
+Yan Wang: list the tables in the database
+
+
+164
+00:24:42.685 --> 00:24:44.455
+Yan Wang: and know that we're using gemini.
+
+
+165
+00:24:47.085 --> 00:24:48.575
+Yan Wang: We'll see whether it works.
+
+
+166
+00:24:55.115 --> 00:25:02.385
+Yan Wang: It works. It calls the Mcp tool of list all tables and get the result great.
+
+
+167
+00:25:02.555 --> 00:25:06.674
+Yan Wang: How about we do the same thing? But switch it to gpt
+
+
+168
+00:25:10.185 --> 00:25:11.215
+Yan Wang: same thing.
+
+
+169
+00:25:11.545 --> 00:25:20.504
+Yan Wang: Get this. What about Claude? And here I won't. I don't want to show it in cursor here. We will show it from an even another client.
+
+
+170
+00:25:20.825 --> 00:25:27.395
+Yan Wang: The Claude has a Claude desktop. I'll just create a new new one.
+
+
+171
+00:25:27.795 --> 00:25:30.924
+Yan Wang: The tricky part here is Cloud Desktop
+
+
+172
+00:25:31.085 --> 00:25:39.934
+Yan Wang: needs to config the Mcp server as well. And how do we config it is we need to.
+
+
+173
+00:25:40.255 --> 00:25:45.604
+Yan Wang: I'll just remove everything and begin from scratch. We need to add a configuration file.
+
+
+174
+00:25:45.805 --> 00:25:56.655
+Yan Wang: How to access. That is, we go to settings. There's a developer, and in the developer there's a config. We could click the added config. It will show the config file in the folder in the finder.
+
+
+175
+00:25:56.965 --> 00:26:12.394
+Yan Wang: and then we'll just open it here. Notice that currently, because I don't have any Mcp server. This is an empty, and what I'll do is just a copy paste to this configuration file from cursor to Claude. That's it.
+
+
+176
+00:26:12.685 --> 00:26:21.285
+Yan Wang: Then we just restart the cloud desktop app so it could reload this.
+
+
+177
+00:26:22.575 --> 00:26:30.335
+Yan Wang: All right here. If we click, search and tools, we'll be able to see. There is a circle, Idb. Explorer already available.
+
+
+178
+00:26:30.754 --> 00:26:38.555
+Yan Wang: This is good. That means it's connected with our Mcp. Server. Then we can further ask it. Just copy this again.
+
+
+179
+00:26:38.725 --> 00:26:39.784
+Yan Wang: Ask it.
+
+
+180
+00:26:39.915 --> 00:26:47.195
+Yan Wang: Use MB. Mcb. Server or sqlite database explorer. List the tables in database. And here I want to challenge it a little bit.
+
+
+181
+00:26:48.495 --> 00:26:51.245
+Yan Wang: Can you do some more comprehensive
+
+
+182
+00:26:51.475 --> 00:27:01.194
+Yan Wang: exploration on the on the data and come up with some deep data analysis, with even visualizations.
+
+
+183
+00:27:01.915 --> 00:27:18.555
+Yan Wang: And I'll just allow it here. This warning is to say that the cloud needs to call some external resources, which is the Mcp Server here, and to prevent some security risk it will need the user to confirm.
+
+
+184
+00:27:19.195 --> 00:27:25.884
+Yan Wang: And here I would just ask you to do more exploration. So it diligently spans quite a few different
+
+
+185
+00:27:26.405 --> 00:27:29.445
+Yan Wang: different requests to our database
+
+
+186
+00:27:29.565 --> 00:27:38.974
+Yan Wang: and try to crunch the numbers and come up with something, so we'll leave it running here and come back to our original presentation.
+
+
+187
+00:27:40.645 --> 00:27:42.054
+Yan Wang: I'll close it.
+
+
+188
+00:27:42.655 --> 00:27:43.944
+Yan Wang: What's this here?
+
+
+189
+00:27:48.185 --> 00:27:49.065
+Yan Wang: So.
+
+
+190
+00:27:49.275 --> 00:28:00.814
+Yan Wang: following on our our demo. Let's assume we can see that actually, everything initially works beautifully. We had some small bug, but quickly fix that. But I also want to show you the other side of Mcp.
+
+
+191
+00:28:01.324 --> 00:28:14.234
+Yan Wang: So essentially, what happened was, we have the the tool implementation, and we make it accessible through fast Mcp. And then we showed it's successfully caught by different clients like cursor and cloud desktop.
+
+
+192
+00:28:14.445 --> 00:28:26.885
+Yan Wang: It perfectly illustrates the core promise of Mcp genuinely interoperability and the ability to write tools once and use them across various platforms. That's a powerful concept realized.
+
+
+193
+00:28:27.545 --> 00:28:47.324
+Yan Wang: But then, as is often the case in development, we will intentionally introduce a subtle bug. It doesn't have to be a major architecture flaw. It's just probably a small oversight, for instance, we probably will give it a incorrect file pass for the circular database or a tiny typo. So let's see that.
+
+
+194
+00:28:49.015 --> 00:28:55.755
+Yan Wang: Oh, so it sounds like the the cloud is still busy busy proposing the the report.
+
+
+195
+00:28:56.055 --> 00:29:01.765
+Yan Wang: and and at this time I'll just close
+
+
+196
+00:29:02.333 --> 00:29:17.464
+Yan Wang: this is the fast Mcp server. Let's terminate that because it's for debugging only and go to the Mcp. Dot Json. Let's give it some typo before that. It seems that the cloud already finished its job. It
+
+
+197
+00:29:18.415 --> 00:29:25.755
+Yan Wang: wrote quite a few SQL. Queries run it against the database and come up with this nice analytics dashboard
+
+
+198
+00:29:25.885 --> 00:29:30.005
+Yan Wang: showing the core metrics from this database.
+
+
+199
+00:29:30.315 --> 00:29:40.424
+Yan Wang: which is very nice, and imagine that in your work. What if you could just do your weekly business review based on this draft rather than having everything from scratch?
+
+
+200
+00:29:40.735 --> 00:29:42.895
+Yan Wang: How many hours this could save you
+
+
+201
+00:29:43.485 --> 00:29:50.525
+Yan Wang: all right, coming back to this debugging issue. Let's intentionally make it not work. Say
+
+
+202
+00:29:50.825 --> 00:30:01.585
+Yan Wang: we, instead of using absolute pass, because I know it will fail. If we don't, don't use that, let's use this argument. Make it relative pass. What will happen
+
+
+203
+00:30:02.115 --> 00:30:10.255
+Yan Wang: in cursor if we go to Mcp probably turned off refresh. Turn on it, says client closed.
+
+
+204
+00:30:10.525 --> 00:30:13.384
+Yan Wang: Okay, client, close. What does that mean?
+
+
+205
+00:30:13.845 --> 00:30:19.135
+Yan Wang: How would I debug and get error messages and fix my code because of that
+
+
+206
+00:30:19.405 --> 00:30:29.785
+Yan Wang: if we click here it knows it will show we need to go to output and cursor Mcp for error logs. Okay, we go to here. Output. Go to cursor. Mcp.
+
+
+207
+00:30:30.435 --> 00:30:34.505
+Yan Wang: It says, error plan closed. Okay, what does that mean?
+
+
+208
+00:30:34.695 --> 00:30:37.575
+Yan Wang: I don't know. And there's a reason for that.
+
+
+209
+00:30:37.925 --> 00:30:46.655
+Yan Wang: It's not because Mcp is badly implemented that it exposed a little information for debugging. It's just because
+
+
+210
+00:30:47.195 --> 00:30:53.865
+Yan Wang: Mcp is a client-server architecture, and this architecture means that they don't know the details
+
+
+211
+00:30:54.075 --> 00:31:01.855
+Yan Wang: across this boundary, and this makes this debugging extremely hard, and if we just
+
+
+212
+00:31:02.015 --> 00:31:07.745
+Yan Wang: recover this, still use the absolute path, come back, refresh.
+
+
+213
+00:31:08.655 --> 00:31:18.075
+Yan Wang: turn on. It works again. But what if we go to the Mcb server and change this absolute.
+
+
+214
+00:31:18.835 --> 00:31:24.014
+Yan Wang: let's see, should be, give you tools. Change this absolute path to relative path.
+
+
+215
+00:31:24.255 --> 00:31:26.204
+Yan Wang: So, for example, we we just
+
+
+216
+00:31:26.335 --> 00:31:28.215
+Yan Wang: for the dB name, is this.
+
+
+217
+00:31:29.325 --> 00:31:31.685
+Yan Wang: so here is the tricky part.
+
+
+218
+00:31:32.375 --> 00:31:35.815
+Yan Wang: If we go to here still, Mcp.
+
+
+219
+00:31:36.895 --> 00:31:47.305
+Yan Wang: refresh, this will still be successful. However, if we redo this query, let's see what will happen.
+
+
+220
+00:31:48.395 --> 00:31:51.985
+Yan Wang: It says, Circulator, unable to open database file.
+
+
+221
+00:31:52.265 --> 00:31:56.375
+Yan Wang: But in the case that you check this path, it's still correct.
+
+
+222
+00:31:56.695 --> 00:32:05.554
+Yan Wang: It's here. It's still correct. Ecommerce data. Dot. dB is correct. And even in the case that you want to use fast, Mcp, to debug it
+
+
+223
+00:32:07.175 --> 00:32:12.334
+Yan Wang: because you're launching this from the current folder, it will still tell you
+
+
+224
+00:32:12.635 --> 00:32:29.784
+Yan Wang: this. Tools, list of tools, list of tables, wrong tool. It will still tell you the correct result. So now we enter a really tricky part that our debugging tool says nothing's wrong. It runs beautifully, and our client says, no, I can't open the database file.
+
+
+225
+00:32:30.195 --> 00:32:33.514
+Yan Wang: so I just want to show that even some really
+
+
+226
+00:32:33.845 --> 00:32:39.385
+Yan Wang: small errors, even not complicated mistakes, is very hard to debug.
+
+
+227
+00:32:39.775 --> 00:32:45.254
+Yan Wang: unless you know a lot of especially details about Mcp.
+
+
+228
+00:32:45.885 --> 00:32:51.304
+Yan Wang: So I'll just remove all this and cover so it won't break things.
+
+
+229
+00:32:55.755 --> 00:32:57.104
+Yan Wang: So I want to see that
+
+
+230
+00:32:57.675 --> 00:33:02.315
+Yan Wang: the the reason behind is because you're no longer debugging python.
+
+
+231
+00:33:02.455 --> 00:33:12.695
+Yan Wang: You're debugging the Json Rpc. Over Http between distributed components and with unclear logs. As this diagram shows.
+
+
+232
+00:33:12.815 --> 00:33:18.304
+Yan Wang: and those client to server model schema boundaries becomes harder to crease.
+
+
+233
+00:33:18.505 --> 00:33:29.485
+Yan Wang: and this is the 1st hidden cost of Mcp. Debugging gets harder. The abstraction that gives you portability also removes immediate feedback. You don't see the wiring anymore.
+
+
+234
+00:33:29.545 --> 00:33:48.725
+Yan Wang: You see the endpoints and hope the wiring works. You're not debugging functions but semantic boundaries. This isn't a design flaw, but a trade-off. Abstract protocols reduce visibility, and Mtv's purpose is to scale and standardize, not necessarily to make things easier during early experimentation.
+
+
+235
+00:33:48.905 --> 00:33:50.535
+Yan Wang: So what are your options?
+
+
+236
+00:33:51.245 --> 00:34:02.925
+Yan Wang: Well, let's take a 3rd approach. Let's rebuild that superlite agent using just a prompt and a command line, no server, no protocol, just a tool, and a natural language description, and this introduces the linked approach.
+
+
+237
+00:34:03.135 --> 00:34:04.985
+Yan Wang: Here, I'll just ask.
+
+
+238
+00:34:06.415 --> 00:34:28.555
+Yan Wang: Take a look at the dB. The Mcp. Server and Agentpui. We want to make it a command line utility. For example, you would accept a switch about which mode or which command to execute with some optional commands. And let's 1st write a new python script
+
+
+239
+00:34:29.087 --> 00:34:38.525
+Yan Wang: of doing the part the command line parsing, and also write a document in Markdown so that future AI would know how to use this tool
+
+
+240
+00:34:43.555 --> 00:34:44.565
+Yan Wang: here.
+
+
+241
+00:34:44.665 --> 00:34:47.134
+Yan Wang: I'll use the dimension.
+
+
+242
+00:34:48.129 --> 00:34:52.594
+Yan Wang: Mcp server.py and dB
+
+
+243
+00:34:52.845 --> 00:34:56.075
+Yan Wang: should be super light.py right?
+
+
+244
+00:35:01.255 --> 00:35:04.845
+Yan Wang: And the goal of this is cursor
+
+
+245
+00:35:05.145 --> 00:35:15.185
+Yan Wang: itself is an agent. It knows holding book tools, and because it knows how to execute a command line utility like a shell command.
+
+
+246
+00:35:15.525 --> 00:35:20.104
+Yan Wang: We could just build a command or command line utility for it
+
+
+247
+00:35:20.255 --> 00:35:27.935
+Yan Wang: to invoke. That's it. And this is the real, direct and quick way
+
+
+248
+00:35:28.405 --> 00:35:31.644
+Yan Wang: to just to do some agentic exploration.
+
+
+249
+00:35:32.395 --> 00:35:40.084
+Yan Wang: And here, because we're using Gpt. 4.1, it's so much faster than the the Gemini.
+
+
+250
+00:35:41.195 --> 00:35:46.284
+Yan Wang: and it also give us a readme. So then, what we'll do is we'll adjust that.
+
+
+251
+00:35:46.455 --> 00:35:49.155
+Yan Wang: Have this readme file and sent a cursor
+
+
+252
+00:35:50.155 --> 00:35:53.725
+Yan Wang: following instructions on in this readme
+
+
+253
+00:35:53.885 --> 00:36:05.714
+Yan Wang: use the command line tool to explore the super light database especially. Let's start from how like the table names listing the table names.
+
+
+254
+00:36:09.905 --> 00:36:12.155
+Yan Wang: And we're using Gpu 4.1 here.
+
+
+255
+00:36:12.775 --> 00:36:19.775
+Yan Wang: Okay? Great. It knows to invoke this with list tables as the command line and get the table names. That's it.
+
+
+256
+00:36:19.895 --> 00:36:28.015
+Yan Wang: It's that simple. And notice how more robust and quick it compare with Mcp. So we do have some other options here
+
+
+257
+00:36:28.305 --> 00:36:35.804
+Yan Wang: due to the limit of time we'll skip another demo on open web. Ui. But we will also mention that briefly.
+
+
+258
+00:36:37.035 --> 00:36:40.484
+Yan Wang: So I also want to emphasize. It has cost as well. It's
+
+
+259
+00:36:40.655 --> 00:36:48.344
+Yan Wang: it. It's pretty straightforward, but it lacks structures. There's no schema and no interface contract.
+
+
+260
+00:36:48.585 --> 00:37:00.814
+Yan Wang: Prompt errors becomes model misinterpretations. You will hit soft failures and have to guess what went wrong. The speed of those prompt-based tools is a double-edged sword.
+
+
+261
+00:37:02.675 --> 00:37:21.825
+Yan Wang: Alright. We have explored a few different approaches to enable our AI models to interact with tools and external systems to bring it all together. Let's look at this summary table, which compares 3 distinct paths we've touched upon. It's important to understand the nuances of each before making a decision for your own specific project.
+
+
+262
+00:37:22.105 --> 00:37:27.054
+Yan Wang: And first, st we have what we call the function calling capabilities.
+
+
+263
+00:37:27.495 --> 00:37:47.765
+Yan Wang: It typically refers to using the native function calling provided by specific Om vendors like Openai's offering. As we saw, this approach is generally simple to implement and can be quite effective for straightforward use cases. However, its main limitation is that it often ties you to that vendor specific api and ecosystem.
+
+
+264
+00:37:48.325 --> 00:38:07.805
+Yan Wang: And, second, there's the Mcp-based implementation leveraging the model context protocol. This path offers significant power and crucially portability across different models and platforms. This standardization Mcp brings a huge advantage for long-term flexibility and tool reusability.
+
+
+265
+00:38:08.025 --> 00:38:18.665
+Yan Wang: But the trade-off, as we have discussed, can be an increase in complexity, particularly when it comes to debugging interactions, as there is an added layer of abstraction.
+
+
+266
+00:38:19.415 --> 00:38:23.844
+Yan Wang: And 3, rd we consider a prompt plus cli hybrid.
+
+
+267
+00:38:24.005 --> 00:38:32.345
+Yan Wang: This method, where you might instruct a model to generate command, line, interface commands can be very fast for initial interaction and prototyping.
+
+
+268
+00:38:32.675 --> 00:38:35.005
+Yan Wang: You can't get something up and running quickly.
+
+
+269
+00:38:35.115 --> 00:38:41.954
+Yan Wang: But the challenges here, however, lies in the synchronization and ensuring robust error-proof
+
+
+270
+00:38:42.305 --> 00:38:46.565
+Yan Wang: interactions, especially as the complexity of the tasks grow.
+
+
+271
+00:38:47.555 --> 00:39:09.025
+Yan Wang: It's critical to recognize that each of these approaches is valid and has a specific role to play, depending on the context. This comparison, as the table, you see, isn't about crowning a single winner or loser. It's about understanding their relative strengths, weaknesses, positioning, and the inherent trade-offs.
+
+
+272
+00:39:09.315 --> 00:39:26.174
+Yan Wang: For example, a project like open Web Ui makes extensive use of open Api know that it's not Openai's Api. It's called open Api. It's a existing standard for Apis, and that's a perfectly sensible choice. Given the requirements for broad web service and integration.
+
+
+273
+00:39:26.315 --> 00:39:29.824
+Yan Wang: and there simply isn't a 1. Size fits all best protocol.
+
+
+274
+00:39:30.425 --> 00:39:33.294
+Yan Wang: So this naturally leads to the critical question
+
+
+275
+00:39:33.595 --> 00:39:38.924
+Yan Wang: given these options and their trade-offs, how do you actually choose the right path for your needs?
+
+
+276
+00:39:39.915 --> 00:39:42.355
+Yan Wang: Here's the framework we have used and found effective.
+
+
+277
+00:39:42.565 --> 00:39:44.355
+Yan Wang: Ask yourself 3 questions.
+
+
+278
+00:39:44.485 --> 00:39:48.304
+Yan Wang: Are you targeting multiple Lms or deployment environments?
+
+
+279
+00:39:48.505 --> 00:39:51.664
+Yan Wang: Do you need to standardize tools across team or platforms?
+
+
+280
+00:39:52.035 --> 00:39:57.155
+Yan Wang: Is your product already in a stable or scaling phase? Not in a rapid, prototyping mode?
+
+
+281
+00:39:57.735 --> 00:40:12.495
+Yan Wang: And these questions separate early stage builders from production, stage architects, if all 3 are. Yes, Mcp is probably a smart bet, if even one is no, you might be better off sticking to something lighter, for now
+
+
+282
+00:40:12.845 --> 00:40:19.255
+Yan Wang: remember the cost of misusing Mcp often isn't rewriting code later. It's wasting confidence now.
+
+
+283
+00:40:20.165 --> 00:40:25.234
+Yan Wang: and that's the key point. Mcp isn't a bad attack. It's just often misused.
+
+
+284
+00:40:25.555 --> 00:40:33.215
+Yan Wang: Looking at this typical product. Lifecycle exploration concept, prototyping Mvp. In production.
+
+
+285
+00:40:33.365 --> 00:40:50.885
+Yan Wang: Things like simple, prompt plus cli are great for early stages, fast duration, low overload and Mcp, designed for robustness and reuse, fits better as you move towards Mvp. And production where standardization and cross-platform support become more critical.
+
+
+286
+00:40:51.525 --> 00:41:02.324
+Yan Wang: Mcp isn't a beginner's tool. It's a development abstract. It's a deployment abstraction. It's for systems that are ready to scale, not for projects still exploring use cases.
+
+
+287
+00:41:02.895 --> 00:41:12.044
+Yan Wang: And that really brings us to the core skill, the crucial takeaway. I want to spotlight as we discuss this different approaches to building and deploying AI agents.
+
+
+288
+00:41:12.225 --> 00:41:18.005
+Yan Wang: It's a nuanced point, but an incredibly important one for anyone working in this rapidly volume field.
+
+
+289
+00:41:18.475 --> 00:41:26.775
+Yan Wang: The critical skill here isn't necessarily about the technical ability to write an Mtp. Server from scratch or implement. The most complex protocol
+
+
+290
+00:41:27.045 --> 00:41:40.125
+Yan Wang: as fundamental models become more powerful and tooling proofs. The basic mechanics of building agents getting them to perform tasks is in many ways becoming more accessible and easier over time.
+
+
+291
+00:41:40.605 --> 00:41:47.465
+Yan Wang: Instead, the real expertise the true mark of an experienced builder or architect lies in the judgment.
+
+
+292
+00:41:47.615 --> 00:41:57.574
+Yan Wang: the ability to discern when a particular abstraction like Mcp is the right choice for a specific project. Your team and your current stage of development.
+
+
+293
+00:41:57.785 --> 00:42:07.604
+Yan Wang: knowing when to introduce layers of abstraction, when to standardize interfaces for broader use and when to maintain simplicity for rapid iteration. That's the difficult part
+
+
+294
+00:42:07.935 --> 00:42:10.905
+Yan Wang: that's the strategic judgment we need to cultivate.
+
+
+295
+00:42:11.365 --> 00:42:20.335
+Yan Wang: And the famous saying by Donna Knus, often paraphrased on the slide, reminds us, premature optimization is the root of much evil in programming.
+
+
+296
+00:42:20.625 --> 00:42:28.635
+Yan Wang: choosing a powerful but complex protocol like Mcp too early can indeed be a form of premature optimization
+
+
+297
+00:42:28.755 --> 00:42:37.675
+Yan Wang: leading to unnecessarily overhead and slowed progress when agility is needed, and that's the builder's mindset.
+
+
+298
+00:42:38.325 --> 00:42:40.744
+Yan Wang: It has 3 layers, as shown here.
+
+
+299
+00:42:40.975 --> 00:42:49.825
+Yan Wang: First, st you understand why things exist. The ecosystem, the incentives, the history you decode trends and ask deeper questions.
+
+
+300
+00:42:50.145 --> 00:42:58.934
+Yan Wang: Second, you build hands-on, not just reading blocks, but shipping tools, debugging pipelines, working through ambiguity, prototyping rapidly.
+
+
+301
+00:42:59.245 --> 00:43:07.545
+Yan Wang: 3, rd you develop an opinion. Your own filter for hype versus insight, you develop a point of view and stay independent.
+
+
+302
+00:43:08.395 --> 00:43:15.865
+Yan Wang: This is what we teach in our full AI builders. Course, you're not just learning tools. You're learning how to build judgment at scale.
+
+
+303
+00:43:16.255 --> 00:43:29.575
+Yan Wang: You will get practice making trade-offs, not just reading about them. You will work with real tools under uncertainty in structured projects you will leave just not knowing more, but thinking better.
+
+
+304
+00:43:30.035 --> 00:43:46.454
+Yan Wang: And it works. Our students have come from Meta, Google, Openai, Gp. Morgan, and academia labs. Some are engineers, other product managers, data scientists, even professors, note the diverse backgrounds of those learners. They all found their own paths.
+
+
+305
+00:43:46.885 --> 00:43:52.904
+Yan Wang: Many say the same thing echoed in this testimonial from Max. This changed. How I think
+
+
+306
+00:43:53.125 --> 00:44:01.245
+Yan Wang: this is great. To signal. The course is not just about technical tips. It's about longevity in the AI era by learning how to learn and how to unlearn.
+
+
+307
+00:44:01.705 --> 00:44:09.485
+Yan Wang: In the last few slides. We'll share a few more of those words, not impress but invite. You can read more of reviews on the course page.
+
+
+308
+00:44:10.435 --> 00:44:28.175
+Yan Wang: Let's look at another perspective on this transformation. This comes from Tt. And applied scientist at Microsoft and really underscores how developing a builder's mindset can shift AI from being just an occasional tool to an ingredient, daily, habit fundamentally changing, how one approaches and solves problems
+
+
+309
+00:44:28.715 --> 00:44:43.645
+Yan Wang: Td shares and I quote the greatest takeaway for me was the mindset shift. I used to think many tasks were beyond AI's reach. Now think about how to use. AI has become a habit. It's boosted my productivity both at work and in life.
+
+
+310
+00:44:43.775 --> 00:44:50.225
+Yan Wang: This mindset shift didn't just help me understand AI better. It changed the way I think about solving problems.
+
+
+311
+00:44:50.655 --> 00:44:57.905
+Yan Wang: And I will say, this is a powerful illustration of moving beyond just understanding AI to truly integrating it into our problem-solving DNA.
+
+
+312
+00:44:58.145 --> 00:45:11.714
+Yan Wang: Our goal in sharing these experiences is not simply to impress you with past success, but rather to extend an invitation for you to consider and potentially experience a similar impactful shift in your own work and thinking.
+
+
+313
+00:45:12.985 --> 00:45:24.885
+Yan Wang: continuing with the theme of tangible impact. The next example comes from Christine. A quant researcher at Jpmorgan Chase beautifully illustrates a very practical outcome of internalizing these AI building principles.
+
+
+314
+00:45:25.035 --> 00:45:39.414
+Yan Wang: It's about that powerful transition from merely understanding AI conceptually to actively building tools that integrate into and genuinely enhance one day workflow, ultimately redefining how work itself gets done.
+
+
+315
+00:45:39.995 --> 00:45:53.544
+Yan Wang: Christine shares. And I'll quote her experience. This course opened my imagination about what I could use geni for I built an application that I now use daily, something that I never thought I could have created easily.
+
+
+316
+00:45:53.685 --> 00:45:58.454
+Yan Wang: It helped me think more deeply about what to focus on and what I can delegate to. AI.
+
+
+317
+00:45:58.675 --> 00:46:02.424
+Yan Wang: It's not just about productivity. It's about redefining how I work
+
+
+318
+00:46:02.645 --> 00:46:20.754
+Yan Wang: this highlights the journey from possibility to practical application, creating tools that solve real personal or professional problems. And again, our intention in sharing this story is to inspire you to consider how you might build tools that address your own unique challenges and opportunities.
+
+
+319
+00:46:21.685 --> 00:46:25.714
+Yan Wang: It's also crucial to highlight accessibility of those concepts and tools.
+
+
+320
+00:46:25.905 --> 00:46:54.404
+Yan Wang: And the next review from Ken, a senior product specialist from thermal fisher scientific, really speaks to this point. It underscores that you don't need to be a seasoned software engineer with years of coding experience to start leveraging AI effectively even with what might be considered basic python skills. Or you're working in a role or company not traditionally focused on software development, the builder's mindset and the practical tools we explore can be incredibly applicable and empowering.
+
+
+321
+00:46:56.045 --> 00:47:05.204
+Yan Wang: If today's lesson gave you even one new way to think about protocol choice, imagine what we could do together over a few weeks.
+
+
+322
+00:47:05.335 --> 00:47:06.804
+Yan Wang: So here's our next step.
+
+
+323
+00:47:07.075 --> 00:47:30.265
+Yan Wang: If you want to join cohort of builders learning to navigate the real terrain of applied AI, not just tools, but trade-offs, as we have discussed, if you have read the docs and still feel stuck, or you are building, but unsure if you're on the right track, if you want to learn how to think, not just copy code and discuss architecture and design, not just the syntax. Then come, join us.
+
+
+324
+00:47:31.565 --> 00:47:48.034
+Yan Wang: Thank you all for joining today's session. I hope this gives you a clear understanding of what Mcp is and what it isn't. You've seen the core capabilities of Mcp. You've seen the pinpoints. But, more importantly, you've seen what happens when a powerful tool is used at a wrong stage.
+
+
+325
+00:47:48.355 --> 00:48:05.355
+Yan Wang: That's the real story here. Many teams try Mcp too early when it doesn't work smoothly. They don't just give up on Mcp. They give up on AI altogether. They walk away thinking the tech isn't ready when really they just needed better timing or a more honest framework for thinking.
+
+
+326
+00:48:05.945 --> 00:48:12.584
+Yan Wang: That's why we created the full course, not just to show you tools, but to train your timing, your judgment. Your builder's mindset.
+
+
+327
+00:48:13.095 --> 00:48:19.734
+Yan Wang: If that resonates with you, if you want to build it differently and more decisively, I'd love to see you in the full course
+
+
+328
+00:48:20.185 --> 00:48:26.635
+Yan Wang: you can scan the QR. Code on the right and use the code Mcp for discount of $150.
+
+
+329
+00:48:27.225 --> 00:48:29.725
+Yan Wang: And I will leave you with this final thought.
+
+
+330
+00:48:29.975 --> 00:48:35.235
+Yan Wang: misusing the right tool at the wrong time can cost more than not using it at all.
+
+
+331
+00:48:36.475 --> 00:48:45.215
+Yan Wang: Alright, I will distribute the recording database, file, slide deck and other relevant resources. After this meeting download links will also be sent through email.
+
+
+332
+00:48:45.485 --> 00:48:51.595
+Yan Wang: Thank you. And I will take questions here, this and this one.
+
+
+333
+00:48:51.805 --> 00:48:59.305
+Yan Wang: Once the record will be posted, I'll I'll post the link through the the email we publish here.
+
+
+334
+00:49:00.015 --> 00:49:05.234
+Yan Wang: And could you share a thought about the newly announced agent-to-agent protocol by Google.
+
+
+335
+00:49:07.225 --> 00:49:08.105
+Yan Wang: To it.
+
+
+336
+00:49:09.445 --> 00:49:14.545
+Yan Wang: I don't really have too much comment on that. Currently I I
+
+
+337
+00:49:15.235 --> 00:49:20.415
+Yan Wang: had some exploration on the multi-agent MoD agent
+
+
+338
+00:49:21.895 --> 00:49:35.024
+Yan Wang: route, but haven't really reached the complexity stage of needing a specific protocol for that, I think overall it's good, but the timing for that release is still uncertain.
+
+
+339
+00:49:35.425 --> 00:49:58.644
+Yan Wang: I'm not super sure how valuable it is, yet, because personally, I adopt a slightly different approach that is based on shared documentation, as you can also see here we ask in our cursor rules, cursor rules. We specifically ask the AI to write documents here, and this will make them reusable across different agents while filtering out
+
+
+340
+00:49:58.755 --> 00:50:00.585
+Yan Wang: the the too much details.
+
+
+341
+00:50:02.635 --> 00:50:08.885
+Yan Wang: Alright! Looks like there are no further questions.
+
+
+342
+00:50:10.575 --> 00:50:14.314
+Yan Wang: I'll stay here for like 30 more seconds
+
+
+343
+00:50:14.925 --> 00:50:23.955
+Yan Wang: in the case that someone has any more questions, feel free to post it in chat or unmute
+
+
+344
+00:50:24.195 --> 00:50:25.934
+Yan Wang: directly to discuss
+
+
+345
+00:50:32.815 --> 00:50:35.864
+Yan Wang: and thank you for all the nice comments.
+
+
+346
+00:50:38.735 --> 00:50:47.334
+Yan Wang: Alright. If there are no further questions, we'll adjust the end here and send out the final resources after.
+
+
+347
+00:50:47.665 --> 00:50:56.595
+Yan Wang: probably later today or tomorrow, and thank you so much for attending this learning course and asking great questions.
+
+
+348
+00:50:57.145 --> 00:50:58.795
+Yan Wang: We'll see you again.
+
+
+349
+00:50:58.995 --> 00:50:59.865
+Yan Wang: Thank you.
+
+
+

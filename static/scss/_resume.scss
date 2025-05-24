@@ -117,6 +117,30 @@ $font-size-h2: 1.75rem !default;
     margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
     display: flex;
     justify-content: space-between; // company left, dates right
+    gap: 0.25rem;  // Add spacing between role box and dates
+    break-inside: avoid;  // Prevent page breaks in PDF/print
+    
+    .role-box {
+        @extend .section-box;              // Reuse borders/padding logic
+        display: inline-block;             // Allow it to fit content
+        border-color: var(--roleBox-borderColor, #{$roleBox-borderColor});
+        border-width: calc(var(--roleBox-borderWidthPx, #{$roleBox-borderWidthPx}) * 1px + 0px);  // Force calc evaluation for WeasyPrint
+        padding: calc(var(--roleBox-paddingPx, #{$roleBox-paddingPx}) * 1px + 0px);
+        color: var(--roleBox-textColor, #{$roleBox-textColor});
+        border-radius: calc(var(--roleBox-borderRadiusPx, #{$roleBox-borderRadiusPx}) * 1px + 0px);
+        background-color: var(--roleBox-backgroundColor, #{$roleBox-backgroundColor});
+        
+        // Dark mode support
+        @media (prefers-color-scheme: dark) {
+            background: transparent;
+            border-color: currentColor;
+        }
+        
+        // Print-specific adjustments
+        @media print {
+            line-height: 1.1;  // Match DOCX exact line height
+        }
+    }
     
     .role,
     .company-name,

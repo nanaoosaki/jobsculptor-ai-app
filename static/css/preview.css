@@ -149,7 +149,7 @@ hr {
   margin: 1rem auto;
 }
 
-.section-box {
+.section-box, .position-bar .role-box {
   margin: 0.2rem 0;
   padding: 1px 12px;
   background: transparent;
@@ -166,7 +166,7 @@ hr {
   break-inside: avoid;
   break-after: avoid;
   margin-bottom: 0.5rem;
-  margin-left: 0;
+  margin-left: 0.5em;
 }
 
 .resume-section {
@@ -176,7 +176,7 @@ hr {
 }
 .resume-section .summary-content, .resume-section .experience-content, .resume-section .education-content,
 .resume-section .skills-content, .resume-section .projects-content {
-  margin-left: 0;
+  margin-left: 0.5em;
 }
 
 .position-bar {
@@ -186,6 +186,28 @@ hr {
   margin-bottom: 0.15rem;
   display: flex;
   justify-content: space-between;
+  gap: 0.25rem;
+  break-inside: avoid;
+}
+.position-bar .role-box {
+  display: inline-block;
+  border-color: var(--roleBox-borderColor, #4A6FDC);
+  border-width: calc(var(--roleBox-borderWidthPx, 1) * 1px + 0px);
+  padding: calc(var(--roleBox-paddingPx, 4) * 1px + 0px);
+  color: var(--roleBox-textColor, #333333);
+  border-radius: calc(var(--roleBox-borderRadiusPx, 0.5) * 1px + 0px);
+  background-color: var(--roleBox-backgroundColor, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  .position-bar .role-box {
+    background: transparent;
+    border-color: currentColor;
+  }
+}
+@media print {
+  .position-bar .role-box {
+    line-height: 1.1;
+  }
 }
 .position-bar .role,
 .position-bar .company-name,
@@ -205,7 +227,7 @@ hr {
 
 .job, .education, .project {
   margin-bottom: 1rem;
-  margin-left: 0;
+  margin-left: 0.5em;
 }
 .job .job-title-line, .job .education-title-line, .job .project-title-line, .job .degree-line, .job .position-line, .education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line, .project .job-title-line, .project .education-title-line, .project .project-title-line, .project .degree-line, .project .position-line {
   display: flex;
@@ -285,7 +307,7 @@ ul.bullets li::before {
 }
 
 .skills-content {
-  margin-left: 0;
+  margin-left: 0.5em;
 }
 .skills-content p, .skills-content ul {
   margin-bottom: 0.25rem;

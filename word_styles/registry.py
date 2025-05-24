@@ -177,6 +177,22 @@ class StyleRegistry:
             line_height_pt=1.0,  # Minimal height
             has_border=False
         ))
+        
+        # RoleBoxText - Style for text inside role boxes
+        self.register(ParagraphBoxStyle(
+            name="RoleBoxText",
+            base_style_name="Normal",
+            wrapper="paragraph",  # This is for the paragraph inside the table cell
+            font_name="Calibri",
+            font_size_pt=11.0,
+            font_bold=True,
+            font_color="333333",  # Dark gray
+            space_before_pt=0.0,  # Zero spacing for tight layout
+            space_after_pt=0.0,   # Zero spacing for tight layout
+            line_rule="exact",
+            line_height_pt=11.0,  # Exact font size with no extra space
+            has_border=False      # No border on paragraph itself (table handles that)
+        ))
     
     def register(self, style: ParagraphBoxStyle):
         """

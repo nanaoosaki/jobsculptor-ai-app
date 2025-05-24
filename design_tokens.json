@@ -87,6 +87,24 @@
   "docx-global-left-margin-cm": "2.0",
   "docx-global-right-margin-cm": "2.0",
   
+  "roleBox": {
+    "borderColor": "#4A6FDC",
+    "borderWidthPx": "1",
+    "paddingPx": "4",
+    "background": "transparent",
+    "backgroundColor": "transparent",
+    "borderRadiusPx": "0.5",
+    "textColor": "#333333",
+
+    "docx": {
+      "borderWidthPt": "0.75",
+      "borderColor": "#4A6FDC",
+      "borderThemeColor": "accent1",
+      "paddingTopTwips": "40",
+      "paddingSideTwips": "80"
+    }
+  },
+  
   "sectionHeader": {
     "border": {
       "widthPt": 1,

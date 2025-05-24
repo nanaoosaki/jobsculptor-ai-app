@@ -1,6 +1,11 @@
 import json
 import pathlib
 import sys
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def generate_scss_variables():
     """Reads design tokens and generates an SCSS variables file."""
@@ -22,10 +27,7 @@ def generate_scss_variables():
 
         with open(output_path, 'w') as f:
             f.write("// Auto-generated from design_tokens.json. Do not edit directly.\n\n")
-            for key, value in tokens.items():
-                # Convert dots to hyphens in variable names
-                scss_key = key.replace('.', '-')
-                f.write(f"${scss_key}: {value};\n")
+            _write_variables(f, tokens, "")
         
         print(f"Successfully generated {output_path}")
 
@@ -38,6 +40,29 @@ def generate_scss_variables():
     except Exception as e:
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
         sys.exit(1)
+
+def _write_variables(file, obj, prefix):
+    """Recursively write SCSS variables from nested objects."""
+    for key, value in obj.items():
+        # Convert dots to hyphens in variable names
+        scss_key = key.replace('.', '-')
+        full_key = f"{prefix}-{scss_key}" if prefix else scss_key
+        
+        if isinstance(value, dict):
+            # Recursively handle nested objects
+            _write_variables(file, value, full_key)
+        else:
+            # Write the variable
+            file.write(f"${full_key}: {value};\n")
+
+def check_token_groups_in_palettes(tokens, palettes):
+    """Add warning for missing token groups in non-default palettes"""
+    for palette_name, palette in palettes.items():
+        if palette_name == "default":
+            continue
+        for group_name in ["roleBox"]:  # List of required groups
+            if group_name not in palette:
+                logger.warning(f"{group_name} missing in palette {palette_name} – falling back to default")
 
 if __name__ == "__main__":
     generate_scss_variables() 

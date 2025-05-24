@@ -376,4 +376,125 @@ def remove_empty_paragraphs(doc: Document) -> int:
                     removed_count += 1
     
     logger.info(f"Removed {removed_count} empty paragraphs")
-    return removed_count 
+    return removed_count
+
+def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table:
+    """
+    Add a role box using a table with borders, reusing the header-box table helper.
+    
+    Args:
+        doc: The document to add the role box to
+        role: The role/position text
+        dates: Optional dates text (if provided, creates 2-column table)
+        
+    Returns:
+        The added table
+    """
+    # Determine number of columns based on whether dates are provided
+    cols = 2 if dates else 1
+    
+    # Create table
+    tbl = doc.add_table(rows=1, cols=cols)
+    
+    # Disable autofit to prevent Word from resizing
+    tbl.autofit = False
+    
+    # Get the first cell for role
+    role_cell = tbl.rows[0].cells[0]
+    
+    # Apply border to the role cell using roleBox tokens
+    _apply_role_box_border(role_cell)
+    
+    # Set cell vertical alignment to top
+    _set_cell_vertical_alignment(role_cell, 'top')
+    
+    # Set cell margins for role box (smaller than section headers)
+    role_margins = {
+        'top': 5,      # Minimal top padding
+        'left': 15,    # Moderate side padding
+        'bottom': 15,
+        'right': 15
+    }
+    _set_cell_margins(role_cell, role_margins)
+    
+    # Get the existing paragraph in the role cell
+    role_para = role_cell.paragraphs[0]
+    
+    # Apply role box style
+    from .registry import get_or_create_style
+    role_style = get_or_create_style("RoleBoxText", doc)
+    role_para.style = role_style
+    
+    # Add the role text
+    role_para.text = role
+    
+    # Handle dates cell if provided
+    if dates and cols == 2:
+        dates_cell = tbl.rows[0].cells[1]
+        
+        # No border for dates cell
+        _set_cell_vertical_alignment(dates_cell, 'top')
+        
+        # Set minimal margins for dates cell
+        dates_margins = {
+            'top': 5,
+            'left': 10,
+            'bottom': 15,
+            'right': 5
+        }
+        _set_cell_margins(dates_cell, dates_margins)
+        
+        # Get the existing paragraph in the dates cell
+        dates_para = dates_cell.paragraphs[0]
+        
+        # Apply normal text style to dates
+        dates_style = get_or_create_style("ContentParagraph", doc)
+        dates_para.style = dates_style
+        
+        # Add the dates text
+        dates_para.text = dates
+        
+        # Right-align dates
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        dates_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    
+    logger.info(f"Added role box: {role}" + (f" with dates: {dates}" if dates else ""))
+    return tbl
+
+def _apply_role_box_border(cell: _Cell):
+    """
+    Apply border to a role box cell based on roleBox design tokens.
+    
+    Args:
+        cell: The cell to apply border to
+    """
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    
+    # Use roleBox design token values
+    # Convert border width from pt to 1/8th points for Word
+    width_8th_pt = int(0.75 * 8)  # roleBox.docx.borderWidthPt = 0.75
+    border_color = "4A6FDC"  # roleBox.docx.borderColor (without #)
+    
+    # Get cell properties
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    
+    # Remove any existing borders
+    tcBorders_elements = tcPr.xpath('./w:tcBorders')
+    for element in tcBorders_elements:
+        tcPr.remove(element)
+    
+    # Create border XML
+    tcBorders_xml = f'''
+    <w:tcBorders {nsdecls("w")}>
+        <w:top w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
+        <w:left w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
+        <w:bottom w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
+        <w:right w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
+    </w:tcBorders>
+    '''
+    
+    # Add borders to cell
+    tcBorders = parse_xml(tcBorders_xml)
+    tcPr.append(tcBorders) 
