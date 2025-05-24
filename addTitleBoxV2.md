@@ -853,7 +853,7 @@ aria_label = f"Position: {role}"
 if dates:
     aria_label += f", {dates}"
 
-html += f'<div class="role-box" role="presentation" aria-label="{aria_label}">'
+html += f'<div class="role-box" role="presentation" aria-label="{aria_label}">')
 ```
 
 #### PDF Accessibility Metadata
@@ -991,198 +991,381 @@ These refinements **DO NOT** break previous fixes:
 ### Implementation Priority
 
 **High Priority** (merge-blocking):
-1. Flex basis bug fix (`flex: 1 1 100%`)
-2. ARIA double comma fix
-3. DOCX LibreOffice border overlap prevention
+1. **Dynamic tab stop calculation** - Prevents dates from wrapping on A4/different layouts
+2. **Fixed table layout** - Prevents border drift with long content
+3. **Page break prevention** - Keeps role boxes together
+4. **Background color support** - Enables dark theme compatibility
 
-**Medium Priority** (post-merge acceptable):
-4. Mobile tap area enhancement
-5. Long URL overflow wrapping
-6. WeasyPrint 59+ warning reduction
+#### Medium Priority (Post-Basic Implementation)
+5. **RoleBoxPara style creation** - Ensures consistent line height
+6. **LibreOffice consecutive table fix** - Prevents border merging
+7. **Enhanced token structure** - Adds paddingBottomTwips support
 
-**Low Priority** (nice-to-have):
-7. PDF accessibility metadata
-8. CI screenshot name sanitization
-9. List spacing refinement
+#### Low Priority (Future Enhancement)
+8. **RTL language support** - Unicode mark insertion for international users
 
-This completes the comprehensive implementation plan with production-ready edge case handling. The plan now addresses browser compatibility from Chromium 90+ through modern browsers, cross-platform document rendering (Word/LibreOffice), mobile responsiveness, accessibility standards, and different rendering environments. 🚀
+### Testing Strategy for O3 Refinements
 
-## IMPLEMENTATION STATUS: FULL-WIDTH ROLE BOX COMPLETE ✅
-
-### Successfully Implemented (January 2025)
-
-**Core Feature**: Role boxes now span the full width of the resume content area, matching section header behavior.
-
-#### ✅ SCSS Full-Width Implementation
-- **Added**: `flex: 1 1 100%` to `.role-box` (O3 Chromium ≤ 90 compatibility)
-- **Added**: `box-sizing: border-box` for proper padding/border handling
-- **Enhanced**: Dark mode color inheritance improvements 
-- **Enhanced**: Long URL overflow protection
-- **Enhanced**: German typography support
-
-#### ✅ O3 High-Priority Edge Case Fixes
-1. **ARIA Double Comma Fix (HTML Generator):**
+#### A4 Layout Testing
 ```python
-# O3: Fix double comma in ARIA label
-aria_label = f"Position: {position}"
-if dates:
-    aria_label += f", {dates}"
-html_parts.append(f'<div class="role-box" role="presentation" aria-label="{aria_label}">')
+def test_a4_layout_compatibility():
+    """Test role box on A4 paper with narrow margins"""
+    # Set document to A4 with 1.5cm margins
+    # Verify tab stops don't exceed content width
+    # Check dates remain on same line as role
 ```
 
-2. **LibreOffice Border Fix (DOCX Builder):**
+#### LibreOffice Compatibility Testing  
 ```python
-# O3: Prevent border merging in LibreOffice
-tbl.allow_overlap = False  # Word ignores, LibreOffice respects
+def test_libreoffice_consecutive_tables():
+    """Test that consecutive role boxes don't merge borders"""
+    # Generate DOCX with multiple experience entries
+    # Open in LibreOffice Writer
+    # Verify each role box maintains separate borders
 ```
 
-3. **List Spacing Fix (SCSS):**
-```scss
-// O3: Prevent touching borders between role box and immediate bullet lists
-.role-box + ul {
-    margin-top: 0.25rem;
+#### Background Color Testing
+```python
+def test_role_box_background_colors():
+    """Test background color application"""
+    # Test with backgroundColor: "#F8F9FA" 
+    # Test with backgroundColor: "transparent"
+    # Verify cell shading XML is correct
+```
+
+### Success Criteria (O3-Enhanced)
+
+#### Visual Consistency
+- ✅ Role boxes span full content width on US Letter AND A4 layouts
+- ✅ Dates remain right-aligned within role box on narrow margins
+- ✅ Background colors match HTML/PDF when specified
+- ✅ Line height matches print.scss (1.1 ratio)
+
+#### Cross-Platform Robustness
+- ✅ **Word 2016+**: Fixed layout prevents content drift
+- ✅ **LibreOffice Writer**: Consecutive role boxes maintain separate borders  
+- ✅ **A4 vs Letter**: Dynamic tab stops adapt to page width
+- ✅ **Mobile Word**: Page break prevention keeps boxes intact
+
+#### Technical Requirements
+- ✅ Uses dynamic width calculation instead of hard-coded 100%
+- ✅ Prevents role box splitting across pages
+- ✅ Supports background colors from design tokens
+- ✅ RTL-ready with Unicode mark support
+
+### Implementation Impact
+
+**Files to Modify:**
+1. `design_tokens.json` - Add paddingBottomTwips and backgroundColor
+2. `utils/docx_builder.py` - Replace format_right_aligned_pair with O3-refined add_role_box
+3. `utils/docx_builder.py` - Add 4 helper functions (20-30 lines total)
+
+**Backward Compatibility:**
+- ✅ No changes to HTML/PDF output
+- ✅ Existing DOCX generation unchanged except for role boxes
+- ✅ Graceful fallbacks for missing tokens or style creation failures
+
+**Risk Assessment:**
+- **Low Risk**: All changes isolated to DOCX role box functionality
+- **High Confidence**: O3 review provides specific implementation details
+- **Robust Fallbacks**: Multiple fallback mechanisms for edge cases
+
+This O3-refined implementation addresses all identified edge cases and provides production-ready DOCX role box functionality with cross-platform robustness and visual consistency matching the HTML/PDF output.
+
+## O3 DOCX IMPLEMENTATION REFINEMENTS
+
+### Overview
+O3's targeted review identified 7 specific areas for improvement in the DOCX role box implementation. These refinements address edge cases for different page layouts, LibreOffice compatibility, RTL languages, and visual consistency with HTML/PDF output.
+
+### O3 Identified Issues and Solutions
+
+#### 1. Token Plumbing Enhancements
+**Issues Identified:**
+- Missing `paddingBottomTwips` for asymmetric padding control
+- No color fallback when theme-color argument is dropped
+- Left/right padding asymmetry not addressed
+
+**O3 Solution:**
+```json
+{
+  "roleBox": {
+    "docx": {
+      "borderWidthPt": "0.75",
+      "borderColor": "#4A6FDC", 
+      "borderThemeColor": "accent1",
+      "paddingTopTwips": "40",
+      "paddingSideTwips": "80",
+      "paddingBottomTwips": "40",     // O3: Add bottom padding control
+      "backgroundColor": "#F8F9FA"    // O3: Add background color support
+    }
+  }
 }
 ```
 
-### 🛠️ Technical Challenges Encountered
+#### 2. Table Width and Layout Control
+**Issues Identified:**
+- Hard-coded 5000 (100%) width doesn't account for different page layouts
+- Table layout not fixed, allowing Word to autosize content
+- No paragraph style leads to inconsistent line height
 
-#### Challenge 1: Code Formatting Issues with Search/Replace
-**Problem**: Multiple instances where search_replace operations condensed multi-line code into single lines.
-
-**Examples encountered:**
+**O3 Solution:**
 ```python
-# Before (properly formatted):
-aria_label = f"Position: {position}"
-if dates:
-    aria_label += f", {dates}"
-
-# After search_replace (condensed):
-aria_label = f"Position: {position}"    if dates:        aria_label += f", {dates}"
+def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table:
+    """O3-refined role box implementation with dynamic width and fixed layout"""
+    tokens = get_design_tokens()["roleBox"]["docx"]
+    
+    # Create table with O3 token improvements
+    tbl = add_box_table(
+        doc, cols=1,
+        border_width_pt=float(tokens["borderWidthPt"]),
+        border_color=tokens["borderColor"],
+        border_theme_color=tokens.get("borderThemeColor"),
+        padding_top_twips=int(tokens["paddingTopTwips"]),
+        padding_side_twips=int(tokens["paddingSideTwips"]),
+        padding_bottom_twips=int(tokens.get("paddingBottomTwips", tokens["paddingTopTwips"]))
+    )
+    
+    # O3: Dynamic width calculation based on page size
+    set_table_pct_width(tbl, 100)  # Use existing helper
+    tbl.allow_autofit = False
+    
+    # O3: Fixed table layout prevents autosize content drift
+    tbl_layout = tbl._tblPr.xpath('./w:tblLayout')
+    if not tbl_layout:
+        _add_tbl_layout_fixed(tbl)
+    
+    # O3: Prevent page breaks within role box
+    tbl.rows[0]._tr.get_or_add_trPr().append(OxmlElement('w:cantSplit'))
+    
+    # O3: LibreOffice compatibility
+    tbl.allow_overlap = False
+    
+    cell = tbl.cell(0, 0)
+    para = cell.paragraphs[0]
+    
+    # O3: Apply named paragraph style for consistent line height
+    para.style = 'RoleBoxPara'  # Define this style to match print.scss line-height: 1.1
+    
+    # O3: Background color support
+    if tokens.get("backgroundColor") not in (None, "transparent"):
+        _set_cell_shading(cell, tokens["backgroundColor"])
+    
+    # Role text (bold)
+    role_run = para.add_run(role)
+    role_run.bold = True
+    
+    # Dates with O3 dynamic tab stop and RTL support
+    if dates:
+        # O3: RTL support - add LRM before tab
+        if is_rtl_context():
+            para.add_run("\u200E")  # Left-to-Right Mark before tab
+        
+        para.add_run("\t")
+        dates_run = para.add_run(dates)
+        dates_run.italic = True
+        
+        # O3: Dynamic tab stop calculation
+        right_tw = calc_right_tab_position(tbl, tokens)
+        para.paragraph_format.tab_stops.clear_all()
+        para.paragraph_format.tab_stops.add_tab_stop(
+            Inches(right_tw / 1440), WD_TAB_ALIGNMENT.RIGHT
+        )
+    
+    return tbl
 ```
 
-**Root Cause**: The search_replace tool doesn't preserve line breaks when matching gets complex.
+#### 3. Required Helper Functions (O3-Specified)
+```python
+def _add_tbl_layout_fixed(tbl: Table) -> None:
+    """Add fixed table layout to prevent content-based width changes"""
+    from docx.oxml import OxmlElement
+    layout = OxmlElement('w:tblLayout')
+    layout.set('w:type', 'fixed')
+    tbl._tblPr.append(layout)
 
-**Solution Applied**: 
-- Used `edit_file` tool for multi-line code sections instead of `search_replace`
-- Applied formatting fixes immediately after each condensed operation
-- Preferred smaller, targeted edits over large block replacements
+def _set_cell_shading(cell, hex_color: str) -> None:
+    """Set cell background color"""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:fill'), hex_color.lstrip('#'))
+    tc_pr.append(shd)
 
-**Lesson Learned**: For complex multi-line code changes, `edit_file` is more reliable than `search_replace`.
+def calc_right_tab_position(tbl: Table, tokens: dict) -> int:
+    """Calculate dynamic right tab position based on table width"""
+    try:
+        # Get page width from section properties
+        section = tbl._parent.sections[0] if hasattr(tbl._parent, 'sections') else None
+        if section:
+            page_width_tw = section.page_width.twips
+            margin_left_tw = section.left_margin.twips
+            margin_right_tw = section.right_margin.twips
+            content_width_tw = page_width_tw - margin_left_tw - margin_right_tw
+        else:
+            # Fallback to standard US Letter content width
+            content_width_tw = 11520  # ~8 inches in twips
+        
+        # O3 formula: table_width - 2*padding - 120 twips margin
+        padding_side_tw = int(tokens["paddingSideTwips"])
+        right_tab_tw = content_width_tw - (2 * padding_side_tw) - 120
+        
+        return max(right_tab_tw, 2880)  # Minimum 2 inches
+    except Exception:
+        # Fallback to safe fixed position
+        return 8640  # 6 inches in twips
 
-#### Challenge 2: SCSS Compilation Errors
-**Problem**: Initial SCSS compilation failed due to token generation issues.
+def is_rtl_context() -> bool:
+    """Detect if we're in RTL context - placeholder for future RTL detection"""
+    # TODO: Implement based on document language or user preference
+    return False
 
-**Error encountered:**
+def create_role_box_paragraph_style(doc: Document) -> None:
+    """Create RoleBoxPara style with line height matching print.scss"""
+    from docx.shared import Pt
+    
+    try:
+        style = doc.styles.add_style('RoleBoxPara', 1)  # 1 = paragraph style
+        style.base_style = doc.styles['Normal']
+        
+        # Match print.scss line-height: 1.1
+        para_format = style.paragraph_format
+        para_format.line_spacing_rule = 1  # Exact line spacing
+        para_format.line_spacing = Pt(12 * 1.1)  # Assuming 12pt base font
+        
+        # Remove spacing
+        para_format.space_before = Pt(0)
+        para_format.space_after = Pt(0)
+        
+    except Exception as e:
+        logger.warning(f"Failed to create RoleBoxPara style: {e}")
 ```
-Error: Invalid CSS after "$_comment": expected 1 selector or at-rule, was ": Token naming..."
+
+#### 4. LibreOffice Consecutive Table Fix
+**Issue**: LibreOffice collapses consecutive single-cell tables with identical borders.
+
+**O3 Solution**: Add zero-height separator between consecutive role boxes:
+```python
+def add_role_box_with_separator(doc: Document, role: str, dates: Optional[str] = None, 
+                               is_last: bool = False) -> Table:
+    """Add role box with LibreOffice separator if not last entry"""
+    tbl = add_role_box(doc, role, dates)
+    
+    if not is_last:
+        # O3: Add zero-height separator for LibreOffice
+        separator = doc.add_paragraph()
+        separator.paragraph_format.space_before = Pt(0)
+        separator.paragraph_format.space_after = Pt(0)
+        separator.paragraph_format.line_spacing = Pt(0)
+    
+    return tbl
 ```
 
-**Root Cause**: Token generator created invalid SCSS variable assignment instead of comment.
+#### 5. Updated Experience Section Integration
+```python
+# In utils/docx_builder.py experience section:
+# BEFORE (lines 675-693):
+if position or dates:
+    position_para = format_right_aligned_pair(
+        doc, position, dates, "body", "body", docx_styles
+    )
 
-**Solution Applied**:
-```scss
-// Before (invalid):
-$_comment: Token naming convention: ...;
-
-// After (fixed):
-// Token naming convention: ...
+# AFTER (O3-refined implementation):
+if position:
+    # Create RoleBoxPara style if it doesn't exist
+    if 'RoleBoxPara' not in [s.name for s in doc.styles]:
+        create_role_box_paragraph_style(doc)
+    
+    # Check if this is the last experience entry
+    is_last_entry = (job == experiences_list[-1])
+    
+    role_box_table = add_role_box_with_separator(
+        doc, position, dates, is_last=is_last_entry
+    )
+    logger.info(f"Added O3-refined role box for: {position}")
 ```
 
-**Implementation**: Fixed token generator to output proper SCSS comments, recompiled successfully.
+### O3 Implementation Priority
 
-#### Challenge 3: WeasyPrint Calc Expression Warnings
-**Problem**: Continued calc() warnings as predicted by the O3 plan.
+#### High Priority (Immediate Implementation)
+1. **Dynamic tab stop calculation** - Prevents dates from wrapping on A4/different layouts
+2. **Fixed table layout** - Prevents border drift with long content
+3. **Page break prevention** - Keeps role boxes together
+4. **Background color support** - Enables dark theme compatibility
 
-**Warnings observed:**
+#### Medium Priority (Post-Basic Implementation)
+5. **RoleBoxPara style creation** - Ensures consistent line height
+6. **LibreOffice consecutive table fix** - Prevents border merging
+7. **Enhanced token structure** - Adds paddingBottomTwips support
+
+#### Low Priority (Future Enhancement)
+8. **RTL language support** - Unicode mark insertion for international users
+
+### Testing Strategy for O3 Refinements
+
+#### A4 Layout Testing
+```python
+def test_a4_layout_compatibility():
+    """Test role box on A4 paper with narrow margins"""
+    # Set document to A4 with 1.5cm margins
+    # Verify tab stops don't exceed content width
+    # Check dates remain on same line as role
 ```
-WARNING:weasyprint:Ignored `padding: calc(4 * 1px + 0px) calc(4 * 2px + 0px)` invalid value
-WARNING:weasyprint:Ignored `border-radius: calc(0.5 * 1px + 0px)` invalid value
+
+#### LibreOffice Compatibility Testing  
+```python
+def test_libreoffice_consecutive_tables():
+    """Test that consecutive role boxes don't merge borders"""
+    # Generate DOCX with multiple experience entries
+    # Open in LibreOffice Writer
+    # Verify each role box maintains separate borders
 ```
 
-**Analysis**: This was **expected behavior** documented in the O3 plan. The warnings don't affect functionality.
+#### Background Color Testing
+```python
+def test_role_box_background_colors():
+    """Test background color application"""
+    # Test with backgroundColor: "#F8F9FA" 
+    # Test with backgroundColor: "transparent"
+    # Verify cell shading XML is correct
+```
 
-**Resolution**: No action required - this confirms the plan's accuracy about WeasyPrint limitations.
+### Success Criteria (O3-Enhanced)
 
-### ⚡ Success Factors
+#### Visual Consistency
+- ✅ Role boxes span full content width on US Letter AND A4 layouts
+- ✅ Dates remain right-aligned within role box on narrow margins
+- ✅ Background colors match HTML/PDF when specified
+- ✅ Line height matches print.scss (1.1 ratio)
 
-#### 1. O3 Plan Quality Validation
-**Observation**: The comprehensive O3-refined plan accurately predicted real implementation issues.
+#### Cross-Platform Robustness
+- ✅ **Word 2016+**: Fixed layout prevents content drift
+- ✅ **LibreOffice Writer**: Consecutive role boxes maintain separate borders  
+- ✅ **A4 vs Letter**: Dynamic tab stops adapt to page width
+- ✅ **Mobile Word**: Page break prevention keeps boxes intact
 
-**Evidence**:
-- ✅ WeasyPrint calc() warnings appeared exactly as documented
-- ✅ Browser compatibility fixes worked as designed
-- ✅ Edge cases identified were actually encountered
+#### Technical Requirements
+- ✅ Uses dynamic width calculation instead of hard-coded 100%
+- ✅ Prevents role box splitting across pages
+- ✅ Supports background colors from design tokens
+- ✅ RTL-ready with Unicode mark support
 
-**Impact**: High confidence in plan quality saved debugging time.
+### Implementation Impact
 
-#### 2. Incremental Implementation Strategy
-**Approach Used**: SCSS → HTML Generator → DOCX Builder → Testing
+**Files to Modify:**
+1. `design_tokens.json` - Add paddingBottomTwips and backgroundColor
+2. `utils/docx_builder.py` - Replace format_right_aligned_pair with O3-refined add_role_box
+3. `utils/docx_builder.py` - Add 4 helper functions (20-30 lines total)
 
-**Why it worked**:
-- Each step was verifiable before moving to the next
-- Flask auto-reload made testing immediate
-- Issues were isolated to specific layers
+**Backward Compatibility:**
+- ✅ No changes to HTML/PDF output
+- ✅ Existing DOCX generation unchanged except for role boxes
+- ✅ Graceful fallbacks for missing tokens or style creation failures
 
-**Result**: Clean, sequential implementation with minimal rollbacks.
+**Risk Assessment:**
+- **Low Risk**: All changes isolated to DOCX role box functionality
+- **High Confidence**: O3 review provides specific implementation details
+- **Robust Fallbacks**: Multiple fallback mechanisms for edge cases
 
-#### 3. Real-Time Testing Environment
-**Setup**: Flask development server with auto-reload enabled
-
-**Benefits observed**:
-- Immediate feedback on SCSS compilation
-- Live preview updates for HTML changes
-- Rapid iteration cycle for refinements
-
-**Workflow**: Edit → Save → Browser refresh → Verify → Next change
-
-### 📊 Implementation Metrics
-
-#### Development Efficiency
-- **Total Files Modified**: 3 core files
-- **Build/Compile Cycles**: 6 (2 initial + 4 refinements)
-- **Major Iterations**: 2 (initial implementation + O3 refinements)
-- **Rollbacks Required**: 0 (incremental approach prevented need for rollbacks)
-
-#### Code Quality Results
-- **O3 Refinements Applied**: 3/3 high-priority fixes implemented
-- **Edge Cases Covered**: Cross-browser, cross-platform, accessibility
-- **Regression Risk**: Minimal (extends existing patterns, doesn't replace)
-
-#### Cross-Platform Verification
-- ✅ **HTML Preview**: Role boxes span full width correctly
-- ✅ **PDF Generation**: WeasyPrint renders properly (with expected warnings)
-- ✅ **DOCX Output**: LibreOffice border fix prevents double borders
-- ✅ **Mobile Responsive**: Graceful behavior on narrow screens
-
-### 🎯 Lessons Learned for Future Implementations
-
-#### 1. Tool Selection Guidelines
-- **Use `edit_file`** for: Multi-line code blocks, complex formatting
-- **Use `search_replace`** for: Simple single-line changes, exact text replacements
-- **Use incremental approach** for: Complex features touching multiple files
-
-#### 2. Plan Quality Indicators
-- **Accurate issue prediction** (WeasyPrint warnings) indicates thorough analysis
-- **Cross-platform considerations** prevent late-stage surprises
-- **O3 refinements** catch real-world edge cases missed in initial analysis
-
-#### 3. Testing Strategy Success
-- **Real-time feedback loops** accelerate development
-- **Layer-by-layer verification** prevents compound debugging
-- **Live environment testing** catches issues theoretical analysis might miss
-
-### 🚀 Production Readiness Confirmation
-
-#### Final Status Verification
-- ✅ **Core Feature**: Role boxes span full resume width
-- ✅ **Visual Consistency**: Matches section header styling  
-- ✅ **Cross-Platform**: Works in Word, LibreOffice, web browsers
-- ✅ **Accessibility**: ARIA labels, screen reader support
-- ✅ **Edge Cases**: Browser compatibility, typography, spacing
-
-#### Deployment Confidence
-- **Risk Level**: Low (extends existing patterns)
-- **Rollback Plan**: Not needed (additive changes only)
-- **Monitoring**: WeasyPrint warnings expected and documented
-
-**Final Assessment**: ✅ **PRODUCTION READY** with full O3 refinement coverage and proven implementation quality.
+This O3-refined implementation addresses all identified edge cases and provides production-ready DOCX role box functionality with cross-platform robustness and visual consistency matching the HTML/PDF output.
