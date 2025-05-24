@@ -182,23 +182,41 @@ The `resume_index.py` module is responsible for tracking and logging resume proc
 - **datetime**: For timestamping entries.
 - **threading**: For ensuring thread safety with locks.
 
-### docx_builder.py
+### utils/docx_builder.py (ACTUALLY USED)
 
 #### Purpose
-The `docx_builder.py` module generates Microsoft Word (.docx) files with consistent styling based on design tokens. It formats resume data into a structured DOCX format.
+The `utils/docx_builder.py` module generates Microsoft Word (.docx) files with consistent styling based on design tokens. This is the actual DOCX builder used by the application.
+
+#### Current Implementation Status
+- **Role Box Status**: ❌ **NOT IMPLEMENTED** - Currently uses `format_right_aligned_pair()` for position/dates
+- **Explanation**: While a role box implementation existed in unused `docx_builder.py` (now deleted), the actually used `utils/docx_builder.py` lacks this feature
 
 #### Key Functions
-- **load_section_json**: Loads JSON data for a specific section of the resume.
-- **_apply_paragraph_style**: Applies styles to paragraphs based on DOCX style definitions.
-- **build_docx**: Constructs the DOCX file from the resume data.
+- **load_section_json**: Loads JSON data for a specific section of the resume
+- **build_docx**: Main function that constructs the DOCX file from resume data
+- **format_right_aligned_pair**: Formats left and right-aligned text with tab stops (current approach for position/dates)
+- **add_section_header**: Creates section headers using word_styles.section_builder
+- **create_bullet_point**: Formats achievement bullets with proper styling
+- **add_role_description**: Adds role description paragraphs
+- **tighten_before_headers**: Removes unwanted spacing and empty paragraphs
 
 #### Dependencies
-- **os**: For file path operations.
-- **json**: For reading and writing JSON data.
-- **logging**: For logging operations.
-- **BytesIO**: For handling in-memory byte streams.
-- **docx**: For creating and manipulating DOCX files.
-- **word_styles**: Package for advanced DOCX styling
+- **os**: For file path operations
+- **json**: For reading and writing JSON data  
+- **logging**: For logging operations
+- **BytesIO**: For handling in-memory byte streams
+- **docx**: For creating and manipulating DOCX files
+- **word_styles**: Package for advanced DOCX styling (section_builder.py)
+- **style_engine.py**: For accessing design tokens
+
+#### I/O
+- **Input**: JSON files from `static/uploads/temp_session_data/{request_id}_{section}.json`, design_tokens.json
+- **Output**: BytesIO stream with generated DOCX file served to user
+
+#### Used By
+- **app.py**: Main Flask application for DOCX download route (`/download/docx/{request_id}`)
+
+**IMPLEMENTATION NEEDED**: Role box functionality to match HTML/PDF implementation requires adding to this file.
 
 ### html_generator.py
 
