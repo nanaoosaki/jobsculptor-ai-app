@@ -156,7 +156,6 @@ hr {
   color: #4a6fdc;
   border: 2px solid #4a6fdc !important;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   display: block;
   width: auto;
@@ -403,7 +402,6 @@ hr {
   border: 1px solid #3A3A3A;
   background: #FFFFFF;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   break-inside: avoid;
   break-after: avoid;
