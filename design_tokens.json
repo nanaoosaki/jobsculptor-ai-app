@@ -86,19 +86,203 @@
   "docx-global-left-margin-cm": "2.0",
   "docx-global-right-margin-cm": "2.0",
   
-    "roleBox": {    "borderColor": "#4A6FDC",    "borderWidth": "1",    "padding": "4",    "background": "transparent",    "backgroundColor": "transparent",    "borderRadius": "0.5",    "textColor": "#333333",    "docx": {      "borderWidthPt": "0.75",      "borderColor": "#4A6FDC",      "borderThemeColor": "accent1",      "paddingTopTwips": "40",      "paddingSideTwips": "80",      "paddingBottomTwips": "40",      "backgroundColor": "#F8F9FA"    }  },
+    "roleBox": {    
+      "borderColor": "#4A6FDC",    
+      "borderWidth": "1",    
+      "padding": "4",    
+      "background": "transparent",    
+      "backgroundColor": "transparent",    
+      "borderRadius": "0.5",    
+      "textColor": "#333333",
+      "spacing": {
+        "rightMarginPt": 8
+      },
+      "dates": {
+        "fontSize": "10pt",
+        "fontColor": {
+          "hex": "#6c757d"
+        }
+      },
+      "docx": {      
+        "borderWidthPt": "0.75",      
+        "borderColor": "#4A6FDC",      
+        "borderThemeColor": "accent1",      
+        "paddingTopTwips": "40",      
+        "paddingSideTwips": "80",      
+        "paddingBottomTwips": "40",      
+        "backgroundColor": "#F8F9FA"    
+      }  
+    },
   
   "sectionHeader": {
     "border": {
       "widthPt": 1,
-      "color": "#000000",
+      "color": "#0D2B7E",
       "style": "single"
     },
-    "paddingPt": 1,
+    "padding": {
+      "verticalPt": 4,
+      "horizontalPt": 0
+    },
+    "background": {
+      "color": "transparent"
+    },
     "spacingAfterPt": 4,
     "lineHeight": {
       "value": 276,
       "rule": "auto"
+    }
+  },
+  
+  "typography": {
+    "_comment": "Unified typography system - single source of truth for all fonts across HTML/PDF/DOCX formats",
+    "fontFamily": {
+      "primary": "'Calibri', Arial, sans-serif",
+      "fallback": "Arial, sans-serif", 
+      "docxPrimary": "Calibri",
+      "webPrimary": "'Calibri', Arial, sans-serif",
+      "embedSubset": false,
+      "fontVersion": "2025-05",
+      "secondary": {
+        "cjk": "'Noto Sans CJK SC', 'Microsoft YaHei'",
+        "arabic": "'Noto Naskh Arabic', 'Arabic Typesetting'",
+        "cyrillic": "'Calibri', 'DejaVu Sans'",
+        "emoji": "Noto Color Emoji"
+      },
+      "accessibility": {
+        "dyslexicMode": "OpenDyslexic"
+      }
+    },
+    "fontSize": {
+      "body": "11pt",
+      "small": "9pt",
+      "sectionHeader": "14pt", 
+      "nameHeader": "16pt",
+      "roleTitle": "11pt",
+      "roleBox": "11pt",
+      "companyName": "11pt",
+      "roleDescription": "11pt",
+      "bulletPoint": "11pt",
+      "contactInfo": "11pt",
+      "skillCategory": "11pt",
+      "skillList": "11pt"
+    },
+    "fontWeight": {
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600, 
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.4,
+      "loose": 1.6,
+      "sectionHeader": 1.0
+    },
+    "lineHeightPt": {
+      "body": 15.4,
+      "sectionHeader": 18.0,
+      "nameHeader": 19.2,
+      "roleTitle": 15.4,
+      "companyName": 15.4,
+      "roleDescription": 15.4,
+      "bulletPoint": 15.4
+    },
+    "fontColor": {
+      "primary": {
+        "hex": "#333333",
+        "themeColor": "text1"
+      },
+      "secondary": {
+        "hex": "#6c757d",
+        "themeColor": "text2"
+      },
+      "headers": {
+        "hex": "#0D2B7E",
+        "themeColor": "accent1"
+      },
+      "muted": {
+        "hex": "#999999",
+        "themeColor": "text2"
+      },
+      "light": {
+        "hex": "#666666",
+        "themeColor": "text2"
+      },
+      "roleText": {
+        "hex": "#333333",
+        "themeColor": "text1"
+      },
+      "roleBox": {
+        "hex": "#333333",
+        "themeColor": "text1"
+      }
+    },
+    "casing": {
+      "_comment": "Text casing control - single source of truth for all formats",
+      "sectionHeaders": "normal",
+      "roleText": "normal", 
+      "companyNames": "normal",
+      "skillCategories": "normal",
+      "_migration": {
+        "_comment": "Migration tracking for O3 preference recording requirement",
+        "previousDefault": "uppercase",
+        "changeDate": "2025-01-XX",
+        "userPreferenceLogged": true,
+        "migrationReason": "Cross-format consistency - HTML/PDF showed normal case, DOCX showed uppercase"
+      }
+    },
+    "fontStyle": {
+      "normal": "normal",
+      "italic": "italic"
+    },
+    "fontFeatureSettings": {
+      "body": "'tnum' 1, 'liga' 1",
+      "headers": "'liga' 1, 'kern' 1",
+      "numbers": "'tnum' 1, 'lnum' 1"
+    },
+    "docx": {
+      "_comment": "DOCX-specific typography overrides and format-specific values",
+      "fontSize": {
+        "sectionHeaderPt": 14,
+        "bodyPt": 11,
+        "companyPt": 11,
+        "rolePt": 11,
+        "bulletPt": 11,
+        "nameHeaderPt": 16
+      },
+      "spacing": {
+        "sectionAfterPt": 4,
+        "paragraphAfterPt": 6,
+        "bulletAfterPt": 6
+      },
+      "color": {
+        "headers": "0D2B7E",
+        "primary": "333333",
+        "secondary": "6c757d"
+      }
+    },
+    "html": {
+      "_comment": "HTML/CSS-specific typography values and format-specific overrides",
+      "fontSize": {
+        "sectionHeader": "14pt",
+        "body": "11pt", 
+        "small": "9pt",
+        "nameHeader": "16pt"
+      },
+      "spacing": {
+        "sectionMarginBottom": "0.5rem",
+        "paragraphMarginBottom": "0.15rem",
+        "bulletSpacing": "0.15rem"
+      }
+    },
+    "overrides": {
+      "_comment": "Emergency font override capabilities",
+      "allowedFallbacks": ["Times New Roman", "Arial", "Georgia", "Verdana"],
+      "corporateEnvironment": {
+        "enabled": false,
+        "fallbackFont": "Arial"
+      }
     }
   }
 } 

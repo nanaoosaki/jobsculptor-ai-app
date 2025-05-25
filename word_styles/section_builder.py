@@ -14,9 +14,11 @@ from docx.table import Table, _Cell
 from docx.oxml.ns import qn
 
 from .registry import get_or_create_style, apply_direct_paragraph_formatting
+from utils.rendering_tracer import trace
 
 logger = logging.getLogger(__name__)
 
+@trace("docx.section_header")
 def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading2Table") -> None:
     """
     Add a section header with proper styling and spacing.
@@ -65,6 +67,7 @@ def add_section_header(doc: Document, text: str, style_name: str = "BoxedHeading
         # Use paragraph-based approach
         return _add_paragraph_section_header(doc, text, style_name)
 
+@trace("docx.section_header")
 def _add_paragraph_section_header(doc: Document, text: str, style_name: str):
     """
     Add a section header using a paragraph with border.
@@ -91,6 +94,7 @@ def _add_paragraph_section_header(doc: Document, text: str, style_name: str):
     logger.info(f"Added section header: {text} with style {style_name}")
     return header_para
 
+@trace("docx.section_header")
 def _add_table_section_header(doc: Document, text: str, style_def):
     """
     Add a section header using a 1x1 table with borders.

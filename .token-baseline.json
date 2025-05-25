@@ -1,0 +1,863 @@
+[
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 52,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 53,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 58,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 59,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 61,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 66,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 67,
+    "value": 14,
+    "message": "Hardcoded point size '14pt' should use design token"
+  },
+  {
+    "type": "hardcoded_rgb_color",
+    "file": ".\\resume_styler.py",
+    "line": 69,
+    "value": "#000066",
+    "message": "Hardcoded RGB color '#000066' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 71,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 79,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 80,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 83,
+    "value": 4,
+    "message": "Hardcoded point size '4pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 88,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 89,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 91,
+    "value": 3,
+    "message": "Hardcoded point size '3pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 96,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 97,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 99,
+    "value": 4,
+    "message": "Hardcoded point size '4pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 135,
+    "value": 16,
+    "message": "Hardcoded point size '16pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 151,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 173,
+    "value": 4,
+    "message": "Hardcoded point size '4pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\resume_styler.py",
+    "line": 182,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\resume_styler.py",
+    "line": 183,
+    "value": 14,
+    "message": "Hardcoded point size '14pt' should use design token"
+  },
+  {
+    "type": "hardcoded_rgb_color",
+    "file": ".\\resume_styler.py",
+    "line": 185,
+    "value": "#000066",
+    "message": "Hardcoded RGB color '#000066' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 53,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 54,
+    "value": 16,
+    "message": "Hardcoded point size '16pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 59,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 60,
+    "value": 10,
+    "message": "Hardcoded point size '10pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 64,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 65,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 71,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 72,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 77,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 78,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 83,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 84,
+    "value": 10,
+    "message": "Hardcoded point size '10pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 88,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 89,
+    "value": 10,
+    "message": "Hardcoded point size '10pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\yc_eddie_styler.py",
+    "line": 134,
+    "value": "Symbol",
+    "message": "Hardcoded font name 'Symbol' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_resume_generator.py",
+    "line": 30,
+    "value": 16,
+    "message": "Hardcoded point size '16pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_resume_generator.py",
+    "line": 31,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_resume_generator.py",
+    "line": 32,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_resume_generator.py",
+    "line": 35,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\yc_resume_generator.py",
+    "line": 36,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 118,
+    "value": "#FFFFFF",
+    "message": "Hardcoded hex color '#FFFFFF' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 124,
+    "value": "#FFFFFF",
+    "message": "Hardcoded hex color '#FFFFFF' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 204,
+    "value": "#FFFFFF",
+    "message": "Hardcoded hex color '#FFFFFF' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 210,
+    "value": "#FFFFFF",
+    "message": "Hardcoded hex color '#FFFFFF' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 376,
+    "value": "#333333",
+    "message": "Hardcoded hex color '#333333' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 382,
+    "value": "#333333",
+    "message": "Hardcoded hex color '#333333' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 387,
+    "value": "#333333",
+    "message": "Hardcoded hex color '#333333' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 397,
+    "value": "#333333",
+    "message": "Hardcoded hex color '#333333' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 992,
+    "value": "#000000",
+    "message": "Hardcoded hex color '#000000' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\style_engine.py",
+    "line": 1003,
+    "value": 14,
+    "message": "Hardcoded point size '14pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\style_engine.py",
+    "line": 1165,
+    "value": 14,
+    "message": "Hardcoded point size '14pt' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 1184,
+    "value": "#000000",
+    "message": "Hardcoded hex color '#000000' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\style_engine.py",
+    "line": 1322,
+    "value": "#000000",
+    "message": "Hardcoded hex color '#000000' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 53,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 54,
+    "value": 16,
+    "message": "Hardcoded point size '16pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 59,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 60,
+    "value": 10,
+    "message": "Hardcoded point size '10pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 64,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 65,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 71,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 72,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 77,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 78,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 83,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 84,
+    "value": 10,
+    "message": "Hardcoded point size '10pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 88,
+    "value": "Calibri",
+    "message": "Hardcoded font name 'Calibri' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 89,
+    "value": 10,
+    "message": "Hardcoded point size '10pt' should use design token"
+  },
+  {
+    "type": "hardcoded_font",
+    "file": ".\\archived\\yc_eddie_styler.py",
+    "line": 134,
+    "value": "Symbol",
+    "message": "Hardcoded font name 'Symbol' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_resume_generator.py",
+    "line": 30,
+    "value": 16,
+    "message": "Hardcoded point size '16pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_resume_generator.py",
+    "line": 31,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_resume_generator.py",
+    "line": 32,
+    "value": 11,
+    "message": "Hardcoded point size '11pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_resume_generator.py",
+    "line": 35,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archived\\yc_resume_generator.py",
+    "line": 36,
+    "value": 12,
+    "message": "Hardcoded point size '12pt' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\tools\\generate_tokens.py",
+    "line": 246,
+    "value": "#6c757d",
+    "message": "Hardcoded hex color '#6c757d' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\tools\\generate_tokens.py",
+    "line": 269,
+    "value": "#ffffff",
+    "message": "Hardcoded hex color '#ffffff' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\tools\\generate_tokens.py",
+    "line": 286,
+    "value": "#FFFFFF",
+    "message": "Hardcoded hex color '#FFFFFF' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\tools\\generate_tokens.py",
+    "line": 287,
+    "value": "#0D2B7E",
+    "message": "Hardcoded hex color '#0D2B7E' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\tools\\generate_tokens.py",
+    "line": 315,
+    "value": "#3A3A3A",
+    "message": "Hardcoded hex color '#3A3A3A' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\tools\\generate_tokens_css.py",
+    "line": 136,
+    "value": "#000000",
+    "message": "Hardcoded hex color '#000000' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\utils\\docx_builder.py",
+    "line": 652,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\utils\\docx_builder.py",
+    "line": 706,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_fix_spacing_issues.py",
+    "line": 51,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_fix_spacing_issues.py",
+    "line": 56,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_fix_spacing_issues.py",
+    "line": 67,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_minimal_docx_spacing.py",
+    "line": 38,
+    "value": 14,
+    "message": "Hardcoded point size '14pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_minimal_docx_spacing.py",
+    "line": 42,
+    "value": 4,
+    "message": "Hardcoded point size '4pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_no_empty_paragraphs.py",
+    "line": 156,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_no_empty_paragraphs.py",
+    "line": 161,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_no_empty_paragraphs.py",
+    "line": 167,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_no_empty_paragraphs.py",
+    "line": 173,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_revised_spacing_fix.py",
+    "line": 54,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_revised_spacing_fix.py",
+    "line": 58,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_revised_spacing_fix.py",
+    "line": 66,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_revised_spacing_fix.py",
+    "line": 70,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\archive\\test_scripts\\test_revised_spacing_fix.py",
+    "line": 78,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": ".\\archive\\test_scripts\\test_section_header_box.py",
+    "line": 114,
+    "value": "#000000",
+    "message": "Hardcoded hex color '#000000' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": ".\\examples\\generate_demo.py",
+    "line": 113,
+    "value": 18,
+    "message": "Hardcoded point size '18pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": "utils\\docx_builder.py",
+    "line": 652,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_pt_size",
+    "file": "utils\\docx_builder.py",
+    "line": 706,
+    "value": 6,
+    "message": "Hardcoded point size '6pt' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": "tools\\generate_tokens.py",
+    "line": 246,
+    "value": "#6c757d",
+    "message": "Hardcoded hex color '#6c757d' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": "tools\\generate_tokens.py",
+    "line": 269,
+    "value": "#ffffff",
+    "message": "Hardcoded hex color '#ffffff' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": "tools\\generate_tokens.py",
+    "line": 286,
+    "value": "#FFFFFF",
+    "message": "Hardcoded hex color '#FFFFFF' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": "tools\\generate_tokens.py",
+    "line": 287,
+    "value": "#0D2B7E",
+    "message": "Hardcoded hex color '#0D2B7E' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": "tools\\generate_tokens.py",
+    "line": 315,
+    "value": "#3A3A3A",
+    "message": "Hardcoded hex color '#3A3A3A' should use design token"
+  },
+  {
+    "type": "hardcoded_hex_color",
+    "file": "tools\\generate_tokens_css.py",
+    "line": 136,
+    "value": "#000000",
+    "message": "Hardcoded hex color '#000000' should use design token"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 29,
+    "value": "#17a2b8",
+    "message": "Hardcoded color '#17a2b8' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 30,
+    "value": "#ffc107",
+    "message": "Hardcoded color '#ffc107' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 31,
+    "value": "#dc3545",
+    "message": "Hardcoded color '#dc3545' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 34,
+    "value": "#8a2be2",
+    "message": "Hardcoded color '#8a2be2' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 35,
+    "value": "#f3eafa",
+    "message": "Hardcoded color '#f3eafa' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 115,
+    "value": "#e9f7fe",
+    "message": "Hardcoded color '#e9f7fe' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 127,
+    "value": "#f0f0f0",
+    "message": "Hardcoded color '#f0f0f0' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 133,
+    "value": "#f0f0f0",
+    "message": "Hardcoded color '#f0f0f0' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\preview.scss",
+    "line": 348,
+    "value": "#e0e0e0",
+    "message": "Hardcoded color '#e0e0e0' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\print.scss",
+    "line": 55,
+    "value": "#FFFFFF",
+    "message": "Hardcoded color '#FFFFFF' should use design token variable"
+  },
+  {
+    "type": "hardcoded_text_transform",
+    "file": "static\\scss\\print.scss",
+    "line": 79,
+    "value": "text-transform: uppercase;",
+    "message": "Hardcoded text-transform should use design token for casing control"
+  },
+  {
+    "type": "hardcoded_text_transform",
+    "file": "static\\scss\\_resume.scss",
+    "line": 86,
+    "value": "text-transform: uppercase;",
+    "message": "Hardcoded text-transform should use design token for casing control"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\_resume.scss",
+    "line": 132,
+    "value": "#4A6FDC",
+    "message": "Hardcoded color '#4A6FDC' should use design token variable"
+  },
+  {
+    "type": "hardcoded_scss_color",
+    "file": "static\\scss\\_resume.scss",
+    "line": 135,
+    "value": "#333333",
+    "message": "Hardcoded color '#333333' should use design token variable"
+  }
+]

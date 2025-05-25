@@ -1,9 +1,43 @@
 {
+  "typography": {
+    "_comment": "Typography settings derived from unified typography system",
+    "fontFamily": "Calibri",
+    "fontSize": {
+      "body": 11,
+      "sectionHeader": 14,
+      "nameHeader": 16,
+      "roleTitle": 11,
+      "companyName": 11,
+      "bulletPoint": 11
+    },
+    "fontWeight": {
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "fontColor": {
+      "primary": "#333333",
+      "headers": "#0D2B7E",
+      "secondary": "#6c757d"
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.4,
+      "loose": 1.6,
+      "sectionHeader": 1.0
+    },
+    "spacing": {
+      "sectionAfterPt": 4,
+      "paragraphAfterPt": 6,
+      "bulletAfterPt": 6
+    }
+  },
   "page": {
     "marginTopCm": 0.8,
     "marginBottomCm": 0.8,
-    "marginLeftCm": 2.5,
-    "marginRightCm": 2.5
+    "marginLeftCm": 2.0,
+    "marginRightCm": 2.0
   },
   "global": {
     "fontFamily": "Calibri",
@@ -31,15 +65,15 @@
       51
     ],
     "bold": true,
-    "spaceAfterPt": 12
+    "spaceAfterPt": 4
   },
   "heading2": {
     "fontFamily": "Calibri",
     "fontSizePt": 14,
     "color": [
-      0,
-      0,
-      102
+      13,
+      43,
+      126
     ],
     "spaceAfterPt": 4,
     "bold": true,
@@ -54,9 +88,9 @@
       0
     ],
     "borderSize": 1,
-    "paddingVertical": 0.5,
+    "paddingVertical": 1.0,
     "paddingHorizontal": 12.0,
-    "marginBottom": 4.0,
+    "marginBottom": 8.0,
     "indentCm": 0.0
   },
   "heading3": {
@@ -107,31 +141,55 @@
     "indentCm": 0.0
   },
   "sectionSpacing": {
-    "spacingPt": 12
+    "spacingPt": 4
   },
   "styles": {
     "MR_SectionHeader": {
+      "fontFamily": "Calibri",
       "fontSizePt": 14,
       "indentCm": 0.0,
       "spaceAfterPt": 4,
-      "bold": true
+      "bold": true,
+      "color": [
+        13,
+        43,
+        126
+      ]
     },
     "MR_Content": {
-      "fontSizePt": 11,
-      "indentCm": 0.0,
-      "spaceAfterPt": 6
-    },
-    "MR_RoleDescription": {
+      "fontFamily": "Calibri",
       "fontSizePt": 11,
       "indentCm": 0.0,
       "spaceAfterPt": 6,
-      "italic": true
+      "color": [
+        51,
+        51,
+        51
+      ]
+    },
+    "MR_RoleDescription": {
+      "fontFamily": "Calibri",
+      "fontSizePt": 11,
+      "indentCm": 0.0,
+      "spaceAfterPt": 6,
+      "italic": true,
+      "color": [
+        51,
+        51,
+        51
+      ]
     },
     "MR_BulletPoint": {
+      "fontFamily": "Calibri",
       "fontSizePt": 11,
       "indentCm": 0.0,
       "hangingIndentCm": 0.0,
-      "spaceAfterPt": 6
+      "spaceAfterPt": 6,
+      "color": [
+        51,
+        51,
+        51
+      ]
     }
   }
 }

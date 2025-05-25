@@ -63,6 +63,19 @@ def preview_tailored_resume(request_id):
     try:
         # Get upload folder path
         upload_folder = current_app.config['UPLOAD_FOLDER']
+        
+        # Font family override escape-hatch
+        font_override = request.args.get('ff')
+        if font_override:
+            # Validate against allowed fonts for security
+            allowed_fonts = ['Times New Roman', 'Arial', 'Georgia', 'Verdana', 'Helvetica']
+            if font_override in allowed_fonts:
+                # Store override in session for this request
+                session['font_override'] = font_override
+                app.logger.info(f"Font override applied: {font_override}")
+            else:
+                app.logger.warning(f"Invalid font override attempted: {font_override}")
+        
         # Generate HTML fragment using the request_id and upload_folder
         html_fragment = generate_preview_from_llm_responses(request_id, upload_folder, for_screen=True)
         return html_fragment # Return just the HTML content
@@ -233,6 +246,103 @@ def download_pdf():
         as_attachment=True,
         download_name=filename
     )
+
+@app.route('/api/font-features', methods=['POST'])
+def update_font_features():
+    """API endpoint for dynamic font feature updates"""
+    try:
+        data = request.get_json()
+        feature_type = data.get('type', 'numbers')
+        feature_value = data.get('value', 'default')
+        
+        # Map UI selections to OpenType features
+        feature_map = {
+            'numbers': {
+                'tabular': "'tnum' 1, 'lnum' 1",
+                'oldstyle': "'onum' 1, 'pnum' 1", 
+                'default': "'liga' 1"
+            },
+            'ligatures': {
+                'enabled': "'liga' 1, 'kern' 1",
+                'disabled': "'liga' 0",
+                'default': "'liga' 1"
+            }
+        }
+        
+        if feature_type in feature_map and feature_value in feature_map[feature_type]:
+            # Store in session for immediate effect
+            if 'font_features' not in session:
+                session['font_features'] = {}
+            session['font_features'][feature_type] = feature_map[feature_type][feature_value]
+            
+            app.logger.info(f"Font feature updated: {feature_type} = {feature_value}")
+            return jsonify({
+                'success': True, 
+                'feature': feature_map[feature_type][feature_value],
+                'type': feature_type,
+                'value': feature_value
+            })
+        
+        return jsonify({'success': False, 'error': 'Invalid feature selection'})
+        
+    except Exception as e:
+        app.logger.error(f"Error updating font features: {str(e)}")
+        return jsonify({'success': False, 'error': f'Font feature update failed: {str(e)}'}), 500
+
+@app.route('/api/accessibility', methods=['POST'])
+def toggle_accessibility_mode():
+    """Toggle accessibility font mode"""
+    try:
+        data = request.get_json()
+        mode = data.get('mode', 'standard')
+        
+        if mode == 'dyslexic':
+            # Store accessibility mode in session
+            session['accessibility_mode'] = mode
+            app.logger.info(f"Accessibility mode enabled: {mode}")
+            return jsonify({'success': True, 'mode': mode})
+        else:
+            # Clear accessibility mode
+            session.pop('accessibility_mode', None)
+            app.logger.info("Accessibility mode disabled")
+            return jsonify({'success': True, 'mode': 'standard'})
+            
+    except Exception as e:
+        app.logger.error(f"Error toggling accessibility mode: {str(e)}")
+        return jsonify({'success': False, 'error': f'Accessibility toggle failed: {str(e)}'}), 500
+
+@app.route('/api/typography-test')
+def typography_test():
+    """Test endpoint to verify enhanced typography system is working"""
+    try:
+        from style_manager import load_tokens
+        
+        # Load design tokens
+        tokens = load_tokens()
+        typography = tokens.get('typography', {})
+        
+        # Test data
+        test_info = {
+            'typography_system': 'enhanced' if typography else 'legacy',
+            'font_version': typography.get('fontFamily', {}).get('fontVersion', 'unknown'),
+            'available_fonts': {
+                'primary': typography.get('fontFamily', {}).get('primary', 'not_set'),
+                'docx': typography.get('fontFamily', {}).get('docxPrimary', 'not_set'),
+                'fallback': typography.get('fontFamily', {}).get('fallback', 'not_set')
+            },
+            'font_sizes': typography.get('fontSize', {}),
+            'session_overrides': {
+                'font_override': session.get('font_override'),
+                'accessibility_mode': session.get('accessibility_mode'),
+                'font_features': session.get('font_features', {})
+            }
+        }
+        
+        return jsonify(test_info)
+        
+    except Exception as e:
+        app.logger.error(f"Error in typography test: {str(e)}")
+        return jsonify({'error': f'Typography test failed: {str(e)}'}), 500
 
 if __name__ == '__main__':
     # Configure Flask session

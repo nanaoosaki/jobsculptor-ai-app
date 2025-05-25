@@ -25,3 +25,11 @@ class Config:
     USE_LLM_JOB_ANALYSIS = os.environ.get('USE_LLM_JOB_ANALYSIS', 'true').lower() == 'true'
     LLM_JOB_ANALYZER_PROVIDER = os.environ.get('LLM_JOB_ANALYZER_PROVIDER', 'auto')  # 'auto', 'claude', 'openai'
     JOB_ANALYSIS_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads/job_analysis_cache')
+
+# Rendering Configuration (Phase 1 Enhancement)
+RENDERING_CONFIG = {
+    "section_header_writer": "table",  # "table" or "paragraph" 
+    "enable_legacy_paragraph_path": False,  # Deprecated - will be removed
+    "strict_token_mode": False,  # Will enable in Phase 2
+    "trace_rendering_paths": True,  # Enable tracing for debugging
+}

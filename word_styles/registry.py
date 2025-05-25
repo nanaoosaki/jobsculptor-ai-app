@@ -10,7 +10,7 @@ duplicate style definitions in the document.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List, Tuple, Any
+from typing import Dict, Optional, List, Tuple, Any, Union
 
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
@@ -74,6 +74,97 @@ class ParagraphBoxStyle:
     # Flag to indicate if borders should be applied
     has_border: bool = False
 
+    @classmethod
+    def from_tokens(cls, name: str, element_type: str, tokens: Optional[Dict[str, Any]] = None):
+        """
+        Create a ParagraphBoxStyle from design tokens.
+        
+        Args:
+            name: Style name
+            element_type: Type of element (sectionHeader, body, roleDescription, bulletPoint, etc.)
+            tokens: Design tokens dictionary (if None, will load from file)
+        
+        Returns:
+            ParagraphBoxStyle instance configured from tokens
+        """
+        # Import here to avoid circular dependency
+        try:
+            from style_engine import StyleEngine
+        except ImportError:
+            logger.warning("StyleEngine not available, using hardcoded defaults")
+            return cls(name=name)
+        
+        if tokens is None:
+            tokens = StyleEngine.load_tokens()
+        
+        # Get typography values from new system
+        font_family = StyleEngine.get_typography_font_family(tokens, "docx")
+        font_size = StyleEngine.get_typography_font_size(tokens, element_type, "pt")
+        
+        # Map element types to their styling properties
+        element_configs = {
+            "sectionHeader": {
+                "base_style_name": "Heading 2",
+                "outline_level": 1,
+                "font_bold": True,
+                "font_color": StyleEngine.get_typography_font_color(tokens, "headers", "hex").lstrip("#"),
+                "space_after_pt": StyleEngine.get_typography_spacing(tokens, "sectionAfterPt", "docx"),
+                "line_rule": "exact",
+                "line_height_pt": float(font_size) + 1.0,  # Font size + 1pt extra
+                "has_border": True,
+                "border_width_pt": 1.0,
+                "border_color": StyleEngine.get_typography_font_color(tokens, "headers", "hex").lstrip("#"),
+                "keep_with_next": True
+            },
+            "body": {
+                "base_style_name": "Normal",
+                "font_color": StyleEngine.get_typography_font_color(tokens, "primary", "hex").lstrip("#"),
+                "space_after_pt": StyleEngine.get_typography_spacing(tokens, "paragraphAfterPt", "docx"),
+                "has_border": False
+            },
+            "roleDescription": {
+                "base_style_name": "Normal",
+                "font_italic": True,
+                "font_color": StyleEngine.get_typography_font_color(tokens, "primary", "hex").lstrip("#"),
+                "space_after_pt": StyleEngine.get_typography_spacing(tokens, "paragraphAfterPt", "docx"),
+                "has_border": False
+            },
+            "bulletPoint": {
+                "base_style_name": "Normal",
+                "font_color": StyleEngine.get_typography_font_color(tokens, "primary", "hex").lstrip("#"),
+                "space_after_pt": StyleEngine.get_typography_spacing(tokens, "bulletAfterPt", "docx"),
+                "has_border": False
+            },
+            "roleBoxText": {
+                "base_style_name": "Normal",
+                "font_bold": True,
+                "font_color": StyleEngine.get_typography_font_color(tokens, "roleText", "hex").lstrip("#"),
+                "space_before_pt": 0.0,
+                "space_after_pt": 0.0,
+                "line_rule": "exact",
+                "line_height_pt": float(font_size),  # Exact font size with no extra space
+                "has_border": False
+            }
+        }
+        
+        # Get configuration for this element type
+        config = element_configs.get(element_type, {})
+        
+        # Create style with token-derived values
+        return cls(
+            name=name,
+            font_name=font_family,
+            font_size_pt=float(font_size),
+            **config
+        )
+    
+    @staticmethod
+    def _parse_font_size(size_str: Union[str, int, float]) -> float:
+        """Parse font size string to float."""
+        if isinstance(size_str, (int, float)):
+            return float(size_str)
+        return float(str(size_str).replace("pt", ""))
+
 
 class StyleRegistry:
     """
@@ -91,108 +182,150 @@ class StyleRegistry:
         self._register_default_styles()
     
     def _register_default_styles(self):
-        """Register default paragraph styles."""
-        # BoxedHeading2 - Section header with border
-        self.register(ParagraphBoxStyle(
-            name="BoxedHeading2",
-            base_style_name="Heading 2",
-            outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
-            wrapper="paragraph",
-            font_name="Calibri",
-            font_size_pt=14.0,
-            font_bold=True,
-            font_color="0D2B7E",  # Navy blue
-            border_width_pt=1.0,
-            border_color="0D2B7E",  # Match font color
-            border_style="single",
-            border_padding_pt=1.0,  # 20 twips
-            space_before_pt=0.0,
-            space_after_pt=4.0,
-            # Changed from "auto" to "exact" and calculate line height based on font size + 1pt
-            line_rule="exact",
-            line_height_pt=15.0,  # 14pt font + 1pt extra = 15pt (300 twips)
-            keep_with_next=True,
-            has_border=True
-        ))
+        """Register default paragraph styles using typography tokens when available."""
         
-        # BoxedHeading2Table - Section header with border using table wrapper
-        self.register(ParagraphBoxStyle(
-            name="BoxedHeading2Table",
-            base_style_name="Heading 2",
-            outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
-            wrapper="table",  # Use table wrapper instead of paragraph
-            font_name="Calibri",
-            font_size_pt=14.0,
-            font_bold=True,
-            font_color="0D2B7E",  # Navy blue
-            border_width_pt=1.0,
-            border_color="0D2B7E",  # Match font color
-            border_style="single",
-            border_twips=20,  # 1pt
-            padding_twips=20,  # 1pt
-            space_before_pt=0.0,
-            space_after_pt=4.0,
-            keep_with_next=True,
-            has_border=True
-        ))
+        # Try to use the new typography system
+        try:
+            from style_engine import StyleEngine
+            tokens = StyleEngine.load_tokens()
+            use_typography_tokens = "typography" in tokens
+            logger.info(f"Typography system available: {use_typography_tokens}")
+        except ImportError:
+            use_typography_tokens = False
+            logger.warning("StyleEngine not available, using hardcoded defaults")
         
-        # HeaderBoxH2 - New purpose-built style for table cell content
-        self.register(ParagraphBoxStyle(
-            name="HeaderBoxH2",
-            base_style_name="Normal",  # Important: Based on Normal, not Heading 2
-            outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
-            wrapper="paragraph",  # This is for the paragraph inside the table cell
-            font_name="Calibri",
-            font_size_pt=14.0,
-            font_bold=True,
-            font_color="0D2B7E",  # Navy blue
-            space_before_pt=0.0,  # Zero spacing, critical for tight layout
-            space_after_pt=0.0,   # Zero spacing, critical for tight layout
-            line_rule="exact",
-            line_height_pt=14.0,  # Exact font size with no extra space
-            keep_with_next=True,
-            has_border=False      # No border on paragraph itself (table handles that)
-        ))
-        
-        # ContentParagraph - Regular content paragraph
-        self.register(ParagraphBoxStyle(
-            name="ContentParagraph",
-            base_style_name="Normal",
-            font_name="Calibri",
-            font_size_pt=11.0,
-            space_before_pt=0.0,
-            space_after_pt=6.0,
-            line_rule="auto",
-            has_border=False
-        ))
-        
-        # EmptyParagraph - Used as a spacer with minimal height
-        self.register(ParagraphBoxStyle(
-            name="EmptyParagraph",
-            base_style_name="Normal",
-            font_size_pt=1.0,
-            space_before_pt=0.0, 
-            space_after_pt=0.0,
-            line_rule="exact",
-            line_height_pt=1.0,  # Minimal height
-            has_border=False
-        ))
-        
-        # RoleBoxText - Style for text inside role boxes
-        self.register(ParagraphBoxStyle(
-            name="RoleBoxText",
-            base_style_name="Normal",
-            wrapper="paragraph",  # This is for the paragraph inside the table cell
-            font_name="Calibri",
-            font_size_pt=11.0,
-            font_bold=True,
-            font_color="333333",  # Dark gray
-            space_before_pt=0.0,  # Zero spacing for tight layout
-            space_after_pt=0.0,   # Zero spacing for tight layout
-            line_rule="exact",
-            line_height_pt=11.0,  # Exact font size with no extra space
-            has_border=False      # No border on paragraph itself (table handles that)
-        ))
+        if use_typography_tokens:
+            # Use new token-based system
+            self.register(ParagraphBoxStyle.from_tokens("BoxedHeading2", "sectionHeader", tokens))
+            self.register(ParagraphBoxStyle.from_tokens("BoxedHeading2Table", "sectionHeader", tokens))
+            
+            # HeaderBoxH2 for table cell content
+            header_box_style = ParagraphBoxStyle.from_tokens("HeaderBoxH2", "sectionHeader", tokens)
+            header_box_style.base_style_name = "Normal"  # Override for table cell content
+            header_box_style.has_border = False  # Table handles the border
+            self.register(header_box_style)
+            
+            # Content styles
+            self.register(ParagraphBoxStyle.from_tokens("ContentParagraph", "body", tokens))
+            
+            # EmptyParagraph - special case for spacers
+            empty_style = ParagraphBoxStyle.from_tokens("EmptyParagraph", "body", tokens)
+            empty_style.font_size_pt = 1.0
+            empty_style.space_before_pt = 0.0
+            empty_style.space_after_pt = 0.0
+            empty_style.line_rule = "exact"
+            empty_style.line_height_pt = 1.0
+            self.register(empty_style)
+            
+            # RoleBoxText for role box content
+            self.register(ParagraphBoxStyle.from_tokens("RoleBoxText", "roleBoxText", tokens))
+            
+            logger.info("Registered styles using typography tokens")
+            
+        else:
+            # Fallback to legacy hardcoded system
+            logger.info("Using legacy hardcoded style system")
+            
+            # BoxedHeading2 - Section header with border
+            self.register(ParagraphBoxStyle(
+                name="BoxedHeading2",
+                base_style_name="Heading 2",
+                outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
+                wrapper="paragraph",
+                font_name="Calibri",
+                font_size_pt=14.0,
+                font_bold=True,
+                font_color="0D2B7E",  # Navy blue
+                border_width_pt=1.0,
+                border_color="0D2B7E",  # Match font color
+                border_style="single",
+                border_padding_pt=1.0,  # 20 twips
+                space_before_pt=0.0,
+                space_after_pt=4.0,
+                line_rule="exact",
+                line_height_pt=15.0,  # 14pt font + 1pt extra = 15pt (300 twips)
+                keep_with_next=True,
+                has_border=True
+            ))
+            
+            # BoxedHeading2Table - Section header with border using table wrapper
+            self.register(ParagraphBoxStyle(
+                name="BoxedHeading2Table",
+                base_style_name="Heading 2",
+                outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
+                wrapper="table",  # Use table wrapper instead of paragraph
+                font_name="Calibri",
+                font_size_pt=14.0,
+                font_bold=True,
+                font_color="0D2B7E",  # Navy blue
+                border_width_pt=1.0,
+                border_color="0D2B7E",  # Match font color
+                border_style="single",
+                border_twips=20,  # 1pt
+                padding_twips=20,  # 1pt
+                space_before_pt=0.0,
+                space_after_pt=4.0,
+                keep_with_next=True,
+                has_border=True
+            ))
+            
+            # HeaderBoxH2 - New purpose-built style for table cell content
+            self.register(ParagraphBoxStyle(
+                name="HeaderBoxH2",
+                base_style_name="Normal",  # Important: Based on Normal, not Heading 2
+                outline_level=1,  # Level 2 heading (0=Heading 1, 1=Heading 2)
+                wrapper="paragraph",  # This is for the paragraph inside the table cell
+                font_name="Calibri",
+                font_size_pt=14.0,
+                font_bold=True,
+                font_color="0D2B7E",  # Navy blue
+                space_before_pt=0.0,  # Zero spacing, critical for tight layout
+                space_after_pt=0.0,   # Zero spacing, critical for tight layout
+                line_rule="exact",
+                line_height_pt=14.0,  # Exact font size with no extra space
+                keep_with_next=True,
+                has_border=False      # No border on paragraph itself (table handles that)
+            ))
+            
+            # ContentParagraph - Regular content paragraph
+            self.register(ParagraphBoxStyle(
+                name="ContentParagraph",
+                base_style_name="Normal",
+                font_name="Calibri",
+                font_size_pt=11.0,
+                space_before_pt=0.0,
+                space_after_pt=6.0,
+                line_rule="auto",
+                has_border=False
+            ))
+            
+            # EmptyParagraph - Used as a spacer with minimal height
+            self.register(ParagraphBoxStyle(
+                name="EmptyParagraph",
+                base_style_name="Normal",
+                font_size_pt=1.0,
+                space_before_pt=0.0, 
+                space_after_pt=0.0,
+                line_rule="exact",
+                line_height_pt=1.0,  # Minimal height
+                has_border=False
+            ))
+            
+            # RoleBoxText - Style for text inside role boxes
+            self.register(ParagraphBoxStyle(
+                name="RoleBoxText",
+                base_style_name="Normal",
+                wrapper="paragraph",  # This is for the paragraph inside the table cell
+                font_name="Calibri",
+                font_size_pt=11.0,
+                font_bold=True,
+                font_color="333333",  # Dark gray
+                space_before_pt=0.0,  # Zero spacing for tight layout
+                space_after_pt=0.0,   # Zero spacing for tight layout
+                line_rule="exact",
+                line_height_pt=11.0,  # Exact font size with no extra space
+                has_border=False      # No border on paragraph itself (table handles that)
+            ))
     
     def register(self, style: ParagraphBoxStyle):
         """

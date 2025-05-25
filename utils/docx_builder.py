@@ -22,6 +22,14 @@ from docx.oxml.ns import qn
 
 from style_manager import StyleManager
 from style_engine import StyleEngine
+from utils.rendering_tracer import trace
+
+# Import our new universal renderers
+try:
+    from rendering.components import SectionHeader, RoleBox
+    USE_UNIVERSAL_RENDERERS = True
+except ImportError:
+    USE_UNIVERSAL_RENDERERS = False
 
 # Import our new style registry
 try:
@@ -277,42 +285,45 @@ def create_bullet_point(doc, text, docx_styles):
     logger.info(f"Applied MR_BulletPoint style to: {str(text)[:30]}...")
     return bullet_para
 
-def add_section_header(doc: Document, section_name: str) -> Paragraph:
+@trace("docx.section_header")
+def add_section_header(doc: Document, section_name: str) -> Any:
     """
-    Add a section header with proper styling.
+    Add a section header using the universal SectionHeader renderer.
     
-    This function uses the new style registry approach if available,
-    otherwise it falls back to the previous approach.
+    This new implementation ensures consistent styling across all formats
+    and eliminates the dual-path architectural problems.
     
     Args:
         doc: The document to add the section header to
         section_name: The section header text
         
     Returns:
-        The added paragraph
+        The rendered section header (table or paragraph depending on renderer)
     """
+    if USE_UNIVERSAL_RENDERERS:
+        # Use the new universal renderer (Phase 2 approach)
+        try:
+            tokens = StyleEngine.load_tokens()  # Use raw tokens instead of structured
+            header_renderer = SectionHeader(tokens, section_name)
+            result = header_renderer.to_docx(doc)
+            logger.info(f"Generated universal section header: '{section_name}' using SectionHeader renderer")
+            return result
+        except Exception as e:
+            logger.warning(f"Universal renderer failed for '{section_name}': {e}")
+            logger.warning("Falling back to legacy registry approach")
+            # Fall through to legacy approach
+    
     if USE_STYLE_REGISTRY:
-        # Use the new registry-based approach
+        # Legacy registry approach (Phase 1 stabilized)
         section_para = registry_add_section_header(doc, section_name)
-        logger.info(f"Applied BoxedHeading2 style to section header: {section_name}")
+        logger.info(f"Applied BoxedHeading2Table style to section header: {section_name}")
         return section_para
     else:
-        # Fall back to the old approach
-        section_para = doc.add_paragraph(section_name)
-        
-        # Apply styling using StyleEngine if available
-        if USE_STYLE_ENGINE:
-            boxed_heading_style = StyleEngine.create_boxed_heading_style(doc)
-            section_para.style = boxed_heading_style
-            StyleEngine.apply_boxed_section_header_style(doc, section_para)
-        else:
-            # Basic fallback styling
-            section_para.style = "Heading 2"
-            for run in section_para.runs:
-                run.bold = True
-        
-        logger.info(f"Applied style to section header: {section_name}")
-        return section_para
+        # Emergency fallback (should not happen in normal operation)
+        para = doc.add_paragraph(section_name.upper())
+        para.style = 'Heading 2'
+        logger.warning(f"Used emergency fallback for section header: {section_name}")
+        return para
 
 def add_role_description(doc, text, docx_styles):
     """Adds a consistently formatted role description paragraph."""

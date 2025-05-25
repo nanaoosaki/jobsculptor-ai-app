@@ -83,7 +83,6 @@ $font-size-h2: 1.75rem !default;
     color: $primaryColor;  // blue text color
     border: 2px solid $primaryColor !important;  // light blue outline, override inline styles
     font-weight: $font-weight-bold;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
     display: block;  // Explicitly set to block (though likely default)
     width: auto;     // Explicitly set width to auto
@@ -307,4 +306,22 @@ ul.bullets {
 // O3: Prevent touching borders between role box and immediate bullet lists
 .role-box + ul {
     margin-top: 0.25rem;
+}
+
+// Prevent orphaned list items
+.bullets li {
+  break-inside: avoid;
+}
+
+// Accessibility helper class (O3 suggestion - keep for future use)
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 } 

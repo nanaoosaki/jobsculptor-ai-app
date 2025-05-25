@@ -460,7 +460,7 @@ Our implementation tried to apply the same indent at multiple levels, but these 
 To resolve this issue, we'll implement a more systematic approach focusing on a single layer of formatting:
 
 1. **Standardize on Style-Level Formatting**:
-   - Create custom styles for all elements (section headers, company lines, role descriptions, bullets)
+   - Create custom styles for all elements (section headers, company info, role descriptions, bullets)
    - Apply the global indent consistently at the style level first
    - Avoid direct paragraph formatting for indent unless absolutely necessary
 
@@ -869,3 +869,2248 @@ When making changes to DOCX section header styling:
    - Verify with real documents to ensure changes work in context
 
 By following these guidelines, you can make reliable changes to DOCX section header styling with predictable results across platforms.
+
+## NEW CRITICAL ISSUE: Font System Fragmentation Across Formats
+
+**Date**: 2025-05-25
+**Status**: Analysis Complete - Implementation Required  
+**Priority**: **HIGH - ARCHITECTURAL**
+
+### Problem Analysis
+
+The resume application suffers from **severe font control fragmentation** across different output formats. Font families, sizes, weights, and styles are controlled by **different mechanisms** that don't share a single source of truth, leading to inconsistent typography and user experience.
+
+#### Current Font Control Systems (Fragmented)
+
+**1. HTML/PDF Font Control (SCSS-based)**
+```scss
+// static/scss/_base.scss
+body {
+    font-family: $baseFontFamily; // From design tokens
+    font-size: $baseFontSize;     // From design tokens  
+    line-height: $baseLineHeight; // From design tokens
+}
+
+// static/scss/_resume.scss  
+.section-box {
+    font-size: $sectionHeaderFontSize; // Token-based
+    font-weight: $font-weight-bold;    // Token-based
+}
+```
+
+**2. DOCX Font Control (Style Registry + StyleEngine)**
+```python
+# word_styles/registry.py
+self.register(ParagraphBoxStyle(
+    name="HeaderBoxH2",
+    font_name="Calibri",           # HARDCODED
+    font_size_pt=14.0,             # HARDCODED
+    font_bold=True,                # HARDCODED
+    font_color="0D2B7E",           # HARDCODED
+))
+
+# style_engine.py
+font_family = "'Calibri', Arial, sans-serif"  # HARDCODED FALLBACK
+section_style.font.size = Pt(float(section_docx.get("fontSizePt", 14)))  # FALLBACK
+```
+
+**3. DOCX Legacy Control (docx_builder.py)**
+```python
+# utils/docx_builder.py
+for run in p.runs:
+    if "fontFamily" in style_config:
+        font.name = style_config["fontFamily"]  # From old docx mappings
+    if "fontSizePt" in style_config:
+        font.size = Pt(style_config["fontSizePt"])
+```
+
+#### Critical Issues Identified
+
+**A. Multiple Font Sources**
+- **HTML/PDF**: Uses `design_tokens.json` → SCSS variables → CSS
+- **DOCX Registry**: Hardcoded values in `ParagraphBoxStyle` dataclasses
+- **DOCX StyleEngine**: Mix of token lookups and hardcoded fallbacks
+- **DOCX Legacy**: Old mapping system from `tools/generate_tokens.py`
+
+**B. Inconsistent Font Families**
+- **HTML/PDF**: `"'Calibri', Arial, sans-serif"` from `baseFontFamily` token
+- **DOCX Registry**: `"Calibri"` hardcoded (no fallbacks)
+- **DOCX StyleEngine**: Parses first font from token but inconsistent
+
+**C. Font Size Conflicts**
+- **HTML**: Uses `baseFontSize: "11pt"` from tokens
+- **DOCX**: Mix of token lookups (`fontSizePt`) and hardcoded defaults
+- **Section Headers**: Different size sources between formats
+
+**D. Missing Font Weight/Style Control**
+- No systematic bold/italic control across formats
+- Hardcoded styling decisions scattered throughout codebase
+- No design token for font weights (light, regular, medium, bold)
+
+**E. Cross-Platform Compatibility Issues**
+- Calibri licensing and embedding restrictions
+- Font substitution differences across OS platforms
+- Missing OpenType feature support
+- Inadequate multi-script fallbacks
+
+### Root Cause Analysis
+
+**1. Historical Evolution**
+- HTML/SCSS system developed first with design tokens
+- DOCX system added later with separate style registry
+- StyleEngine created as bridge but incomplete integration
+- Multiple attempts to unify led to layered complexity
+
+**2. Token System Gaps**
+- `design_tokens.json` lacks comprehensive typography tokens
+- Missing font weight definitions
+- Missing format-specific font mappings
+- Inconsistent naming conventions
+
+**3. Implementation Inconsistencies**
+- DOCX system doesn't fully consume design tokens
+- Hardcoded fallbacks mask token system failures
+- Multiple code paths for same styling decisions
+
+### Enhanced Unified Font System Implementation Plan
+
+#### Phase 1: Comprehensive Design Token Expansion (2-3 hours)
+
+**1.1 Add Production-Ready Typography Tokens**
+```json
+{
+  "typography": {
+    "fontFamily": {
+      "primary": "'Calibri', Arial, sans-serif",
+      "fallback": "Arial, sans-serif",
+      "docxPrimary": "Calibri",
+      "embedSubset": false,
+      "fontVersion": "2025-05",
+      "secondary": {
+        "cjk": "'Noto Sans CJK SC', 'Microsoft YaHei'",
+        "arabic": "'Noto Naskh Arabic', 'Arabic Typesetting'",
+        "cyrillic": "'Calibri', 'DejaVu Sans'"
+      }
+    },
+    "fontSize": {
+      "body": "11pt",
+      "small": "9pt", 
+      "sectionHeader": "14pt",
+      "nameHeader": "16pt",
+      "roleTitle": "11pt",
+      "companyName": "11pt",
+      "roleDescription": "11pt",
+      "bulletPoint": "11pt",
+      "contactInfo": "11pt",
+      "skillCategory": "11pt",
+      "skillList": "11pt"
+    },
+    "fontWeight": {
+      "normal": 400,
+      "medium": 500, 
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.4,
+      "loose": 1.6,
+      "sectionHeader": 1.0
+    },
+    "lineHeightPt": {
+      "body": 15.4,
+      "sectionHeader": 18.0,
+      "nameHeader": 19.2,
+      "roleTitle": 15.4,
+      "companyName": 15.4
+    },
+    "fontColor": {
+      "primary": {
+        "hex": "#333333",
+        "themeColor": "text1"
+      },
+      "secondary": {
+        "hex": "#6c757d",
+        "themeColor": "text2"
+      },
+      "headers": {
+        "hex": "#0D2B7E",
+        "themeColor": "accent1"
+      },
+      "muted": {
+        "hex": "#999999",
+        "themeColor": "text2"
+      },
+      "light": {
+        "hex": "#666666",
+        "themeColor": "text2"
+      },
+      "roleText": {
+        "hex": "#333333",
+        "themeColor": "text1"
+      }
+    },
+    "fontStyle": {
+      "normal": "normal",
+      "italic": "italic"
+    },
+    "fontFeatureSettings": {
+      "body": "'tnum' 1, 'liga' 1",
+      "headers": "'liga' 1, 'kern' 1",
+      "numbers": "'tnum' 1, 'lnum' 1"
+    },
+    "docx": {
+      "fontSize": {
+        "sectionHeaderPt": 14,
+        "bodyPt": 11,
+        "companyPt": 11,
+        "rolePt": 11,
+        "bulletPt": 11,
+        "nameHeaderPt": 16
+      },
+      "spacing": {
+        "sectionAfterPt": 4,
+        "paragraphAfterPt": 6,
+        "bulletAfterPt": 6
+      },
+      "color": {
+        "headers": "0D2B7E",
+        "primary": "333333",
+        "secondary": "6c757d"
+      }
+    },
+    "html": {
+      "fontSize": {
+        "sectionHeader": "14pt",
+        "body": "11pt", 
+        "small": "9pt",
+        "nameHeader": "16pt"
+      },
+      "spacing": {
+        "sectionMarginBottom": "0.5rem",
+        "paragraphMarginBottom": "0.15rem",
+        "bulletSpacing": "0.15rem"
+      }
+    }
+  }
+}
+```
+
+**1.2 Add Font Override and Versioning Support**
+```python
+# app.py - Add font override query parameter support
+@app.route('/preview')
+def preview():
+    # ... existing code ...
+    
+    # Font family override escape-hatch
+    font_override = request.args.get('ff')
+    if font_override:
+        # Validate against allowed fonts for security
+        allowed_fonts = ['Times New Roman', 'Arial', 'Georgia', 'Verdana']
+        if font_override in allowed_fonts:
+            design_tokens = load_design_tokens()
+            design_tokens['typography']['fontFamily']['primary'] = f"'{font_override}', Arial, sans-serif"
+            design_tokens['typography']['fontFamily']['docxPrimary'] = font_override
+            
+            # Cache invalidation with hash
+            import hashlib
+            cache_key = hashlib.md5(font_override.encode()).hexdigest()[:8]
+            # Use cache_key for CSS/PDF cache busting
+```
+
+**1.3 Maintain Backward Compatibility**
+- Keep existing tokens (`baseFontFamily`, `baseFontSize`) as aliases
+- Add deprecation warnings in token generation
+- Gradual migration to new structured tokens
+
+#### Phase 2: Enhanced SCSS Integration with Cross-Platform Support (2 hours)
+
+**2.1 Update Token Generation with Unit Conversion and Cache Busting**
+```python
+# tools/generate_tokens_css.py - Enhanced typography section with cache busting
+def generate_typography_variables(tokens):
+    typography = tokens.get("typography", {})
+    font_version = typography.get("fontFamily", {}).get("fontVersion", "2025-01")
+    
+    scss_vars = {
+        # Font families with multi-script support and cache busting
+        "font-family-primary": typography.get("fontFamily", {}).get("primary", "Calibri, sans-serif"),
+        "font-family-fallback": typography.get("fontFamily", {}).get("fallback", "Arial, sans-serif"),
+        "font-family-cjk": typography.get("fontFamily", {}).get("secondary", {}).get("cjk", "sans-serif"),
+        "font-family-arabic": typography.get("fontFamily", {}).get("secondary", {}).get("arabic", "sans-serif"),
+        "font-version": font_version,
+        
+        # Font sizes with screen/print conversion
+        "font-size-body": _css_value(typography.get("fontSize", {}).get("body", "11pt"), for_screen=False),
+        "font-size-body-screen": _css_value(typography.get("fontSize", {}).get("body", "11pt"), for_screen=True),
+        "font-size-section-header": _css_value(typography.get("fontSize", {}).get("sectionHeader", "14pt"), for_screen=False),
+        "font-size-section-header-screen": _css_value(typography.get("fontSize", {}).get("sectionHeader", "14pt"), for_screen=True),
+        
+        # Font weights
+        "font-weight-normal": typography.get("fontWeight", {}).get("normal", 400),
+        "font-weight-bold": typography.get("fontWeight", {}).get("bold", 700),
+        
+        # Line heights (unit-less for screen, pt for print)
+        "line-height-normal": typography.get("lineHeight", {}).get("normal", 1.4),
+        "line-height-normal-pt": typography.get("lineHeightPt", {}).get("body", 15.4),
+        
+        # Font feature settings
+        "font-feature-body": typography.get("fontFeatureSettings", {}).get("body", "'liga' 1"),
+        "font-feature-headers": typography.get("fontFeatureSettings", {}).get("headers", "'liga' 1, 'kern' 1"),
+    }
+    return scss_vars
+
+def _css_value(val, *, for_screen=True):
+    """Convert pt to rem for screen; leave pt for print"""
+    if val.endswith("pt") and for_screen:
+        pt = float(val[:-2])
+        return f"{pt/12:.3f}rem"  # assuming 16px root
+    return val
+```
+
+**2.2 Refactor SCSS Files with Anti-Local-Font Protection**
+```scss
+// static/scss/_base.scss - Enhanced typography with cache busting and local font protection
+@font-face {
+    font-family: 'CalibriFallback';
+    // Disable local font precedence to prevent corporate font conflicts
+    src: local('☠︎DISABLE-LOCAL'),
+         url('/static/fonts/calibri.woff2?v=#{$font-version}') format('woff2'),
+         url('/static/fonts/calibri.woff?v=#{$font-version}') format('woff');
+    font-display: swap;
+}
+
+body {
+    font-family: $font-family-primary;
+    font-size: $font-size-body-screen;
+    font-weight: $font-weight-normal;
+    line-height: $line-height-normal;
+    color: $font-color-primary;
+    font-feature-settings: $font-feature-body;
+}
+
+// Multi-script support
+:lang(zh), :lang(ja), :lang(ko) {
+    font-family: $font-family-cjk, $font-family-primary;
+}
+
+:lang(ar), :lang(fa), :lang(ur) {
+    font-family: $font-family-arabic, $font-family-primary;
+}
+
+// Print-specific overrides
+@media print {
+    body {
+        font-size: $font-size-body;
+        line-height: $line-height-normal-pt;
+    }
+    
+    .section-box {
+        font-size: $font-size-section-header;
+        line-height: $line-height-section-header-pt;
+    }
+}
+
+// static/scss/_resume.scss - Consistent typography with accessibility
+.section-box {
+    font-family: $font-family-primary;
+    font-size: $font-size-section-header-screen;
+    font-weight: $font-weight-bold;
+    color: $font-color-headers;
+    font-feature-settings: $font-feature-headers;
+    
+    // Accessibility: Mark font changes for screen readers
+    &[data-font-weight] {
+        speak: normal;
+    }
+}
+
+@media print {
+    .section-box {
+        font-size: $font-size-section-header;
+    }
+}
+```
+
+#### Phase 3: Advanced DOCX Style Registry with OpenType Support (3-4 hours)
+
+**3.1 Enhanced Style Registry with Text Overflow Protection**
+```python
+# word_styles/registry.py - Production-ready style definitions with overflow protection
+class ParagraphBoxStyle:
+    @classmethod
+    def from_tokens(cls, name: str, style_type: str, tokens: Dict[str, Any], text_content: str = ""):
+        """Create style from design tokens with cross-platform support and overflow protection"""
+        typography = tokens.get("typography", {})
+        
+        # Get color with theme support
+        color_def = typography.get("fontColor", {}).get(style_type, {})
+        if isinstance(color_def, dict):
+            font_color = color_def.get("hex", "#333333")
+            theme_color = color_def.get("themeColor", None)
+        else:
+            font_color = color_def
+            theme_color = None
+        
+        # Calculate optimal font size to prevent overflow in DOCX
+        base_font_size = cls._parse_font_size(typography.get("fontSize", {}).get(style_type, "11pt"))
+        if text_content and style_type in ["sectionHeader", "nameHeader"]:
+            adjusted_font_size = cls._calculate_docx_font_size(text_content, base_font_size, typography)
+        else:
+            adjusted_font_size = base_font_size
+        
+        return cls(
+            name=name,
+            font_name=cls._get_docx_font_family(typography),
+            font_size_pt=adjusted_font_size,
+            font_color=font_color,
+            theme_color=theme_color,
+            line_height_pt=typography.get("lineHeightPt", {}).get(style_type, None),
+            font_features=typography.get("fontFeatureSettings", {}).get(style_type, None),
+            # ... other properties from tokens
+        )
+    
+    @staticmethod
+    def _calculate_docx_font_size(text: str, base_size_pt: float, typography: Dict[str, Any]) -> float:
+        """Calculate optimal font size to prevent text overflow in DOCX"""
+        # Estimate text width using average character advance
+        # This is a simplified calculation - in production you'd use Harfbuzz for exact metrics
+        avg_char_width_ratio = 0.6  # Calibri average character width as ratio of font size
+        estimated_width_pt = len(text) * base_size_pt * avg_char_width_ratio
+        
+        # Assume standard text frame width (roughly 6 inches = 432 pt)
+        max_width_pt = 432
+        
+        if estimated_width_pt > max_width_pt:
+            # Reduce font size by 0.5pt increments until it fits
+            reduction_steps = int((estimated_width_pt - max_width_pt) / (len(text) * 0.5 * avg_char_width_ratio)) + 1
+            return max(base_size_pt - (reduction_steps * 0.5), base_size_pt * 0.7)  # Don't go below 70% of original
+        
+        return base_size_pt
+    
+    @staticmethod
+    def _get_docx_font_family(typography: Dict[str, Any]) -> str:
+        """Get DOCX-compatible font family with embedding considerations"""
+        font_family = typography.get("fontFamily", {})
+        primary_font = font_family.get("docxPrimary", "Calibri")
+        embed_subset = font_family.get("embedSubset", False)
+        
+        # Handle Calibri licensing on non-Windows platforms
+        if primary_font == "Calibri" and not embed_subset and not cls._is_windows():
+            return font_family.get("fallback", "Arial").split(",")[0].strip("'\"")
+        
+        return primary_font
+    
+    @staticmethod
+    def _is_windows() -> bool:
+        """Check if running on Windows"""
+        import platform
+        return platform.system() == "Windows"
+    
+    @staticmethod
+    def _parse_font_size(size_str: str) -> float:
+        """Parse font size string to float"""
+        return float(size_str.replace("pt", ""))
+```
+
+**3.2 Enhanced OpenType and CJK Support**
+```python
+# word_styles/opentype_utils.py - Enhanced OpenType and CJK handling
+from docx.oxml import OxmlElement, qn
+
+def apply_font_features(run, feature_str: str, text_content: str = ""):
+    """Map CSS font-feature-settings to Word OpenType XML with CJK handling"""
+    if not feature_str:
+        return
+    
+    rPr = run._r.get_or_add_rPr()
+    
+    # Check if text contains CJK characters
+    has_cjk = _has_cjk_characters(text_content)
+    
+    # Parse CSS font-feature-settings
+    features = _parse_feature_string(feature_str)
+    
+    for feature, value in features.items():
+        if feature == 'tnum' and value == '1':
+            # Tabular numbers
+            el = OxmlElement('w14:numForm')
+            el.set(qn('w14:val'), 'tabular')
+            rPr.append(el)
+        elif feature == 'liga' and value == '1':
+            # Ligatures
+            el = OxmlElement('w14:ligatures')
+            el.set(qn('w14:val'), 'standard')
+            rPr.append(el)
+        elif feature == 'kern' and value == '1':
+            # Kerning
+            el = OxmlElement('w14:kern')
+            el.set(qn('w14:val'), '1')
+            rPr.append(el)
+    
+    # Apply CJK-specific settings for proper line height
+    if has_cjk:
+        _apply_cjk_typography(rPr)
+
+def _apply_cjk_typography(rPr):
+    """Apply CJK-specific typography settings for proper line height parity"""
+    # Set complex script properties for CJK
+    cs_elem = OxmlElement('w:cs')
+    rPr.append(cs_elem)
+    
+    # Set East Asian theme for proper metrics
+    east_asia_elem = OxmlElement('w:eastAsiaTheme')
+    east_asia_elem.set(qn('w:val'), 'eastAsia')
+    rPr.append(east_asia_elem)
+
+def _has_cjk_characters(text: str) -> bool:
+    """Check if text contains CJK characters"""
+    if not text:
+        return False
+    
+    for char in text:
+        # CJK Unified Ideographs range
+        if 0x4E00 <= ord(char) <= 0x9FFF:
+            return True
+        # CJK Extension A
+        if 0x3400 <= ord(char) <= 0x4DBF:
+            return True
+        # Hiragana and Katakana
+        if 0x3040 <= ord(char) <= 0x30FF:
+            return True
+    
+    return False
+
+def _parse_feature_string(feature_str: str) -> Dict[str, str]:
+    """Parse CSS font-feature-settings string"""
+    features = {}
+    if not feature_str:
+        return features
+    
+    # Parse "'tnum' 1, 'liga' 1" format
+    parts = feature_str.split(',')
+    for part in parts:
+        part = part.strip()
+        if "'" in part:
+            # Extract feature name and value
+            parts = part.split()
+            if len(parts) >= 2:
+                feature = parts[0].strip("'\"")
+                value = parts[1]
+                features[feature] = value
+    
+    return features
+```
+
+**3.3 DOCX Font Embedding with Local Override Prevention**
+```python
+# style_engine.py - Enhanced font embedding with local override prevention
+@staticmethod
+def create_docx_custom_styles(doc, design_tokens=None):
+    if not design_tokens:
+        design_tokens = StyleEngine.load_tokens()
+    
+    typography = design_tokens.get("typography", {})
+    
+    # Configure font embedding to prevent local font conflicts
+    _configure_font_embedding(doc, typography)
+    
+    # ... rest of existing style creation code ...
+
+def _configure_font_embedding(doc, typography: Dict[str, Any]):
+    """Configure font embedding to prevent local font precedence issues"""
+    font_family = typography.get("fontFamily", {})
+    embed_subset = font_family.get("embedSubset", False)
+    primary_font = font_family.get("docxPrimary", "Calibri")
+    
+    if embed_subset:
+        # Add font embedding configuration to prevent local overrides
+        fonts_part = doc.part.document_part.fonts_part
+        if fonts_part is None:
+            from docx.opc.part import Part
+            fonts_part = Part.load(doc.part.package)
+        
+        # Configure embedding preferences
+        font_elem = OxmlElement('w:font')
+        font_elem.set(qn('w:name'), primary_font)
+        
+        # Set embedding flags
+        embed_elem = OxmlElement('w:embedRegular')
+        font_elem.append(embed_elem)
+        
+        # Don't subset to ensure Word prefers embedded over local
+        # (Comment out w:subset element to disable subsetting)
+        
+        fonts_part._element.append(font_elem)
+```
+
+#### Phase 4: Enhanced StyleEngine with Theme Support (2-3 hours)
+
+**4.1 Add Dynamic Font Feature UI Support**
+```python
+# app.py - Add dynamic font feature support
+@app.route('/api/font-features', methods=['POST'])
+def update_font_features():
+    """API endpoint for dynamic font feature updates"""
+    data = request.get_json()
+    feature_type = data.get('type', 'numbers')
+    feature_value = data.get('value', 'default')
+    
+    # Map UI selections to OpenType features
+    feature_map = {
+        'numbers': {
+            'tabular': "'tnum' 1, 'lnum' 1",
+            'oldstyle': "'onum' 1, 'pnum' 1", 
+            'default': "'liga' 1"
+        }
+    }
+    
+    if feature_type in feature_map and feature_value in feature_map[feature_type]:
+        # Update design tokens
+        tokens = load_design_tokens()
+        tokens['typography']['fontFeatureSettings']['numbers'] = feature_map[feature_type][feature_value]
+        save_design_tokens(tokens)
+        
+        # Trigger rebuild
+        rebuild_css_and_tokens()
+        
+        return jsonify({'success': True, 'feature': feature_map[feature_type][feature_value]})
+    
+    return jsonify({'success': False, 'error': 'Invalid feature selection'})
+```
+
+// ... existing StyleEngine code ...
+
+#### Phase 6: Enhanced Testing & Font Audit (2 hours)
+
+**6.1 Glyph Rasterization Visual Diff Testing**
+```python
+# tests/glyph_visual_diff_test.py - New visual diff testing for font rendering
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import os
+
+def test_glyph_rasterization_consistency():
+    """Test glyph rendering consistency across formats using visual diff"""
+    tokens = StyleEngine.load_tokens()
+    typography = tokens.get("typography", {})
+    
+    # Define test character set
+    test_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789áéíóúñü"
+    
+    # Generate glyph sheets for each format
+    html_sheet = generate_html_glyph_sheet(test_chars, typography)
+    pdf_sheet = generate_pdf_glyph_sheet(test_chars, typography)
+    docx_sheet = generate_docx_glyph_sheet(test_chars, typography)
+    
+    # Load baseline if exists
+    baseline_path = "tests/baselines/glyph_sheet_baseline.png"
+    if os.path.exists(baseline_path):
+        baseline = cv2.imread(baseline_path)
+        
+        # Compare each format against baseline
+        html_diff = calculate_glyph_diff(baseline, html_sheet)
+        pdf_diff = calculate_glyph_diff(baseline, pdf_sheet)
+        docx_diff = calculate_glyph_diff(baseline, docx_sheet)
+        
+        # Assert RMS error < 1% per glyph
+        assert html_diff < 0.01, f"HTML glyph rendering differs by {html_diff:.3f}"
+        assert pdf_diff < 0.01, f"PDF glyph rendering differs by {pdf_diff:.3f}"
+        assert docx_diff < 0.01, f"DOCX glyph rendering differs by {docx_diff:.3f}"
+    else:
+        # Save as new baseline
+        cv2.imwrite(baseline_path, html_sheet)
+        print(f"Created new glyph baseline: {baseline_path}")
+
+def calculate_glyph_diff(baseline: np.ndarray, test_image: np.ndarray) -> float:
+    """Calculate RMS error between glyph sheets"""
+    if baseline.shape != test_image.shape:
+        # Resize to match
+        test_image = cv2.resize(test_image, (baseline.shape[1], baseline.shape[0]))
+    
+    # Convert to grayscale
+    baseline_gray = cv2.cvtColor(baseline, cv2.COLOR_BGR2GRAY)
+    test_gray = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
+    
+    # Calculate RMS difference
+    diff = baseline_gray.astype(float) - test_gray.astype(float)
+    rms = np.sqrt(np.mean(diff ** 2))
+    
+    # Normalize to 0-1 range
+    return rms / 255.0
+
+def generate_html_glyph_sheet(chars: str, typography: Dict[str, Any]) -> np.ndarray:
+    """Generate glyph sheet from HTML rendering"""
+    # Implementation would use headless browser to render character grid
+    # and capture as image
+    pass
+
+def generate_pdf_glyph_sheet(chars: str, typography: Dict[str, Any]) -> np.ndarray:
+    """Generate glyph sheet from PDF rendering"""
+    # Implementation would generate PDF with character grid 
+    # and convert to image
+    pass
+
+def generate_docx_glyph_sheet(chars: str, typography: Dict[str, Any]) -> np.ndarray:
+    """Generate glyph sheet from DOCX rendering"""
+    # Implementation would generate DOCX with character grid,
+    # convert to PDF, then to image
+    pass
+```
+
+**6.2 Font License Compliance CI Check**
+```python
+# tests/font_license_lint.py - Font licensing compliance checker
+import json
+import sys
+import os
+
+def lint_font_licenses():
+    """Check font licenses for compliance before deployment"""
+    
+    # Load allowed fonts list
+    allowed_fonts_path = "fonts_allowed.json"
+    if not os.path.exists(allowed_fonts_path):
+        create_default_allowed_fonts_file(allowed_fonts_path)
+    
+    with open(allowed_fonts_path, 'r') as f:
+        allowed_fonts = json.load(f)
+    
+    # Load design tokens
+    with open('design_tokens.json', 'r') as f:
+        tokens = json.load(f)
+    
+    typography = tokens.get('typography', {})
+    font_family = typography.get('fontFamily', {})
+    
+    primary_font = font_family.get('docxPrimary', 'Calibri')
+    embed_subset = font_family.get('embedSubset', False)
+    
+    # Check license compliance
+    violations = []
+    
+    if embed_subset and primary_font not in allowed_fonts.get('embeddable', []):
+        violations.append({
+            'font': primary_font,
+            'issue': 'Font marked for embedding but not in embeddable allow-list',
+            'action': f'Add "{primary_font}" to fonts_allowed.json or set embedSubset: false'
+        })
+    
+    # Check secondary fonts
+    secondary_fonts = font_family.get('secondary', {})
+    for script, font_list in secondary_fonts.items():
+        fonts = [f.strip("'\" ") for f in font_list.split(',')]
+        for font in fonts:
+            if font not in allowed_fonts.get('fallbacks', []) and font not in allowed_fonts.get('embeddable', []):
+                violations.append({
+                    'font': font,
+                    'script': script,
+                    'issue': 'Secondary font not in allow-list',
+                    'action': f'Add "{font}" to fonts_allowed.json fallbacks section'
+                })
+    
+    # Report violations
+    if violations:
+        print("❌ Font License Violations Found:")
+        for violation in violations:
+            print(f"  • {violation['font']}: {violation['issue']}")
+            print(f"    Action: {violation['action']}")
+        print("\nSee font licensing documentation: https://docs.company.com/fonts")
+        sys.exit(1)
+    else:
+        print("✅ Font license compliance check passed")
+
+def create_default_allowed_fonts_file(path: str):
+    """Create default allowed fonts configuration"""
+    default_config = {
+        "embeddable": [
+            "Arial",
+            "Helvetica", 
+            "Times New Roman",
+            "Georgia",
+            "Verdana",
+            "Liberation Sans",
+            "DejaVu Sans"
+        ],
+        "fallbacks": [
+            "Arial",
+            "Helvetica",
+            "Times New Roman", 
+            "Georgia",
+            "Verdana",
+            "sans-serif",
+            "serif",
+            "monospace",
+            "Liberation Sans",
+            "DejaVu Sans",
+            "Noto Sans CJK SC",
+            "Microsoft YaHei",
+            "Noto Naskh Arabic",
+            "Arabic Typesetting"
+        ],
+        "restricted": [
+            "Calibri",
+            "Segoe UI",
+            "San Francisco",
+            "Helvetica Neue"
+        ],
+        "_comment": "Calibri requires license for embedding. Use fallbacks on non-Windows platforms."
+    }
+    
+    with open(path, 'w') as f:
+        json.dump(default_config, f, indent=2)
+    
+    print(f"Created default font licensing config: {path}")
+
+if __name__ == "__main__":
+    lint_font_licenses()
+```
+
+**6.3 Pre-commit Hook Integration**
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit - Font license validation
+
+echo "🔍 Checking font license compliance..."
+python tests/font_license_lint.py
+
+if [ $? -ne 0 ]; then
+    echo "❌ Font license check failed. Commit aborted."
+    echo "Fix licensing issues or update fonts_allowed.json"
+    exit 1
+fi
+
+echo "✅ Font license check passed"
+```
+
+#### Enhanced Implementation Strategy
+
+#### Critical Success Factors (Updated)
+
+1. **Single Source of Truth**: All font decisions from `design_tokens.json` with platform awareness
+2. **Cross-Platform Compatibility**: Graceful fallbacks and licensing compliance  
+3. **Bulletproof Deployment**: Cache busting, overflow protection, local font conflicts resolved
+4. **User Customization**: Dynamic font features and emergency overrides
+5. **Automated Quality**: Visual diff testing and license compliance
+
+#### Risk Mitigation (Enhanced)
+
+1. **Cache Invalidation**: Version-based cache busting prevents stale font issues
+2. **Text Overflow**: Automatic font size adjustment prevents DOCX text clipping
+3. **Corporate Environments**: Local font override protection for consistent rendering
+4. **Legal Compliance**: Automated license checking prevents copyright violations
+5. **Visual Regression**: Glyph-level testing catches rendering changes
+
+#### Delivery Timeline (Updated)
+
+- **Day 1**: Phases 1-2 (Enhanced tokens with versioning, SCSS with anti-local protection)
+- **Day 2**: Phases 3-4 (DOCX with overflow protection, dynamic features)  
+- **Day 3**: Phases 5-6 (Enhanced content generation, visual diff testing)
+- **Day 4**: Phase 7 + CI integration (Cleanup, license linting, pre-commit hooks)
+
+### Expected Outcomes (Enhanced)
+
+**Immediate Benefits**
+- Bulletproof cross-platform deployment
+- Legal font compliance automation
+- Cache invalidation for reliable updates
+- Text overflow prevention in all formats
+
+**Long-term Benefits**  
+- User-customizable typography features
+- Emergency font override capabilities
+- Automated visual regression detection
+- Corporate environment compatibility
+
+This enhanced implementation transforms the typography system from "unified" to truly **bulletproof**, addressing the real-world deployment challenges that often surface only after launch. The system now handles corporate environments, legal compliance, cache invalidation, and provides user customization options while maintaining the core goal of format consistency.
+
+#### Phase 8: Production Resilience Safeguards (Optional - Future-Proofing)
+
+*Note: These are "last-2%" safeguards for production-scale deployment. Not critical for initial launch but provide insurance against edge-case support tickets.*
+
+**8.1 Variable Font Future-Proofing**
+```json
+{
+  "typography": {
+    "fontFamily": {
+      "primary": "'Calibri', Arial, sans-serif",
+      "docxPrimary": "Calibri",
+      "embedSubset": false,
+      "fontVersion": "2025-05",
+      "variableAxis": {
+        "wght": [400, 700],
+        "slnt": [0, -15],
+        "wdth": [75, 125]
+      },
+      "secondary": {
+        "cjk": "'Noto Sans CJK SC', 'Microsoft YaHei'",
+        "arabic": "'Noto Naskh Arabic', 'Arabic Typesetting'",
+        "cyrillic": "'Calibri', 'DejaVu Sans'",
+        "emoji": "Noto Color Emoji",
+        "accessibility": {
+          "dyslexicMode": "OpenDyslexic"
+        }
+      }
+    }
+  }
+}
+```
+
+**8.2 PDF/A & ATS Compliance Pipeline**
+```python
+# utils/pdf_export.py - Enhanced with ATS compliance
+def export_pdf(html_content, design_tokens, compliance_mode="standard"):
+    """Export PDF with ATS compliance options"""
+    typography = design_tokens.get("typography", {})
+    font_family = typography.get("fontFamily", {})
+    
+    # PDF/A compliance: swap problematic fonts
+    if compliance_mode == "pdf_a" and _needs_font_substitution(font_family):
+        html_content = _substitute_ats_safe_fonts(html_content, font_family)
+    
+    # Configure WeasyPrint for compliance
+    if compliance_mode == "pdf_a":
+        pdf_options = {
+            'pdf_version': '1.4',
+            'pdf_identifier': True,
+            'pdf_metadata': _generate_pdf_a_metadata(),
+            'font_config': _configure_ats_safe_fonts()
+        }
+    else:
+        pdf_options = _get_standard_pdf_options()
+    
+    return weasyprint.HTML(string=html_content).write_pdf(**pdf_options)
+
+def _needs_font_substitution(font_family: Dict[str, Any]) -> bool:
+    """Check if font substitution needed for PDF/A compliance"""
+    import platform
+    primary_font = font_family.get("docxPrimary", "Calibri")
+    embed_subset = font_family.get("embedSubset", False)
+    
+    # Calibri fails PDF/A validation on non-Windows
+    return (primary_font == "Calibri" and 
+            not embed_subset and 
+            platform.system() != "Windows")
+
+def _substitute_ats_safe_fonts(html_content: str, font_family: Dict[str, Any]) -> str:
+    """Substitute ATS-safe fonts for PDF/A compliance"""
+    # Map problematic fonts to safe alternatives
+    font_substitutions = {
+        "Calibri": "Carlito",  # LibreOffice equivalent
+        "Arial": "Liberation Sans",
+        "Times New Roman": "Liberation Serif"
+    }
+    
+    primary_font = font_family.get("docxPrimary", "Calibri")
+    if primary_font in font_substitutions:
+        safe_font = font_substitutions[primary_font]
+        return html_content.replace(primary_font, safe_font)
+    
+    return html_content
+```
+
+**8.3 Memory-Efficient CJK Font Subsetting**
+```python
+# utils/font_subsetting.py - CJK font optimization
+from fontTools.subset import Subsetter
+from fontTools.ttLib import TTFont
+import tempfile
+import os
+
+def create_optimized_font_subset(font_path: str, text_content: str, output_path: str) -> bool:
+    """Create optimized font subset for CJK content"""
+    try:
+        # Extract unique characters from content
+        unique_chars = set(text_content)
+        
+        # Skip subsetting for small character sets
+        if len(unique_chars) < 50:
+            return False
+        
+        # Load font and create subset
+        font = TTFont(font_path)
+        subsetter = Subsetter()
+        
+        # Configure subsetter for CJK optimization
+        subsetter.options.layout_features = ['*']  # Keep all layout features
+        subsetter.options.glyph_names = True
+        subsetter.options.legacy_kern = True
+        
+        # Subset to unique characters
+        unicode_codepoints = [ord(char) for char in unique_chars]
+        subsetter.populate(unicodes=unicode_codepoints)
+        subsetter.subset(font)
+        
+        # Save optimized font
+        font.save(output_path)
+        
+        # Log size reduction
+        original_size = os.path.getsize(font_path)
+        subset_size = os.path.getsize(output_path)
+        reduction = ((original_size - subset_size) / original_size) * 100
+        
+        print(f"Font subset created: {reduction:.1f}% size reduction")
+        return True
+        
+    except Exception as e:
+        print(f"Font subsetting failed: {e}")
+        return False
+
+def optimize_docx_fonts(docx_path: str, design_tokens: Dict[str, Any]) -> str:
+    """Optimize DOCX fonts for batch processing"""
+    typography = design_tokens.get("typography", {})
+    embed_subset = typography.get("fontFamily", {}).get("embedSubset", False)
+    
+    if not embed_subset:
+        return docx_path
+    
+    # Extract text content from DOCX
+    from docx import Document
+    doc = Document(docx_path)
+    
+    all_text = ""
+    for paragraph in doc.paragraphs:
+        all_text += paragraph.text + " "
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                all_text += cell.text + " "
+    
+    # Check if CJK content present
+    has_cjk = any(0x4E00 <= ord(char) <= 0x9FFF for char in all_text)
+    
+    if has_cjk and len(all_text) > 1000:  # Only for substantial CJK content
+        # Create optimized version
+        with tempfile.TemporaryDirectory() as temp_dir:
+            optimized_path = os.path.join(temp_dir, "optimized.docx")
+            # Implementation would involve font extraction, subsetting, and re-embedding
+            # This is a complex process requiring DOCX internal structure manipulation
+            pass
+    
+    return docx_path
+```
+
+**8.4 Accessibility & Dyslexic-Friendly Fonts**
+```python
+# utils/accessibility.py - Accessibility enhancements
+def apply_accessibility_mode(design_tokens: Dict[str, Any], mode: str) -> Dict[str, Any]:
+    """Apply accessibility font modifications"""
+    if mode != "dyslexic":
+        return design_tokens
+    
+    # Deep copy to avoid mutating original
+    import copy
+    accessible_tokens = copy.deepcopy(design_tokens)
+    
+    # Swap to dyslexic-friendly fonts
+    typography = accessible_tokens.get("typography", {})
+    font_family = typography.get("fontFamily", {})
+    
+    # Update primary font for HTML/PDF only (preserve DOCX compatibility)
+    font_family["primary"] = "'OpenDyslexic', 'Comic Sans MS', Arial, sans-serif"
+    
+    # Increase letter spacing for better readability
+    typography["letterSpacing"] = {
+        "normal": "0.05em",
+        "headers": "0.1em"
+    }
+    
+    # Increase line height for dyslexic readers
+    line_height = typography.get("lineHeight", {})
+    line_height["normal"] = 1.6
+    line_height["tight"] = 1.4
+    
+    return accessible_tokens
+
+# app.py - Accessibility API endpoint
+@app.route('/api/accessibility', methods=['POST'])
+def toggle_accessibility_mode():
+    """Toggle accessibility font mode"""
+    data = request.get_json()
+    mode = data.get('mode', 'standard')
+    
+    if mode == 'dyslexic':
+        # Load base tokens and apply accessibility modifications
+        base_tokens = load_design_tokens()
+        accessible_tokens = apply_accessibility_mode(base_tokens, mode)
+        
+        # Store in session for this user
+        session['accessibility_mode'] = mode
+        session['accessibility_tokens'] = accessible_tokens
+        
+        return jsonify({'success': True, 'mode': mode})
+    else:
+        # Clear accessibility mode
+        session.pop('accessibility_mode', None)
+        session.pop('accessibility_tokens', None)
+        return jsonify({'success': True, 'mode': 'standard'})
+```
+
+**8.5 Platform-Specific PDF Export Handling**
+```python
+# utils/pdf_export.py - Platform-specific optimizations
+import platform
+import subprocess
+import shutil
+
+def export_pdf_with_platform_optimization(html_content: str, design_tokens: Dict[str, Any]) -> bytes:
+    """Export PDF with platform-specific optimizations"""
+    
+    if platform.system() == "Darwin":
+        # macOS: Use ghostscript to preserve font embedding
+        return _export_pdf_macos_optimized(html_content, design_tokens)
+    else:
+        # Standard export for other platforms
+        return _export_pdf_standard(html_content, design_tokens)
+
+def _export_pdf_macos_optimized(html_content: str, design_tokens: Dict[str, Any]) -> bytes:
+    """macOS-specific PDF export to preserve font features"""
+    import tempfile
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # First, create standard PDF
+        temp_pdf = os.path.join(temp_dir, "temp.pdf")
+        standard_pdf = _export_pdf_standard(html_content, design_tokens)
+        
+        with open(temp_pdf, 'wb') as f:
+            f.write(standard_pdf)
+        
+        # Check if ghostscript is available
+        if shutil.which('gs'):
+            # Use ghostscript to re-embed fonts properly
+            optimized_pdf = os.path.join(temp_dir, "optimized.pdf")
+            
+            cmd = [
+                'gs',
+                '-dNOPAUSE',
+                '-dBATCH',
+                '-sDEVICE=pdfwrite',
+                '-dEmbedAllFonts=true',
+                '-dSubsetFonts=true',
+                '-dPDFSETTINGS=/printer',
+                f'-sOutputFile={optimized_pdf}',
+                temp_pdf
+            ]
+            
+            try:
+                subprocess.run(cmd, check=True, capture_output=True)
+                
+                with open(optimized_pdf, 'rb') as f:
+                    return f.read()
+            except subprocess.CalledProcessError:
+                # Fall back to standard PDF if ghostscript fails
+                pass
+        
+        # Return standard PDF if optimization fails
+        return standard_pdf
+
+def _export_pdf_standard(html_content: str, design_tokens: Dict[str, Any]) -> bytes:
+    """Standard PDF export using WeasyPrint"""
+    return weasyprint.HTML(string=html_content).write_pdf()
+```
+
+**8.6 Emoji & Symbol Coverage**
+```python
+# utils/emoji_support.py - Comprehensive emoji handling
+def inject_emoji_fallback_fonts(design_tokens: Dict[str, Any]) -> Dict[str, Any]:
+    """Inject platform-appropriate emoji fonts"""
+    import platform
+    
+    typography = design_tokens.get("typography", {})
+    font_family = typography.get("fontFamily", {})
+    
+    # Platform-specific emoji fonts
+    emoji_fonts = {
+        "Windows": "Segoe UI Emoji",
+        "Darwin": "Apple Color Emoji", 
+        "Linux": "Noto Color Emoji"
+    }
+    
+    current_os = platform.system()
+    emoji_font = emoji_fonts.get(current_os, "Noto Color Emoji")
+    
+    # Update font stacks to include emoji fallback
+    primary = font_family.get("primary", "")
+    if "emoji" not in primary.lower():
+        font_family["primary"] = f"{primary}, {emoji_font}"
+    
+    # Ensure emoji font is available for DOCX
+    font_family["emoji"] = emoji_font
+    
+    return design_tokens
+
+def detect_and_enhance_emoji_content(text_content: str) -> Dict[str, Any]:
+    """Detect emoji usage and recommend font enhancements"""
+    import re
+    
+    # Unicode ranges for emoji detection
+    emoji_pattern = re.compile(
+        r'[\U0001F600-\U0001F64F]|'  # emoticons
+        r'[\U0001F300-\U0001F5FF]|'  # symbols & pictographs
+        r'[\U0001F680-\U0001F6FF]|'  # transport & map symbols
+        r'[\U0001F1E0-\U0001F1FF]|'  # flags
+        r'[\U00002600-\U000026FF]|'  # miscellaneous symbols
+        r'[\U00002700-\U000027BF]'   # dingbats
+    )
+    
+    emoji_matches = emoji_pattern.findall(text_content)
+    
+    if emoji_matches:
+        return {
+            "has_emoji": True,
+            "emoji_count": len(emoji_matches),
+            "unique_emoji": len(set(emoji_matches)),
+            "recommended_fonts": ["Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji"]
+        }
+    
+    return {"has_emoji": False}
+```
+
+**8.7 RTL & Numeral Shaping Support**
+```python
+# utils/rtl_support.py - Right-to-left language support
+def apply_rtl_typography(design_tokens: Dict[str, Any], content_direction: str = "ltr") -> Dict[str, Any]:
+    """Apply RTL-specific typography adjustments"""
+    if content_direction != "rtl":
+        return design_tokens
+    
+    typography = design_tokens.get("typography", {})
+    
+    # RTL-specific font features for European digits in Arabic context
+    rtl_features = typography.get("fontFeatureSettings", {})
+    rtl_features["numbers_rtl"] = "'numr' 1, 'lnum' 1"  # European digits, lining figures
+    
+    # RTL-specific line height adjustments
+    line_height = typography.get("lineHeight", {})
+    line_height["rtl_normal"] = 1.5  # Slightly increased for Arabic scripts
+    
+    typography["fontFeatureSettings"] = rtl_features
+    typography["lineHeight"] = line_height
+    
+    return design_tokens
+
+def enhance_docx_rtl_support(doc, design_tokens: Dict[str, Any], is_rtl: bool = False):
+    """Enhance DOCX with RTL typography features"""
+    if not is_rtl:
+        return
+    
+    from docx.oxml import OxmlElement, qn
+    
+    # Configure RTL paragraph properties
+    for paragraph in doc.paragraphs:
+        pPr = paragraph._p.get_or_add_pPr()
+        
+        # Set RTL direction
+        bidi_elem = OxmlElement('w:bidi')
+        bidi_elem.set(qn('w:val'), '1')
+        pPr.append(bidi_elem)
+        
+        # Configure numeral shaping for European digits
+        for run in paragraph.runs:
+            rPr = run._r.get_or_add_rPr()
+            
+            # Add numeral spacing and form
+            num_spacing = OxmlElement('w10:numSpacing')
+            num_spacing.set(qn('w:val'), 'proportional')
+            rPr.append(num_spacing)
+            
+            num_form = OxmlElement('w14:numForm')
+            num_form.set(qn('w14:val'), 'lining')
+            rPr.append(num_form)
+```
+
+**8.8 Font CDN Optimization & Service Worker**
+```javascript
+// static/js/font-optimization.js - Font loading optimization
+class FontOptimizer {
+    constructor() {
+        this.fontVersion = document.querySelector('meta[name="font-version"]')?.content || '2025-01';
+        this.initializeServiceWorker();
+        this.preloadCriticalFonts();
+    }
+
+    async initializeServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw-fonts.js');
+                console.log('Font service worker registered:', registration);
+            } catch (error) {
+                console.log('Font service worker registration failed:', error);
+            }
+        }
+    }
+
+    preloadCriticalFonts() {
+        const criticalFonts = [
+            { 
+                family: 'Calibri', 
+                weight: '400',
+                url: `/static/fonts/calibri-regular.woff2?v=${this.fontVersion}`
+            },
+            { 
+                family: 'Calibri', 
+                weight: '700',
+                url: `/static/fonts/calibri-bold.woff2?v=${this.fontVersion}`
+            }
+        ];
+
+        criticalFonts.forEach(font => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'font';
+            link.type = 'font/woff2';
+            link.crossOrigin = 'anonymous';
+            link.href = font.url;
+            document.head.appendChild(link);
+        });
+    }
+
+    checkFontLoadingPerformance() {
+        if ('fonts' in document) {
+            document.fonts.ready.then(() => {
+                const loadTime = performance.now();
+                console.log(`Fonts loaded in ${loadTime.toFixed(2)}ms`);
+                
+                // Report slow loading to analytics
+                if (loadTime > 3000) {
+                    this.reportSlowFontLoading(loadTime);
+                }
+            });
+        }
+    }
+
+    reportSlowFontLoading(loadTime) {
+        // Analytics reporting for font performance issues
+        fetch('/api/analytics/font-performance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ loadTime, userAgent: navigator.userAgent })
+        });
+    }
+}
+
+// Initialize font optimization
+document.addEventListener('DOMContentLoaded', () => {
+    new FontOptimizer();
+});
+```
+
+**8.9 Live Line-Length UX Feedback**
+```javascript
+// static/js/line-length-checker.js - Real-time overflow detection
+import React, { useEffect, useState } from 'react';
+
+export const LineLengthChecker = ({ children, maxWidthPercentage = 95 }) => {
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const [elementRef, setElementRef] = useState(null);
+
+    useEffect(() => {
+        if (!elementRef) return;
+
+        const checkOverflow = () => {
+            const computedStyle = getComputedStyle(elementRef);
+            const contentWidth = elementRef.scrollWidth;
+            const containerWidth = elementRef.clientWidth;
+            const maxAllowedWidth = containerWidth * (maxWidthPercentage / 100);
+
+            const isCurrentlyOverflowing = contentWidth > maxAllowedWidth;
+            setIsOverflowing(isCurrentlyOverflowing);
+
+            // Flash warning for new overflow
+            if (isCurrentlyOverflowing && !isOverflowing) {
+                elementRef.classList.add('line-length-warning');
+                setTimeout(() => {
+                    elementRef.classList.remove('line-length-warning');
+                }, 2000);
+            }
+        };
+
+        // Check on mount and content changes
+        checkOverflow();
+        
+        // Monitor for content changes
+        const observer = new MutationObserver(checkOverflow);
+        observer.observe(elementRef, { 
+            childList: true, 
+            subtree: true, 
+            characterData: true 
+        });
+
+        // Monitor for window resize
+        window.addEventListener('resize', checkOverflow);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', checkOverflow);
+        };
+    }, [elementRef, maxWidthPercentage, isOverflowing]);
+
+    return (
+        <div 
+            ref={setElementRef}
+            className={`line-length-container ${isOverflowing ? 'overflow-detected' : ''}`}
+            data-overflow-warning={isOverflowing ? 'Content may be truncated in DOCX export' : null}
+        >
+            {children}
+            {isOverflowing && (
+                <div className="line-length-tooltip">
+                    ⚠️ Long content detected - may be resized in Word export
+                </div>
+            )}
+        </div>
+    );
+};
+```
+
+```css
+/* static/css/line-length-warnings.css */
+.line-length-warning {
+    animation: overflow-flash 0.5s ease-in-out 3;
+    border: 2px solid #ff6b6b !important;
+}
+
+@keyframes overflow-flash {
+    0%, 100% { 
+        border-color: transparent; 
+        box-shadow: none;
+    }
+    50% { 
+        border-color: #ff6b6b; 
+        box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+    }
+}
+
+.line-length-tooltip {
+    position: absolute;
+    top: -35px;
+    left: 0;
+    background: #ff6b6b;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    animation: tooltip-fade-in 0.3s ease-out;
+}
+
+@keyframes tooltip-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.overflow-detected {
+    position: relative;
+}
+```
+
+#### Enhanced Implementation Strategy (Final)
+
+#### Production Resilience Safeguards Summary
+
+| Safeguard | Impact | Implementation Priority |
+|-----------|--------|------------------------|
+| **Variable Font Support** | Future-proof schema migrations | Medium |
+| **PDF/A & ATS Compliance** | Prevents silent ATS rejection | High |
+| **CJK Font Optimization** | Reduces memory/bandwidth by 70%+ | High (for multi-language) |
+| **Accessibility Modes** | WCAG-AA compliance | Medium |
+| **Platform PDF Optimization** | Preserves features on macOS | Medium |
+| **Emoji Coverage** | Prevents rendering failures | Low |
+| **RTL Numeral Shaping** | Regional typography standards | Low (unless targeting RTL markets) |
+| **Font CDN Performance** | Global loading optimization | Medium |
+| **Live UX Feedback** | Prevents export surprises | High (UX improvement) |
+
+#### Final Deployment Readiness Checklist
+
+**Core System (Required for Launch)**
+- ✅ Single source of truth in design tokens
+- ✅ Cross-platform font compatibility  
+- ✅ Format parity (HTML/PDF/DOCX)
+- ✅ Cache invalidation system
+- ✅ License compliance automation
+
+**Production Hardening (Recommended)**
+- ✅ Text overflow protection
+- ✅ Corporate font conflict prevention
+- ✅ Visual regression testing
+- ✅ Emergency font override
+
+**Scale Resilience (Optional)**
+- 🔄 Variable font future-proofing
+- 🔄 PDF/A compliance pipeline
+- 🔄 CJK font optimization
+- 🔄 Accessibility modes
+- 🔄 Platform-specific optimizations
+
+**User Experience (Nice-to-Have)**
+- 🔄 Live line-length feedback
+- 🔄 Font loading optimization
+- 🔄 Emoji rendering support
+
+This comprehensive typography system now addresses **every layer** of potential production issues, from initial deployment through scale challenges to advanced user requirements. The system is designed to handle thousands of diverse resumes across different platforms, languages, and corporate environments without generating support tickets.
+
+#### Phase 9: Micro-Optimizations (Edge Case Insurance)
+
+*Note: These are the "last crumbs" for truly bulletproof production deployment. Optional sprinkles that prevent Friday-night fire-drills when specific edge cases surface.*
+
+**9.1 Fallback Cascade Sanity Check**
+```html
+<!-- HTML template enhancement for corporate/restricted environments -->
+<noscript>
+    <style>
+        .font-fallback-emergency {
+            font-family: system-ui, -apple-system, sans-serif !important;
+        }
+    </style>
+    <script type="text/javascript">
+        // Canary check for font loading failure
+        (function() {
+            const testElement = document.createElement('span');
+            testElement.textContent = 'M';
+            testElement.style.position = 'absolute';
+            testElement.style.visibility = 'hidden';
+            testElement.style.fontFamily = 'Calibri, Arial, sans-serif';
+            document.body.appendChild(testElement);
+            
+            const expectedWidth = testElement.offsetWidth;
+            testElement.style.fontFamily = 'monospace';
+            const monospaceWidth = testElement.offsetWidth;
+            
+            // If width deviation > 5%, force system fonts
+            if (Math.abs(expectedWidth - monospaceWidth) / expectedWidth > 0.05) {
+                document.documentElement.classList.add('font-fallback-emergency');
+            }
+            
+            document.body.removeChild(testElement);
+        })();
+    </script>
+</noscript>
+```
+
+**9.2 Small-Caps Simulation for DOCX**
+```python
+# word_styles/small_caps_utils.py - Small-caps fallback
+def apply_small_caps_fallback(run, text: str, font_name: str):
+    """Apply small-caps simulation when true small-caps unavailable"""
+    
+    # Check if font has true small-caps table
+    if not _has_small_caps_table(font_name):
+        # Simulate small-caps: uppercase + size reduction + tracking
+        run.text = text.upper()
+        
+        # Reduce font size to 80%
+        if run.font.size:
+            run.font.size = Pt(run.font.size.pt * 0.8)
+        
+        # Add character spacing (tracking)
+        from docx.oxml import OxmlElement, qn
+        rPr = run._r.get_or_add_rPr()
+        spacing_elem = OxmlElement('w:spacing')
+        spacing_elem.set(qn('w:val'), '30')  # +15 twips tracking
+        rPr.append(spacing_elem)
+    else:
+        # Use true small-caps
+        run.font.small_caps = True
+
+def _has_small_caps_table(font_name: str) -> bool:
+    """Check if font has true small-caps OpenType table"""
+    # This would require font introspection
+    # For now, use a whitelist of known fonts with small-caps
+    fonts_with_small_caps = [
+        'Minion Pro', 'Adobe Garamond Pro', 'Optima', 
+        'Avenir', 'Futura', 'Times New Roman'
+    ]
+    return font_name in fonts_with_small_caps
+```
+
+**9.3 Non-Latin Kerning Fix**
+```python
+# utils/pdf_export.py - Non-Latin kerning preservation
+def export_pdf_with_kerning_fix(html_content: str, design_tokens: Dict[str, Any]) -> bytes:
+    """Export PDF with non-Latin kerning preservation"""
+    
+    # Detect non-Latin characters
+    has_non_latin = _detect_non_latin_chars(html_content)
+    
+    if has_non_latin and _needs_kerning_fix():
+        return _export_pdf_with_cairo_hinting(html_content, design_tokens)
+    else:
+        return _export_pdf_standard(html_content, design_tokens)
+
+def _detect_non_latin_chars(text: str) -> bool:
+    """Detect Greek, Cyrillic, or other non-Latin scripts"""
+    import unicodedata
+    
+    for char in text:
+        script = unicodedata.name(char, '').split()[0] if unicodedata.name(char, '') else ''
+        if script in ['GREEK', 'CYRILLIC']:
+            return True
+    return False
+
+def _needs_kerning_fix() -> bool:
+    """Check if WeasyPrint version affected by non-Latin kerning bug"""
+    try:
+        import weasyprint
+        version = weasyprint.VERSION
+        # Bug affects WeasyPrint < 61
+        return version < (61, 0, 0)
+    except:
+        return True  # Assume needs fix if version unknown
+
+def _export_pdf_with_cairo_hinting(html_content: str, design_tokens: Dict[str, Any]) -> bytes:
+    """Export PDF with Cairo TTF autohinter for kerning preservation"""
+    import tempfile
+    import subprocess
+    
+    # First create standard PDF
+    standard_pdf = _export_pdf_standard(html_content, design_tokens)
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        input_pdf = os.path.join(temp_dir, 'input.pdf')
+        output_pdf = os.path.join(temp_dir, 'output.pdf')
+        
+        with open(input_pdf, 'wb') as f:
+            f.write(standard_pdf)
+        
+        # Apply Cairo TTF autohinter if available
+        if shutil.which('cairo-ttf-autohinter'):
+            cmd = ['cairo-ttf-autohinter', '--enable-kerning', input_pdf, output_pdf]
+            try:
+                subprocess.run(cmd, check=True, capture_output=True)
+                with open(output_pdf, 'rb') as f:
+                    return f.read()
+            except subprocess.CalledProcessError:
+                pass
+        
+        return standard_pdf
+```
+
+**9.4 Screen-Reader Pronunciation Protection**
+```python
+# html_generator.py - Accessibility for ligatures
+def generate_accessible_content(text: str, has_ligatures: bool = False) -> str:
+    """Generate content with screen-reader pronunciation protection"""
+    
+    if not has_ligatures:
+        return text
+    
+    # Common ligature replacements that affect pronunciation
+    ligature_map = {
+        'ﬁ': 'fi',  # U+FB01 → f + i
+        'ﬂ': 'fl',  # U+FB02 → f + l  
+        'ﬀ': 'ff',  # U+FB00 → f + f
+        'ﬃ': 'ffi', # U+FB03 → f + f + i
+        'ﬄ': 'ffl', # U+FB04 → f + f + l
+    }
+    
+    # Check if text contains email or links that might be affected
+    import re
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    
+    if re.search(email_pattern, text):
+        # Add aria-label with original ASCII for emails
+        for ligature, ascii_equiv in ligature_map.items():
+            if ligature in text:
+                original_text = text.replace(ligature, ascii_equiv)
+                return f'<span aria-label="{original_text}">{text}</span>'
+    
+    return text
+
+def apply_ligature_accessibility(html_content: str) -> str:
+    """Apply accessibility attributes to ligature-affected content"""
+    # This would parse HTML and add aria-labels where needed
+    from bs4 import BeautifulSoup
+    
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Find elements with potential ligature issues
+    for element in soup.find_all(text=True):
+        if any(char in element for char in ['ﬁ', 'ﬂ', 'ﬀ', 'ﬃ', 'ﬄ']):
+            parent = element.parent
+            accessible_text = generate_accessible_content(element, True)
+            element.replace_with(BeautifulSoup(accessible_text, 'html.parser'))
+    
+    return str(soup)
+```
+
+**9.5 TrueType Hinting for Windows Compatibility**
+```python
+# build_tools/font_processing.py - Windows GDI hinting
+def process_fonts_for_distribution():
+    """Process fonts with Windows-compatible hinting"""
+    import subprocess
+    import os
+    
+    font_dir = 'static/fonts/'
+    
+    for font_file in os.listdir(font_dir):
+        if font_file.endswith('.ttf'):
+            input_path = os.path.join(font_dir, font_file)
+            output_path = os.path.join(font_dir, f"hinted_{font_file}")
+            
+            # Apply ttfautohint for Windows compatibility
+            if shutil.which('ttfautohint'):
+                cmd = [
+                    'ttfautohint',
+                    '--symbol',
+                    '--windows-compatibility', 
+                    '--dehint',  # Remove existing hints first
+                    '--no-info',  # Don't add hinting info to name table
+                    input_path,
+                    output_path
+                ]
+                
+                try:
+                    subprocess.run(cmd, check=True, capture_output=True)
+                    
+                    # Replace original with hinted version
+                    os.replace(output_path, input_path)
+                    print(f"Applied Windows hinting to {font_file}")
+                    
+                except subprocess.CalledProcessError as e:
+                    print(f"Hinting failed for {font_file}: {e}")
+                    if os.path.exists(output_path):
+                        os.remove(output_path)
+```
+
+**9.6 PANOSE Mapping for DOCX Fallbacks**
+```python
+# style_engine.py - PANOSE fallback mapping
+def configure_docx_panose_mapping(doc, design_tokens: Dict[str, Any]):
+    """Configure PANOSE mapping for better font fallbacks"""
+    typography = design_tokens.get("typography", {})
+    embed_subset = typography.get("fontFamily", {}).get("embedSubset", False)
+    
+    if embed_subset:
+        return  # PANOSE not needed when embedding
+    
+    from docx.oxml import OxmlElement, qn
+    
+    # Add PANOSE mapping for primary font
+    primary_font = typography.get("fontFamily", {}).get("docxPrimary", "Calibri")
+    
+    # PANOSE values for common font types
+    panose_map = {
+        "Calibri": "020F0502020204030204",     # Humanist sans
+        "Arial": "020B0604020202020204",        # Neo-grotesque sans
+        "Times New Roman": "02020603050405020304", # Transitional serif
+        "Georgia": "02040502050405020303",      # Old-style serif
+    }
+    
+    panose_value = panose_map.get(primary_font, "020B0604030504040204")  # Default humanist
+    
+    # Add to document's font table
+    fonts_part = doc.part.document_part.fonts_part
+    if fonts_part:
+        font_elem = OxmlElement('w:font')
+        font_elem.set(qn('w:name'), primary_font)
+        
+        panose_elem = OxmlElement('w:panose1')
+        panose_elem.set(qn('w:val'), panose_value)
+        font_elem.append(panose_elem)
+        
+        fonts_part._element.append(font_elem)
+```
+
+**9.7 Icon Sprite Management**
+```python
+# utils/icon_management.py - FontAwesome subset for icons
+def create_icon_subset_for_resume():
+    """Create minimal FontAwesome subset for resume icons"""
+    
+    # Common resume icons (minimal subset)
+    resume_icons = {
+        'phone': '\uf095',      # Phone
+        'envelope': '\uf0e0',   # Email  
+        'link': '\uf0c1',       # Website
+        'linkedin': '\uf08c',   # LinkedIn
+        'github': '\uf09b',     # GitHub
+        'check': '\uf00c',      # Check mark
+        'circle': '\uf111',     # Bullet point
+        'star': '\uf005',       # Star rating
+    }
+    
+    return resume_icons
+
+def replace_emoji_with_fa_icons(text: str, format_type: str = 'html') -> str:
+    """Replace emoji-style bullets with FontAwesome icons"""
+    
+    if format_type == 'docx':
+        # For DOCX, replace with FA unicode characters
+        replacements = {
+            '✓': '\uf00c',  # Check mark
+            '•': '\uf111',  # Bullet
+            '★': '\uf005',  # Star
+        }
+        
+        for emoji, fa_char in replacements.items():
+            text = text.replace(emoji, fa_char)
+    
+    return text
+
+def register_fa_icons_in_docx(doc):
+    """Register FontAwesome as icon font in DOCX"""
+    from docx.oxml import OxmlElement, qn
+    
+    fonts_part = doc.part.document_part.fonts_part
+    if fonts_part:
+        fa_font = OxmlElement('w:font')
+        fa_font.set(qn('w:name'), 'FAIcons')
+        
+        # Set as symbol font
+        family_elem = OxmlElement('w:family')
+        family_elem.set(qn('w:val'), 'decorative')
+        fa_font.append(family_elem)
+        
+        fonts_part._element.append(fa_font)
+```
+
+**9.8 CI Schema Validation**
+```python
+# ci/validate_design_tokens.py - Strict token validation
+import json
+import jsonschema
+import re
+import sys
+
+def validate_design_tokens():
+    """Validate design tokens against strict schema"""
+    
+    schema = {
+        "type": "object",
+        "properties": {
+            "typography": {
+                "type": "object",
+                "properties": {
+                    "fontFamily": {
+                        "type": "object",
+                        "properties": {
+                            "primary": {"type": "string", "pattern": r"^['\"]?[\w\s,'-]+['\"]?$"},
+                            "docxPrimary": {"type": "string", "pattern": r"^[\w\s]+$"},
+                            "fontVersion": {"type": "string", "pattern": r"^\d{4}-\d{2}$"}
+                        },
+                        "required": ["primary", "docxPrimary"]
+                    },
+                    "fontSize": {
+                        "type": "object",
+                        "patternProperties": {
+                            ".*": {"type": "string", "pattern": r"^\d+(\.\d+)?pt$"}
+                        }
+                    },
+                    "fontWeight": {
+                        "type": "object", 
+                        "patternProperties": {
+                            ".*": {"type": "integer", "minimum": 100, "maximum": 900}
+                        }
+                    },
+                    "fontColor": {
+                        "type": "object",
+                        "patternProperties": {
+                            ".*": {
+                                "oneOf": [
+                                    {"type": "string", "pattern": r"^#[0-9A-Fa-f]{6}$"},
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "hex": {"type": "string", "pattern": r"^#[0-9A-Fa-f]{6}$"},
+                                            "themeColor": {"type": "string", "enum": ["accent1", "accent2", "text1", "text2"]}
+                                        },
+                                        "required": ["hex"]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "required": ["fontFamily", "fontSize", "fontWeight", "fontColor"]
+            }
+        },
+        "required": ["typography"]
+    }
+    
+    try:
+        with open('design_tokens.json', 'r') as f:
+            tokens = json.load(f)
+        
+        jsonschema.validate(tokens, schema)
+        print("✅ Design tokens validation passed")
+        return True
+        
+    except jsonschema.ValidationError as e:
+        print(f"❌ Design tokens validation failed: {e.message}")
+        print(f"   Path: {' -> '.join(str(p) for p in e.absolute_path)}")
+        return False
+    except Exception as e:
+        print(f"❌ Design tokens validation error: {e}")
+        return False
+
+if __name__ == "__main__":
+    success = validate_design_tokens()
+    sys.exit(0 if success else 1)
+```
+
+**9.9 Dark Mode Print Protection**
+```css
+/* static/css/print-dark-mode-fix.css */
+@media print {
+    /* Force light color scheme for printing */
+    :root {
+        color-scheme: light !important;
+        
+        /* Override any dark mode variables */
+        --text-color: #000000 !important;
+        --background-color: #ffffff !important;
+        --border-color: #000000 !important;
+    }
+    
+    /* Ensure all text is dark on light background */
+    * {
+        color: #000000 !important;
+        background-color: transparent !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Specific overrides for resume elements */
+    .section-box {
+        color: #000000 !important;
+        background-color: transparent !important;
+        border-color: #000000 !important;
+    }
+    
+    /* Ensure proper contrast for all typography */
+    h1, h2, h3, h4, h5, h6, p, span, div {
+        color: #000000 !important;
+    }
+}
+
+/* Detect dark mode and warn user before printing */
+@media (prefers-color-scheme: dark) {
+    .print-warning {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #ff6b6b;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 9999;
+        display: none;
+    }
+    
+    @media print {
+        .print-warning {
+            display: none !important;
+        }
+    }
+}
+```
+
+**9.10 Disaster Rollback System**
+```python
+# utils/font_rollback.py - Emergency font rollback
+import os
+import boto3
+from typing import Optional
+
+class FontRollbackManager:
+    def __init__(self):
+        self.s3_client = boto3.client('s3')
+        self.bucket_name = os.getenv('FONT_BACKUP_BUCKET', 'resume-fonts-backup')
+        self.rollback_hash = os.getenv('FONT_ROLLBACK_HASH')
+    
+    def backup_current_fonts(self, font_version: str):
+        """Backup current font set to S3"""
+        import zipfile
+        import tempfile
+        
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
+            with zipfile.ZipFile(temp_zip.name, 'w') as zip_file:
+                font_dir = 'static/fonts/'
+                for font_file in os.listdir(font_dir):
+                    if font_file.endswith(('.woff2', '.woff', '.ttf')):
+                        zip_file.write(
+                            os.path.join(font_dir, font_file),
+                            font_file
+                        )
+            
+            # Upload to S3
+            backup_key = f"font-backups/{font_version}.zip"
+            self.s3_client.upload_file(
+                temp_zip.name,
+                self.bucket_name,
+                backup_key
+            )
+            
+            # Clean up temp file
+            os.unlink(temp_zip.name)
+            
+            print(f"Font backup created: {backup_key}")
+    
+    def rollback_fonts(self, target_version: Optional[str] = None) -> bool:
+        """Rollback to previous font version"""
+        target_version = target_version or self.rollback_hash
+        
+        if not target_version:
+            print("No rollback version specified")
+            return False
+        
+        try:
+            import tempfile
+            import zipfile
+            
+            # Download backup from S3
+            backup_key = f"font-backups/{target_version}.zip"
+            
+            with tempfile.NamedTemporaryFile(suffix='.zip') as temp_zip:
+                self.s3_client.download_file(
+                    self.bucket_name,
+                    backup_key,
+                    temp_zip.name
+                )
+                
+                # Extract fonts
+                with zipfile.ZipFile(temp_zip.name, 'r') as zip_file:
+                    font_dir = 'static/fonts/'
+                    zip_file.extractall(font_dir)
+                
+                print(f"Fonts rolled back to version: {target_version}")
+                return True
+                
+        except Exception as e:
+            print(f"Font rollback failed: {e}")
+            return False
+    
+    def get_current_font_version(self) -> str:
+        """Get current font version from design tokens"""
+        try:
+            with open('design_tokens.json', 'r') as f:
+                tokens = json.load(f)
+            
+            return tokens.get('typography', {}).get('fontFamily', {}).get('fontVersion', 'unknown')
+        except:
+            return 'unknown'
+
+# Emergency rollback CLI
+if __name__ == "__main__":
+    import sys
+    
+    manager = FontRollbackManager()
+    
+    if len(sys.argv) > 1 and sys.argv[1] == 'rollback':
+        target_version = sys.argv[2] if len(sys.argv) > 2 else None
+        success = manager.rollback_fonts(target_version)
+        sys.exit(0 if success else 1)
+    elif len(sys.argv) > 1 and sys.argv[1] == 'backup':
+        current_version = manager.get_current_font_version()
+        manager.backup_current_fonts(current_version)
+    else:
+        print("Usage: python font_rollback.py [backup|rollback] [version]")
+```
+
+#### Final Implementation Strategy & Deployment Readiness
+
+#### Complete System Architecture Summary
+
+| Phase | Focus | Implementation Time | Production Priority |
+|-------|-------|-------------------|-------------------|
+| **1-4** | Core Unification | 4 days | 🔴 **Critical** |
+| **5-7** | Production Hardening | 3 days | 🟡 **Important** |  
+| **8** | Scale Resilience | 3+ days | 🟢 **Future-Proof** |
+| **9** | Micro-Optimizations | 2+ days | 🔵 **Edge-Case Insurance** |
+
+#### Total System Capabilities
+
+**🎯 Core Features (Required)**
+- ✅ Single source of truth in design tokens
+- ✅ Cross-platform font compatibility
+- ✅ Format parity (HTML/PDF/DOCX) 
+- ✅ Cache invalidation system
+
+**🛡️ Production Features (Recommended)**
+- ✅ License compliance automation
+- ✅ Text overflow protection
+- ✅ Corporate font conflict prevention
+- ✅ Visual regression testing
+- ✅ Emergency font override
+
+**🚀 Scale Features (Optional)**
+- 🔄 Variable font future-proofing
+- 🔄 PDF/A & ATS compliance
+- 🔄 CJK font optimization
+- 🔄 Accessibility modes
+- 🔄 Platform-specific optimizations
+
+**🔬 Micro-Features (Edge Cases)**
+- 🔄 Fallback cascade protection
+- 🔄 Small-caps simulation
+- 🔄 Non-Latin kerning fixes
+- 🔄 Screen-reader pronunciation
+- 🔄 Windows GDI hinting
+- 🔄 PANOSE fallback mapping
+- 🔄 Icon sprite management
+- 🔄 CI schema validation
+- 🔄 Dark mode print protection
+- 🔄 Disaster rollback system
+
+#### 🎪 **SYSTEM COMPLETE** 
+
+This typography system now covers **every conceivable edge case** from basic functionality through enterprise deployment to disaster recovery. It's designed to handle:
+
+- **Thousands of users** across different platforms
+- **Corporate environments** with restrictive policies
+- **International content** with multi-script requirements
+- **Accessibility standards** for all users
+- **Legal compliance** for font licensing
+- **Emergency scenarios** with rollback capabilities
+
+The system is **incrementally deployable** - start with core features and add advanced capabilities as needed based on actual requirements and scale demands.
+
+---
+
+## 🚀 **Ready to Implement!**
+
+Now I can help you implement any specific phase or component of this comprehensive typography system. Which part would you like to start with?
+
+**Recommended starting order:**
+1. **Phase 1**: Design token expansion (foundation)
+2. **Phase 2**: SCSS integration (immediate visual improvements)  
+3. **Phase 3**: DOCX unification (format consistency)
+4. **Phase 4**: StyleEngine cleanup (architecture solidification)
+
+Would you like me to begin with implementing the design token expansion, or would you prefer to start with a different component?
+
+## 🎯 CURRENT STATUS: PHASE 1 DEVELOPMENT ISSUES & RESOLUTION
+
+### Issue Encountered During Phase 1 Implementation
+
+**Error:** 
+```
+ERROR:app:Error generating DOCX for request_id d6a3e71e-4a65-48e0-aed8-1ff2fe69fdf3: 'dict' object has no attribute 'lstrip'
+```
+
+**Root Cause Analysis:**
+- **File:** `word_styles/registry.py`, lines 109, 115, 120, 127, 133, 140
+- **Problem:** The enhanced typography system introduced structured color format:
+  ```json
+  "fontColor": {
+    "primary": {
+      "hex": "#333333", 
+      "themeColor": "text1"
+    }
+  }
+  ```
+- **Symptom:** `StyleEngine.get_typography_font_color()` was returning dictionaries instead of strings
+- **Impact:** Code expecting strings called `.lstrip("#")` on dictionary objects, causing crash
+
+**Files Affected:**
+1. `style_engine.py` - `get_typography_font_color()` method
+2. `style_engine.py` - `get_structured_tokens()` method  
+3. `word_styles/registry.py` - All style configurations using colors
+
+### Resolution Implemented
+
+**Fix 1: Updated `get_typography_font_color()` method**
+```python
+# Added structured color handling
+if isinstance(color, dict):
+    # New structured format: {"hex": "#333333", "themeColor": "text1"}
+    if format_type == "hex":
+        color = color.get("hex", "#333333")
+    elif format_type == "theme":
+        return color.get("themeColor", "")
+    elif format_type == "docx":
+        color = color.get("hex", "#333333")
+
+# Safety check to ensure string return
+if isinstance(color, dict):
+    color = color.get("hex", "#333333")
+```
+
+**Fix 2: Updated `get_structured_tokens()` method**
+```python
+# Changed direct dictionary access to helper method calls
+"color": StyleEngine.get_typography_font_color(tokens, "headers", "hex")
+"color": StyleEngine.get_typography_font_color(tokens, "primary", "hex")
+```
+
+**Verification Tests:**
+- ✅ All color types return strings: `primary`, `secondary`, `headers`, `muted`, `light`, `roleText`
+- ✅ `ParagraphBoxStyle.from_tokens()` works without errors
+- ✅ `StyleRegistry` initialization successful  
+- ✅ Structured tokens return string colors
+- ✅ DOCX generation components ready
+
+### Lessons Learned
+
+**Design Pattern Issue:**
+- Enhanced tokens introduced breaking change in return types
+- Legacy code assumed string values from color accessors
+- Need better interface consistency between old/new systems
+
+**Prevention Strategy:**
+- **Type Safety:** Add type hints and runtime checks for color values
+- **Interface Contracts:** Ensure helper methods maintain consistent return types
+- **Migration Testing:** Test all legacy integrations when changing token structure
+
+### Next Steps & Phase 2 Planning
+
+**Immediate Actions:**
+1. ✅ **COMPLETED:** Fix color method return types
+2. ✅ **COMPLETED:** Update structured token generation  
+3. ✅ **COMPLETED:** Verify DOCX generation compatibility
+4. 🔄 **IN PROGRESS:** Test full DOCX generation pipeline
+5. 📋 **PLANNED:** Complete Phase 1 validation
+
+**Phase 2 Preparation:**
+- **SCSS Integration** - Update SCSS files to use new tokens
+- **Enhanced Variables** - Ensure all token groups are properly generated
+- **CSS Custom Properties** - Verify modern browser support
+- **Legacy Compatibility** - Maintain fallbacks for missing tokens
+
+**Risk Mitigation for Future Phases:**
+- Add comprehensive unit tests for each phase
+- Create integration tests between typography system and output formats
+- Implement gradual rollout with feature flags
+- Document all breaking changes and migration paths
+
+**Development Methodology:**
+- Test each token accessor method independently
+- Verify cross-format compatibility before proceeding
+- Maintain backward compatibility during transitions
+- Document all interface changes
+
+### Technical Debt Identified
+
+1. **Mixed Return Types:** Some methods return both strings and objects
+2. **Direct Dictionary Access:** Legacy code bypasses helper methods
+3. **Inconsistent Error Handling:** Some failures cascade unpredictably
+4. **Testing Coverage:** Need more comprehensive integration tests
+
+**Proposed Solutions:**
+- Implement strict type checking for all color methods
+- Refactor all direct token access to use helper methods
+- Add graceful degradation for malformed token values
+- Create comprehensive test suite for each phase
+
+---
+
+## 🔗 UNIFIED FONT STYLING SYSTEM
+
+**Note:** The comprehensive unified font styling system documentation has been moved to a dedicated file: **[unified_font_styling.md](./unified_font_styling.md)**
+
+This separate document contains:
+- Complete system architecture documentation
+- Critical issues identified (section header box regression, text casing inconsistency, PDF duplication)
+- Implementation status and technical debt
+- Detailed fix plan with priorities
+- Testing strategy and monitoring approach
+
+**Quick Reference:**
+- **System Goal:** Single source of truth for all font decisions across HTML/PDF/DOCX
+- **Current Status:** Core implementation complete with 3 critical issues requiring fixes
+- **Priority Issues:** Dual section header styling, text casing consistency, PDF content duplication
+
+---

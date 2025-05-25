@@ -1,6 +1,75 @@
 // Auto-generated from design_tokens.json. Do not edit directly.
 
-// Token naming convention: width/radius/padding values are unit-less strings. CSS applies units (px) via calc() multiplication. This prevents WeasyPrint calc() bugs and maintains clean token schema.
+// === UNIFIED TYPOGRAPHY SYSTEM ===
+// Enhanced typography tokens for consistent fonts across all formats
+$font-family-primary: "'Calibri', Arial, sans-serif";
+$font-family-fallback: "Arial, sans-serif";
+$font-family-docx: "Calibri";
+$font-family-web: "'Calibri', Arial, sans-serif";
+$font-version: "2025-05";
+$font-family-cjk: 'Noto Sans CJK SC', 'Microsoft YaHei';
+$font-family-arabic: 'Noto Naskh Arabic', 'Arabic Typesetting';
+$font-family-cyrillic: 'Calibri', 'DejaVu Sans';
+$font-family-emoji: "Noto Color Emoji";
+$font-family-dyslexic: "OpenDyslexic";
+$font-size-body: 11pt;
+$font-size-body-screen: 0.917rem;
+$font-size-small: 9pt;
+$font-size-small-screen: 0.750rem;
+$font-size-sectionHeader: 14pt;
+$font-size-sectionHeader-screen: 1.167rem;
+$font-size-nameHeader: 16pt;
+$font-size-nameHeader-screen: 1.333rem;
+$font-size-roleTitle: 11pt;
+$font-size-roleTitle-screen: 0.917rem;
+$font-size-companyName: 11pt;
+$font-size-companyName-screen: 0.917rem;
+$font-size-roleDescription: 11pt;
+$font-size-roleDescription-screen: 0.917rem;
+$font-size-bulletPoint: 11pt;
+$font-size-bulletPoint-screen: 0.917rem;
+$font-size-contactInfo: 11pt;
+$font-size-contactInfo-screen: 0.917rem;
+$font-size-skillCategory: 11pt;
+$font-size-skillCategory-screen: 0.917rem;
+$font-size-skillList: 11pt;
+$font-size-skillList-screen: 0.917rem;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+$line-height-tight: 1.2;
+$line-height-normal: 1.4;
+$line-height-loose: 1.6;
+$line-height-sectionHeader: 1.0;
+$line-height-body-pt: 15.4pt;
+$line-height-sectionHeader-pt: 18.0pt;
+$line-height-nameHeader-pt: 19.2pt;
+$line-height-roleTitle-pt: 15.4pt;
+$line-height-companyName-pt: 15.4pt;
+$line-height-roleDescription-pt: 15.4pt;
+$line-height-bulletPoint-pt: 15.4pt;
+$font-color-primary: #333333;
+$font-color-primary-theme: "text1";
+$font-color-secondary: #6c757d;
+$font-color-secondary-theme: "text2";
+$font-color-headers: #0D2B7E;
+$font-color-headers-theme: "accent1";
+$font-color-muted: #999999;
+$font-color-muted-theme: "text2";
+$font-color-light: #666666;
+$font-color-light-theme: "text2";
+$font-color-roleText: #333333;
+$font-color-roleText-theme: "text1";
+$font-style-normal: "normal";
+$font-style-italic: "italic";
+$font-feature-body: "'tnum' 1, 'liga' 1";
+$font-feature-headers: "'liga' 1, 'kern' 1";
+$font-feature-numbers: "'tnum' 1, 'lnum' 1";
+
+// === LEGACY AND OTHER TOKENS ===
+// Includes backward compatibility tokens and non-typography tokens
+$_comment: Token naming convention: width/radius/padding values are unit-less strings. CSS applies units (px) via calc() multiplication. This prevents WeasyPrint calc() bugs and maintains clean token schema.;
 $contentWidth: 95%;
 $contentPadding: 0.5in;
 $pageMarginVertical: 0.8cm;
@@ -97,6 +166,8 @@ $roleBox-docx-borderColor: #4A6FDC;
 $roleBox-docx-borderThemeColor: accent1;
 $roleBox-docx-paddingTopTwips: 40;
 $roleBox-docx-paddingSideTwips: 80;
+$roleBox-docx-paddingBottomTwips: 40;
+$roleBox-docx-backgroundColor: #F8F9FA;
 $sectionHeader-border-widthPt: 1;
 $sectionHeader-border-color: #000000;
 $sectionHeader-border-style: single;

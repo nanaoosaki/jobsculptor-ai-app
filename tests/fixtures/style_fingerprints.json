@@ -1,0 +1,36 @@
+{
+  "test_metadata": {
+    "request_id": "29fbc315-fa41-4c7b-b520-755f39b7060a",
+    "test_date": "2025-01-XX",
+    "formats_tested": [
+      "html",
+      "pdf",
+      "docx"
+    ]
+  },
+  "html_styles": {
+    "h2_casing": "normal",
+    "h2_font": "Calibri 14pt bold",
+    "h2_border": "#0D2B7E 1pt solid",
+    "role_duplication_count": 4
+  },
+  "pdf_styles": {
+    "h2_font": "Calibri 14pt bold",
+    "h2_border": "#0D2B7E 1pt solid",
+    "h2_casing": "normal",
+    "role_duplication_count": 1
+  },
+  "docx_styles": {
+    "h2_casing": "uppercase",
+    "h2_font": "Calibri 14pt bold",
+    "h2_border": "#0D2B7E 1pt solid",
+    "role_duplication_count": 1
+  },
+  "consistency_issues": {
+    "font_mismatch": false,
+    "border_mismatch": false,
+    "casing_mismatch": true,
+    "html_duplication": true,
+    "pdf_duplication": false
+  }
+}

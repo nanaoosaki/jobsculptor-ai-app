@@ -6,6 +6,14 @@ from typing import Dict, List, Union, Optional
 from flask import current_app
 from style_manager import StyleManager
 
+# Import universal renderers for consistent cross-format styling
+try:
+    from rendering.components import SectionHeader, RoleBox
+    from style_engine import StyleEngine
+    USE_UNIVERSAL_RENDERERS = True
+except ImportError:
+    USE_UNIVERSAL_RENDERERS = False
+
 logger = logging.getLogger(__name__)
 
 def validate_html_content(html_content: str) -> str:
@@ -157,22 +165,9 @@ def format_job_entry(company: str, location: str, position: str, dates: str, con
     # Position and dates on the second line with unified role box
     html_parts.append(f'<div class="position-bar position-line" aria-labelledby="company-location">')
     
-    # Role box now contains both role and dates
-    # O3: Fix double comma in ARIA label
-    aria_label = f"Position: {position}"
-    if dates:
-        aria_label += f", {dates}"
-    html_parts.append(f'<div class="role-box" role="presentation" aria-label="{aria_label}">')
-    html_parts.append(f'<span class="role">{position}</span>')
-    
-    # Add non-breaking space for screen reader pause between role and dates
-    if dates:
-        html_parts.append(f'&nbsp;<span class="dates">{dates}</span>')
-    
-    html_parts.append('</div>')  # Close role-box
-    
-    # Add noscript fallback for aggressive email clients
-    html_parts.append(f'<noscript><div class="visually-hidden" aria-hidden="true">{position} {dates if dates else ""}</div></noscript>')
+    # Use universal role box renderer for consistent styling and no duplication
+    role_box_html = generate_universal_role_box_html(position, dates)
+    html_parts.append(role_box_html)
     
     html_parts.append('</div>')  # Close position-bar
     
@@ -274,6 +269,70 @@ def format_project_entry(title: str, dates: str, details: List[str]) -> str:
     
     return ''.join(html_parts)
 
+
+def generate_universal_role_box_html(position: str, dates: Optional[str] = None) -> str:
+    """
+    Generate role box HTML using the universal RoleBox renderer.
+    
+    This ensures consistent styling across HTML/PDF/DOCX formats and
+    eliminates content duplication issues.
+    
+    Args:
+        position: Job title/position
+        dates: Optional employment dates
+        
+    Returns:
+        HTML string for the role box
+    """
+    if USE_UNIVERSAL_RENDERERS:
+        try:
+            tokens = StyleEngine.load_tokens()  # Use raw tokens instead of structured
+            role_box = RoleBox(tokens, position, dates)
+            return role_box.to_html()
+        except Exception as e:
+            logger.warning(f"Universal RoleBox renderer failed: {e}")
+            logger.warning("Falling back to legacy role box HTML")
+    
+    # Legacy fallback (should match existing structure)
+    aria_label = f"Position: {position}"
+    if dates:
+        aria_label += f", {dates}"
+    
+    html_parts = [
+        f'<div class="role-box" role="presentation" aria-label="{aria_label}">',
+        f'<span class="role">{position}</span>'
+    ]
+    
+    if dates:
+        html_parts.append(f'&nbsp;<span class="dates">{dates}</span>')
+    
+    html_parts.append('</div>')
+    return ''.join(html_parts)
+
+def generate_universal_section_header_html(section_name: str) -> str:
+    """
+    Generate section header HTML using the universal SectionHeader renderer.
+    
+    This ensures consistent styling across HTML/PDF/DOCX formats and
+    eliminates casing mismatches.
+    
+    Args:
+        section_name: Section header text
+        
+    Returns:
+        HTML string for the section header
+    """
+    if USE_UNIVERSAL_RENDERERS:
+        try:
+            tokens = StyleEngine.load_tokens()  # Use raw tokens instead of structured
+            section_header = SectionHeader(tokens, section_name)
+            return section_header.to_html()
+        except Exception as e:
+            logger.warning(f"Universal SectionHeader renderer failed: {e}")
+            logger.warning("Falling back to legacy section header HTML")
+    
+    # Legacy fallback
+    return f'<div class="section-box">{section_name}</div>'
 
 def generate_preview_from_llm_responses(request_id: str, upload_folder: str, for_screen: bool = True) -> str:
     """
