@@ -8,6 +8,7 @@ import os
 import logging
 import json
 import traceback
+import re
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
@@ -407,6 +408,98 @@ def tighten_before_headers(doc):
 # Replace old _fix_spacing_between_sections with new implementation
 _fix_spacing_between_sections = tighten_before_headers
 
+def parse_contact_string(contact_text: str) -> Dict[str, str]:
+    """
+    Parse contact information from a string format.
+    Handles both pipe-separated and space-separated formats with Unicode symbols.
+    
+    Args:
+        contact_text: Raw contact string from JSON
+        
+    Returns:
+        Dictionary with parsed contact fields
+    """
+    contact_data = {}
+    
+    # Split by lines and filter out empty lines
+    lines = [line.strip() for line in contact_text.strip().split('\n') if line.strip()]
+    
+    if not lines:
+        return contact_data
+    
+    # First line is the name
+    contact_data['name'] = lines[0].strip()
+    logger.info(f"Extracted name: {contact_data['name']}")
+    
+    # Process remaining lines for contact details
+    for line in lines[1:]:
+        line = line.strip()
+        if not line:
+            continue
+            
+        logger.info(f"Processing contact line: {line}")
+        
+        # Split by common separators (spaces, pipes, tabs)
+        # Handle both pipe-separated and space-separated formats
+        if '|' in line:
+            parts = [p.strip() for p in line.split('|') if p.strip()]
+        else:
+            # For space-separated format, split by multiple spaces or Unicode symbols
+            # Use regex to split on multiple spaces or symbol boundaries
+            parts = re.split(r'\s{2,}|(?<=\S)\s+(?=[☎✉📧📞🌐])|(?<=[☎✉📧📞🌐])\s+', line)
+            parts = [p.strip() for p in parts if p.strip()]
+        
+        logger.info(f"Split contact parts: {parts}")
+        
+        # Parse each part to identify contact type
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+                
+            # Remove Unicode symbols for easier parsing
+            clean_part = re.sub(r'[☎✉📧📞🌐]', '', part).strip()
+            
+            # Email detection
+            if '@' in clean_part and re.match(r'^[^@]+@[^@]+\.[^@]+$', clean_part):
+                contact_data['email'] = clean_part
+                logger.info(f"Found email: {clean_part}")
+            
+            # Phone number detection (various formats)
+            elif re.search(r'[\d\-\.\(\)\+\s]{7,}', clean_part) and any(c.isdigit() for c in clean_part):
+                # Additional validation for phone numbers
+                digit_count = sum(1 for c in clean_part if c.isdigit())
+                if digit_count >= 7:  # Minimum digits for a phone number
+                    contact_data['phone'] = clean_part
+                    logger.info(f"Found phone: {clean_part}")
+            
+            # URL detection (GitHub, LinkedIn, websites)
+            elif any(domain in clean_part.lower() for domain in ['github.com', 'linkedin.com', 'www.', 'http']):
+                if 'github' in clean_part.lower():
+                    contact_data['github'] = clean_part
+                    logger.info(f"Found GitHub: {clean_part}")
+                elif 'linkedin' in clean_part.lower():
+                    contact_data['linkedin'] = clean_part
+                    logger.info(f"Found LinkedIn: {clean_part}")
+                else:
+                    contact_data['website'] = clean_part
+                    logger.info(f"Found website: {clean_part}")
+            
+            # Location detection (contains common location indicators)
+            elif any(indicator in clean_part.lower() for indicator in ['street', 'ave', 'road', 'blvd', 'city', 'state', ', ']):
+                if len(clean_part) > 3:  # Avoid single letters
+                    contact_data['location'] = clean_part
+                    logger.info(f"Found location: {clean_part}")
+            
+            # If none of the above, and it's substantial text, treat as additional info
+            elif len(clean_part) > 2 and not contact_data.get('location'):
+                # Could be location or other contact info
+                contact_data['other'] = clean_part
+                logger.info(f"Found other contact info: {clean_part}")
+    
+    logger.info(f"Final parsed contact data: {contact_data}")
+    return contact_data
+
 def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
     """
     Build a DOCX file from the resume data for the given request ID.
@@ -512,37 +605,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                         logger.info("Contact content is a string, attempting to parse")
                         
                         # Parse the contact information from the string
-                        lines = contact_data.strip().split('\n')
-                        
-                        # Extract name from the first line
-                        name = lines[0].strip() if lines else ""
-                        logger.info(f"Extracted name from string: {name}")
-                        
-                        # Extract contact details from subsequent lines
-                        contact_details = {}
-                        if len(lines) > 1:
-                            details_line = lines[1].strip()
-                            # Split by common separators
-                            details_parts = [p.strip() for p in details_line.replace('|', '|').split('|')]
-                            
-                            logger.info(f"Extracted contact details: {details_parts}")
-                            
-                            for part in details_parts:
-                                part = part.strip()
-                                # Try to identify the type of contact detail
-                                if '@' in part:
-                                    contact_details['email'] = part
-                                elif 'P:' in part or 'Phone:' in part or any(c.isdigit() for c in part):
-                                    contact_details['phone'] = part
-                                elif 'LinkedIn' in part or 'linkedin.com' in part:
-                                    contact_details['linkedin'] = part
-                                elif 'Github' in part or 'github.com' in part:
-                                    contact_details['github'] = part
-                                elif any(loc in part.lower() for loc in ['street', 'ave', 'road', 'blvd', 'city', 'state']):
-                                    contact_details['location'] = part
-                        
-                        # Create a new contact object
-                        contact = {'name': name, **contact_details}
+                        contact = parse_contact_string(contact_data)
                         logger.info(f"Created structured contact data: {contact}")
                     else:
                         logger.info(f"Contact content is type: {type(contact_data)}")
