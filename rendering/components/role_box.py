@@ -27,7 +27,11 @@ class RoleBox:
             "dates": {
                 "fontSize": "required",
                 "fontColor": {"hex": "required"}
-            }
+            },
+            "borderColor": "required",
+            "borderWidth": "required",
+            "borderRadius": "required",
+            "padding": "required"
         }
     }
     
@@ -98,13 +102,23 @@ class RoleBox:
         dates_font_size = self.tokens["roleBox"]["dates"]["fontSize"]
         dates_color = self.tokens["roleBox"]["dates"]["fontColor"]["hex"]
         
+        # Get border styling tokens
+        border_color = self.tokens["roleBox"]["borderColor"]
+        border_width = self.tokens["roleBox"]["borderWidth"] 
+        border_radius = self.tokens["roleBox"]["borderRadius"]
+        padding = self.tokens["roleBox"]["padding"]
+        
         return {
             "container": "; ".join([
                 "display: flex",
                 "justify-content: space-between",
                 "align-items: baseline",
                 "margin: 8pt 0 4pt 0",
-                "line-height: 1.2"
+                "line-height: 1.2",
+                f"border: {border_width}pt solid {border_color}",
+                f"border-radius: {border_radius}pt",
+                f"padding: {padding}pt 8pt",
+                "background-color: transparent"
             ]),
             "role": "; ".join([
                 f"font-size: {role_font_size}",

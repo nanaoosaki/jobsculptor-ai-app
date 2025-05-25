@@ -103,7 +103,9 @@ class SectionHeader:
         """Apply paragraph-level styling from design tokens"""
         font_size = self.tokens["typography"]["fontSize"]["sectionHeader"]
         font_color = self.tokens["typography"]["fontColor"]["headers"]["hex"]
-        font_family = self.tokens["typography"]["fontFamily"]["primary"]
+        # Use DOCX-specific font name instead of CSS font stack
+        # This fixes the serif vs sans serif inconsistency across formats
+        font_family = self.tokens["typography"]["fontFamily"]["docxPrimary"]
         border_width = self.tokens["sectionHeader"]["border"]["widthPt"]
         border_color = self.tokens["sectionHeader"]["border"]["color"]
         v_padding = self.tokens["sectionHeader"]["padding"]["verticalPt"]
