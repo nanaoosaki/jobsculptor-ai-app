@@ -186,6 +186,7 @@ header {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  min-height: 100vh; // Full viewport height for proper centering
 }
 
 .preview-title {
@@ -197,13 +198,39 @@ header {
   padding-bottom: $web-preview-title-padding-bottom;
 }
 
-// A4 Paper Styling for Resume Preview Content Area
+// A4 Paper Styling for Resume Preview Content Area (HTML ONLY)
 .tailored-resume-content {
-  // Inherits base resume styles from _resume.scss
-  box-shadow: $paper-shadow; // Add shadow for paper effect
-  margin-top: $spacing-medium; // Space above the paper
-  margin-bottom: $spacing-medium; // Space below the paper
-  // Width, padding, etc., are defined in _resume.scss
+  // A4 Paper Dimensions - RESPONSIVE approach for web preview
+  max-width: min(210mm, 90vw); // A4 width OR 90% viewport, whichever is smaller
+  width: 100%; // Take available space up to max-width
+  min-height: 400px; // Reasonable minimum height for web preview
+  
+  // Paper-like appearance
+  background-color: $background-color-paper; // Pure white
+  box-shadow: $paper-shadow; // Paper drop shadow
+  border: 1px solid #e0e0e0; // Subtle border for definition
+  
+  // Proper A4 margins
+  padding: $paper-padding-vertical $paper-padding-horizontal;
+  margin: 0 auto; // Simple centering - let parent handle flex if needed
+  
+  // Typography optimized for A4 print
+  font-family: $baseFontFamily;
+  font-size: $baseFontSize; // 11pt
+  line-height: $baseLineHeight; // 1.4
+  color: $textColor;
+  
+  // Page layout
+  overflow: visible; // Allow content to flow naturally
+  page-break-inside: avoid; // Prevent awkward breaks
+  
+  // Ensure content respects A4 boundaries
+  box-sizing: border-box;
+  
+  // Remove any inherited spacing that might break A4 layout
+  * {
+    box-sizing: border-box;
+  }
 }
 
 .resume-preview-content { // Old class, might be removable
@@ -366,5 +393,22 @@ a:hover {
     &:last-child {
       border-bottom: none;
     }
+  }
+}
+
+// Resume Preview Card (UI wrapper around A4 paper) - HTML ONLY
+#resumePreview {
+  background-color: $background-color-page; // Light grey page background
+  padding: $spacing-large; // Space around the A4 paper
+  
+  // Simple centering approach - no flex conflicts
+  text-align: center; // Center-align the container content
+  min-height: 400px; // Minimum height for the preview area
+  overflow-x: auto; // Allow horizontal scroll if needed on mobile
+  overflow-y: visible; // Allow natural vertical flow
+  
+  // The A4 paper will center itself with margin: 0 auto
+  .tailored-resume-content {
+    text-align: left; // Reset text alignment for resume content
   }
 } 

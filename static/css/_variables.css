@@ -69,11 +69,11 @@
   --section-content-padding-left: 0;
   --role-description-padding-left: 0;
   --section-box-margin-bottom: 0.5rem;
-  --position-line-margin-bottom: 0rem;
-  --position-bar-margin-top: 0rem;
-  --job-content-margin-top: 0rem;
+  --position-line-margin-bottom: 0.05rem;
+  --position-bar-margin-top: 0.1rem;
+  --job-content-margin-top: 0.1rem;
   --role-description-margin-top: 0rem;
-  --role-description-margin-bottom: 0rem;
+  --role-description-margin-bottom: 0.05rem;
   --role-list-margin-top: 0rem;
   --paragraph-margin-block: 0rem;
   --ul-margin-block: 0rem;

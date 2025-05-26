@@ -205,8 +205,8 @@ hr {
 .position-bar {
   background: #FFFFFF;
   padding: 0.25rem 0.45rem;
-  margin-top: 0rem;
-  margin-bottom: 0rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.05rem;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -274,7 +274,7 @@ hr {
 .job .job-title-line, .job .education-title-line, .job .project-title-line, .job .degree-line, .job .position-line, .education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line, .project .job-title-line, .project .education-title-line, .project .project-title-line, .project .degree-line, .project .position-line {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0rem;
+  margin-bottom: 0.05rem;
   padding-left: 0;
 }
 .job .company, .job .institution, .job .project-title, .job .position, .job .degree, .education .company, .education .institution, .education .project-title, .education .position, .education .degree, .project .company, .project .institution, .project .project-title, .project .position, .project .degree {
@@ -287,7 +287,7 @@ hr {
   text-align: right;
 }
 .job .job-content, .job .education-content, .job .project-content, .education .job-content, .education .education-content, .education .project-content, .project .job-content, .project .education-content, .project .project-content {
-  margin-top: 0rem;
+  margin-top: 0.1rem;
   margin-left: 0;
   padding-left: 0;
 }
@@ -299,7 +299,7 @@ hr {
 .job .job-content .role-description-text, .job .education-content .role-description-text, .job .project-content .role-description-text, .education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text, .project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
   font-style: italic;
   margin-top: 0rem;
-  margin-bottom: 0rem;
+  margin-bottom: 0.05rem;
   color: #555;
   padding-left: 0;
   margin-left: 0;
@@ -389,7 +389,7 @@ ul.bullets li::before {
 .job .job-content, .job .education-content, .job .project-content,
 .education .job-content, .education .education-content, .education .project-content,
 .project .job-content, .project .education-content, .project .project-content {
-  margin-top: 0rem;
+  margin-top: 0.1rem;
   margin-left: 0;
   padding-left: 0;
 }
@@ -417,7 +417,7 @@ ul.bullets li::before {
 .education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text,
 .project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
   margin-top: 0rem;
-  margin-bottom: 0rem;
+  margin-bottom: 0.05rem;
 }
 
 .role-box + ul {
@@ -488,7 +488,7 @@ hr {
 .position-bar {
   background: #FFFFFF;
   padding: 0.25rem 0.45rem;
-  margin-top: 0rem;
+  margin-top: 0.1rem;
   display: flex;
   justify-content: space-between;
 }

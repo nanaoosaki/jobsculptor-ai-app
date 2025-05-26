@@ -205,8 +205,8 @@ hr {
 .position-bar {
   background: #FFFFFF;
   padding: 0.25rem 0.45rem;
-  margin-top: 0rem;
-  margin-bottom: 0rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.05rem;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -274,7 +274,7 @@ hr {
 .job .job-title-line, .job .education-title-line, .job .project-title-line, .job .degree-line, .job .position-line, .education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line, .project .job-title-line, .project .education-title-line, .project .project-title-line, .project .degree-line, .project .position-line {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0rem;
+  margin-bottom: 0.05rem;
   padding-left: 0;
 }
 .job .company, .job .institution, .job .project-title, .job .position, .job .degree, .education .company, .education .institution, .education .project-title, .education .position, .education .degree, .project .company, .project .institution, .project .project-title, .project .position, .project .degree {
@@ -287,7 +287,7 @@ hr {
   text-align: right;
 }
 .job .job-content, .job .education-content, .job .project-content, .education .job-content, .education .education-content, .education .project-content, .project .job-content, .project .education-content, .project .project-content {
-  margin-top: 0rem;
+  margin-top: 0.1rem;
   margin-left: 0;
   padding-left: 0;
 }
@@ -299,7 +299,7 @@ hr {
 .job .job-content .role-description-text, .job .education-content .role-description-text, .job .project-content .role-description-text, .education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text, .project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
   font-style: italic;
   margin-top: 0rem;
-  margin-bottom: 0rem;
+  margin-bottom: 0.05rem;
   color: #555;
   padding-left: 0;
   margin-left: 0;
@@ -389,7 +389,7 @@ ul.bullets li::before {
 .job .job-content, .job .education-content, .job .project-content,
 .education .job-content, .education .education-content, .education .project-content,
 .project .job-content, .project .education-content, .project .project-content {
-  margin-top: 0rem;
+  margin-top: 0.1rem;
   margin-left: 0;
   padding-left: 0;
 }
@@ -417,7 +417,7 @@ ul.bullets li::before {
 .education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text,
 .project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
   margin-top: 0rem;
-  margin-bottom: 0rem;
+  margin-bottom: 0.05rem;
 }
 
 .role-box + ul {
@@ -590,6 +590,7 @@ header {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  min-height: 100vh;
 }
 
 .preview-title {
@@ -602,9 +603,24 @@ header {
 }
 
 .tailored-resume-content {
+  max-width: min(210mm, 90vw);
+  width: 100%;
+  min-height: 400px;
+  background-color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  border: 1px solid #e0e0e0;
+  padding: 0.8cm 0.8cm;
+  margin: 0 auto;
+  font-family: "Calibri", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
+  overflow: visible;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+}
+.tailored-resume-content * {
+  box-sizing: border-box;
 }
 
 .resume-preview-content {
@@ -757,6 +773,18 @@ header {
 }
 .item-list li:last-child {
   border-bottom: none;
+}
+
+#resumePreview {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  text-align: center;
+  min-height: 400px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+#resumePreview .tailored-resume-content {
+  text-align: left;
 }
 
 /*# sourceMappingURL=preview.css.map */
