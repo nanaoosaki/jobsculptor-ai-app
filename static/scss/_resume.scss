@@ -1,6 +1,45 @@
 // Core resume styles (YC-Eddie inspired)
 @use 'tokens' as *;
 
+// === BASE RESET FOR WEASYPRINT COMPATIBILITY ===
+// Reset problematic UA defaults using physical properties
+// (margin-block not supported in WeasyPrint < 62)
+.tailored-resume-content {
+  // Reset all paragraph and list margins to zero using physical properties
+  p, ul, ol {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  // Specific resets for role content
+  .job-content, .education-content, .project-content {
+    p {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    
+    ul, ol {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    
+    li {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    
+    .role-description-text {
+      margin-top: 0;  // Override hardcoded 0.2em
+      margin-bottom: 0;  // Override hardcoded 0.5em
+    }
+  }
+  
+  // Reset for role box adjacent lists
+  .role-box + ul {
+    margin-top: 0;
+  }
+}
+
 // Define local fallback variables not yet in design tokens
 $font-family-body: $baseFontFamily !default;
 $font-size-body: $baseFontSize !default;
@@ -222,8 +261,8 @@ $font-size-h2: 1.75rem !default;
         
         .role-description-text {
             font-style: italic;
-            margin-top: 0.2em;  // Add some space above the description
-            margin-bottom: 0.5em; // Add some space below the description before bullets
+            margin-top: $role-description-margin-top;  // Use token instead of hardcoded 0.2em
+            margin-bottom: $role-description-margin-bottom; // Use token instead of hardcoded 0.5em
             color: #555; // Slightly lighter text color
             padding-left: 0;  // No left padding to align with content
             margin-left: 0;   // No left margin to align with content
@@ -305,7 +344,7 @@ ul.bullets {
 
 // O3: Prevent touching borders between role box and immediate bullet lists
 .role-box + ul {
-    margin-top: 0.25rem;
+    margin-top: $role-list-margin-top;
 }
 
 // Prevent orphaned list items
@@ -324,4 +363,37 @@ ul.bullets {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
+}
+
+.job .job-content, .job .education-content, .job .project-content, 
+.education .job-content, .education .education-content, .education .project-content, 
+.project .job-content, .project .education-content, .project .project-content {
+  margin-top: $job-content-margin-top;
+  margin-left: 0;
+  padding-left: 0;
+  
+  // Reset all paragraph and list margins using physical properties
+  p {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  ul, ol {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  li {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  .role-description-text {
+    margin-top: $role-description-margin-top;
+    margin-bottom: $role-description-margin-bottom;
+  }
+}
+
+.role-box + ul {
+  margin-top: $role-list-margin-top;
 } 

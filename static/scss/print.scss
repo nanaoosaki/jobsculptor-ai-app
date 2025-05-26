@@ -85,7 +85,7 @@ hr {
 .position-bar {
     background: $color-positionBar-bg;
     padding: 0.25rem 0.45rem;
-    margin-top: 0.4rem;
+    margin-top: $position-bar-margin-top;  // Use design token instead of hardcoded 0.4rem
     display: flex;
     justify-content: space-between; // company left, dates right
     

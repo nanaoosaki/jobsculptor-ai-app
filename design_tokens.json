@@ -71,6 +71,12 @@
   "position-line-margin-bottom": "0rem",
   "position-bar-margin-top": "0rem",
   "job-content-margin-top": "0rem",
+  "role-description-margin-top": "0rem",
+  "role-description-margin-bottom": "0rem",
+  "role-list-margin-top": "0rem",
+  "paragraph-margin-block": "0rem",
+  "ul-margin-block": "0rem",
+  "li-margin-block": "0rem",
   "section-spacing-vertical": "0.8rem",
   "bullet-spacing-after": "0rem",
   

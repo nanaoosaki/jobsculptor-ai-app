@@ -107,6 +107,30 @@ hr {
   margin-top: 1.5rem;
 }
 
+.tailored-resume-content p, .tailored-resume-content ul, .tailored-resume-content ol {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.tailored-resume-content .job-content p, .tailored-resume-content .education-content p, .tailored-resume-content .project-content p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.tailored-resume-content .job-content ul, .tailored-resume-content .job-content ol, .tailored-resume-content .education-content ul, .tailored-resume-content .education-content ol, .tailored-resume-content .project-content ul, .tailored-resume-content .project-content ol {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.tailored-resume-content .job-content li, .tailored-resume-content .education-content li, .tailored-resume-content .project-content li {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.tailored-resume-content .job-content .role-description-text, .tailored-resume-content .education-content .role-description-text, .tailored-resume-content .project-content .role-description-text {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.tailored-resume-content .role-box + ul {
+  margin-top: 0;
+}
+
 .resume-preview-container .tailored-resume-content,
 .resume-preview-container .tailored-resume-content * {
   line-height: inherit;
@@ -274,8 +298,8 @@ hr {
 }
 .job .job-content .role-description-text, .job .education-content .role-description-text, .job .project-content .role-description-text, .education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text, .project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
   font-style: italic;
-  margin-top: 0.2em;
-  margin-bottom: 0.5em;
+  margin-top: 0rem;
+  margin-bottom: 0rem;
   color: #555;
   padding-left: 0;
   margin-left: 0;
@@ -343,7 +367,7 @@ ul.bullets li::before {
 }
 
 .role-box + ul {
-  margin-top: 0.25rem;
+  margin-top: 0rem;
 }
 
 .bullets li {
@@ -360,6 +384,44 @@ ul.bullets li::before {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
+}
+
+.job .job-content, .job .education-content, .job .project-content,
+.education .job-content, .education .education-content, .education .project-content,
+.project .job-content, .project .education-content, .project .project-content {
+  margin-top: 0rem;
+  margin-left: 0;
+  padding-left: 0;
+}
+.job .job-content p, .job .education-content p, .job .project-content p,
+.education .job-content p, .education .education-content p, .education .project-content p,
+.project .job-content p, .project .education-content p, .project .project-content p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.job .job-content ul, .job .job-content ol, .job .education-content ul, .job .education-content ol, .job .project-content ul, .job .project-content ol,
+.education .job-content ul,
+.education .job-content ol, .education .education-content ul, .education .education-content ol, .education .project-content ul, .education .project-content ol,
+.project .job-content ul,
+.project .job-content ol, .project .education-content ul, .project .education-content ol, .project .project-content ul, .project .project-content ol {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.job .job-content li, .job .education-content li, .job .project-content li,
+.education .job-content li, .education .education-content li, .education .project-content li,
+.project .job-content li, .project .education-content li, .project .project-content li {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.job .job-content .role-description-text, .job .education-content .role-description-text, .job .project-content .role-description-text,
+.education .job-content .role-description-text, .education .education-content .role-description-text, .education .project-content .role-description-text,
+.project .job-content .role-description-text, .project .education-content .role-description-text, .project .project-content .role-description-text {
+  margin-top: 0rem;
+  margin-bottom: 0rem;
+}
+
+.role-box + ul {
+  margin-top: 0rem;
 }
 
 @page {
@@ -426,7 +488,7 @@ hr {
 .position-bar {
   background: #FFFFFF;
   padding: 0.25rem 0.45rem;
-  margin-top: 0.4rem;
+  margin-top: 0rem;
   display: flex;
   justify-content: space-between;
 }
