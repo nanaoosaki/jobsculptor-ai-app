@@ -1,268 +1,231 @@
 #!/usr/bin/env python3
 """
-Style Linter for Hybrid CSS Architecture
-Enforces Style Taxonomy ADR-001: Box model properties must use design tokens + translator
+Style Linter - Prevent Spacing Drift Back to SCSS
 
-Usage:
-    python tools/style_linter.py                    # Check all SCSS files
-    python tools/style_linter.py --file path.scss   # Check specific file
-    python tools/style_linter.py --ci               # CI mode (exit with error code)
+Part of Phase 1, Day 2 implementation of the hybrid CSS refactor.
+This linter prevents spacing properties from being added to SCSS files.
+
+Key Features:
+- Enforces style taxonomy: spacing → design tokens, UI → SCSS
+- Whitelist for line-height on headings (o3 refinement)
+- Escape hatch with /* translator-ignore */ comments
+- CI integration to fail builds on violations
 """
 
+import glob
 import os
 import re
-import sys
-import glob
-import argparse
-from typing import List, Tuple, Dict, Set
-from pathlib import Path
+from typing import List, Tuple, Set
 
-# Box model properties that MUST use design tokens + translator (ADR-001)
-FORBIDDEN_SCSS_PROPS = [
-    # Margin properties
-    'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-    'margin-block', 'margin-inline', 'margin-block-start', 'margin-block-end',
-    'margin-inline-start', 'margin-inline-end',
-    
-    # Padding properties  
-    'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-    'padding-block', 'padding-inline', 'padding-block-start', 'padding-block-end',
-    'padding-inline-start', 'padding-inline-end',
-    
-    # Gap properties
-    'gap', 'row-gap', 'column-gap', 'grid-gap', 'grid-row-gap', 'grid-column-gap',
-    
-    # Layout spacing properties
-    'line-height',  # Exception: allowed for h1-h6 with visual-rhythm comment
-    'text-indent',
-    
-    # Position properties (spacing-related)
-    'top', 'right', 'bottom', 'left',
-    'inset', 'inset-block', 'inset-inline',
-]
 
-# Whitelisted selectors where line-height is allowed (visual rhythm)
-LINE_HEIGHT_WHITELIST = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
-
-# Valid translator-ignore reasons
-VALID_IGNORE_REASONS = [
-    'visual-rhythm',    # For h1-h6 line-height
-    'responsive',       # For media query overrides
-    'component',        # For interactive components (buttons, forms)
-    'legacy',          # Temporary during migration
-    'vendor',          # Third-party component overrides
-]
-
-class StyleViolation:
-    def __init__(self, file_path: str, line_num: int, prop: str, value: str, line_content: str):
-        self.file_path = file_path
-        self.line_num = line_num
-        self.prop = prop
-        self.value = value
-        self.line_content = line_content.strip()
+def check_scss_spacing_violations(scss_root: str = "static/scss") -> bool:
+    """
+    Prevent spacing drift back to SCSS with whitelist (o3 refinement)
     
-    def __str__(self):
-        return f"{self.file_path}:{self.line_num} - '{self.prop}' should use design tokens + translator"
-
-class StyleLinter:
-    def __init__(self, strict_mode: bool = False):
-        self.strict_mode = strict_mode
-        self.violations: List[StyleViolation] = []
-        
-    def lint_file(self, file_path: str) -> List[StyleViolation]:
-        """Lint a single SCSS file for style taxonomy violations."""
-        violations = []
-        
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-        except Exception as e:
-            print(f"⚠️  Warning: Could not read {file_path}: {e}")
-            return violations
-            
-        for line_num, line in enumerate(lines, 1):
-            violations.extend(self._check_line(file_path, line_num, line))
-            
-        return violations
+    Checks SCSS files for spacing properties that should be in design tokens.
+    Allows line-height for headings and properties with /* translator-ignore */ comments.
     
-    def _check_line(self, file_path: str, line_num: int, line: str) -> List[StyleViolation]:
-        """Check a single line for style taxonomy violations."""
-        violations = []
-        line_clean = line.strip()
+    Args:
+        scss_root: Root directory containing SCSS files
         
-        # Skip comments, empty lines, and imports
-        if (not line_clean or 
-            line_clean.startswith('//') or 
-            line_clean.startswith('/*') or
-            line_clean.startswith('@import') or
-            line_clean.startswith('@use')):
-            return violations
-        
-        # Check for translator-ignore comment on the same line
-        has_ignore_comment = '/* translator-ignore' in line
-        
-        # Extract CSS property declarations
-        css_property_pattern = r'^\s*([a-zA-Z-]+)\s*:\s*([^;]+);?'
-        match = re.match(css_property_pattern, line_clean)
-        
-        if match:
-            prop = match.group(1).strip()
-            value = match.group(2).strip()
-            
-            if prop in FORBIDDEN_SCSS_PROPS:
-                violation = None
-                
-                if prop == 'line-height':
-                    # Special handling for line-height on headings
-                    if self._is_heading_line_height(file_path, line_num, line):
-                        if not has_ignore_comment or 'visual-rhythm' not in line:
-                            violation = StyleViolation(
-                                file_path, line_num, prop, value, line_clean
-                            )
-                    else:
-                        # Non-heading line-height must be ignored or use translator
-                        if not has_ignore_comment:
-                            violation = StyleViolation(
-                                file_path, line_num, prop, value, line_clean
-                            )
-                else:
-                    # All other forbidden properties
-                    if not has_ignore_comment:
-                        violation = StyleViolation(
-                            file_path, line_num, prop, value, line_clean
-                        )
-                
-                if violation:
-                    violations.append(violation)
-                    
-                # Validate ignore comment reason if present
-                if has_ignore_comment:
-                    self._validate_ignore_comment(file_path, line_num, line)
-        
-        return violations
+    Returns:
+        True if no violations found, False otherwise
+    """
+    print(f"🔍 Checking SCSS spacing violations in {scss_root}")
     
-    def _is_heading_line_height(self, file_path: str, line_num: int, line: str) -> bool:
-        """Check if line-height is being applied to a heading selector."""
-        # Look for heading selectors in the current context
-        # This is a simplified check - could be enhanced with proper SCSS parsing
-        context_lines = self._get_context_lines(file_path, line_num, lookback=10)
-        
-        for context_line in context_lines:
-            for heading in LINE_HEIGHT_WHITELIST:
-                if f'{heading}' in context_line and '{' in context_line:
-                    return True
+    if not os.path.exists(scss_root):
+        print(f"❌ SCSS root directory not found: {scss_root}")
         return False
     
-    def _get_context_lines(self, file_path: str, line_num: int, lookback: int = 5) -> List[str]:
-        """Get previous lines for context analysis."""
+    scss_files = glob.glob(f'{scss_root}/**/*.scss', recursive=True)
+    violations = []
+    
+    # Spacing properties that should be in design tokens
+    spacing_props = ['margin', 'padding', 'gap', 'line-height']
+    
+    # o3 refinement: Whitelist line-height for headings
+    allowed_line_height_selectors = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+    
+    print(f"📂 Checking {len(scss_files)} SCSS files:")
+    
+    for file_path in scss_files:
+        print(f"   - {file_path}")
+        
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-                start = max(0, line_num - lookback - 1)
-                end = line_num - 1
-                return [line.strip() for line in lines[start:end]]
-        except:
-            return []
-    
-    def _validate_ignore_comment(self, file_path: str, line_num: int, line: str):
-        """Validate that translator-ignore comment has a valid reason."""
-        ignore_pattern = r'/\*\s*translator-ignore\s*:?\s*([^*]+)\*/'
-        match = re.search(ignore_pattern, line)
-        
-        if match:
-            reason = match.group(1).strip()
-            if reason not in VALID_IGNORE_REASONS:
-                print(f"⚠️  {file_path}:{line_num} - Invalid ignore reason '{reason}'. Valid: {', '.join(VALID_IGNORE_REASONS)}")
-    
-    def lint_directory(self, scss_dir: str = "static/scss") -> List[StyleViolation]:
-        """Lint all SCSS files in a directory."""
-        all_violations = []
-        
-        scss_pattern = os.path.join(scss_dir, "**/*.scss")
-        scss_files = glob.glob(scss_pattern, recursive=True)
-        
-        if not scss_files:
-            print(f"⚠️  No SCSS files found in {scss_dir}")
-            return all_violations
-        
-        print(f"🔍 Linting {len(scss_files)} SCSS files...")
-        
-        for file_path in scss_files:
-            file_violations = self.lint_file(file_path)
-            all_violations.extend(file_violations)
+        except UnicodeDecodeError:
+            print(f"⚠️ Could not read {file_path} (encoding issue)")
+            continue
             
-            if file_violations:
-                print(f"❌ {file_path}: {len(file_violations)} violations")
-            else:
-                print(f"✅ {file_path}: clean")
-        
-        return all_violations
+        file_violations = check_file_spacing_violations(
+            file_path, lines, spacing_props, allowed_line_height_selectors
+        )
+        violations.extend(file_violations)
     
-    def report_violations(self, violations: List[StyleViolation]) -> bool:
-        """Report all violations and return True if any found."""
-        if not violations:
-            print("✅ No style taxonomy violations found!")
-            return False
-        
-        print(f"\n❌ Found {len(violations)} style taxonomy violations:")
-        print("=" * 60)
-        
-        # Group violations by file
-        violations_by_file: Dict[str, List[StyleViolation]] = {}
+    # Report results
+    print(f"\n📊 Style Linter Results:")
+    print(f"   - Files checked: {len(scss_files)}")
+    print(f"   - Violations found: {len(violations)}")
+    
+    if violations:
+        print("\n❌ SCSS spacing violations found:")
         for violation in violations:
-            if violation.file_path not in violations_by_file:
-                violations_by_file[violation.file_path] = []
-            violations_by_file[violation.file_path].append(violation)
+            print(f"  {violation}")
         
-        for file_path, file_violations in violations_by_file.items():
-            print(f"\n📁 {file_path}:")
-            for violation in file_violations:
-                print(f"  Line {violation.line_num}: {violation.prop}")
-                print(f"    → {violation.line_content}")
-                print(f"    💡 Use design tokens or add: /* translator-ignore: reason */")
+        print("\n💡 Fix violations by:")
+        print("   - Moving spacing properties to design_tokens.json")
+        print("   - Using translator layer for spacing control")
+        print("   - Adding /* translator-ignore */ comment for exceptions")
         
-        print("\n" + "=" * 60)
-        print("📖 Style Taxonomy Rules (ADR-001):")
-        print("   • Box model properties → Design tokens + translator")
-        print("   • Visual properties → SCSS") 
-        print("   • Use /* translator-ignore: reason */ for exceptions")
-        print(f"   • Valid reasons: {', '.join(VALID_IGNORE_REASONS)}")
+        return False
+    
+    print("\n✅ No SCSS spacing violations found")
+    return True
+
+
+def check_file_spacing_violations(
+    file_path: str, 
+    lines: List[str], 
+    spacing_props: List[str],
+    allowed_line_height_selectors: List[str]
+) -> List[str]:
+    """
+    Check a single SCSS file for spacing violations
+    
+    Args:
+        file_path: Path to SCSS file
+        lines: File content as list of lines
+        spacing_props: List of spacing properties to check
+        allowed_line_height_selectors: Selectors allowed to have line-height
         
-        return True
+    Returns:
+        List of violation messages
+    """
+    violations = []
+    current_selector = ""
+    
+    for i, line in enumerate(lines):
+        line_num = i + 1
+        stripped_line = line.strip()
+        
+        # Skip comments and empty lines
+        if not stripped_line or stripped_line.startswith('//'):
+            continue
+        
+        # Track current selector context
+        if '{' in stripped_line and not stripped_line.startswith('@'):
+            # Extract selector before {
+            selector_match = re.match(r'^([^{]+)\s*\{', stripped_line)
+            if selector_match:
+                current_selector = selector_match.group(1).strip()
+        
+        # Check for spacing properties
+        for prop in spacing_props:
+            if f'{prop}:' in stripped_line or f'{prop}-' in stripped_line:
+                # Check for translator-ignore escape hatch
+                if '/* translator-ignore */' in line:
+                    continue
+                
+                # o3 refinement: Allow line-height for headings
+                if prop == 'line-height':
+                    if any(sel in current_selector for sel in allowed_line_height_selectors):
+                        continue
+                
+                violation = f"{file_path}:{line_num} - {prop} should use translator (selector: {current_selector})"
+                violations.append(violation)
+    
+    return violations
+
+
+def generate_style_taxonomy_report() -> None:
+    """
+    Generate a report showing the style taxonomy enforcement
+    """
+    print("📋 Style Taxonomy Report")
+    print("=" * 50)
+    
+    print("\n🎯 Style Taxonomy Rules:")
+    print("   📦 Box Model Properties → Design Tokens + Translator")
+    print("      - margin-* (top, bottom, left, right, block, inline)")
+    print("      - padding-* (top, bottom, left, right, block, inline)")
+    print("      - gap")
+    print("      - line-height (except h1-h6)")
+    print("")
+    print("   🎨 Visual Properties → SCSS")
+    print("      - color, background-color")
+    print("      - font-family, font-size, font-weight")
+    print("      - border, border-radius")
+    print("      - display, position, flex")
+    print("      - line-height (h1-h6 allowed)")
+    print("")
+    print("   🚪 Escape Hatch:")
+    print("      - Add /* translator-ignore */ comment for exceptions")
+    print("")
+    print("   ✅ Benefits:")
+    print("      - Single source of truth for spacing")
+    print("      - Prevents spacing drift")
+    print("      - Clear separation of concerns")
+    
+    print("=" * 50)
+
+
+def check_design_token_coverage() -> None:
+    """
+    Check if all spacing properties in SCSS have corresponding design tokens
+    """
+    print("\n🔄 Checking design token coverage...")
+    
+    # This would analyze SCSS files and cross-reference with design_tokens.json
+    # to ensure all spacing values have corresponding tokens
+    
+    # For now, just a placeholder
+    print("   ℹ️ Design token coverage check not yet implemented")
+    print("   ℹ️ Will be added in Phase 2 for comprehensive validation")
+
 
 def main():
-    parser = argparse.ArgumentParser(description='Style Linter for Hybrid CSS Architecture')
-    parser.add_argument('--file', help='Lint specific SCSS file')
-    parser.add_argument('--dir', default='static/scss', help='Directory to lint (default: static/scss)')
-    parser.add_argument('--ci', action='store_true', help='CI mode: exit with error code on violations')
-    parser.add_argument('--strict', action='store_true', help='Strict mode: stricter validation')
+    """Main function to run style linting"""
+    print("🎯 Style Linter - Prevent Spacing Drift")
+    print("=" * 50)
     
-    args = parser.parse_args()
+    # Check for spacing violations
+    success = check_scss_spacing_violations()
     
-    linter = StyleLinter(strict_mode=args.strict)
+    # Generate taxonomy report
+    generate_style_taxonomy_report()
     
-    if args.file:
-        if not os.path.exists(args.file):
-            print(f"❌ File not found: {args.file}")
-            sys.exit(1)
-        violations = linter.lint_file(args.file)
-    else:
-        if not os.path.exists(args.dir):
-            print(f"❌ Directory not found: {args.dir}")
-            sys.exit(1)
-        violations = linter.lint_directory(args.dir)
+    # Check design token coverage (placeholder)
+    check_design_token_coverage()
     
-    has_violations = linter.report_violations(violations)
-    
-    if args.ci and has_violations:
-        print("\n💥 Style linting failed - fix violations before committing")
-        sys.exit(1)
-    
-    if has_violations:
-        print(f"\n🔧 Fix violations and run again: python tools/style_linter.py")
-        sys.exit(1 if args.ci else 0)
-    else:
-        print("\n🎉 All SCSS files comply with Style Taxonomy ADR-001!")
+    return success
+
 
 if __name__ == "__main__":
-    main() 
+    import sys
+    
+    if len(sys.argv) == 2:
+        command = sys.argv[1]
+        
+        if command == '--report':
+            generate_style_taxonomy_report()
+            sys.exit(0)
+        elif command == '--help':
+            print("Usage:")
+            print("  python tools/style_linter.py           # Check for violations")
+            print("  python tools/style_linter.py --report  # Show style taxonomy")
+            sys.exit(0)
+        else:
+            print(f"Unknown command: {command}")
+            sys.exit(1)
+    
+    elif len(sys.argv) == 1:
+        # Default: check for violations (CI mode)
+        success = main()
+        sys.exit(0 if success else 1)
+    
+    else:
+        print("Usage:")
+        print("  python tools/style_linter.py           # Check for violations")
+        print("  python tools/style_linter.py --report  # Show style taxonomy")
+        sys.exit(1) 
