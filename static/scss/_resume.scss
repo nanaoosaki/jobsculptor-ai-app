@@ -112,7 +112,7 @@ $font-size-h2: 1.75rem !default;
 .position-bar {
     background: $color-positionBar-bg;
     padding: 0.25rem 0.45rem;
-    margin-top: 0.4rem;
+    margin-top: $position-bar-margin-top;
     margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
     break-inside: avoid;      // Prevent page breaks in PDF/print
     page-break-inside: avoid; // Legacy compatibility for older print engines
@@ -210,7 +210,7 @@ $font-size-h2: 1.75rem !default;
     }
 
     .job-content, .education-content, .project-content {
-        margin-top: $spacing-small;
+        margin-top: $job-content-margin-top;
         margin-left: 0;  // No additional margin to maintain alignment with parent
         padding-left: 0; // No padding to ensure alignment with section titles
         

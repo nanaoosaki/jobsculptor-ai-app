@@ -153,11 +153,14 @@ hr {
   margin: 0.2rem 0;
   padding: 1px 12px;
   background: transparent;
+  color: #4a6fdc;
+  border: 2px solid #4a6fdc !important;
   font-weight: 700;
   letter-spacing: 0.5px;
   display: block;
   width: auto;
   text-align: left;
+  font-size: 12pt;
   line-height: 1;
   break-inside: avoid;
   break-after: avoid;
@@ -178,8 +181,8 @@ hr {
 .position-bar {
   background: #FFFFFF;
   padding: 0.25rem 0.45rem;
-  margin-top: 0.4rem;
-  margin-bottom: 0.15rem;
+  margin-top: 0rem;
+  margin-bottom: 0rem;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -190,12 +193,12 @@ hr {
   align-items: center;
   flex: 1 1 100%;
   box-sizing: border-box;
-  border-style: solid;
   border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
   border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);
+  padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);
+  color: var(--roleBox-textColor, #333333);
   border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);
-  padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px) calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);
-  background: var(--roleBox-backgroundColor, transparent);
+  background-color: var(--roleBox-backgroundColor, transparent);
   hyphens: manual;
 }
 .position-bar .role-box .role {
@@ -247,7 +250,7 @@ hr {
 .job .job-title-line, .job .education-title-line, .job .project-title-line, .job .degree-line, .job .position-line, .education .job-title-line, .education .education-title-line, .education .project-title-line, .education .degree-line, .education .position-line, .project .job-title-line, .project .education-title-line, .project .project-title-line, .project .degree-line, .project .position-line {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0rem;
   padding-left: 0;
 }
 .job .company, .job .institution, .job .project-title, .job .position, .job .degree, .education .company, .education .institution, .education .project-title, .education .position, .education .degree, .project .company, .project .institution, .project .project-title, .project .position, .project .degree {
@@ -260,7 +263,7 @@ hr {
   text-align: right;
 }
 .job .job-content, .job .education-content, .job .project-content, .education .job-content, .education .education-content, .education .project-content, .project .job-content, .project .education-content, .project .project-content {
-  margin-top: 0.5rem;
+  margin-top: 0rem;
   margin-left: 0;
   padding-left: 0;
 }
@@ -288,7 +291,7 @@ hr {
   position: relative;
   padding-left: 0;
   text-indent: 0;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0rem;
   line-height: 1.2;
 }
 .job .job-content li::before, .job .education-content li::before, .job .project-content li::before, .education .job-content li::before, .education .education-content li::before, .education .project-content li::before, .project .job-content li::before, .project .education-content li::before, .project .project-content li::before {
@@ -305,7 +308,7 @@ ul.bullets {
 }
 ul.bullets li {
   position: relative;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0rem;
   line-height: 1.25;
   padding-left: 0;
   text-indent: 0;
@@ -328,7 +331,7 @@ ul.bullets li::before {
 }
 .skills-content li {
   position: relative;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0rem;
   line-height: 1.2;
   padding-left: 0;
   text-indent: 0;
@@ -341,6 +344,22 @@ ul.bullets li::before {
 
 .role-box + ul {
   margin-top: 0.25rem;
+}
+
+.bullets li {
+  break-inside: avoid;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 :root {

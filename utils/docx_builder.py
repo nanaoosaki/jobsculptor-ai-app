@@ -22,7 +22,13 @@ from docx.oxml.ns import qn
 
 from style_manager import StyleManager
 from style_engine import StyleEngine
-from utils.rendering_tracer import trace
+
+# Simple stub for rendering tracer to avoid import errors
+def trace(name):
+    """Simple stub decorator for tracing function calls"""
+    def decorator(func):
+        return func
+    return decorator
 
 # Import our new universal renderers
 try:

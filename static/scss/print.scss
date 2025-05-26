@@ -74,7 +74,7 @@ hr {
     margin: $space-section-y 0;
     padding: 0.35rem 0.6rem;
     border: 1px solid $color-sectionBox-border;
-    background: $color-sectionBox-bg;
+    background: transparent;  // transparent fill like HTML version
     font-weight: $font-weight-bold;
     letter-spacing: 0.5px;
     break-inside: avoid; // Prevent section headers breaking across pages
