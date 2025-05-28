@@ -35,6 +35,11 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 TEMP_SESSION_DATA_PATH = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_session_data')
 os.makedirs(TEMP_SESSION_DATA_PATH, exist_ok=True)
 
+@app.context_processor
+def inject_config():
+    """Make config available in all templates"""
+    return dict(config=app.config)
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -42,6 +47,11 @@ def allowed_file(filename):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/spacing-comparison')
+def spacing_comparison():
+    """Show before/after spacing comparison"""
+    return render_template('compare_spacing.html')
 
 # Setup resume upload routes
 setup_upload_routes(app)

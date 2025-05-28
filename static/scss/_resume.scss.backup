@@ -7,36 +7,36 @@
 .tailored-resume-content {
   // Reset all paragraph and list margins to zero using physical properties
   p, ul, ol {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   
   // Specific resets for role content
   .job-content, .education-content, .project-content {
     p {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+      margin-top: 0;
+      margin-bottom: 0;
     }
     
     ul, ol {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+      margin-top: 0;
+      margin-bottom: 0;
     }
     
     li {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+      margin-top: 0;
+      margin-bottom: 0;
     }
     
     .role-description-text {
-  // REMOVED BY TRANSLATOR: margin-top: 0;  // Override hardcoded 0.2em
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;  // Override hardcoded 0.5em
+      margin-top: 0;  // Override hardcoded 0.2em
+      margin-bottom: 0;  // Override hardcoded 0.5em
     }
   }
   
   // Reset for role box adjacent lists
   .role-box + ul {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
+    margin-top: 0;
   }
 }
 
@@ -79,8 +79,8 @@ $font-size-h2: 1.75rem !default;
 .tailored-resume-content {
     width: $paper-width-a4;
     max-width: 100%; // Ensure it fits within parent containers
-  // REMOVED BY TRANSLATOR: margin: 0 auto; // Centering within the preview container
-  // REMOVED BY TRANSLATOR: padding: $paper-padding-vertical $paper-padding-horizontal;
+    margin: 0 auto; // Centering within the preview container
+    padding: $paper-padding-vertical $paper-padding-horizontal;
     background-color: $background-color-paper; // White paper background
     font-family: $font-family-body;
     font-size: $font-size-body;
@@ -91,10 +91,10 @@ $font-size-h2: 1.75rem !default;
 // Contact Section Specifics
 .contact-section {
     text-align: center;
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-medium;
+    margin-bottom: $spacing-medium;
 
     p {
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-xsmall; // Tighter spacing for contact lines
+        margin-bottom: $spacing-xsmall; // Tighter spacing for contact lines
         line-height: $line-height-tight; // Use tighter line height
     }
 
@@ -102,7 +102,7 @@ $font-size-h2: 1.75rem !default;
         font-size: $font-size-h1;
         font-weight: $font-weight-bold;
         color: $text-color-headings;
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-small;
+        margin-bottom: $spacing-small;
     }
 }
 
@@ -111,13 +111,13 @@ $font-size-h2: 1.75rem !default;
     height: 1px;
     background-color: $text-color-headings;
     width: $contact-divider-width;
-  // REMOVED BY TRANSLATOR: margin: $spacing-medium auto; // Centered divider
+    margin: $spacing-medium auto; // Centered divider
 }
 
 // Section Box Styling – blue outline with transparent fill
 .section-box {
-  // REMOVED BY TRANSLATOR: margin: $space-section-y 0; // Use existing token for spacing around box
-  // REMOVED BY TRANSLATOR: padding: $sectionHeaderPaddingVert $sectionHeaderPaddingHoriz; // Use specific tokens
+    margin: $space-section-y 0; // Use existing token for spacing around box
+    padding: $sectionHeaderPaddingVert $sectionHeaderPaddingHoriz; // Use specific tokens
     background: transparent;  // transparent fill
     color: $primaryColor;  // blue text color
     border: 2px solid $primaryColor !important;  // light blue outline, override inline styles
@@ -130,35 +130,35 @@ $font-size-h2: 1.75rem !default;
     line-height: $sectionHeaderLineHeight; // Apply line-height directly
     break-inside: avoid; // Prevent section headers breaking across pages
     break-after: avoid;
-  // REMOVED BY TRANSLATOR: margin-bottom: $section-box-margin-bottom; // Use new token for consistent margin
-  // REMOVED BY TRANSLATOR: margin-left: $content-left-margin; // Ensure section headers align with content
+    margin-bottom: $section-box-margin-bottom; // Use new token for consistent margin
+    margin-left: $content-left-margin; // Ensure section headers align with content
 }
 
 // Resume Section Styling
 .resume-section {
-  // REMOVED BY TRANSLATOR: margin-bottom: $section-spacing-vertical;
-  // REMOVED BY TRANSLATOR: margin-left: 0; // No margin at section level to prevent stacking
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding at section level to prevent stacking
+    margin-bottom: $section-spacing-vertical;
+    margin-left: 0; // No margin at section level to prevent stacking
+    padding-left: 0; // No padding at section level to prevent stacking
     
     // All section content containers need the same left margin
     .summary-content, .experience-content, .education-content,
     .skills-content, .projects-content {
-  // REMOVED BY TRANSLATOR: margin-left: $content-left-margin; // Use the same token as section-box
+        margin-left: $content-left-margin; // Use the same token as section-box
     }
 }
 
 // Position Bar Styling - Updated for unified role+dates box
 .position-bar {
     background: $color-positionBar-bg;
-  // REMOVED BY TRANSLATOR: padding: 0.25rem 0.45rem;
-  // REMOVED BY TRANSLATOR: margin-top: $position-bar-margin-top;
-  // REMOVED BY TRANSLATOR: margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
+    padding: 0.25rem 0.45rem;
+    margin-top: $position-bar-margin-top;
+    margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
     break-inside: avoid;      // Prevent page breaks in PDF/print
     page-break-inside: avoid; // Legacy compatibility for older print engines
     
     .role-box {
         @extend .section-box;              // Reuse borders/padding logic
-  // REMOVED BY TRANSLATOR: margin-left: 0 !important;        // Override inherited margin for clean left alignment
+        margin-left: 0 !important;        // Override inherited margin for clean left alignment
         display: flex;                     // Use flex to align role and dates
         justify-content: space-between;    // Role on left, dates on right
         align-items: center;               // Vertically center content
@@ -169,7 +169,7 @@ $font-size-h2: 1.75rem !default;
         
         border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
         border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);  // Force calc evaluation for WeasyPrint
-  // REMOVED BY TRANSLATOR: padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);  // top/bottom vs sides
+        padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);  // top/bottom vs sides
         color: var(--roleBox-textColor, #333333);
         border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);
         background-color: var(--roleBox-backgroundColor, transparent);
@@ -186,7 +186,7 @@ $font-size-h2: 1.75rem !default;
         // Style the dates
         .dates {
             font-style: italic;
-  // REMOVED BY TRANSLATOR: margin-left: 1rem;             // Add some space between role and dates
+            margin-left: 1rem;             // Add some space between role and dates
             white-space: nowrap;           // Prevent dates from wrapping
         }
         
@@ -227,14 +227,14 @@ $font-size-h2: 1.75rem !default;
 
 // Experience and Education Entry Formatting
 .job, .education, .project {
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-medium;
-  // REMOVED BY TRANSLATOR: margin-left: $content-left-margin; // Ensure consistent left margin for all sections
+    margin-bottom: $spacing-medium;
+    margin-left: $content-left-margin; // Ensure consistent left margin for all sections
 
     .job-title-line, .education-title-line, .project-title-line, .degree-line, .position-line {
         display: flex;
         justify-content: space-between;
-  // REMOVED BY TRANSLATOR: margin-bottom: $position-line-margin-bottom; // Use new token for consistency
-  // REMOVED BY TRANSLATOR: padding-left: 0; // Ensure no left padding to align with section headers
+        margin-bottom: $position-line-margin-bottom; // Use new token for consistency
+        padding-left: 0; // Ensure no left padding to align with section headers
     }
 
     .company, .institution, .project-title, .position, .degree {
@@ -249,23 +249,23 @@ $font-size-h2: 1.75rem !default;
     }
 
     .job-content, .education-content, .project-content {
-  // REMOVED BY TRANSLATOR: margin-top: $job-content-margin-top;
-  // REMOVED BY TRANSLATOR: margin-left: 0;  // No additional margin to maintain alignment with parent
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding to ensure alignment with section titles
+        margin-top: $job-content-margin-top;
+        margin-left: 0;  // No additional margin to maintain alignment with parent
+        padding-left: 0; // No padding to ensure alignment with section titles
         
         p {
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-xsmall;
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // Ensure no left padding
-  // REMOVED BY TRANSLATOR: margin-left: 0;   // Ensure no left margin
+            margin-bottom: $spacing-xsmall;
+            padding-left: 0;  // Ensure no left padding
+            margin-left: 0;   // Ensure no left margin
         }
         
         .role-description-text {
             font-style: italic;
-  // REMOVED BY TRANSLATOR: margin-top: $role-description-margin-top;  // Use token instead of hardcoded 0.2em
-  // REMOVED BY TRANSLATOR: margin-bottom: $role-description-margin-bottom; // Use token instead of hardcoded 0.5em
+            margin-top: $role-description-margin-top;  // Use token instead of hardcoded 0.2em
+            margin-bottom: $role-description-margin-bottom; // Use token instead of hardcoded 0.5em
             color: #555; // Slightly lighter text color
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No left padding to align with content
-  // REMOVED BY TRANSLATOR: margin-left: 0;   // No left margin to align with content
+            padding-left: 0;  // No left padding to align with content
+            margin-left: 0;   // No left margin to align with content
             display: block;  // Ensure block-level display
             width: 100%;     // Take up full width
         }
@@ -273,15 +273,15 @@ $font-size-h2: 1.75rem !default;
         // Bullet point styling
         ul {
             list-style-type: none; // Remove default bullets
-  // REMOVED BY TRANSLATOR: margin-left: 0; // flush with parent text block
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding for clean left alignment
+            margin-left: 0; // flush with parent text block
+            padding-left: 0; // No padding for clean left alignment
         }
 
         li {
             position: relative;
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding for clean left alignment
+            padding-left: 0; // No padding for clean left alignment
             text-indent: 0; // No hanging indent
-  // REMOVED BY TRANSLATOR: margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
+            margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
             line-height: $line-height-tight;
 
             &::before {
@@ -295,16 +295,16 @@ $font-size-h2: 1.75rem !default;
 
 // Tight Bullet Spacing - New
 ul.bullets {
-  // REMOVED BY TRANSLATOR: margin: 0.25rem 0 0.15rem 0;  // no left indent
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No padding for clean left alignment
+    margin: 0.25rem 0 0.15rem 0;  // no left indent
+    padding-left: 0;  // No padding for clean left alignment
     list-style-type: none;  // no default bullets
-  // REMOVED BY TRANSLATOR: margin-left: 0; // No additional margin to maintain alignment
+    margin-left: 0; // No additional margin to maintain alignment
 
     li {
         position: relative;
-  // REMOVED BY TRANSLATOR: margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
+        margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
         line-height: $font-lineHeight-tight;
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No padding for clean left alignment
+        padding-left: 0;  // No padding for clean left alignment
         text-indent: 0;  // No hanging indent
         
         &::before {
@@ -318,20 +318,20 @@ ul.bullets {
 // Skills Section (Often just paragraphs or a list)
 .skills-content {
     // Add specific styling if needed, e.g., columns
-  // REMOVED BY TRANSLATOR: margin-left: $content-left-margin; // Ensure consistent left margin
+    margin-left: $content-left-margin; // Ensure consistent left margin
     
     p, ul {
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-xsmall;
+         margin-bottom: $spacing-xsmall;
     }
     ul {
         list-style-type: none;
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding for clean left alignment
+        padding-left: 0; // No padding for clean left alignment
     }
     li {
          position: relative;
-  // REMOVED BY TRANSLATOR: margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
+         margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
          line-height: $line-height-tight; // Use tighter line height
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No padding for clean left alignment
+         padding-left: 0;  // No padding for clean left alignment
          text-indent: 0;  // No hanging indent
          
          &::before {
@@ -344,7 +344,7 @@ ul.bullets {
 
 // O3: Prevent touching borders between role box and immediate bullet lists
 .role-box + ul {
-  // REMOVED BY TRANSLATOR: margin-top: $role-list-margin-top;
+    margin-top: $role-list-margin-top;
 }
 
 // Prevent orphaned list items
@@ -357,8 +357,8 @@ ul.bullets {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
-  // REMOVED BY TRANSLATOR: padding: 0 !important;
-  // REMOVED BY TRANSLATOR: margin: -1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
   overflow: hidden !important;
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
@@ -368,32 +368,32 @@ ul.bullets {
 .job .job-content, .job .education-content, .job .project-content, 
 .education .job-content, .education .education-content, .education .project-content, 
 .project .job-content, .project .education-content, .project .project-content {
-  // REMOVED BY TRANSLATOR: margin-top: $job-content-margin-top;
-  // REMOVED BY TRANSLATOR: margin-left: 0;
-  // REMOVED BY TRANSLATOR: padding-left: 0;
+  margin-top: $job-content-margin-top;
+  margin-left: 0;
+  padding-left: 0;
   
   // Reset all paragraph and list margins using physical properties
   p {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   
   ul, ol {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   
   li {
-  // REMOVED BY TRANSLATOR: margin-top: 0;
-  // REMOVED BY TRANSLATOR: margin-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   
   .role-description-text {
-  // REMOVED BY TRANSLATOR: margin-top: $role-description-margin-top;
-  // REMOVED BY TRANSLATOR: margin-bottom: $role-description-margin-bottom;
+    margin-top: $role-description-margin-top;
+    margin-bottom: $role-description-margin-bottom;
   }
 }
 
 .role-box + ul {
-  // REMOVED BY TRANSLATOR: margin-top: $role-list-margin-top;
+  margin-top: $role-list-margin-top;
 } 

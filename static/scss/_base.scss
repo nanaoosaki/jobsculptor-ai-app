@@ -1,6 +1,5 @@
 // Base styles: resets, variables, typography, utility classes
-@use 'tokens' as *; // Use tokens globally in this file
-@use 'sass:color';
+@import 'tokens'; // Use tokens globally in this file
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 // --- Define missing variables locally until added to tokens --- 
@@ -9,7 +8,7 @@ $text-color-primary: $textColor !default; // Use base textColor from tokens
 $text-color-headings: $darkColor !default; // Use darkColor from tokens
 $background-color-page: $lightColor !default; // Use lightColor from tokens
 $link-color: $primaryColor !default; // Use primaryColor from tokens
-$link-color-hover: color.adjust($primaryColor, $lightness: -15%) !default;
+$link-color-hover: darken($primaryColor, 15%) !default;
 $border-color-light: #dee2e6 !default; // Standard light border
 
 // Spacing (define simple scale locally)

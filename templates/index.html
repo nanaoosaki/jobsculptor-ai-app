@@ -14,6 +14,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/_variables.css') }}">
     {# Preview Specific Styles - Linked here so they apply to injected content #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/preview.css') }}">
+    
+    {# Enhanced Spacing CSS - Phase 4 Implementation #}
+    {% if config.USE_ENHANCED_SPACING %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/spacing.css') }}">
+    {% endif %}
     <style>
         .job-requirements-card {
             margin-top: 20px;

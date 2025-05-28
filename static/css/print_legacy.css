@@ -373,10 +373,10 @@ ul.bullets {
 /* Enhanced Spacing Rules - Generated for weasyprint */
 /* DO NOT EDIT MANUALLY - Use design_tokens.json */
 
-@layer spacing {
+
   .line-height-tight {
     line-height: 1.2;
-  }
+  
 
   .bullet-list {
     padding-left: 0;

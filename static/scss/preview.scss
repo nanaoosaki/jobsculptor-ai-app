@@ -1,9 +1,8 @@
 // Styles specific to the web preview UI
 
-@use 'tokens' as *;
-@use 'sass:color';
-@use 'base';
-@use 'resume';
+@import 'tokens';
+@import 'base';
+@import 'resume';
 
 // Define any variables not in tokens
 $background-color-page: #f8f9fa !default; // Light grey background for the page
@@ -85,8 +84,8 @@ header {
 }
 
 .btn-primary:hover {
-  background-color: color.adjust($primaryColor, $lightness: -10%);
-  border-color: color.adjust($primaryColor, $lightness: -10%);
+  background-color: darken($primaryColor, 10%);
+  border-color: darken($primaryColor, 10%);
 }
 
 // ... other button styles ...
@@ -201,9 +200,14 @@ header {
 // A4 Paper Styling for Resume Preview Content Area (HTML ONLY)
 .tailored-resume-content {
   // A4 Paper Dimensions - RESPONSIVE approach for web preview
-  max-width: min(210mm, 90vw); // A4 width OR 90% viewport, whichever is smaller
+  max-width: 210mm; // A4 width
   width: 100%; // Take available space up to max-width
   min-height: 400px; // Reasonable minimum height for web preview
+  
+  // For smaller screens, use viewport width instead
+  @media (max-width: 800px) {
+    max-width: 90vw; // Use 90% viewport width on mobile
+  }
   
   // Paper-like appearance
   background-color: $background-color-paper; // Pure white

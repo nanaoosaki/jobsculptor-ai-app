@@ -1,7 +1,7 @@
 // SCSS specifically for PDF generation via WeasyPrint or similar
-@use 'tokens' as *;
-@use 'base';
-@use 'resume';
+@import 'tokens';
+@import 'base';
+@import 'resume';
 
 // Define any variables not in tokens
 $pdf-header-color: $darkColor !default; // Use dark color for PDF headers

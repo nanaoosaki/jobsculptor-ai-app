@@ -25,3 +25,6 @@ class Config:
     USE_LLM_JOB_ANALYSIS = os.environ.get('USE_LLM_JOB_ANALYSIS', 'true').lower() == 'true'
     LLM_JOB_ANALYZER_PROVIDER = os.environ.get('LLM_JOB_ANALYZER_PROVIDER', 'auto')  # 'auto', 'claude', 'openai'
     JOB_ANALYSIS_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads/job_analysis_cache')
+
+    # Enhanced Spacing Feature Flag (Phase 4)
+    USE_ENHANCED_SPACING = os.getenv('USE_ENHANCED_SPACING', 'true').lower() == 'true'

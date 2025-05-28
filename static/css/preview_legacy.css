@@ -1,4 +1,4 @@
-/* Hybrid CSS - Print */
+/* Hybrid CSS - Preview */
 /* Generated: 2025-05-28 08:15:24 */
 
 /* ===== UI STYLES (Legacy CSS - Preserved) ===== */
@@ -247,136 +247,318 @@ ul.bullets {
   white-space: nowrap !important;
   border: 0 !important; }
 
-@page {
-  size: A4;
-  margin: 1cm;
-  background-color: #FFFFFF; }
-
-html {
-  background-color: #FFFFFF; }
+:root {
+  --primary-color: #4a6fdc;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --info-color: #17a2b8;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --ai-color: #8a2be2;
+  --ai-light-color: #f3eafa; }
 
 body {
-  font-family: "Calibri", Arial, sans-serif;
-  font-size: 11pt;
-  line-height: 1.25;
-  color: #333;
-  background-color: white;
+  background-color: #f8f9fa;
+  min-height: 100vh;
   margin: 0;
-  padding: 0; }
+  padding: 0;
+  font-family: "Calibri", Arial, sans-serif; }
 
-.tailored-resume-content {
-  width: 100%;
-  box-shadow: none;
-  margin: 0;
-  background-color: #FFFFFF; }
-
-.tailored-resume-content {
-  box-shadow: none;
-  margin: 0;
-  width: 100%;
-  max-width: 100%;
-  padding: 0; }
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: #f8f9fa; }
 
 .resume-container {
-  background-color: #FFFFFF; }
+  max-width: 900px;
+  margin: 2rem auto;
+  background-color: #f8f9fa; }
 
-.contact-divider, .divider {
-  display: none; }
+header {
+  margin-bottom: 2rem; }
 
-hr {
-  background-color: transparent;
-  border: none;
-  height: 0;
-  margin: 0;
-  padding: 0; }
+.card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 4px;
+  overflow: hidden; }
 
-.section-box, .position-bar .role-box {
-  margin: 0.2rem 0;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid #3A3A3A;
-  background: transparent;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  break-inside: avoid;
-  break-after: avoid; }
+.card:hover {
+  transform: translateY(-5px); }
 
-.position-bar {
-  background: #FFFFFF;
-  padding: 0.25rem 0.45rem;
-  margin-top: 0.1rem;
-  display: flex;
-  justify-content: space-between; }
-  .position-bar .role,
-  .position-bar .company-name,
-  .position-bar .institution,
-  .position-bar .project-title,
-  .position-bar .degree,
-  .position-bar .dates,
-  .position-bar .location {
-    font-weight: 700; }
+.card-header {
+  padding: 0.5rem 1rem;
+  background-color: var(--light-color);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 600; }
 
-ul.bullets {
-  margin: 0.25rem 0 0.15rem 1.1rem; }
-  ul.bullets li {
-    margin-bottom: 0.15rem;
-    line-height: 1.25;
-    break-inside: avoid; }
-    ul.bullets li::marker {
-      color: #3A3A3A; }
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color); }
 
-.resume-section, .job, .education, .project {
-  page-break-inside: auto; }
+.btn-primary:hover {
+  background-color: #2751cc;
+  border-color: #2751cc; }
 
-.resume-section h2 {
-  color: #343a40; }
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(74, 111, 220, 0.25); }
 
-.contact-divider {
-  display: none; }
+#uploadStatus, #jobParseStatus, #tailorStatus {
+  font-size: 0.9rem; }
 
-.company, .institution, .project-title {
-  text-align: left; }
+.status-success {
+  color: var(--success-color); }
 
-.position, .degree {
-  text-align: left; }
+.status-error {
+  color: var(--danger-color); }
 
-.location, .dates {
-  text-align: right; }
+.status-loading {
+  color: var(--info-color); }
 
-.resume-section:first-child {
-  page-break-before: avoid; }
-  .resume-section:first-child > div {
-    text-align: left; }
-  .resume-section:first-child .contact-section {
-    text-align: center; }
+#jobRequirements, #userResumeParsed {
+  min-height: 150px; }
 
-@media print {
-  h2 {
-    page-break-after: avoid; }
-  h2 + p, h2 + ul {
-    page-break-before: avoid; }
-  li {
-    page-break-inside: avoid; } }
+.requirement-item {
+  background-color: #e9f7fe;
+  border-left: 3px solid var(--info-color);
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px; }
+
+/* Scrollable sections for UI only */
+.scrollable-section {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) #f0f0f0; }
+  .scrollable-section::-webkit-scrollbar {
+    width: 8px; }
+  .scrollable-section::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px; }
+  .scrollable-section::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 4px; }
+
+.user-resume-content {
+  overflow: visible !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important; }
+  .user-resume-content * {
+    overflow: visible !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important; }
+
+#userResumeParsed {
+  height: auto;
+  max-height: 300px;
+  overflow-y: auto !important;
+  overflow-x: hidden !important; }
+
+.row.mb-4 .card {
+  margin-bottom: 0;
+  height: 100%; }
+  .row.mb-4 .card .card-body {
+    padding: 0; }
+  .row.mb-4 .card .scrollable-section {
+    max-height: 250px; }
+
+.job-requirements-card {
+  margin-top: -10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--info-color); }
+  .job-requirements-card .card-header {
+    background-color: var(--info-color); }
 
 .resume-preview-container {
-  display: block;
-  padding: 0;
-  background: none; }
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh; }
 
-.section-box, .position-bar .role-box {
-  break-inside: avoid; }
+.preview-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--dark-color);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem; }
 
-.bullets li {
-  break-inside: avoid; }
+.tailored-resume-content {
+  max-width: 210mm;
+  width: 100%;
+  min-height: 400px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  padding: 0.8cm 0.8cm;
+  margin: 0 auto;
+  font-family: "Calibri", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
+  overflow: visible;
+  page-break-inside: avoid;
+  box-sizing: border-box; }
+  @media (max-width: 800px) {
+    .tailored-resume-content {
+      max-width: 90vw; } }
+  .tailored-resume-content * {
+    box-sizing: border-box; }
+
+.resume-preview-content {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem; }
+
+.preview-section {
+  margin-bottom: 2rem; }
+
+.preview-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem; }
+
+.preview-text {
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+  line-height: 1.4; }
+
+.preview-bold {
+  font-weight: 600; }
+
+.resume-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--dark-color); }
+
+.job-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 0.25rem;
+  margin-top: 1rem; }
+
+.job-date {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+  margin-bottom: 0.75rem; }
+
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 1rem; }
+  .btn {
+    padding: 0.375rem 0.75rem; }
+  .resume-preview-content {
+    max-height: 300px; }
+  .job-requirements-card {
+    margin-top: 0; }
+  .row.mb-4 .scrollable-section {
+    max-height: 200px; } }
+
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spinner 1s linear infinite; }
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg); } }
+
+.custom-file-upload {
+  border: 1px dashed #ccc;
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  border-radius: 4px;
+  background-color: var(--light-color); }
+  .custom-file-upload:hover {
+    background-color: #e9ecef; }
+
+.ai-analysis-section {
+  background-color: var(--ai-light-color);
+  border-left: 3px solid var(--ai-color);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(138, 43, 226, 0.15); }
+  .ai-analysis-section .job-section-title {
+    color: var(--ai-color);
+    border-bottom: 1px solid var(--ai-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem; }
+  .ai-analysis-section h5 {
+    color: var(--ai-color);
+    font-weight: 600;
+    margin-top: 1rem; }
+  .ai-analysis-section .badge {
+    font-size: 0.7rem;
+    background-color: var(--ai-color) !important;
+    vertical-align: middle;
+    margin-left: 0.5rem; }
+  .ai-analysis-section .requirement-list {
+    margin-left: 0;
+    padding-left: 1.2rem; }
+  .ai-analysis-section .requirement-item {
+    background-color: white;
+    border-left: 2px solid var(--ai-color);
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.8rem; }
+
+.title-with-hr {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem; }
+
+.item-list {
+  list-style: none;
+  padding: 0; }
+  .item-list li {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #eee;
+    cursor: pointer; }
+    .item-list li:hover {
+      background-color: #f8f9fa; }
+    .item-list li:last-child {
+      border-bottom: none; }
+
+#resumePreview {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  text-align: center;
+  min-height: 400px;
+  overflow-x: auto;
+  overflow-y: visible; }
+  #resumePreview .tailored-resume-content {
+    text-align: left; }
 
 
 /* ===== ENHANCED SPACING RULES ===== */
-/* Enhanced Spacing Rules - Generated for weasyprint */
+/* Enhanced Spacing Rules - Generated for browser */
 /* DO NOT EDIT MANUALLY - Use design_tokens.json */
 
-@layer spacing {
+
   .line-height-tight {
     line-height: 1.2;
-  }
+  
 
   .bullet-list {
     padding-left: 0;
@@ -437,15 +619,15 @@ ul.bullets {
   }
 
   p {
-    margin-top: 0rem;
+    margin-block: 0rem;
   }
 
   ul {
-    margin-top: 0rem;
+    margin-block: 0rem;
   }
 
   li {
-    margin-top: 0rem;
+    margin-block: 0rem;
   }
 
   .section-vertical {
@@ -487,8 +669,5 @@ ul.bullets {
   .docx-paragraph-pt {
     margin-bottom: 0;
   }
-
-  /* WeasyPrint reset - applied after spacing rules */
-  html, body, p, ul, li { margin: 0; padding: 0; }
 
 }
