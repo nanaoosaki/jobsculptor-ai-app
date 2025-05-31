@@ -663,4 +663,138 @@ Since **none** of the logical indentation systems affect the output, the real co
 ### **The Smoking Gun Question**
 If 5cm indentation has zero effect, **what system IS creating the current indentation?** Finding this system is the key to solving the problem.
 
-**Status**: 🎯 **STYLE SYSTEM PROVEN INEFFECTIVE** - Must find the real indentation controller through element-level investigation. 
+**Status**: 🎯 **STYLE SYSTEM PROVEN INEFFECTIVE** - Must find the real indentation controller through element-level investigation.
+
+---
+
+## 🚨 **BREAKTHROUGH: STYLE SYSTEM IS DISCONNECTED FROM INDENTATION**
+
+### **🎯 DEFINITIVE PROOF: Our Style System Is NOT Controlling Indentation**
+
+#### **The Smoking Gun Evidence**
+- **Extreme test implemented**: `indentCm: 5.0` (5 centimeters = ~2 inches)
+- **Styles generated correctly**: JSON shows all styles with 5.0cm values
+- **Logs confirm application**: `Applied MR_RoleDescription style to:` messages appear
+- **DOCX result**: **"no change at all"** - identical indentation as before
+- **Conclusion**: **Our style system is completely disconnected from what controls the indentation**
+
+#### **What This Definitively Proves**
+1. **`indentCm` properties are ignored** - 5cm should be impossible to miss if applied
+2. **Style application is cosmetic** - logs say styles are applied but have no effect  
+3. **Different system controls indentation** - something we haven't identified yet
+4. **All our previous attempts were futile** - we've been modifying the wrong thing entirely
+
+---
+
+## 🎉 **FINAL RESOLUTION: TOKEN NAMING MISMATCH DISCOVERED**
+
+### **✅ ROOT CAUSE IDENTIFIED: Token System Disconnection**
+
+After extensive investigation that proved the style system was working correctly, the real issue was discovered:
+
+#### **The Critical Discovery**
+```python
+# In format_right_aligned_pair() and related functions:
+style='MR_Content'  # Code uses this style name
+
+# In style creation code:
+# Code looks for: "docx-company-name-indent-cm" 
+# Design tokens had: "docx-company-name-cm" (missing "indent")
+# Result: Code used fallback values instead of our test values
+```
+
+#### **Evidence of the Problem**
+```json
+// BROKEN - token naming mismatch:
+{
+  "docx-section-header-cm": "5.0",        // Code looked for "...-indent-cm"
+  "docx-company-name-cm": "5.0",          // Code looked for "...-indent-cm"  
+  "docx-role-description-cm": "5.0"       // Code looked for "...-indent-cm"
+}
+
+// FIXED - corrected token names:
+{
+  "docx-section-header-indent-cm": "5.0",    // ✅ Now connects to style system
+  "docx-company-name-indent-cm": "5.0",      // ✅ Now connects to style system
+  "docx-role-description-indent-cm": "5.0"   // ✅ Now connects to style system
+}
+```
+
+### **✅ The Breakthrough Test Confirmation**
+- **Corrected token names**: Added "indent" suffix to all DOCX indentation tokens
+- **Regenerated styles**: `'MR_Content': {'indentCm': 5.0}` in generation output
+- **User confirmation**: Massive indentation now visible (proved connection restored)
+- **Final implementation**: Set values to `0.0` for flush left alignment
+
+### **✅ Final Working Implementation**
+```json
+// Final design_tokens.json values:
+{
+  "docx-section-header-indent-cm": "0.0",      // Section headers flush left
+  "docx-company-name-indent-cm": "0.0",        // Company names flush left
+  "docx-role-description-indent-cm": "0.0",    // Role descriptions flush left
+  "docx-content-left-indent-cm": "0.0",        // All content flush left
+  "docx-bullet-left-indent-cm": "0.39",        // Only bullets indented
+  "docx-bullet-hanging-indent-cm": "0.39"      // Proper hanging indent
+}
+```
+
+#### **Generated Style Results**
+```bash
+# Final working generation output:
+'MR_SectionHeader': {'indentCm': 0.0}      // ✅ Section headers flush left
+'MR_Content': {'indentCm': 0.0}            // ✅ Company names flush left  
+'MR_RoleDescription': {'indentCm': 0.0}    // ✅ Role descriptions flush left
+'MR_BulletPoint': {'indentCm': 0.39}       // ✅ Bullets properly indented
+```
+
+---
+
+## 🎯 **CROSS-FORMAT ALIGNMENT ACHIEVED**
+
+### **✅ Final DOCX Output Results**
+- **Section Headers**: ✅ Flush left within content area (1.0cm page margin only)
+- **Company Names**: ✅ Flush left, perfectly aligned with section headers
+- **Role Descriptions**: ✅ Flush left, perfectly aligned with section headers  
+- **Bullet Points**: ✅ Indented 0.39cm from content edge (equivalent to HTML 1em)
+- **Overall Appearance**: ✅ **Perfect visual alignment with HTML preview**
+
+### **📋 Implementation Lessons Learned**
+
+#### **1. Token System Architecture**
+- **Naming conventions are critical** - missing suffixes break the entire configuration chain
+- **Always verify token connections** between design_tokens.json and code consumption
+- **Use extreme test values** to confirm system connections before fine-tuning
+
+#### **2. Style System Debugging**
+- **Generated logs can be misleading** - successful style application doesn't guarantee visual effect
+- **Test with impossible-to-miss values** (like 5cm) to prove system connections
+- **Token naming mismatch = silent fallback behavior** that masks configuration issues
+
+#### **3. Cross-Format Development**
+- **Centralized token system enables consistent control** across HTML, PDF, and DOCX formats
+- **HTML as visual reference standard** - establish baseline for other formats to match
+- **Format-specific debugging required** - each output system has unique quirks and requirements
+
+---
+
+## 📊 **Implementation Status - COMPLETED SUCCESSFULLY**
+
+### **✅ FINAL STATUS: Mission Accomplished**
+
+#### **Token System**
+- ✅ **Token naming corrected**: All DOCX tokens use proper "indent" suffix convention
+- ✅ **Style system connected**: Tokens properly flow through to generated DOCX styles
+- ✅ **Flush left alignment implemented**: All content elements use `indentCm: 0.0`
+
+#### **Cross-Format Alignment**  
+- ✅ **HTML**: Reference standard with container padding and flush left elements
+- ✅ **DOCX**: Perfect visual alignment with HTML through token-based configuration
+- 🔄 **PDF**: Future enhancement opportunity (WeasyPrint-specific challenges remain)
+
+#### **Documentation & Future Development**
+- ✅ **Comprehensive documentation**: Both investigation process and final solution documented
+- ✅ **Token system architecture**: Robust foundation for future cross-format development
+- ✅ **Debugging methodology**: Systematic approach documented for future issues
+
+**Final Result**: ✅ **Complete success** - DOCX cross-format alignment fully resolved through proper token system configuration. The investigation process and solution provide a strong foundation for future cross-format development work. 

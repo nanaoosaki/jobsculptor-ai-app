@@ -1115,7 +1115,7 @@ WeasyPrint is applying **default user agent styles** that browsers don't apply i
 
 ### **Why This Matches Your Visual Observation**
 - **HTML Preview**: Browser doesn't apply the same default margins for print
-- **PDF Output**: WeasyPrint applies 18.9px (~0.67cm) left margin to HTML element
+- **PDF Output**: WeasyPrint applies 18.9px left offset to HTML element
 - **DOCX Output**: Uses different styling system entirely, hence different but consistent behavior
 
 ---
@@ -1289,3 +1289,26 @@ Following a detailed investigation (summarized in "o3 FINAL ANALYSIS" and "Resum
 4.  **WeasyPrint Version Specifics**: Unforeseen behavior in WeasyPrint 65.1 regarding inline style processing for `@page` directives.
 
 This failure necessitates a deeper dive into the loaded CSS assets and a more granular debug of the style application process in WeasyPrint.
+
+---
+
+## 🎯 **FINAL SUMMARY: Mission Accomplished (DOCX) + Future Work (PDF)**
+
+### **✅ DOCX Cross-Format Alignment - COMPLETE SUCCESS**
+- **Problem**: DOCX content appeared globally indented and internally misaligned
+- **Root Cause**: Token naming mismatch disconnected style configuration from style system
+- **Solution**: Corrected token names + flush left values (indentCm: 0.0)
+- **Result**: Perfect visual alignment with HTML preview achieved
+
+### **🔄 PDF Cross-Format Alignment - Future Investigation Needed**  
+- **Problem**: PDF role boxes offset ~0.67cm right compared to HTML
+- **Root Cause**: WeasyPrint applies 18.9px left offset at HTML element level
+- **Attempted Fixes**: Multiple CSS and @page approaches failed
+- **Status**: Requires specialized WeasyPrint debugging and CSS reset strategy
+
+### **📋 Cross-Format Achievement**
+- **HTML ↔ DOCX**: ✅ **Perfect alignment achieved**
+- **HTML ↔ PDF**: 🔄 Requires future investigation
+- **Token System**: ✅ **Robust and working for future development**
+
+**Final Status**: ✅ **Major milestone achieved** - DOCX alignment resolved through systematic debugging and proper token system configuration. PDF alignment remains as future enhancement opportunity.
