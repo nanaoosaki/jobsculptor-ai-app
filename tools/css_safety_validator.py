@@ -1,245 +1,174 @@
 #!/usr/bin/env python3
 """
-CSS Safety Validator - Auto-Derived Selectors & Critical Functionality Protection
-
-Part of Phase 1, Day 1 implementation of the hybrid CSS refactor.
-This validator ensures spacing enhancement preserves all critical functionality.
-
-Key Features:
-- Auto-derives critical selectors from design_tokens.json (no manual drift)
-- Validates file size (prevents empty CSS generation)
-- Protects critical styling tokens (colors, fonts)
-- Enforces cascade layer requirements
+CSS Safety Validator - o3's Suggestion #5
+Guards against regression by ensuring critical CSS rules remain in place.
 """
 
-import json
-import os
 import re
+import sys
 from pathlib import Path
-from typing import Set, List, Dict, Any
 
-
-class ValidationError(Exception):
-    """Raised when CSS validation fails"""
-    pass
-
-
-def validate_css_safety(original_css_path: str, spacing_css_path: str) -> bool:
-    """
-    Ensure spacing enhancement preserves all critical functionality
+def validate_print_css():
+    """Validate that print.css has the critical @page margin: 0 rule at the top."""
     
-    Args:
-        original_css_path: Path to legacy CSS file (preview.css or print.css)
-        spacing_css_path: Path to generated spacing CSS file
+    print_css_path = Path("static/css/print.css")
+    
+    if not print_css_path.exists():
+        print(f"❌ FAIL: {print_css_path} does not exist")
+        return False
+    
+    try:
+        with open(print_css_path, 'r', encoding='utf-8') as f:
+            content = f.read()
         
-    Returns:
-        True if validation passes
+        # Find @page blocks and check if they contain margin: 0
+        page_blocks = re.findall(r'@page\s*\{[^}]*\}', content, re.MULTILINE | re.DOTALL)
         
-    Raises:
-        ValidationError: If validation fails
-    """
-    print(f"🔍 Validating CSS safety: {original_css_path} + {spacing_css_path}")
-    
-    # Read files
-    if not os.path.exists(original_css_path):
-        raise ValidationError(f"Original CSS missing: {original_css_path}")
-    
-    if not os.path.exists(spacing_css_path):
-        raise ValidationError(f"Spacing CSS missing: {spacing_css_path}")
-    
-    with open(original_css_path, 'r', encoding='utf-8') as f:
-        original_css = f.read()
-    
-    with open(spacing_css_path, 'r', encoding='utf-8') as f:
-        spacing_css = f.read()
-    
-    # Auto-derive critical selectors from design tokens (no manual drift)
-    critical_selectors = extract_selectors_from_design_tokens("design_tokens.json")
-    
-    # Size check - spacing.css should be reasonable size (not empty)
-    if len(spacing_css) < 100:
-        raise ValidationError(f"spacing.css too small ({len(spacing_css)} chars) - likely generation failed")
-    
-    # Critical selector preservation in original CSS
-    missing_selectors = []
-    for selector in critical_selectors:
-        if selector not in original_css:
-            missing_selectors.append(selector)
-    
-    if missing_selectors:
-        raise ValidationError(f"Critical selectors missing from legacy CSS: {missing_selectors}")
-    
-    # Color/font preservation in original CSS
-    critical_tokens = ['#4a6fdc', '#343a40', 'Calibri', 'Inter']
-    missing_tokens = []
-    for token in critical_tokens:
-        if token not in original_css:
-            missing_tokens.append(token)
-    
-    if missing_tokens:
-        raise ValidationError(f"Critical styling tokens missing: {missing_tokens}")
-    
-    # Ensure spacing rules are in cascade layer (modern browser protection)
-    if '@layer spacing' not in spacing_css:
-        raise ValidationError("Spacing rules must be in @layer spacing for cascade protection")
-    
-    # Validate spacing CSS contains expected properties
-    spacing_properties = ['margin-top', 'margin-bottom', 'margin-block', 'padding']
-    has_spacing_props = any(prop in spacing_css for prop in spacing_properties)
-    if not has_spacing_props:
-        raise ValidationError("Spacing CSS contains no spacing properties")
-    
-    print(f"✅ CSS safety validation passed:")
-    print(f"   - Original CSS: {len(original_css):,} chars")
-    print(f"   - Spacing CSS: {len(spacing_css):,} chars") 
-    print(f"   - Critical selectors: {len(critical_selectors)} validated")
-    print(f"   - Critical tokens: {len(critical_tokens)} preserved")
-    
-    return True
-
-
-def extract_selectors_from_design_tokens(tokens_file: str) -> List[str]:
-    """
-    Auto-derive critical selectors from design tokens - no manual maintenance needed
-    
-    Maps spacing tokens to their corresponding CSS selectors:
-    - "role-description-margin-top" → ".role-description-text"
-    - "job-content-margin-bottom" → ".job-content" 
-    - "position-bar-margin-top" → ".position-bar"
-    
-    Args:
-        tokens_file: Path to design_tokens.json
+        found_zero_margin = False
+        found_line = None
         
-    Returns:
-        List of CSS selectors that must be preserved
-    """
-    if not os.path.exists(tokens_file):
-        print(f"⚠️ Design tokens file not found: {tokens_file}")
-        return []
-    
-    with open(tokens_file, 'r', encoding='utf-8') as f:
-        tokens = json.load(f)
-    
-    selectors = set()
-    
-    # Extract selectors from spacing-related tokens
-    for token_name in tokens:
-        if any(prop in token_name for prop in ['margin', 'padding', 'gap']):
-            selector = derive_selector_from_token(token_name)
-            if selector:
-                selectors.add(selector)
-    
-    # Add known critical selectors from existing CSS patterns
-    critical_patterns = [
-        '.tailored-resume-content',
-        '.job-content', 
-        '.education-content',
-        '.project-content',
-        '.role-description-text',
-        '.position-bar',
-        '.role-box',
-        '.section-box',
-        '.resume-section',
-        '.contact-section'
-    ]
-    
-    selectors.update(critical_patterns)
-    
-    return sorted(list(selectors))
-
-
-def derive_selector_from_token(token_name: str) -> str:
-    """
-    Derive CSS selector from design token name
-    
-    Examples:
-    - "role-description-margin-top" → ".role-description-text"
-    - "job-content-margin-bottom" → ".job-content"
-    - "position-bar-margin-top" → ".position-bar"
-    - "section-box-margin-bottom" → ".section-box"
-    
-    Args:
-        token_name: Design token name
+        for block in page_blocks:
+            # Check if this @page block has margin: 0 or margin: 0cm
+            if re.search(r'margin\s*:\s*0(?:cm)?\s*(?:!important)?', block):
+                found_zero_margin = True
+                # Find line number
+                lines = content.split('\n')
+                for i, line in enumerate(lines, 1):
+                    if '@page' in line:
+                        found_line = i
+                        break
+                break
         
-    Returns:
-        CSS selector or empty string if no mapping
-    """
-    # Remove spacing property suffixes
-    base_name = token_name
-    spacing_props = ['-margin-top', '-margin-bottom', '-margin-left', '-margin-right', 
-                    '-margin-block', '-margin-inline', '-padding-top', '-padding-bottom',
-                    '-padding-left', '-padding-right', '-padding-block', '-padding-inline',
-                    '-gap', '-line-height']
-    
-    for prop in spacing_props:
-        if base_name.endswith(prop):
-            base_name = base_name[:-len(prop)]
-            break
-    
-    # Skip non-spacing tokens
-    if base_name == token_name:
-        return ""
-    
-    # Map common patterns
-    selector_mappings = {
-        'role-description': '.role-description-text',
-        'job-content': '.job-content',
-        'education-content': '.education-content', 
-        'project-content': '.project-content',
-        'position-bar': '.position-bar',
-        'role-box': '.role-box',
-        'section-box': '.section-box',
-        'resume-section': '.resume-section',
-        'contact-section': '.contact-section',
-        'paragraph': 'p',
-        'ul': 'ul',
-        'li': 'li'
-    }
-    
-    if base_name in selector_mappings:
-        return selector_mappings[base_name]
-    
-    # Default pattern: convert kebab-case to CSS class
-    return f".{base_name}"
+        if found_zero_margin:
+            print(f"✅ PASS: @page margin: 0 rule found on line {found_line}")
+            print(f"   Block content: {page_blocks[0][:100]}...")
+            
+            # Check if it's reasonably early in the file (within first 400 lines)
+            if found_line and found_line > 400:
+                print(f"⚠️  WARNING: @page rule is quite late in file (line {found_line})")
+                print("   For optimal WeasyPrint behavior, it should be earlier")
+            
+            return True
+        else:
+            print("❌ FAIL: @page { margin: 0 } or @page { margin: 0cm } NOT found")
+            print("   This is critical - PDF alignment will be broken!")
+            if page_blocks:
+                print(f"   Found @page blocks but none with margin: 0: {page_blocks[0][:100]}...")
+            return False
+            
+    except Exception as e:
+        print(f"❌ ERROR reading {print_css_path}: {e}")
+        return False
 
-
-def generate_critical_selectors_report(tokens_file: str = "design_tokens.json") -> None:
-    """
-    Generate a report of all critical selectors for documentation
-    """
-    selectors = extract_selectors_from_design_tokens(tokens_file)
+def validate_container_padding_consistency():
+    """Validate that container padding is consistent between preview and print CSS."""
     
-    print(f"\n📋 Critical Selectors Report ({len(selectors)} total):")
+    preview_css_path = Path("static/css/preview.css")
+    print_css_path = Path("static/css/print.css")
+    
+    if not preview_css_path.exists() or not print_css_path.exists():
+        print("❌ FAIL: CSS files missing for padding consistency check")
+        return False
+    
+    try:
+        # Extract padding values
+        preview_padding = extract_container_padding(preview_css_path)
+        print_padding = extract_container_padding(print_css_path)
+        
+        if preview_padding and print_padding:
+            if preview_padding == print_padding:
+                print(f"✅ PASS: Container padding consistent ({preview_padding})")
+                return True
+            else:
+                print(f"❌ FAIL: Container padding mismatch")
+                print(f"   Preview: {preview_padding}")
+                print(f"   Print:   {print_padding}")
+                return False
+        else:
+            print("❌ FAIL: Could not extract container padding values")
+            return False
+            
+    except Exception as e:
+        print(f"❌ ERROR validating container padding: {e}")
+        return False
+
+def extract_container_padding(css_path):
+    """Extract .tailored-resume-content padding value from CSS file."""
+    
+    with open(css_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Look for .tailored-resume-content { ... padding: VALUE; ... }
+    pattern = r'\.tailored-resume-content\s*\{[^}]*padding:\s*([^;]+);'
+    match = re.search(pattern, content)
+    
+    if match:
+        return match.group(1).strip()
+    return None
+
+def validate_bullet_hanging_indent():
+    """Validate that bullet hanging indent tokens are properly set."""
+    
+    tokens_path = Path("design_tokens.json")
+    
+    if not tokens_path.exists():
+        print("❌ FAIL: design_tokens.json not found")
+        return False
+    
+    try:
+        import json
+        with open(tokens_path, 'r', encoding='utf-8') as f:
+            tokens = json.load(f)
+        
+        # Check for bullet indent tokens
+        bullet_padding = tokens.get("bullet-item-padding-left")
+        docx_indent = tokens.get("docx-bullet-left-indent-cm") 
+        docx_hanging = tokens.get("docx-bullet-hanging-indent-cm")
+        
+        if bullet_padding and docx_indent and docx_hanging:
+            print(f"✅ PASS: Bullet hanging indent tokens present")
+            print(f"   HTML: {bullet_padding}")
+            print(f"   DOCX: {docx_indent}cm / {docx_hanging}cm hanging")
+            return True
+        else:
+            print("❌ FAIL: Missing bullet hanging indent tokens")
+            return False
+            
+    except Exception as e:
+        print(f"❌ ERROR validating bullet tokens: {e}")
+        return False
+
+def main():
+    """Run all CSS safety validations."""
+    
+    print("🔍 CSS SAFETY VALIDATOR - o3's Regression Guards")
     print("=" * 50)
     
-    for selector in selectors:
-        print(f"  {selector}")
+    all_passed = True
     
-    print("=" * 50)
-    print(f"ℹ️ These selectors are auto-derived from {tokens_file}")
-    print("ℹ️ They must be preserved in legacy CSS for functionality")
-
+    # Validation 1: Critical @page margin rule
+    print("\n1. Validating critical @page margin: 0 rule...")
+    if not validate_print_css():
+        all_passed = False
+    
+    # Validation 2: Container padding consistency
+    print("\n2. Validating container padding consistency...")
+    if not validate_container_padding_consistency():
+        all_passed = False
+    
+    # Validation 3: Bullet hanging indent
+    print("\n3. Validating bullet hanging indent tokens...")
+    if not validate_bullet_hanging_indent():
+        all_passed = False
+    
+    # Summary
+    print("\n" + "=" * 50)
+    if all_passed:
+        print("✅ ALL VALIDATIONS PASSED - CSS is safe for deployment")
+        return 0
+    else:
+        print("❌ VALIDATION FAILURES DETECTED - Fix before deployment")
+        return 1
 
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) == 2 and sys.argv[1] == '--report':
-        # Generate critical selectors report
-        generate_critical_selectors_report()
-    elif len(sys.argv) == 3:
-        # Validate CSS safety
-        original_css = sys.argv[1]
-        spacing_css = sys.argv[2]
-        
-        try:
-            validate_css_safety(original_css, spacing_css)
-            print("🎉 CSS Safety Validation PASSED")
-            sys.exit(0)
-        except ValidationError as e:
-            print(f"❌ CSS Safety Validation FAILED: {e}")
-            sys.exit(1)
-    else:
-        print("Usage:")
-        print("  python tools/css_safety_validator.py preview.css spacing.css")
-        print("  python tools/css_safety_validator.py --report")
-        sys.exit(1) 
+    sys.exit(main()) 

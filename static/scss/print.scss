@@ -1,7 +1,17 @@
 // SCSS specifically for PDF generation via WeasyPrint or similar
+
 @import 'tokens';
 @import 'base';
 @import 'resume';
+
+// o3 CRITICAL FIX: Must be FIRST (after imports) - Kill page margin before WeasyPrint layouts anything
+// Using !important to prevent any other @page rules from overriding this
+// Using tokenized approach for centralized control
+@page { 
+  margin: #{$page-margin-cm}cm !important;
+  size: A4;
+  background-color: #FFFFFF;
+}
 
 // Define any variables not in tokens
 $pdf-header-color: $darkColor !default; // Use dark color for PDF headers
@@ -11,12 +21,17 @@ $spacing-medium: 1rem !default; // Medium spacing
 $spacing-small: 0.5rem !default; // Small spacing
 $spacing-xsmall: 0.25rem !default; // Extra small spacing
 
-// Custom set global properties for print media
-@page {
-  size: A4;
-  margin: 1cm; // Reduced margin to 1 cm
-  background-color: #FFFFFF; // Ensure white background for page
+// CORRECT FIX: Reset WeasyPrint default UA styles that cause 18.9px offset
+// Evidence shows HTML element starts at x=18.9px instead of x=0px
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
 }
+
+// Custom set global properties for print media
 
 html {
   background-color: #FFFFFF; // Ensure white background
@@ -25,7 +40,7 @@ html {
 body {
   font-family: $baseFontFamily;
   font-size: $baseFontSize;
-  line-height: $font-lineHeight-tight; // Use tighter line height for body
+  line-height: $line-height-tight; // Use tighter line height for body
   color: $textColor;
   background-color: white;
   margin: 0;
@@ -38,7 +53,8 @@ body {
   box-shadow: none; // No shadow for print
   margin: 0; // No margin needed for print
   background-color: #FFFFFF; // Explicitly set white background
-  // Note: Internal padding from _resume.scss still controls content positioning
+  // o3 TOKENIZED: Use centralized container padding control
+  padding: #{$container-padding-cm}cm #{$container-padding-cm}cm;
 }
 
 // Remove screen-specific effects for print
@@ -47,7 +63,8 @@ body {
   margin: 0; // Remove extra margins used for screen layout
   width: 100%; // Use full available width within page margins
   max-width: 100%;
-  padding: 0; // Page margins handle padding
+  // o3 TOKENIZED: Use centralized container padding control
+  padding: #{$container-padding-cm}cm #{$container-padding-cm}cm;
 }
 
 // Make sure container has white background
@@ -71,23 +88,32 @@ hr {
 
 // Section Box Styling - ensure consistency with HTML
 .section-box {
-    margin: $space-section-y 0;
+    margin: 0.5rem 0;
     padding: 0.35rem 0.6rem;
-    border: 1px solid $color-sectionBox-border;
+    border: 1px solid $sectionBoxBorderColor;
     background: transparent;  // transparent fill like HTML version
-    font-weight: $font-weight-bold;
+    font-weight: 700;
     letter-spacing: 0.5px;
     break-inside: avoid; // Prevent section headers breaking across pages
     break-after: avoid;
+    margin-left: 0 !important;  // Force flush left alignment for PDF
 }
 
 // Position Bar Styling - ensure consistency with HTML
 .position-bar {
-    background: $color-positionBar-bg;
+    background: $positionBarBackgroundColor;
     padding: 0.25rem 0.45rem;
-    margin-top: $position-bar-margin-top;  // Use design token instead of hardcoded 0.4rem
+    margin-top: 0.1rem;  // Use hardcoded value
+    margin-left: 0 !important;  // Force flush left alignment
     display: flex;
     justify-content: space-between; // company left, dates right
+    
+    // Role box specific fixes for PDF alignment
+    .role-box {
+        margin-left: 0 !important;  // Override any inherited indentation
+        padding-left: 0 !important; // Ensure no left padding
+        text-indent: 0 !important;  // Override any text indentation
+    }
     
     .role,
     .company-name,
@@ -96,7 +122,7 @@ hr {
     .degree,
     .dates,
     .location {
-        font-weight: $font-weight-bold;
+        font-weight: 700;
     }
 }
 
@@ -104,9 +130,9 @@ hr {
 ul.bullets {
     margin: 0.25rem 0 0.15rem 1.1rem;  // left indent slight
     li {
-        margin-bottom: $space-bullet-y;
-        line-height: $font-lineHeight-tight;
-        &::marker { color: $color-bullet; }
+        margin-bottom: 0.1rem;
+        line-height: $line-height-tight;
+        &::marker { color: $darkColor; }
         break-inside: avoid;
     }
 }
@@ -196,6 +222,17 @@ p {
   
   h2 + p, h2 + ul {
     page-break-before: avoid;
+  }
+  
+  // WeasyPrint Quirk Fix (o3 suggestion D) - Fix PDF role box alignment
+  // Prevents inline-block elements inside paragraphs from inheriting unwanted text-indent
+  p:has(> .position-bar) { 
+    text-indent: 0 !important; 
+  }
+  
+  // Additional WeasyPrint alignment fixes
+  p:has(> .role-box) {
+    text-indent: 0 !important;
   }
   
   li {

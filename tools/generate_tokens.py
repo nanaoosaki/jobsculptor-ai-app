@@ -84,8 +84,11 @@ def generate_scss_variables():
         print(f"Reading tokens from: {tokens_path}")
         print(f"Writing SCSS variables to: {output_path}")
 
-        with open(tokens_path, 'r') as f:
+        with open(tokens_path, 'r', encoding='utf-8') as f:
             tokens = json.load(f)
+
+        # Apply auto-conversion for perfect HTML ↔ DOCX alignment (o3 suggestion B)
+        tokens = auto_convert_em_to_docx_cm(tokens)
 
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -178,8 +181,11 @@ def generate_docx_style_mappings():
         print(f"Reading tokens from: {tokens_path}")
         print(f"Writing DOCX style mappings to: {output_path}")
         
-        with open(tokens_path, 'r') as f:
+        with open(tokens_path, 'r', encoding='utf-8') as f:
             tokens = json.load(f)
+        
+        # Apply auto-conversion for perfect HTML ↔ DOCX alignment (o3 suggestion B)
+        tokens = auto_convert_em_to_docx_cm(tokens)
         
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -212,6 +218,18 @@ def generate_docx_style_mappings():
         docx_role_indent = float(tokens.get("docx-role-description-indent-cm", "0"))
         docx_bullet_indent = float(tokens.get("docx-bullet-left-indent-cm", "0"))
         docx_bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0"))
+        
+        # NEW: Unified content indentation system
+        docx_content_left_indent = float(tokens.get("docx-content-left-indent-cm", "1.0"))
+        
+        # Apply unified indentation to all major elements (except bullets which need relative indentation)
+        docx_section_header_indent = docx_content_left_indent
+        docx_company_indent = docx_content_left_indent  
+        docx_role_indent = docx_content_left_indent
+        
+        # Bullets maintain relative indentation (content indent + bullet indent)
+        docx_bullet_indent = docx_content_left_indent + float(tokens.get("docx-bullet-left-indent-cm", "0.39"))
+        docx_bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0.39"))
         
         # Spacing values - use new typography system spacing if available
         docx_spacing = typography.get("docx", {}).get("spacing", {})
@@ -399,6 +417,33 @@ def hex_to_rgb(hex_color):
     except Exception as e:
         print(f"Error converting color '{hex_color}' to RGB: {e}")
         return [0, 0, 0]  # Default to black
+
+# Auto-conversion helper functions (o3 suggestion B)
+def em_to_cm(em_value, base_font_pt):
+    """Convert em units to cm based on font size"""
+    points = em_value * base_font_pt
+    return round(points * 0.0352778, 2)  # 1 pt = 0.0352778 cm
+
+def auto_convert_em_to_docx_cm(tokens):
+    """Auto-generate DOCX cm values from HTML em values for perfect alignment"""
+    
+    # Extract base font size
+    base_font_str = tokens.get('baseFontSize', '11pt')
+    base_font_pt = float(base_font_str.rstrip('pt'))
+    
+    # Auto-convert bullet indentation
+    bullet_padding_str = tokens.get('bullet-item-padding-left', '1em')
+    if bullet_padding_str.endswith('em'):
+        bullet_padding_em = float(bullet_padding_str.rstrip('em'))
+        docx_indent_cm = em_to_cm(bullet_padding_em, base_font_pt)
+        
+        # Update tokens with auto-converted values
+        tokens['docx-bullet-left-indent-cm'] = str(docx_indent_cm)
+        tokens['docx-bullet-hanging-indent-cm'] = str(docx_indent_cm)
+        
+        print(f"Auto-converted: {bullet_padding_em}em → {docx_indent_cm}cm (at {base_font_pt}pt)")
+    
+    return tokens
 
 if __name__ == "__main__":
     generate_scss_variables()

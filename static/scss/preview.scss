@@ -210,12 +210,12 @@ header {
   }
   
   // Paper-like appearance
-  background-color: $background-color-paper; // Pure white
-  box-shadow: $paper-shadow; // Paper drop shadow
+  background-color: white; // Pure white
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Paper drop shadow
   border: 1px solid #e0e0e0; // Subtle border for definition
   
   // Proper A4 margins
-  padding: $paper-padding-vertical $paper-padding-horizontal;
+  padding: 1cm 1cm;
   margin: 0 auto; // Simple centering - let parent handle flex if needed
   
   // Typography optimized for A4 print

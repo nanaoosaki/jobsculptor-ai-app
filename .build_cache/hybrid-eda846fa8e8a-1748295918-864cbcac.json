@@ -1,0 +1,22 @@
+{
+  "cache_key": "hybrid-eda846fa8e8a-1748295918-864cbcac",
+  "timestamp": "2025-05-26T17:56:36.352777",
+  "output_files": [
+    "preview.css",
+    "print.css"
+  ],
+  "build_stats": {
+    "start_time": 1748296596.159765,
+    "spacing_tokens": 57,
+    "scss_files_compiled": 0,
+    "css_files_generated": 2,
+    "total_css_size": 1770,
+    "optimization_enabled": false,
+    "end_time": 1748296596.3527405,
+    "build_duration": 0.19297552108764648,
+    "output_files": [
+      "preview.css",
+      "print.css"
+    ]
+  }
+}

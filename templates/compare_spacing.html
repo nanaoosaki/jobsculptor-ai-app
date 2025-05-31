@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spacing Comparison - Before vs After</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <h2 class="text-center mb-4">🎯 Hybrid CSS Spacing Comparison</h2>
+        
+        <div class="row">
+            <!-- BEFORE: Default Browser Spacing -->
+            <div class="col-md-6">
+                <h4 class="text-center text-danger">❌ BEFORE: Default Browser Spacing</h4>
+                <div style="border: 2px solid #dc3545; padding: 1rem; margin: 1rem; background: #f8f9fa;">
+                    <div class="resume-section" style="margin-bottom: 1.5rem;">
+                        <div style="border: 1px solid #4A6FDC; padding: 0.5rem; background: transparent;">
+                            <h3 style="margin: 0; font-size: 12pt;">Experience</h3>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="margin-bottom: 0.75rem;">Global Cloud Inc.</h4>
+                    </div>
+                    
+                    <div style="border: 1px solid #4A6FDC; padding: 0.25rem 0.5rem; margin-bottom: 0.5rem; background: #F8F9FA;">
+                        <strong>Senior Software Development Engineer</strong>
+                        <span style="float: right; font-style: italic;">2021.06—Present</span>
+                    </div>
+                    
+                    <div style="margin-top: 0.5rem; margin-bottom: 1rem;">
+                        <p style="margin-bottom: 0.75rem;">Led AI-driven infrastructure innovations, enhancing global deployment strategies.</p>
+                        <ul style="margin-bottom: 1rem;">
+                            <li style="margin-bottom: 0.5rem;">Architected batch compute systems, preventing outages</li>
+                            <li style="margin-bottom: 0.5rem;">Enhanced small LLMs' reasoning with RL self-play</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AFTER: Hybrid CSS Zero Spacing -->
+            <div class="col-md-6">
+                <h4 class="text-center text-success">✅ AFTER: Hybrid CSS Zero Spacing</h4>
+                <div style="border: 2px solid #28a745; padding: 1rem; margin: 1rem; background: #f8f9fa;">
+                    <div class="resume-section" style="margin-bottom: 0.3rem;">
+                        <div style="border: 1px solid #4A6FDC; padding: 0.5rem; background: transparent;">
+                            <h3 style="margin: 0; font-size: 12pt;">Experience</h3>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 0.1rem;">
+                        <h4 style="margin-bottom: 0rem;">Global Cloud Inc.</h4>
+                    </div>
+                    
+                    <div style="border: 1px solid #4A6FDC; padding: 0.25rem 0.5rem; margin-bottom: 0rem; background: #F8F9FA;">
+                        <strong>Senior Software Development Engineer</strong>
+                        <span style="float: right; font-style: italic;">2021.06—Present</span>
+                    </div>
+                    
+                    <div style="margin-top: 0rem; margin-bottom: 0rem;">
+                        <p style="margin-bottom: 0rem;">Led AI-driven infrastructure innovations, enhancing global deployment strategies.</p>
+                        <ul style="margin-bottom: 0rem;">
+                            <li style="margin-bottom: 0rem;">Architected batch compute systems, preventing outages</li>
+                            <li style="margin-bottom: 0rem;">Enhanced small LLMs' reasoning with RL self-play</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <h5>🎯 Key Differences:</h5>
+            <ul class="list-unstyled">
+                <li>📏 Section spacing: <span class="text-danger">1.5rem</span> → <span class="text-success">0.3rem</span></li>
+                <li>📏 Role description gaps: <span class="text-danger">0.75rem</span> → <span class="text-success">0rem</span></li>
+                <li>📏 Bullet spacing: <span class="text-danger">0.5rem</span> → <span class="text-success">0rem</span></li>
+                <li>📏 Position bar gaps: <span class="text-danger">0.5rem</span> → <span class="text-success">0rem</span></li>
+            </ul>
+            
+            <a href="/" class="btn btn-primary mt-3">← Back to Main App</a>
+        </div>
+    </div>
+</body>
+</html> 

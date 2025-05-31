@@ -1,0 +1,88 @@
+{
+  ".line-height-tight": {
+    "line-height": "1.2"
+  },
+  ".bullet-list": {
+    "padding-left": "0"
+  },
+  ".bullet-item": {
+    "padding-left": "1em"
+  },
+  ".bullet-item-text": {
+    "margin-left": "-1em"
+  },
+  ".bullet-list-hanging-cm": {
+    "margin-left": "0.25"
+  },
+  ".bullet-list-cm": {
+    "margin-left": "0.75"
+  },
+  ".role-description-cm": {
+    "margin-left": "0"
+  },
+  ".docx-content-left-cm": {
+    "margin-left": "0.5"
+  },
+  ".section-content": {
+    "padding-left": "0"
+  },
+  ".role-description-text": {
+    "padding-left": "0",
+    "margin-top": "0rem",
+    "margin-bottom": "0.05rem"
+  },
+  ".section-box": {
+    "margin-bottom": "0.5rem"
+  },
+  ".position-line": {
+    "margin-bottom": "0.05rem"
+  },
+  ".position-bar": {
+    "margin-top": "0.1rem"
+  },
+  ".job-content": {
+    "margin-top": "0.1rem"
+  },
+  ".role-list": {
+    "margin-top": "0rem"
+  },
+  "p": {
+    "margin-block": "0rem"
+  },
+  "ul": {
+    "margin-block": "0rem"
+  },
+  "li": {
+    "margin-block": "0rem"
+  },
+  ".section-vertical": {
+    "margin-bottom": "0.8rem"
+  },
+  ".bullet-after": {
+    "margin-bottom": "0rem"
+  },
+  ".docx-section-header-cm": {
+    "margin-left": "0"
+  },
+  ".docx-company-name-cm": {
+    "margin-left": "0"
+  },
+  ".docx-role-description-cm": {
+    "margin-left": "0"
+  },
+  ".docx-bullet-left-cm": {
+    "margin-left": "0"
+  },
+  ".docx-bullet-hanging-cm": {
+    "margin-left": "0"
+  },
+  ".docx-section-pt": {
+    "margin-bottom": "4"
+  },
+  ".docx-bullet-pt": {
+    "margin-bottom": "0"
+  },
+  ".docx-paragraph-pt": {
+    "margin-bottom": "0"
+  }
+}

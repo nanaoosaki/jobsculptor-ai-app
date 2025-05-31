@@ -12,20 +12,16 @@
     },
     "fontWeight": {
       "normal": 400,
-      "medium": 500,
-      "semibold": 600,
       "bold": 700
     },
     "fontColor": {
-      "primary": "#333333",
-      "headers": "#0D2B7E",
+      "primary": "#333",
+      "headers": "rgb(0, 0, 102)",
       "secondary": "#6c757d"
     },
     "lineHeight": {
-      "tight": 1.2,
       "normal": 1.4,
-      "loose": 1.6,
-      "sectionHeader": 1.0
+      "tight": 1.2
     },
     "spacing": {
       "sectionAfterPt": 4,
@@ -36,8 +32,8 @@
   "page": {
     "marginTopCm": 0.8,
     "marginBottomCm": 0.8,
-    "marginLeftCm": 2.0,
-    "marginRightCm": 2.0
+    "marginLeftCm": 1.0,
+    "marginRightCm": 1.0
   },
   "global": {
     "fontFamily": "Calibri",
@@ -71,9 +67,9 @@
     "fontFamily": "Calibri",
     "fontSizePt": 14,
     "color": [
-      13,
-      43,
-      126
+      0,
+      0,
+      102
     ],
     "spaceAfterPt": 4,
     "bold": true,
@@ -83,9 +79,9 @@
       255
     ],
     "borderColor": [
-      0,
-      0,
-      0
+      13,
+      43,
+      126
     ],
     "borderSize": 1,
     "paddingVertical": 1.0,
@@ -114,8 +110,8 @@
   "bulletList": {
     "fontFamily": "Calibri",
     "fontSizePt": 11,
-    "indentCm": 0.0,
-    "hangingIndentCm": 0.0,
+    "indentCm": 0.39,
+    "hangingIndentCm": 0.39,
     "bulletCharacter": "\\2022",
     "spaceAfterPt": 6,
     "color": [
@@ -151,9 +147,9 @@
       "spaceAfterPt": 4,
       "bold": true,
       "color": [
-        13,
-        43,
-        126
+        0,
+        0,
+        102
       ]
     },
     "MR_Content": {
@@ -182,8 +178,8 @@
     "MR_BulletPoint": {
       "fontFamily": "Calibri",
       "fontSizePt": 11,
-      "indentCm": 0.0,
-      "hangingIndentCm": 0.0,
+      "indentCm": 0.39,
+      "hangingIndentCm": 0.39,
       "spaceAfterPt": 6,
       "color": [
         51,

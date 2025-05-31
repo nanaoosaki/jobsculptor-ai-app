@@ -56,7 +56,15 @@
   "role-description-cm": "0",
   "docx-content-left-cm": "0.5",
   "section-content-padding-left": "0",
-  "docx-section-header-cm": "0",
-  "docx-company-name-cm": "0",
-  "docx-role-description-cm": "0"
+  "docx-section-header-indent-cm": "0.0",
+  "docx-company-name-indent-cm": "0.0",
+  "docx-role-description-indent-cm": "0.0",
+  "docx-global-left-margin-cm": "1.0",
+  "docx-global-right-margin-cm": "1.0",
+  "docx-content-left-indent-cm": "0.0",
+  "docx-content-right-indent-cm": "0",
+  "docx-bullet-left-indent-cm": "0.39",
+  "docx-bullet-hanging-indent-cm": "0.39",
+  "page-margin-cm": "0",
+  "container-padding-cm": "1"
 } 

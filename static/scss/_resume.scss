@@ -126,8 +126,8 @@ $font-size-h2: 1.75rem !default;
     display: block;  // Explicitly set to block (though likely default)
     width: auto;     // Explicitly set width to auto
     text-align: left; // left-align header text
-    font-size: $sectionHeaderFontSize; // Apply font-size directly
-    line-height: $sectionHeaderLineHeight; // Apply line-height directly
+    font-size: $baseFontSize; // Apply base font size (section headers will be styled in HTML)
+    line-height: $baseLineHeight; // Apply base line height
     break-inside: avoid; // Prevent section headers breaking across pages
     break-after: avoid;
   // REMOVED BY TRANSLATOR: margin-bottom: $section-box-margin-bottom; // Use new token for consistent margin
@@ -149,16 +149,12 @@ $font-size-h2: 1.75rem !default;
 
 // Position Bar Styling - Updated for unified role+dates box
 .position-bar {
-    background: $color-positionBar-bg;
-  // REMOVED BY TRANSLATOR: padding: 0.25rem 0.45rem;
-  // REMOVED BY TRANSLATOR: margin-top: $position-bar-margin-top;
-  // REMOVED BY TRANSLATOR: margin-bottom: $position-line-margin-bottom; // New token for consistent spacing
+    background: $positionBarBackgroundColor;
     break-inside: avoid;      // Prevent page breaks in PDF/print
     page-break-inside: avoid; // Legacy compatibility for older print engines
     
     .role-box {
         @extend .section-box;              // Reuse borders/padding logic
-  // REMOVED BY TRANSLATOR: margin-left: 0 !important;        // Override inherited margin for clean left alignment
         display: flex;                     // Use flex to align role and dates
         justify-content: space-between;    // Role on left, dates on right
         align-items: center;               // Vertically center content
@@ -169,7 +165,6 @@ $font-size-h2: 1.75rem !default;
         
         border-color: var(--roleBox-borderColor, var(--sectionBox-borderColor, #4A6FDC));
         border-width: calc(var(--roleBox-borderWidth, 1) * 1px + 0px);  // Force calc evaluation for WeasyPrint
-  // REMOVED BY TRANSLATOR: padding: calc(var(--roleBox-padding, 4) * 1px + 0px) calc(var(--roleBox-padding, 4) * 2px + 0px);  // top/bottom vs sides
         color: var(--roleBox-textColor, #333333);
         border-radius: calc(var(--roleBox-borderRadius, 0.5) * 1px + 0px);
         background-color: var(--roleBox-backgroundColor, transparent);
@@ -186,7 +181,6 @@ $font-size-h2: 1.75rem !default;
         // Style the dates
         .dates {
             font-style: italic;
-  // REMOVED BY TRANSLATOR: margin-left: 1rem;             // Add some space between role and dates
             white-space: nowrap;           // Prevent dates from wrapping
         }
         
@@ -214,13 +208,13 @@ $font-size-h2: 1.75rem !default;
     .degree,
     .dates,
     .location {
-        font-weight: $font-weight-bold;
+        font-weight: 700; // Use numeric font weight
     }
 
     .location, .dates {
         font-style: normal; // remove italic
-        font-weight: $font-weight-bold; // make bold
-        color: $text-color-secondary;
+        font-weight: 700; // make bold
+        color: $secondaryColor;
         text-align: right;
     }
 }
@@ -238,13 +232,13 @@ $font-size-h2: 1.75rem !default;
     }
 
     .company, .institution, .project-title, .position, .degree {
-        font-weight: $font-weight-bold;
-        color: $text-color-secondary;
+        font-weight: 700; // Use numeric font weight
+        color: $secondaryColor;
     }
 
     .location, .dates {
         font-style: italic;
-        color: $text-color-muted;
+        color: $darkColor;
         text-align: right;
     }
 
@@ -270,75 +264,74 @@ $font-size-h2: 1.75rem !default;
             width: 100%;     // Take up full width
         }
         
-        // Bullet point styling
+        // Bullet point styling - ENHANCED with true hanging indent (o3 suggestion)
         ul {
             list-style-type: none; // Remove default bullets
-  // REMOVED BY TRANSLATOR: margin-left: 0; // flush with parent text block
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding for clean left alignment
+            margin: 0;
+            padding-left: 0;
         }
 
         li {
-            position: relative;
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding for clean left alignment
-            text-indent: 0; // No hanging indent
-  // REMOVED BY TRANSLATOR: margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
+            /* translator-keep: bullet-indent */
+            padding-left: $bullet-item-padding-left;    // Use design token (1em)
+            /* translator-keep: hanging-indent */
+            text-indent: -$bullet-item-padding-left;    // Create true hanging indent (-1em)
             line-height: $line-height-tight;
-
+            
             &::before {
-                content: "• "; // Bullet with space, inline approach
-                color: $color-bullet;
-                font-weight: normal; // Ensure bullet isn't bold
+                content: "• ";                           // Bullet symbol
+                color: $darkColor;
+                font-weight: normal;
             }
         }
     }
 }
 
-// Tight Bullet Spacing - New
+// Tight Bullet Spacing - ENHANCED with true hanging indent (o3 suggestion)
 ul.bullets {
-  // REMOVED BY TRANSLATOR: margin: 0.25rem 0 0.15rem 0;  // no left indent
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No padding for clean left alignment
-    list-style-type: none;  // no default bullets
-  // REMOVED BY TRANSLATOR: margin-left: 0; // No additional margin to maintain alignment
+    list-style-type: none;
+    margin: 0;
+    padding-left: 0;
 
     li {
-        position: relative;
-  // REMOVED BY TRANSLATOR: margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
-        line-height: $font-lineHeight-tight;
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No padding for clean left alignment
-        text-indent: 0;  // No hanging indent
+        /* translator-keep: bullet-indent */
+        padding-left: $bullet-item-padding-left;        // Use design token (1em)
+        /* translator-keep: hanging-indent */
+        text-indent: -$bullet-item-padding-left;        // Create true hanging indent (-1em)
+        line-height: $line-height-tight;
         
         &::before {
-            content: "• ";  // Bullet with space, inline approach
-            color: $color-bullet;
-            font-weight: normal; // Ensure bullet isn't bold
+            content: "• ";                               // Bullet symbol
+            color: $darkColor;
+            font-weight: normal;
         }
     }
 }
 
-// Skills Section (Often just paragraphs or a list)
+// Skills Section - ENHANCED with true hanging indent (o3 suggestion)
 .skills-content {
-    // Add specific styling if needed, e.g., columns
-  // REMOVED BY TRANSLATOR: margin-left: $content-left-margin; // Ensure consistent left margin
-    
     p, ul {
-  // REMOVED BY TRANSLATOR: margin-bottom: $spacing-xsmall;
+        margin-bottom: 0;
     }
+    
     ul {
         list-style-type: none;
-  // REMOVED BY TRANSLATOR: padding-left: 0; // No padding for clean left alignment
+        margin: 0;
+        padding-left: 0;
     }
+    
     li {
-         position: relative;
-  // REMOVED BY TRANSLATOR: margin-bottom: $bullet-spacing-after; // Use new token for consistent spacing
-         line-height: $line-height-tight; // Use tighter line height
-  // REMOVED BY TRANSLATOR: padding-left: 0;  // No padding for clean left alignment
-         text-indent: 0;  // No hanging indent
+        /* translator-keep: bullet-indent */
+        padding-left: $bullet-item-padding-left;        // Use design token (1em)
+        /* translator-keep: hanging-indent */
+        text-indent: -$bullet-item-padding-left;        // Create true hanging indent (-1em)
+        line-height: $line-height-tight;
          
-         &::before {
-             content: "• ";  // Bullet with space, inline approach
-             color: $color-bullet;
-             font-weight: normal; // Ensure bullet isn't bold
-         }
+        &::before {
+            content: "• ";                               // Bullet symbol
+            color: $darkColor;
+            font-weight: normal;
+        }
     }
 }
 

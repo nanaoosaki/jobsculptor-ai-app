@@ -8,6 +8,7 @@ from style_manager import StyleManager
 from flask import render_template
 from io import BytesIO
 import io
+import re # Added for debug dumping
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -59,6 +60,70 @@ class PDFExporter:
             # Ensure output directory exists
             os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
             
+            # --- BEGIN DEBUG DUMP ---
+            # Create a debug directory in the project root
+            # Assuming current working directory is the project root (D:\AI\manusResume6)
+            project_root = os.getcwd() 
+            debug_dir = os.path.join(project_root, "debug_output")
+            os.makedirs(debug_dir, exist_ok=True)
+
+            # Dump HTML input (which is full_html from generate_resume_pdf)
+            html_debug_path = os.path.join(debug_dir, "debug_weasyprint_input.html")
+            try:
+                with open(html_debug_path, "w", encoding="utf-8") as f_html:
+                    f_html.write(html_content)
+                logger.info(f"DEBUG: Dumped HTML input to {html_debug_path}")
+            except Exception as e_html_dump:
+                logger.error(f"DEBUG: Failed to dump HTML input: {e_html_dump}")
+
+            # Dump CSS content
+            css_debug_path = os.path.join(debug_dir, "debug_weasyprint_combined_styles.css")
+            combined_css_content_parts = []
+
+            # 1. Inline styles from html_content (which is full_html)
+            try:
+                style_pattern = re.compile(r"<style>(.*?)</style>", re.DOTALL | re.IGNORECASE)
+                inline_styles_match = style_pattern.search(html_content)
+                if inline_styles_match:
+                    inline_css = inline_styles_match.group(1).strip()
+                    combined_css_content_parts.append("/* --- INLINE STYLES (from input HTML <head>) --- */")
+                    combined_css_content_parts.append(inline_css)
+                    combined_css_content_parts.append("\n") # Explicit newline marker for clarity
+            except Exception as e_inline_css:
+                logger.error(f"DEBUG: Failed to extract inline CSS: {e_inline_css}")
+
+            # 2. External stylesheets (based on paths used to create CSS objects)
+            # Re-read file contents for an accurate dump of what was fed to CSS()
+            try:
+                if self.print_css_path and os.path.exists(self.print_css_path):
+                    combined_css_content_parts.append(f"/* --- PRINT CSS (from {self.print_css_path}) --- */")
+                    with open(self.print_css_path, "r", encoding="utf-8") as f_css:
+                        combined_css_content_parts.append(f_css.read())
+                    combined_css_content_parts.append("\n")
+                else:
+                    logger.warning(f"DEBUG: Print CSS path not found or not set: {self.print_css_path}")
+            except Exception as e_print_css:
+                logger.error(f"DEBUG: Failed to read print CSS for dumping: {e_print_css}")
+            
+            try:
+                if self.preview_css_path and os.path.exists(self.preview_css_path):
+                    combined_css_content_parts.append(f"/* --- PREVIEW CSS (from {self.preview_css_path}) --- */")
+                    with open(self.preview_css_path, "r", encoding="utf-8") as f_css:
+                        combined_css_content_parts.append(f_css.read())
+                    combined_css_content_parts.append("\n")
+                else:
+                    logger.warning(f"DEBUG: Preview CSS path not found or not set: {self.preview_css_path}")
+            except Exception as e_preview_css:
+                logger.error(f"DEBUG: Failed to read preview CSS for dumping: {e_preview_css}")
+
+            try:
+                with open(css_debug_path, "w", encoding="utf-8") as f_css_out:
+                    f_css_out.write("\n".join(combined_css_content_parts))
+                logger.info(f"DEBUG: Dumped CSS content to {css_debug_path}")
+            except Exception as e_css_dump:
+                logger.error(f"DEBUG: Failed to write combined CSS dump: {e_css_dump}")
+            # --- END DEBUG DUMP ---
+
             # Load CSS stylesheets using paths from StyleManager
             stylesheets = []
             if self.print_css_path:
@@ -111,13 +176,30 @@ class PDFExporter:
         try:
             # Construct the full HTML document structure needed by WeasyPrint
             # Important: No <link> tags here, as stylesheets are passed directly.
+            # o3 CRITICAL FIX: Inline @page rule FIRST to ensure WeasyPrint processes it before any other CSS
             full_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{metadata.get('title', 'Tailored Resume') if metadata else 'Tailored Resume'}</title>
-    <!-- Stylesheets are applied programmatically by WeasyPrint -->
+    <!-- o3 Option B: Inline @page rule for immediate processing -->
+    <style>
+    @page {{ 
+        margin: 0 !important; 
+        size: A4; 
+    }}
+    html, body {{
+        box-sizing: border-box !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        outline: none !important;
+        background: none !important;
+    }}
+    </style>
+    <!-- External stylesheets are applied programmatically by WeasyPrint AFTER inline styles -->
 </head>
 <body class="resume-document">
     <!-- The main resume content generated with for_screen=False -->
