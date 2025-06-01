@@ -390,7 +390,7 @@ def remove_empty_paragraphs(doc: Document) -> int:
 
 def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table:
     """
-    Add a role box using a table with borders around the entire line.
+    Add a role box using a table with light grey-blue background and no borders.
     Creates a single unified box containing both role and dates, similar to section headers.
     
     Args:
@@ -401,13 +401,13 @@ def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table
     Returns:
         The added table
     """
-    # Always create a single-column table for unified border
+    # Always create a single-column table for unified styling
     tbl = doc.add_table(rows=1, cols=1)
     
     # Disable autofit to prevent Word from resizing
     tbl.autofit = False
     
-    # Apply border to the entire table using roleBox tokens
+    # Apply no borders to the table (remove outline)
     _apply_role_box_table_border(tbl)
     
     # CRITICAL: Apply tight spacing after role box table to match design tokens
@@ -416,6 +416,9 @@ def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table
     
     # Get the single cell
     cell = tbl.rows[0].cells[0]
+    
+    # Apply light grey-blue background to the cell
+    _apply_role_box_cell_shading(cell)
     
     # Set cell vertical alignment to top
     _set_cell_vertical_alignment(cell, 'top')
@@ -514,18 +517,13 @@ def _apply_role_box_table_spacing(tbl: Table):
 
 def _apply_role_box_table_border(tbl: Table):
     """
-    Apply border to the entire role box table based on roleBox design tokens.
+    Remove all borders from the role box table for a clean, borderless appearance.
     
     Args:
-        tbl: The table to apply border to
+        tbl: The table to remove borders from
     """
     from docx.oxml import parse_xml
     from docx.oxml.ns import nsdecls
-    
-    # Use roleBox design token values
-    # Convert border width from pt to 1/8th points for Word
-    width_8th_pt = int(0.75 * 8)  # roleBox.docx.borderWidthPt = 0.75
-    border_color = "4A6FDC"  # roleBox.docx.borderColor (without #)
     
     # Get table element and its properties
     tbl_element = tbl._tbl
@@ -544,25 +542,25 @@ def _apply_role_box_table_border(tbl: Table):
     for element in tblBorders_elements:
         tblPr.remove(element)
     
-    # Create table border XML for all sides
+    # Create table border XML with no borders
     tblBorders_xml = f'''
     <w:tblBorders {nsdecls("w")}>
-        <w:top w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
-        <w:left w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
-        <w:bottom w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
-        <w:right w:val="single" w:sz="{width_8th_pt}" w:color="{border_color}"/>
+        <w:top w:val="none"/>
+        <w:left w:val="none"/>
+        <w:bottom w:val="none"/>
+        <w:right w:val="none"/>
         <w:insideH w:val="none"/>
         <w:insideV w:val="none"/>
     </w:tblBorders>
     '''
     
-    # Add borders to table
+    # Add borderless styling to table
     tblBorders = parse_xml(tblBorders_xml)
     tblPr.append(tblBorders)
 
 def _apply_role_box_cell_shading(cell: _Cell):
     """
-    Apply background color to a table cell using roleBox design tokens.
+    Apply light grey-blue background color to a table cell for modern, subtle appearance.
     
     Args:
         cell: The cell to apply background color to
@@ -570,9 +568,9 @@ def _apply_role_box_cell_shading(cell: _Cell):
     from docx.oxml import parse_xml
     from docx.oxml.ns import nsdecls
     
-    # Use roleBox design token values
-    # roleBox.docx.backgroundColor = "#F8F9FA" (light gray)
-    background_color = "F8F9FA"  # Remove # prefix for XML
+    # Light grey-blue color - subtle and professional
+    # Similar to #E8F2FF or #F0F6FF for a very light blue-grey
+    background_color = "E8F2FF"  # Light grey-blue without # prefix for XML
     
     # Get cell properties
     tc = cell._tc
