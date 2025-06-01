@@ -397,4 +397,6 @@ print("Available styles:", [s.name for s in doc.styles])
 4. **❌ Assumption-Based Development**: Always verify style application success
 5. **❌ Platform-Specific Solutions**: Build for cross-platform compatibility from the start
 
-This document represents the complete knowledge base for DOCX generation in this application. It should be the single source of truth for all DOCX-related development and debugging. 
+---
+
+*This document represents the complete knowledge base for DOCX generation in this application. It should be the single source of truth for all DOCX-related development and debugging.* 
