@@ -91,97 +91,202 @@ def load_section_json(request_id: str, section_name: str, temp_dir: str) -> Dict
         logger.error(f"Error loading section JSON: {e}")
         return {}
 
-def _apply_paragraph_style(p, style_name: str, docx_styles: Dict[str, Any]):
+def _apply_paragraph_style(doc: Document, p: Paragraph, style_name: str, docx_styles: Dict[str, Any]):
     """Enhanced style application for paragraphs in DOCX."""
     if not p.runs:
+        logger.warning(f"🔧 SKIPPING style application to empty paragraph (no runs)")
         return  # Skip empty paragraphs
     
-    # Get style configuration
-    style_config = docx_styles.get(style_name, {})
+    logger.info(f"🔧 ATTEMPTING to apply style '{style_name}' to paragraph with text: '{p.text[:50]}...'")
+    
+    try:
+        # Use the passed-in doc object's styles collection
+        available_styles = [s.name for s in doc.styles] 
+        logger.info(f"🔍 Available styles in document: {len(available_styles)} total")
+        logger.info(f"🔍 Checking if '{style_name}' is in available styles...")
+        
+        if style_name in available_styles:
+            logger.info(f"✅ Style '{style_name}' found in doc.styles, attempting assignment...")
+            
+            # Store the original style for comparison
+            original_style = p.style.name if p.style else "None"
+            logger.info(f"📝 Original paragraph style: '{original_style}'")
+            
+            # Get a reference to the style object to verify it exists
+            try:
+                style_obj = doc.styles[style_name]
+                logger.info(f"✅ Successfully retrieved style object for '{style_name}': {style_obj}")
+                logger.info(f"📋 Style object properties: type={style_obj.type}, base_style={style_obj.base_style.name if style_obj.base_style else 'None'}")
+                
+                # Check spacing properties of the style
+                if hasattr(style_obj, 'paragraph_format'):
+                    pf = style_obj.paragraph_format
+                    logger.info(f"📋 Style spacing: space_before={pf.space_before}, space_after={pf.space_after}")
+                
+            except Exception as style_obj_error:
+                logger.error(f"❌ Failed to retrieve style object for '{style_name}': {style_obj_error}")
+                return
+            
+            # Attempt the style assignment
+            try:
+                p.style = style_name
+                logger.info(f"🎯 Style assignment call completed for '{style_name}'")
+            except Exception as assign_error:
+                logger.error(f"❌ Style assignment threw exception: {assign_error}")
+                logger.error(f"❌ Assignment exception type: {type(assign_error).__name__}")
+                return
+            
+            # Verify the assignment worked
+            new_style = p.style.name if p.style else "None"
+            logger.info(f"📝 Style after assignment: '{new_style}'")
+            
+            if new_style == style_name:
+                logger.info(f"✅ Successfully set paragraph style to: {style_name} using doc.styles")
+            else:
+                logger.error(f"❌ Style assignment failed! Expected '{style_name}', got '{new_style}'")
+                logger.error(f"❌ This indicates the assignment was silently ignored or overridden")
+        else:
+            logger.error(f"❌ Style '{style_name}' NOT found in doc.styles.")
+            logger.error(f"❌ Available styles: {available_styles[:10]}... (showing first 10)")
+            # Attempt to use by name directly, python-docx might find it if it's a built-in like 'Normal'
+            try:
+                p.style = style_name
+                logger.info(f"✅ Fallback: Successfully set style to '{style_name}' by direct assignment (might be built-in).")
+            except Exception as e_fb:
+                logger.error(f"❌ Fallback direct assignment for style '{style_name}' also failed: {e_fb}")
+    except Exception as e:
+        logger.error(f"❌ Failed to set paragraph style to {style_name}: {e}")
+        logger.error(f"❌ Exception type: {type(e).__name__}")
+        # import traceback # Already imported at top
+        logger.error(f"❌ Full traceback: {traceback.format_exc()}")
+    
+    # Get style configuration from the new specification
+    styles_section = docx_styles.get("styles", {})
+    style_config = styles_section.get(style_name, {})
     if not style_config:
-        logger.warning(f"Style not found: {style_name}")
+        logger.warning(f"⚠️ Style config not found for: {style_name}")
+        logger.warning(f"⚠️ Available style configs: {list(styles_section.keys())}")
         return
+    
+    logger.info(f"🔧 Applying direct formatting from style config for '{style_name}'...")
+    logger.info(f"📋 Style config keys: {list(style_config.keys())}")
     
     # Apply font properties to all runs in the paragraph for consistency
     for run in p.runs:
         font = run.font
         if "fontSizePt" in style_config:
             font.size = Pt(style_config["fontSizePt"])
+            logger.info(f"🔧 Applied font size: {style_config['fontSizePt']}pt")
         if "fontFamily" in style_config:
             font.name = style_config["fontFamily"]
+            logger.info(f"🔧 Applied font family: {style_config['fontFamily']}")
         if "color" in style_config:
             r, g, b = style_config["color"]
             font.color.rgb = RGBColor(r, g, b)
+            logger.info(f"🔧 Applied color: RGB({r}, {g}, {b})")
         if style_config.get("bold", False):
             font.bold = True
+            logger.info(f"🔧 Applied bold formatting")
         if style_config.get("italic", False):
             font.italic = True
+            logger.info(f"🔧 Applied italic formatting")
+        if style_config.get("allCaps", False):
+            font.all_caps = True
+            logger.info(f"🔧 Applied all caps formatting")
     
-    # Apply paragraph formatting
-    if "spaceAfterPt" in style_config:
-        p.paragraph_format.space_after = Pt(style_config["spaceAfterPt"])
-    if "spaceBeforePt" in style_config:
-        p.paragraph_format.space_before = Pt(style_config["spaceBeforePt"])
+    # Apply paragraph formatting (REMOVED spaceAfterPt and spaceBeforePt to prevent style override)
+    # NOTE: Per O3's advice, removing direct spacing formatting to let the style handle it
+    logger.info(f"🔧 Applying paragraph formatting...")
     if "indentCm" in style_config:
         p.paragraph_format.left_indent = Cm(style_config["indentCm"])
+        logger.info(f"🔧 Applied left indent: {style_config['indentCm']}cm")
+    if "hangingIndentCm" in style_config:
+        p.paragraph_format.first_line_indent = Cm(-style_config["hangingIndentCm"])
+        logger.info(f"🔧 Applied hanging indent: {style_config['hangingIndentCm']}cm")
+    if "lineHeight" in style_config:
+        p.paragraph_format.line_spacing = style_config["lineHeight"]
+        logger.info(f"🔧 Applied line spacing: {style_config['lineHeight']}")
     
     # Apply alignment
-    if style_name == "heading1":
+    alignment = style_config.get("alignment", "left")
+    if alignment == "center":
         p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    elif style_config.get("alignment") == "center":
-        p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        logger.info(f"🔧 Applied center alignment")
+    elif alignment == "right":
+        p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        logger.info(f"🔧 Applied right alignment")
     else:
         p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        logger.info(f"🔧 Applied left alignment")
     
-    # For section headers (heading2), apply shading if specified
-    if style_name == "heading2" and ("backgroundColor" in style_config or "borderColor" in style_config):
+    # Apply right tab for company lines if specified
+    if "rightTabCm" in style_config:
+        from docx.enum.table import WD_TABLE_ALIGNMENT
+        tab_stops = p.paragraph_format.tab_stops
+        tab_stops.add_tab_stop(Cm(style_config["rightTabCm"]))
+        logger.info(f"🔧 Applied right tab stop at: {style_config['rightTabCm']}cm")
+    
+    # Apply background shading for role boxes and section headers
+    if "backgroundColor" in style_config:
         from docx.oxml.ns import nsdecls
         from docx.oxml import parse_xml
         
-        # Apply background shading
-        if "backgroundColor" in style_config:
-            r, g, b = style_config["backgroundColor"]
-            hex_color = f"{r:02x}{g:02x}{b:02x}"
-            
-            shading_xml = f'<w:shd {nsdecls("w")} w:fill="{hex_color}" w:val="clear"/>'
-            p._element.get_or_add_pPr().append(parse_xml(shading_xml))
+        r, g, b = style_config["backgroundColor"]
+        hex_color = f"{r:02x}{g:02x}{b:02x}"
         
-        # Add border if specified
-        if "borderColor" in style_config:
-            r, g, b = style_config["borderColor"]
-            border_hex = f"{r:02x}{g:02x}{b:02x}"
-            border_size = style_config.get("borderSize", 1)
+        shading_xml = f'<w:shd {nsdecls("w")} w:fill="{hex_color}" w:val="clear"/>'
+        p._element.get_or_add_pPr().append(parse_xml(shading_xml))
+        logger.info(f"🔧 Applied background color: #{hex_color}")
+    
+    # Apply borders for section headers and role boxes
+    if "borderColor" in style_config and "borderWidthPt" in style_config:
+        from docx.oxml.ns import nsdecls
+        from docx.oxml import parse_xml
+        
+        r, g, b = style_config["borderColor"]
+        border_hex = f"{r:02x}{g:02x}{b:02x}"
+        border_width_8th_pt = int(style_config["borderWidthPt"] * 8)  # Convert to 1/8th points
+        
+        # For section headers, apply full border; for role boxes, apply as needed
+        if style_name == "MR_SectionHeader":
+            # Section headers get a border on all sides
             border_xml = f'''
                 <w:pBdr {nsdecls("w")}>
-                    <w:bottom w:val="single" w:sz="{border_size * 4}" w:space="0" w:color="{border_hex}"/>
+                    <w:top w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                    <w:left w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                    <w:bottom w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                    <w:right w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
                 </w:pBdr>
             '''
-            p._element.get_or_add_pPr().append(parse_xml(border_xml))
-            
-        # Apply padding
-        if "paddingHorizontal" in style_config or "paddingVertical" in style_config:
-            padding_left = style_config.get("paddingHorizontal", 0)
-            padding_right = style_config.get("paddingHorizontal", 0)
-            padding_top = style_config.get("paddingVertical", 0)
-            padding_bottom = style_config.get("paddingVertical", 0)
-            
-            # Convert to twips (twentieth of a point)
-            padding_left_twips = int(padding_left * 20)
-            padding_right_twips = int(padding_right * 20)
-            padding_top_twips = int(padding_top * 20)
-            padding_bottom_twips = int(padding_bottom * 20)
-            
-            spacing_xml = f'''
-                <w:spacing {nsdecls("w")} w:before="{padding_top_twips}" 
-                w:after="{padding_bottom_twips}"/>
+        else:
+            # Role boxes get a border on all sides too
+            border_xml = f'''
+                <w:pBdr {nsdecls("w")}>
+                    <w:top w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                    <w:left w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                    <w:bottom w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                    <w:right w:val="single" w:sz="{border_width_8th_pt}" w:space="0" w:color="{border_hex}"/>
+                </w:pBdr>
             '''
-            p._element.get_or_add_pPr().append(parse_xml(spacing_xml))
-            
-            indent_xml = f'''
-                <w:ind {nsdecls("w")} w:left="{padding_left_twips}" 
-                w:right="{padding_right_twips}"/>
-            '''
-            p._element.get_or_add_pPr().append(parse_xml(indent_xml))
+        
+        p._element.get_or_add_pPr().append(parse_xml(border_xml))
+        logger.info(f"🔧 Applied border: {style_config['borderWidthPt']}pt, color #{border_hex}")
+
+    # Check final paragraph spacing to understand the inconsistency
+    final_space_before = p.paragraph_format.space_before
+    final_space_after = p.paragraph_format.space_after
+    logger.info(f"📋 Final paragraph spacing: before={final_space_before}, after={final_space_after}")
+
+    # FINAL DIAGNOSTIC: Check the actual final style of the paragraph
+    final_style_name = p.style.name if p.style else "None"
+    logger.info(f"🔍 FINAL DIAGNOSTIC: Paragraph style after all processing = '{final_style_name}' (Expected: '{style_name}')")
+    if final_style_name != style_name:
+        logger.warning(f"⚠️ FINAL DIAGNOSTIC FAILED: Paragraph using '{final_style_name}' instead of '{style_name}'!")
+        
+        # Additional diagnostics for style assignment failure
+        if final_style_name == "Normal":
+            logger.warning(f"⚠️ Paragraph reverted to 'Normal' style - this suggests style assignment was overridden")
+            logger.warning(f"⚠️ This is the root cause of the spacing inconsistency issue")
 
 def _create_document_styles(doc, docx_styles):
     """Create custom styles in the document for consistent formatting."""
@@ -216,23 +321,39 @@ def _create_document_styles(doc, docx_styles):
             
         return styles
 
-def format_right_aligned_pair(doc, left_text, right_text, left_style, right_style, docx_styles):
+def format_right_aligned_pair(doc: Document, left_text: str, right_text: str, left_style: str, right_style: str, docx_styles: Dict[str, Any]):
     """Creates a paragraph with left-aligned and right-aligned text using tab stops."""
-    para = doc.add_paragraph(style='MR_Content')  # Use our new custom style
+    para = doc.add_paragraph()
     
+    logger.info(f"➡️ COMPANY/INSTITUTION ENTRY: '{left_text}' | '{right_text}' using style '{left_style}'")
+    
+    # CRITICAL FIX: Add text content FIRST, then apply style
     # Add left-aligned text
     if left_text:
         left_run = para.add_run(left_text)
         # Apply styling for the left text (always bold)
         left_run.bold = True
     
-    # Get global margin values from design tokens
-    structured_tokens = StyleEngine.get_structured_tokens()
-    global_margins = structured_tokens.get("global", {}).get("margins", {})
-    global_left_margin_cm = float(global_margins.get("leftCm", "2.0"))
-    global_right_margin_cm = float(global_margins.get("rightCm", "2.0"))
+    # NOW apply the paragraph style (paragraph has runs, so it won't be skipped)
+    _apply_paragraph_style(doc, para, left_style, docx_styles) 
     
-    # Fallback to section properties if needed for compatibility
+    # Verify the final style assignment specifically for company entries
+    final_style_name = para.style.name if para.style else "None"
+    logger.info(f"🔍 COMPANY/INSTITUTION STYLE CHECK: Final style = '{final_style_name}' (Expected: '{left_style}')")
+    if final_style_name != left_style:
+        logger.error(f"❌ COMPANY/INSTITUTION STYLE FAILED: '{left_text}' using '{final_style_name}' instead of '{left_style}'!")
+    else:
+        logger.info(f"✅ COMPANY/INSTITUTION STYLE SUCCESS: '{left_text}' correctly using '{final_style_name}'")
+    
+    # Get page margins from design tokens directly
+    from style_engine import StyleEngine
+    design_tokens = StyleEngine.load_tokens()
+    
+    # Get page margins in cm from design tokens
+    global_left_margin_cm = float(design_tokens.get("docx-page-margin-left-cm", "1.5"))
+    global_right_margin_cm = float(design_tokens.get("docx-page-margin-right-cm", "1.5"))
+    
+    # Get section properties for page width
     section = doc.sections[0]
     page_width_emu = section.page_width if section.page_width is not None else 0
     
@@ -243,17 +364,19 @@ def format_right_aligned_pair(doc, left_text, right_text, left_style, right_styl
         # Fallback to A4 width if page_width not available
         page_width_cm = 21.0  # Standard A4 width
     
-    # Calculate content width in cm using global margins
+    # Calculate content width in cm using design token margins
     content_width_cm = page_width_cm - global_left_margin_cm - global_right_margin_cm
+    
+    # Adjust for any content indentation from the paragraph style
+    # The MR_Company style has 0 indentation, so tab position should be at content width
+    tab_position_cm = content_width_cm
     
     # Set tab position at the right edge of content area
     if content_width_cm <= 0:  # Fallback if dimensions are invalid
         logger.warning(f"Calculated non-positive content_width_cm ({content_width_cm}). Defaulting tab stop to 16cm.")
         tab_position_cm = 16.0  # A reasonable default
-    else:
-        tab_position_cm = content_width_cm
     
-    logger.info(f"Global margins: L={global_left_margin_cm}cm, R={global_right_margin_cm}cm, PW={page_width_cm:.2f}cm, Content={content_width_cm:.2f}cm, TabPos={tab_position_cm:.2f}cm")
+    logger.info(f"Right-align calculation: L={global_left_margin_cm}cm, R={global_right_margin_cm}cm, PW={page_width_cm:.2f}cm, Content={content_width_cm:.2f}cm, TabPos={tab_position_cm:.2f}cm")
     
     # Remove any existing tab stops to prevent conflicts
     para.paragraph_format.tab_stops.clear_all()
@@ -269,7 +392,7 @@ def format_right_aligned_pair(doc, left_text, right_text, left_style, right_styl
         para.add_run('\t')  # Add tab
         right_run = para.add_run(right_text)
     
-    # Spacing and indentation are handled by the 'MR_Content' style
+    # Spacing and indentation are now handled by the 'MR_Company' style
     return para
 
 def create_bullet_point(doc, text, docx_styles):
@@ -294,42 +417,46 @@ def create_bullet_point(doc, text, docx_styles):
 @trace("docx.section_header")
 def add_section_header(doc: Document, section_name: str) -> Any:
     """
-    Add a section header using the universal SectionHeader renderer.
+    Add a section header using the new comprehensive specification.
     
-    This new implementation ensures consistent styling across all formats
-    and eliminates the dual-path architectural problems.
+    This implementation uses the MR_SectionHeader style with proper borders,
+    fonts, and spacing as defined in the comprehensive DOCX specification.
     
     Args:
         doc: The document to add the section header to
         section_name: The section header text
         
     Returns:
-        The rendered section header (table or paragraph depending on renderer)
+        The rendered section header paragraph
     """
-    if USE_UNIVERSAL_RENDERERS:
-        # Use the new universal renderer (Phase 2 approach)
-        try:
-            tokens = StyleEngine.load_tokens()  # Use raw tokens instead of structured
-            header_renderer = SectionHeader(tokens, section_name)
-            result = header_renderer.to_docx(doc)
-            logger.info(f"Generated universal section header: '{section_name}' using SectionHeader renderer")
-            return result
-        except Exception as e:
-            logger.warning(f"Universal renderer failed for '{section_name}': {e}")
-            logger.warning("Falling back to legacy registry approach")
-            # Fall through to legacy approach
-    
-    if USE_STYLE_REGISTRY:
-        # Legacy registry approach (Phase 1 stabilized)
-        section_para = registry_add_section_header(doc, section_name)
-        logger.info(f"Applied BoxedHeading2Table style to section header: {section_name}")
-        return section_para
-    else:
-        # Emergency fallback (should not happen in normal operation)
-        para = doc.add_paragraph(section_name.upper())
-        para.style = 'Heading 2'
-        logger.warning(f"Used emergency fallback for section header: {section_name}")
-        return para
+    # Use the new comprehensive specification approach
+    try:
+        # Get the DOCX styles
+        docx_styles = StyleManager.load_docx_styles()
+        
+        # Create the section header paragraph
+        header_para = doc.add_paragraph(section_name.upper())
+        
+        # Apply the MR_SectionHeader style using our enhanced style application
+        _apply_paragraph_style(doc, header_para, "MR_SectionHeader", docx_styles)
+        
+        logger.info(f"Generated section header: '{section_name}' using MR_SectionHeader from comprehensive specification")
+        return header_para
+    except Exception as e:
+        logger.warning(f"Comprehensive specification failed for '{section_name}': {e}")
+        logger.warning("Falling back to legacy registry approach")
+        
+        # Fallback to legacy approach
+        if USE_STYLE_REGISTRY:
+            section_para = registry_add_section_header(doc, section_name)
+            logger.info(f"Applied BoxedHeading2Table style to section header: {section_name}")
+            return section_para
+        else:
+            # Emergency fallback
+            para = doc.add_paragraph(section_name.upper())
+            para.style = 'Heading 2'
+            logger.warning(f"Used emergency fallback for section header: {section_name}")
+            return para
 
 def add_role_description(doc, text, docx_styles):
     """Adds a consistently formatted role description paragraph."""
@@ -339,12 +466,12 @@ def add_role_description(doc, text, docx_styles):
     # Use our new custom style
     role_para = doc.add_paragraph(text, style='MR_RoleDescription')
     
-    # Indentation and spacing are now handled by the 'MR_RoleDescription' style.
-    # Font properties (italic, size) are also handled by the style.
-    # Removed direct paragraph formatting for left_indent, space_after.
-    # Removed direct XML formatting for indentation (w:ind) and spacing (w:spacing).
+    # CRITICAL: Ensure tight spacing before role description for the effect the user wants
+    # This eliminates gaps between role boxes (tables) and role descriptions (paragraphs)
+    role_para.paragraph_format.space_before = Pt(0)  # Force 0pt before
+    role_para.paragraph_format.space_after = Pt(0)   # Force 0pt after for tight bullets
     
-    logger.info(f"Applied MR_RoleDescription style to: {str(text)[:30]}...")
+    logger.info(f"Applied MR_RoleDescription with tight spacing to: {str(text)[:30]}...")
     return role_para
 
 def tighten_before_headers(doc):
@@ -419,6 +546,17 @@ def tighten_before_headers(doc):
             
             logger.info(f"Fixed spacing: Set space_after=0 on paragraph before section header at index {header_idx}")
             fixed_instances_count += 1
+    
+    # DIAGNOSTIC: Check if MR_Company style was actually created (O3 Checklist #2)
+    logger.info("🔍 DIAGNOSTIC #2: Listing all document styles before save...")
+    all_styles = [s.name for s in doc.styles]
+    logger.info(f"📝 All document styles: {all_styles}")
+    if "MR_Company" in all_styles:
+        logger.info("✅ DIAGNOSTIC #2 PASSED: MR_Company style found in document")
+    else:
+        logger.warning("⚠️ DIAGNOSTIC #2 FAILED: MR_Company style NOT found in document!")
+        logger.info("🛠️ Applying O3's backup solution: Creating robust MR_Company style...")
+        _create_robust_company_style(doc)
     
     return fixed_instances_count
 
@@ -560,23 +698,39 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         # Create custom document styles
         custom_styles = _create_document_styles(doc, docx_styles)
         
-        # Configure page margins using global margin tokens
-        section = doc.sections[0]
+        # **FIX: Ensure all custom styles are actually available in the document**
+        logger.info("🔧 VERIFYING: Checking if all custom styles are available...")
+        expected_styles = ['MR_SectionHeader', 'MR_Content', 'MR_RoleDescription', 'MR_BulletPoint', 
+                          'MR_SummaryText', 'MR_SkillCategory', 'MR_SkillList', 'MR_Company']
+        available_styles = [s.name for s in doc.styles]
+        
+        missing_styles = [style for style in expected_styles if style not in available_styles]
+        if missing_styles:
+            logger.error(f"❌ MISSING STYLES: {missing_styles}")
+            logger.error(f"❌ Available styles: {available_styles}")
+            # Force recreation of missing styles
+            logger.info("🔧 FORCING recreation of missing styles...")
+            try:
+                # Try to force recreation
+                from style_engine import StyleEngine
+                StyleEngine.create_docx_custom_styles(doc)
+                logger.info("✅ Successfully forced style recreation")
+            except Exception as e:
+                logger.error(f"❌ Failed to force style recreation: {e}")
+        else:
+            logger.info(f"✅ ALL STYLES AVAILABLE: {expected_styles}")
+        
+        # Get page configuration from new comprehensive specification
         page_config = docx_styles.get("page", {})
         
-        # Get margin values from global tokens
-        structured_tokens = StyleEngine.get_structured_tokens()
-        global_margins = structured_tokens.get("global", {}).get("margins", {})
-        global_left_margin_cm = float(global_margins.get("leftCm", "2.0"))
-        global_right_margin_cm = float(global_margins.get("rightCm", "2.0"))
+        # Set all margins from the new specification (1.5cm each)
+        section = doc.sections[0]
+        section.top_margin = Cm(page_config.get("marginTopCm", 1.5))
+        section.bottom_margin = Cm(page_config.get("marginBottomCm", 1.5))
+        section.left_margin = Cm(page_config.get("marginLeftCm", 1.5))
+        section.right_margin = Cm(page_config.get("marginRightCm", 1.5))
         
-        # Set margins from tokens and style config
-        section.top_margin = Cm(page_config.get("marginTopCm", 1.0))
-        section.bottom_margin = Cm(page_config.get("marginBottomCm", 1.0))
-        section.left_margin = Cm(global_left_margin_cm)  # Use global token
-        section.right_margin = Cm(global_right_margin_cm)  # Use global token
-        
-        logger.info(f"Applied document margins from global tokens: Left={global_left_margin_cm}cm, Right={global_right_margin_cm}cm")
+        logger.info(f"Applied document margins from specification: Top={page_config.get('marginTopCm', 1.5)}cm, Bottom={page_config.get('marginBottomCm', 1.5)}cm, Left={page_config.get('marginLeftCm', 1.5)}cm, Right={page_config.get('marginRightCm', 1.5)}cm")
         
         # ------ CONTACT SECTION ------
         logger.info("Processing Contact section...")
@@ -641,7 +795,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
             
             if name:
                 name_para = doc.add_paragraph(name)
-                _apply_paragraph_style(name_para, "heading1", docx_styles)
+                _apply_paragraph_style(doc, name_para, "MR_Name", docx_styles)
                 
                 # Contact details
                 contact_parts = []
@@ -660,13 +814,9 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 if "github" in contact and contact["github"]:
                     contact_parts.append(contact["github"])
                 
-                contact_text = " | ".join(contact_parts)
+                contact_text = " • ".join(contact_parts)  # Use bullet separator as per specification
                 contact_para = doc.add_paragraph(contact_text)
-                _apply_paragraph_style(contact_para, "body", docx_styles)
-                contact_para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                # Add a horizontal line
-                doc.add_paragraph("").paragraph_format.space_after = Pt(6)
+                _apply_paragraph_style(doc, contact_para, "MR_Contact", docx_styles)
             else:
                 logger.warning("No name found in contact data, skipping contact section")
         else:
@@ -686,7 +836,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                             name = fallback_contact.get("name", "")
                             if name:
                                 name_para = doc.add_paragraph(name)
-                                _apply_paragraph_style(name_para, "heading1", docx_styles)
+                                _apply_paragraph_style(doc, name_para, "MR_Name", docx_styles)
                                 logger.info(f"Added name from fallback: {name}")
                 except Exception as e:
                     logger.error(f"Error processing fallback contact data: {e}")
@@ -764,8 +914,8 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                             doc,
                             company,
                             location,
-                            "heading3",
-                            "heading3",
+                            "MR_Company",
+                            "MR_Company",
                             docx_styles
                         )
                     
@@ -844,8 +994,8 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                             doc,
                             institution,
                             location,
-                            "heading3",
-                            "heading3",
+                            "MR_Company",
+                            "MR_Company",
                             docx_styles
                         )
                     
@@ -977,7 +1127,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Add the string content directly as paragraph
                     projects_para = doc.add_paragraph(content)
-                    _apply_paragraph_style(projects_para, "body", docx_styles)
+                    _apply_paragraph_style(doc, projects_para, "body", docx_styles)
                     
                     # Skip the rest of the projects processing
                     projects_list = []
@@ -1024,7 +1174,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                                 doc,
                                 title,
                                 dates,
-                                "heading3",
+                                "MR_Company",
                                 "body",
                                 docx_styles
                             )
@@ -1042,7 +1192,17 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         else:
             _fix_spacing_between_sections(doc)
         
-        # Save DOCX to BytesIO
+        # DIAGNOSTIC: Check if MR_Company style was actually created (O3 Checklist #2)
+        logger.info("🔍 DIAGNOSTIC #2: Listing all document styles before save...")
+        all_styles = [s.name for s in doc.styles]
+        logger.info(f"📝 All document styles: {all_styles}")
+        if "MR_Company" in all_styles:
+            logger.info("✅ DIAGNOSTIC #2 PASSED: MR_Company style found in document")
+        else:
+            logger.warning("⚠️ DIAGNOSTIC #2 FAILED: MR_Company style NOT found in document!")
+            logger.info("🛠️ Applying O3's backup solution: Creating robust MR_Company style...")
+            _create_robust_company_style(doc)
+        
         logger.info("Saving DOCX to BytesIO...")
         
         output = BytesIO()
@@ -1087,3 +1247,42 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         logger.error(f"Error details: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise 
+
+def _create_robust_company_style(doc):
+    """O3's recommended robust solution for company style creation."""
+    from docx.oxml.shared import qn
+    from docx.shared import Pt
+    from docx.enum.style import WD_STYLE_TYPE
+    
+    logger.info("🛠️ Creating robust MR_Company style using O3's method...")
+    
+    # Get or create the style
+    try:
+        st = doc.styles['MR_Company']
+        logger.info("📝 MR_Company style already exists, updating it...")
+    except KeyError:
+        st = doc.styles.add_style('MR_Company', WD_STYLE_TYPE.PARAGRAPH)
+        logger.info("📝 Created new MR_Company style...")
+    
+    # Set base style to No Spacing (inherits 0pt before/after)
+    try:
+        st.base_style = doc.styles['No Spacing']
+        logger.info("✅ Set base style to 'No Spacing'")
+    except KeyError:
+        st.base_style = None
+        logger.info("⚠️ 'No Spacing' style not found, set base_style to None")
+    
+    # Set paragraph format
+    pf = st.paragraph_format
+    pf.space_before, pf.space_after = Pt(0), Pt(0)
+    logger.info("✅ Set space_before and space_after to 0pt")
+    
+    # Kill any line-based spacing using XML manipulation
+    sp = st._element.get_or_add_pPr().get_or_add_spacing()
+    sp.set(qn('w:after'), '0')
+    sp.set(qn('w:afterLines'), '0')
+    sp.set(qn('w:afterAutospacing'), '0')
+    sp.set(qn('w:contextualSpacing'), '1')
+    logger.info("✅ Applied XML-level spacing controls (w:after=0, w:afterLines=0, w:afterAutospacing=0, w:contextualSpacing=1)")
+    
+    return st 

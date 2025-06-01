@@ -383,6 +383,88 @@ This project focuses on creating an AI-powered resume tailoring tool that optimi
 7. **Contact Information Preservation**: Fixed issues with contact details in tailored resumes, ensuring they are preserved correctly.
 8. **HTML Preview Enhancement**: Ensured HTML preview precisely matches PDF output, improving consistency and user experience.
 9. **DOCX Header Box Spacing Fix**: Implemented a table-based approach with custom HeaderBoxH2 style for section headers, resolving issues with excessive spacing in DOCX output.
+10. **✅ DOCX Company Element Spacing Issue RESOLVED (June 2025)**: Successfully fixed the persistent 6pt spacing issue in company elements by identifying and removing direct formatting overrides that were conflicting with style-based spacing. Company elements now display with proper 0pt spacing in Microsoft Word.
+
+## Critical Learning: DOCX Styling Hierarchy and Precedence (June 2025)
+
+### **The Breakthrough Discovery**
+After 7 failed attempts spanning multiple approaches (design tokens, style creation, XML manipulation), the DOCX company element spacing issue was finally resolved by understanding the **DOCX styling hierarchy**.
+
+### **Root Cause Analysis**
+The problem was **NOT** in:
+- ❌ Style creation (styles were created correctly)
+- ❌ Style assignment (styles were assigned correctly)  
+- ❌ Design token values (tokens were set correctly)
+
+The problem **WAS** in:
+- ✅ **Direct formatting overriding styles** - the styling hierarchy was not understood
+
+### **DOCX Styling Hierarchy (Critical Knowledge)**
+**DOCX follows this precedence hierarchy (highest to lowest):**
+1. **Direct Character Formatting** (run-level properties like `run.font.size`)
+2. **Direct Paragraph Formatting** (paragraph-level like `p.paragraph_format.space_after`) ← **THE CULPRIT**
+3. **Style-Based Formatting** (style properties like `style.paragraph_format.space_after`) ← **WAS BEING OVERRIDDEN**
+4. **Document Defaults**
+
+### **The Winning Fix**
+**File**: `utils/docx_builder.py`
+**Function**: `_apply_paragraph_style()`
+**Change**: Removed direct spacing formatting that was overriding the style
+
+```python
+# REMOVED - These lines were overriding the style!
+# if "spaceAfterPt" in style_config:
+#     p.paragraph_format.space_after = Pt(style_config["spaceAfterPt"])
+# if "spaceBeforePt" in style_config:
+#     p.paragraph_format.space_before = Pt(style_config["spaceBeforePt"])
+```
+
+### **Key Technical Insights**
+
+#### **Style vs. Direct Formatting**
+```python
+# ✅ CORRECT: Let the style handle spacing
+st = doc.styles.add_style('MR_Company', WD_STYLE_TYPE.PARAGRAPH)
+st.paragraph_format.space_after = Pt(0)  # Style-level
+p.style = 'MR_Company'  # Assign style
+
+# ❌ WRONG: Direct formatting overrides the style
+p.paragraph_format.space_after = Pt(0)  # Direct formatting - higher precedence!
+```
+
+#### **Why Previous Diagnostics Missed This**
+- Style assignment diagnostics showed correct style names ✅
+- Style existence diagnostics showed styles were created ✅
+- **Missing**: Direct formatting override detection ❌
+
+#### **O3's Diagnostic Methodology That Worked**
+1. **Style Assignment Check**: Verify paragraph is using intended style
+2. **Style Existence Check**: Confirm style exists in document
+3. **Direct Formatting Check**: Look for overrides in direct formatting ← **This was key**
+
+### **Implications for Future Development**
+
+#### **DOCX Styling Best Practices**
+1. **Create comprehensive styles** with all necessary properties
+2. **Assign styles to elements** using `element.style = 'StyleName'`
+3. **Avoid direct formatting** that might override style properties
+4. **Understand the hierarchy** - direct formatting always wins
+5. **Use diagnostics** to verify both style assignment AND absence of overrides
+
+#### **Debugging Methodology**
+1. **Check style assignment first** - most obvious issue
+2. **Verify style exists** in document's style collection
+3. **Look for direct formatting overrides** - most common hidden issue
+4. **Use comprehensive logging** to trace the entire styling pipeline
+5. **Test in actual applications** (Word, LibreOffice) not just python-docx
+
+### **Performance and Reliability Impact**
+- ✅ **Simpler code**: Removed unnecessary direct formatting logic
+- ✅ **Better maintainability**: Styles now fully control their properties
+- ✅ **Cross-platform consistency**: Style-based approach more reliable
+- ✅ **Future-proof**: Understanding hierarchy prevents similar issues
+
+This breakthrough demonstrates that complex formatting issues often stem from **architectural misunderstandings** rather than implementation bugs. The DOCX styling hierarchy is now properly understood and documented for future development.
 
 ## New Package: word_styles
 

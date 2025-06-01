@@ -324,12 +324,11 @@ ul.bullets li::before {
   border: 0 !important;
 }
 
-/* @page {
+@page {
   margin: 0cm !important;
   size: A4;
   background-color: #FFFFFF;
-} */
-
+}
 @media print {
   html, body {
     margin: 0 !important;

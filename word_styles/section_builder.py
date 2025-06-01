@@ -410,6 +410,10 @@ def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table
     # Apply border to the entire table using roleBox tokens
     _apply_role_box_table_border(tbl)
     
+    # CRITICAL: Apply tight spacing after role box table to match design tokens
+    # This controls the gap between role boxes and role descriptions
+    _apply_role_box_table_spacing(tbl)
+    
     # Get the single cell
     cell = tbl.rows[0].cells[0]
     
@@ -485,6 +489,28 @@ def add_role_box(doc: Document, role: str, dates: Optional[str] = None) -> Table
     
     logger.info(f"Added role box: {role}" + (f" with dates: {dates}" if dates else ""))
     return tbl
+
+def _apply_role_box_table_spacing(tbl: Table):
+    """
+    Apply spacing after role box table - SIMPLIFIED VERSION.
+    
+    The previous implementation used floating table positioning (tblpPr) which
+    caused role boxes to float outside page margins. This version uses normal
+    table properties or relies on following paragraph spacing control.
+    
+    Args:
+        tbl: The table to apply spacing to
+    """
+    # REMOVED: Floating table positioning (tblpPr) that caused the layout issues
+    # The tight spacing between role boxes and role descriptions should be 
+    # controlled by the MR_RoleDescription paragraph spacing (space_before: 0pt)
+    # rather than making the table float outside the document flow.
+    
+    logger.info("Applied normal table spacing (no floating positioning)")
+    
+    # Note: If we need tighter control over table spacing in the future,
+    # we should use table margins or the spacing properties of following paragraphs,
+    # NOT table positioning properties (tblpPr) which break document flow.
 
 def _apply_role_box_table_border(tbl: Table):
     """

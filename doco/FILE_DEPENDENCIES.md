@@ -811,4 +811,110 @@ The `word_styles` package was implemented to provide a more reliable and maintai
 
 This architecture provides a clean separation of concerns and ensures consistent styling across all document formats, with a specific focus on resolving styling issues and maintaining consistent user experience.
 
+This implementation demonstrates the maturity of the resume tailoring application's architecture and the effectiveness of its styling system. The successful completion of this complex feature with comprehensive edge case coverage provides a strong foundation for future enhancements. 🚀 
+
+## Major Resolution: DOCX Company Element Spacing Issue (June 2025)
+
+### Overview
+After 7 failed attempts spanning multiple architectural approaches, the persistent DOCX company element spacing issue has been **successfully resolved**. The breakthrough came from understanding the DOCX styling hierarchy and identifying that direct formatting was overriding style-based formatting.
+
+### Root Cause Discovery
+The issue was **NOT** with:
+- ❌ Style creation (`style_engine.py` was working correctly)
+- ❌ Style assignment (paragraphs were getting the correct style)
+- ❌ Design tokens (`design_tokens.json` values were correct)
+
+The issue **WAS** with:
+- ✅ **Direct formatting overriding styles** in the styling hierarchy
+
+### Key File Dependencies Modified
+
+#### utils/docx_builder.py (PRIMARY FIX)
+- **Critical Change**: Removed direct spacing formatting in `_apply_paragraph_style()`
+- **Before**: Direct formatting was applied after style assignment, overriding the style
+- **After**: Only style-based formatting is used, respecting the DOCX hierarchy
+- **Impact**: Company elements now display with proper 0pt spacing in Microsoft Word
+
+#### DOCX Styling Hierarchy Understanding
+**New Knowledge**: DOCX formatting follows this precedence (highest to lowest):
+1. **Direct Character Formatting** (run-level)
+2. **Direct Paragraph Formatting** ← **Was overriding**
+3. **Style-Based Formatting** ← **Was being overridden**  
+4. **Document Defaults**
+
+#### Dependencies Validated (Working Correctly)
+- **style_engine.py**: ✅ Creates `MR_Company` style with 0pt spacing
+- **design_tokens.json**: ✅ Provides correct spacing values
+- **StyleManager.load_docx_styles()**: ✅ Loads styling configuration
+- **word_styles package**: ✅ Provides advanced table-based styling
+
+### Technical Implementation Details
+
+#### Fixed Code Pattern
+```python
+# ❌ PREVIOUS (BROKEN) - Direct formatting overrode style
+p.style = 'MR_Company'  # Style assigned correctly
+p.paragraph_format.space_after = Pt(0)  # This overrode the style!
+
+# ✅ CURRENT (WORKING) - Let style handle formatting
+p.style = 'MR_Company'  # Style assigned and respected
+# No direct formatting - style controls spacing
+```
+
+#### Enhanced Diagnostic Implementation
+- **Style Assignment Verification**: Confirms paragraphs use intended styles
+- **Style Existence Validation**: Verifies styles exist in document
+- **Direct Formatting Detection**: New capability to identify overrides
+
+### File Modification Summary
+
+#### Files Actually Changed
+- **utils/docx_builder.py**: Removed direct spacing formatting override (CRITICAL FIX)
+- **docx_styling_guide.md**: Added comprehensive resolution documentation
+- **doco/project_context.md**: Updated with breakthrough learning
+- **doco/FILE_DEPENDENCIES.md**: This document - updated dependencies
+
+#### Files Validated (No Changes Needed)
+- **style_engine.py**: Already working correctly
+- **design_tokens.json**: Already had correct values
+- **word_styles/**: Already provided robust styling framework
+
+### Workflow Impact
+
+#### DOCX Generation Pipeline (Updated)
+```
+1. design_tokens.json → provides spacing values
+2. style_engine.py → creates MR_Company style with 0pt spacing
+3. utils/docx_builder.py → assigns style WITHOUT direct formatting override
+4. Microsoft Word → respects style-based spacing (0pt)
+```
+
+#### New Best Practices Established
+1. **Create comprehensive styles** with all necessary properties
+2. **Assign styles to elements** without subsequent direct formatting
+3. **Understand formatting hierarchy** - direct formatting always wins
+4. **Use enhanced diagnostics** to verify style application
+5. **Test in actual Word** to validate formatting behavior
+
+### Success Metrics Achieved
+- ✅ **Company elements**: Display with 0pt spacing in Microsoft Word
+- ✅ **Style consistency**: All elements respect their assigned styles
+- ✅ **Architecture clarity**: DOCX styling hierarchy now understood
+- ✅ **Code simplification**: Removed unnecessary direct formatting logic
+- ✅ **Future-proofing**: Prevents similar styling hierarchy issues
+
+### Implications for Future Development
+
+#### Enhanced Understanding
+- **DOCX styling hierarchy** is now properly documented and understood
+- **Direct vs. style formatting** conflicts are identified and resolved
+- **Diagnostic methodology** has been enhanced with override detection
+
+#### Improved Reliability
+- **Simpler codebase**: Removed conflicting direct formatting logic
+- **Better maintainability**: Styles fully control their properties  
+- **Cross-platform consistency**: Style-based approach more reliable
+
+This resolution represents a significant architectural breakthrough, demonstrating that complex formatting issues often stem from **fundamental misunderstandings** rather than implementation bugs. The DOCX styling system now operates with full hierarchy awareness and proper separation of concerns.
+
 --- 

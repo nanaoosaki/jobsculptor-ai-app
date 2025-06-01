@@ -1,191 +1,214 @@
 {
   "typography": {
-    "_comment": "Typography settings derived from unified typography system",
-    "fontFamily": "Calibri",
+    "_comment": "Typography settings derived from comprehensive DOCX specification",
+    "fontFamily": "Palatino Linotype",
     "fontSize": {
-      "body": 11,
-      "sectionHeader": 14,
-      "nameHeader": 16,
-      "roleTitle": 11,
-      "companyName": 11,
-      "bulletPoint": 11
+      "base": 10,
+      "name": 20,
+      "sectionHeader": 12,
+      "company": 11,
+      "role": 10,
+      "contact": 10,
+      "roleDescription": 10,
+      "bullet": 10
     },
     "fontWeight": {
       "normal": 400,
       "bold": 700
     },
     "fontColor": {
-      "primary": "#333",
-      "headers": "rgb(0, 0, 102)",
-      "secondary": "#6c757d"
+      "primaryBlue": "#1F497D",
+      "roleboxFill": "#D6E0F5",
+      "black": "#000000",
+      "greyText": "#505050"
     },
     "lineHeight": {
-      "normal": 1.4,
-      "tight": 1.2
+      "base": 1.15,
+      "bullet": 1.0
     },
     "spacing": {
-      "sectionAfterPt": 4,
-      "paragraphAfterPt": 6,
-      "bulletAfterPt": 6
+      "defaultAfterPt": 0,
+      "nameAfterPt": 0,
+      "contactAfterPt": 0,
+      "sectionAfterPt": 0,
+      "companyAfterPt": 0,
+      "roleAfterPt": 0,
+      "roleDescAfterPt": 0,
+      "bulletAfterPt": 0
     }
   },
   "page": {
-    "marginTopCm": 0.8,
-    "marginBottomCm": 0.8,
-    "marginLeftCm": 1.0,
-    "marginRightCm": 1.0
+    "marginTopCm": 1.5,
+    "marginBottomCm": 1.5,
+    "marginLeftCm": 1.5,
+    "marginRightCm": 1.5,
+    "size": "A4"
   },
   "global": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 11,
-    "lineHeight": 1.4,
+    "fontFamily": "Palatino Linotype",
+    "fontSizePt": 10,
+    "lineHeight": 1.15,
     "color": [
-      51,
-      51,
-      51
+      0,
+      0,
+      0
     ],
     "backgroundColor": [
       255,
       255,
       255
     ],
-    "tabStopPosition": 19.0,
-    "contentIndentCm": 0.0
-  },
-  "heading1": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 16,
-    "color": [
-      51,
-      51,
-      51
-    ],
-    "bold": true,
-    "spaceAfterPt": 4
-  },
-  "heading2": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 14,
-    "color": [
-      0,
-      0,
-      102
-    ],
-    "spaceAfterPt": 4,
-    "bold": true,
-    "backgroundColor": [
-      255,
-      255,
-      255
-    ],
-    "borderColor": [
-      13,
-      43,
-      126
-    ],
-    "borderSize": 1,
-    "paddingVertical": 1.0,
-    "paddingHorizontal": 12.0,
-    "marginBottom": 8.0,
-    "indentCm": 0.0
-  },
-  "heading3": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 11,
-    "bold": true,
-    "spaceAfterPt": 6
-  },
-  "body": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 11,
-    "lineHeight": 1.4,
-    "color": [
-      51,
-      51,
-      51
-    ],
-    "spaceAfterPt": 6,
-    "indentCm": 0.0
-  },
-  "bulletList": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 11,
-    "indentCm": 0.39,
-    "hangingIndentCm": 0.39,
-    "bulletCharacter": "\\2022",
-    "spaceAfterPt": 6,
-    "color": [
-      58,
-      58,
-      58
-    ]
-  },
-  "roleDescription": {
-    "fontFamily": "Calibri",
-    "fontSizePt": 11,
-    "indentCm": 0.0,
-    "spaceAfterPt": 6,
-    "color": [
-      51,
-      51,
-      51
-    ],
-    "fontStyle": "italic"
-  },
-  "positionBar": {
-    "spaceAfterPt": 6,
-    "indentCm": 0.0
-  },
-  "sectionSpacing": {
-    "spacingPt": 4
+    "defaultSpacingAfterPt": 0
   },
   "styles": {
-    "MR_SectionHeader": {
-      "fontFamily": "Calibri",
-      "fontSizePt": 14,
-      "indentCm": 0.0,
-      "spaceAfterPt": 4,
+    "MR_Name": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 20,
       "bold": true,
       "color": [
         0,
         0,
-        102
-      ]
+        0
+      ],
+      "alignment": "center",
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0
     },
-    "MR_Content": {
-      "fontFamily": "Calibri",
-      "fontSizePt": 11,
-      "indentCm": 0.0,
-      "spaceAfterPt": 6,
+    "MR_Contact": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
       "color": [
-        51,
-        51,
-        51
-      ]
+        0,
+        0,
+        0
+      ],
+      "alignment": "center",
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0
+    },
+    "MR_SectionHeader": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 12,
+      "bold": true,
+      "allCaps": true,
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "borderColor": [
+        31,
+        73,
+        125
+      ],
+      "borderWidthPt": 0.5,
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0
+    },
+    "MR_Company": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 11,
+      "bold": true,
+      "color": [
+        31,
+        73,
+        125
+      ],
+      "alignment": "left",
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0,
+      "rightTabCm": 17.59
+    },
+    "MR_RoleBox": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
+      "bold": true,
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "backgroundColor": [
+        214,
+        224,
+        245
+      ],
+      "borderColor": [
+        31,
+        73,
+        125
+      ],
+      "borderWidthPt": 0.5,
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0
     },
     "MR_RoleDescription": {
-      "fontFamily": "Calibri",
-      "fontSizePt": 11,
-      "indentCm": 0.0,
-      "spaceAfterPt": 6,
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
       "italic": true,
       "color": [
-        51,
-        51,
-        51
-      ]
+        0,
+        0,
+        0
+      ],
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0
     },
     "MR_BulletPoint": {
-      "fontFamily": "Calibri",
-      "fontSizePt": 11,
-      "indentCm": 0.39,
-      "hangingIndentCm": 0.39,
-      "spaceAfterPt": 6,
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
       "color": [
-        51,
-        51,
-        51
-      ]
+        0,
+        0,
+        0
+      ],
+      "indentCm": 0.35,
+      "hangingIndentCm": 0.35,
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "lineHeight": 1.0,
+      "bulletCharacter": "\u2013"
+    },
+    "MR_SummaryText": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0
+    },
+    "MR_SkillCategory": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
+      "bold": true,
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0
+    },
+    "MR_SkillList": {
+      "fontFamily": "Palatino Linotype",
+      "fontSizePt": 10,
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "spaceBeforePt": 0,
+      "spaceAfterPt": 0,
+      "indentCm": 0.0
     }
   }
 }

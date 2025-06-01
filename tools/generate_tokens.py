@@ -190,194 +190,213 @@ def generate_docx_style_mappings():
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Use new typography system if available, fallback to legacy tokens
-        typography = tokens.get("typography", {})
+        # Extract new specification values with fallbacks
+        font_family_base = tokens.get("font-family-base", "Palatino Linotype")
         
-        # Font family - prioritize new typography system
-        font_family_docx = get_typography_value(tokens, "fontFamily", "docxPrimary", 
-                                               tokens.get("baseFontFamily", "'Calibri', Arial, sans-serif").replace("'", "").split(",")[0].strip())
+        # Font sizes from specification
+        font_size_base = int(tokens.get("font-size-base-pt", "10"))
+        font_size_name = int(tokens.get("font-size-name-pt", "20"))
+        font_size_section = int(tokens.get("font-size-sectionheader-pt", "12"))
+        font_size_company = int(tokens.get("font-size-company-pt", "11"))
+        font_size_role = int(tokens.get("font-size-role-pt", "10"))
+        font_size_contact = int(tokens.get("font-size-contact-pt", "10"))
+        font_size_roledesc = int(tokens.get("font-size-roledescription-pt", "10"))
+        font_size_bullet = int(tokens.get("font-size-bullet-pt", "10"))
         
-        # Font sizes - use new typography system or fallback to legacy
-        font_size_body = get_typography_value(tokens, "fontSize", "body", tokens.get("baseFontSize", "11pt"))
-        font_size_section = get_typography_value(tokens, "fontSize", "sectionHeader", "14pt") 
-        font_size_name = get_typography_value(tokens, "fontSize", "nameHeader", tokens.get("nameFontSize", "16pt"))
+        # Colors from specification
+        color_primary_blue = tokens.get("color-primary-blue", "#1F497D")
+        color_rolebox_fill = tokens.get("color-rolebox-fill", "#D6E0F5")
+        color_black = tokens.get("color-black", "#000000")
+        color_grey_text = tokens.get("color-grey-text", "#505050")
         
-        # Convert font sizes to points
-        def parse_font_size(size_str):
-            if isinstance(size_str, (int, float)):
-                return int(size_str)
-            return int(str(size_str).replace("pt", ""))
+        # Line spacing and paragraph spacing
+        line_spacing_base = float(tokens.get("line-spacing-base", "1.15"))
+        line_spacing_bullet = float(tokens.get("line-spacing-bullet", "1.0"))
         
-        # Colors - use new typography system or fallback
-        color_primary = get_typography_value(tokens, "fontColor", "primary", tokens.get("textColor", "#333"))
-        color_headers = get_typography_value(tokens, "fontColor", "headers", tokens.get("pdfHeaderColor", "rgb(0, 0, 102)"))
+        # Paragraph spacing (before/after in pt)
+        para_default_before = int(tokens.get("paragraph-spacing-before-default", "0"))
+        para_default_after = int(tokens.get("paragraph-spacing-after-default", "0"))
+        para_name_before = int(tokens.get("paragraph-spacing-name-before", "0"))
+        para_name_after = int(tokens.get("paragraph-spacing-name-after", "0"))
+        para_contact_before = int(tokens.get("paragraph-spacing-contact-before", "0"))
+        para_contact_after = int(tokens.get("paragraph-spacing-contact-after", "0"))
+        para_section_before = int(tokens.get("paragraph-spacing-section-before", "0"))
+        para_section_after = int(tokens.get("paragraph-spacing-section-after", "0"))
+        para_company_before = int(tokens.get("paragraph-spacing-company-before", "0"))
+        para_company_after = int(tokens.get("paragraph-spacing-company-after", "0"))
+        para_role_before = int(tokens.get("paragraph-spacing-role-before", "0"))
+        para_role_after = int(tokens.get("paragraph-spacing-role-after", "0"))
+        para_roledesc_before = int(tokens.get("paragraph-spacing-roledesc-before", "0"))
+        para_roledesc_after = int(tokens.get("paragraph-spacing-roledesc-after", "0"))
+        para_bullet_before = int(tokens.get("paragraph-spacing-bullet-before", "0"))
+        para_bullet_after = int(tokens.get("paragraph-spacing-bullet-after", "0"))
         
-        # Legacy DOCX-specific values (maintain for now)
-        docx_section_header_indent = float(tokens.get("docx-section-header-indent-cm", "0"))
-        docx_company_indent = float(tokens.get("docx-company-name-indent-cm", "0"))
-        docx_role_indent = float(tokens.get("docx-role-description-indent-cm", "0"))
-        docx_bullet_indent = float(tokens.get("docx-bullet-left-indent-cm", "0"))
-        docx_bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0"))
+        # Page margins
+        page_margin_top = float(tokens.get("docx-page-margin-top-cm", "1.5"))
+        page_margin_bottom = float(tokens.get("docx-page-margin-bottom-cm", "1.5"))
+        page_margin_left = float(tokens.get("docx-page-margin-left-cm", "1.5"))
+        page_margin_right = float(tokens.get("docx-page-margin-right-cm", "1.5"))
         
-        # NEW: Unified content indentation system
-        docx_content_left_indent = float(tokens.get("docx-content-left-indent-cm", "1.0"))
+        # Border widths
+        border_section = float(tokens.get("border-width-section", "0.5"))
+        border_role = float(tokens.get("border-width-role", "0.5"))
         
-        # Apply unified indentation to all major elements (except bullets which need relative indentation)
-        docx_section_header_indent = docx_content_left_indent
-        docx_company_indent = docx_content_left_indent  
-        docx_role_indent = docx_content_left_indent
+        # Bullet indentation
+        bullet_indent = float(tokens.get("docx-bullet-left-indent-cm", "0.39"))
+        bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0.39"))
         
-        # Bullets maintain relative indentation (content indent + bullet indent)
-        docx_bullet_indent = docx_content_left_indent + float(tokens.get("docx-bullet-left-indent-cm", "0.39"))
-        docx_bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0.39"))
-        
-        # Spacing values - use new typography system spacing if available
-        docx_spacing = typography.get("docx", {}).get("spacing", {})
-        docx_section_spacing = int(docx_spacing.get("sectionAfterPt", tokens.get("docx-section-spacing-pt", "4")))
-        docx_bullet_spacing = int(docx_spacing.get("bulletAfterPt", tokens.get("docx-bullet-spacing-pt", "6")))
-        docx_paragraph_spacing = int(docx_spacing.get("paragraphAfterPt", tokens.get("docx-paragraph-spacing-pt", "6")))
-        
-        # Get global margin values
-        global_left_margin_cm = float(tokens.get("docx-global-left-margin-cm", "2.0"))
-        global_right_margin_cm = float(tokens.get("docx-global-right-margin-cm", "2.0"))
-        
-        # Enhanced mapping with typography integration
+        # Enhanced mapping with new specification
         docx_styles = {
             "typography": {
-                "_comment": "Typography settings derived from unified typography system",
-                "fontFamily": font_family_docx,
+                "_comment": "Typography settings derived from comprehensive DOCX specification",
+                "fontFamily": font_family_base,
                 "fontSize": {
-                    "body": parse_font_size(font_size_body),
-                    "sectionHeader": parse_font_size(font_size_section), 
-                    "nameHeader": parse_font_size(font_size_name),
-                    "roleTitle": parse_font_size(get_typography_value(tokens, "fontSize", "roleTitle", "11pt")),
-                    "companyName": parse_font_size(get_typography_value(tokens, "fontSize", "companyName", "11pt")),
-                    "bulletPoint": parse_font_size(get_typography_value(tokens, "fontSize", "bulletPoint", "11pt")),
+                    "base": font_size_base,
+                    "name": font_size_name,
+                    "sectionHeader": font_size_section,
+                    "company": font_size_company,
+                    "role": font_size_role,
+                    "contact": font_size_contact,
+                    "roleDescription": font_size_roledesc,
+                    "bullet": font_size_bullet
                 },
-                "fontWeight": typography.get("fontWeight", {
+                "fontWeight": {
                     "normal": 400,
                     "bold": 700
-                }),
-                "fontColor": {
-                    "primary": color_primary,
-                    "headers": color_headers,
-                    "secondary": get_typography_value(tokens, "fontColor", "secondary", "#6c757d")
                 },
-                "lineHeight": typography.get("lineHeight", {
-                    "normal": 1.4,
-                    "tight": 1.2
-                }),
+                "fontColor": {
+                    "primaryBlue": color_primary_blue,
+                    "roleboxFill": color_rolebox_fill,
+                    "black": color_black,
+                    "greyText": color_grey_text
+                },
+                "lineHeight": {
+                    "base": line_spacing_base,
+                    "bullet": line_spacing_bullet
+                },
                 "spacing": {
-                    "sectionAfterPt": docx_section_spacing,
-                    "paragraphAfterPt": docx_paragraph_spacing,
-                    "bulletAfterPt": docx_bullet_spacing
+                    "defaultAfterPt": para_default_after,
+                    "nameAfterPt": para_name_after,
+                    "contactAfterPt": para_contact_after,
+                    "sectionAfterPt": para_section_after,
+                    "companyAfterPt": para_company_after,
+                    "roleAfterPt": para_role_after,
+                    "roleDescAfterPt": para_roledesc_after,
+                    "bulletAfterPt": para_bullet_after
                 }
             },
             "page": {
-                "marginTopCm": float(tokens.get("pageMarginVertical", "0.8cm").replace("cm", "")),
-                "marginBottomCm": float(tokens.get("pageMarginVertical", "0.8cm").replace("cm", "")),
-                "marginLeftCm": global_left_margin_cm,
-                "marginRightCm": global_right_margin_cm
+                "marginTopCm": page_margin_top,
+                "marginBottomCm": page_margin_bottom,
+                "marginLeftCm": page_margin_left,
+                "marginRightCm": page_margin_right,
+                "size": "A4"
             },
             "global": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(font_size_body),
-                "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
-                "color": hex_to_rgb(color_primary),
-                "backgroundColor": hex_to_rgb(tokens.get("backgroundColor", "#ffffff")),
-                "tabStopPosition": 19.0,
-                "contentIndentCm": docx_company_indent
-            },
-            "heading1": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(font_size_name),
-                "color": hex_to_rgb(color_primary),
-                "bold": True,
-                "spaceAfterPt": docx_section_spacing
-            },
-            "heading2": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(font_size_section),
-                "color": hex_to_rgb(color_headers),
-                "spaceAfterPt": docx_section_spacing,
-                "bold": True,
-                "backgroundColor": hex_to_rgb(tokens.get("color.sectionBox.bg", "#FFFFFF")),
-                "borderColor": hex_to_rgb(tokens.get("sectionHeaderBorder", "#0D2B7E").replace("px solid ", "")),
-                "borderSize": 1,
-                "paddingVertical": float(tokens.get("sectionHeaderPaddingVert", "1px").replace("px", "")),
-                "paddingHorizontal": float(tokens.get("sectionHeaderPaddingHoriz", "12px").replace("px", "")),
-                "marginBottom": float(tokens.get("section-box-margin-bottom", "0.5rem").replace("rem", "")) * 16,
-                "indentCm": docx_section_header_indent
-            },
-            "heading3": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(get_typography_value(tokens, "fontSize", "companyName", "11pt")),
-                "bold": True,
-                "spaceAfterPt": docx_paragraph_spacing
-            },
-            "body": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(font_size_body),
-                "lineHeight": float(tokens.get("baseLineHeight", "1.4")),
-                "color": hex_to_rgb(color_primary),
-                "spaceAfterPt": docx_paragraph_spacing,
-                "indentCm": docx_company_indent
-            },
-            "bulletList": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(get_typography_value(tokens, "fontSize", "bulletPoint", "11pt")),
-                "indentCm": docx_bullet_indent,
-                "hangingIndentCm": docx_bullet_hanging, 
-                "bulletCharacter": tokens.get("bullet-glyph", "\"\\2022\"").replace("\"\\\\", "").replace("\"", ""),
-                "spaceAfterPt": docx_bullet_spacing,
-                "color": hex_to_rgb(tokens.get("color.bullet", "#3A3A3A"))
-            },
-            "roleDescription": {
-                "fontFamily": font_family_docx,
-                "fontSizePt": parse_font_size(get_typography_value(tokens, "fontSize", "roleDescription", "11pt")),
-                "indentCm": docx_role_indent,
-                "spaceAfterPt": docx_paragraph_spacing,
-                "color": hex_to_rgb(color_primary),
-                "fontStyle": "italic"
-            },
-            "positionBar": {
-                "spaceAfterPt": docx_paragraph_spacing,
-                "indentCm": docx_company_indent
-            },
-            "sectionSpacing": {
-                "spacingPt": docx_section_spacing
+                "fontFamily": font_family_base,
+                "fontSizePt": font_size_base,
+                "lineHeight": line_spacing_base,
+                "color": hex_to_rgb(color_black),
+                "backgroundColor": hex_to_rgb("#FFFFFF"),
+                "defaultSpacingAfterPt": para_default_after
             },
             "styles": {
-                "MR_SectionHeader": {
-                    "fontFamily": font_family_docx,
-                    "fontSizePt": parse_font_size(font_size_section),
-                    "indentCm": docx_section_header_indent,
-                    "spaceAfterPt": docx_section_spacing,
+                "MR_Name": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_name,
                     "bold": True,
-                    "color": hex_to_rgb(color_headers)
+                    "color": hex_to_rgb(color_black),
+                    "alignment": "center",
+                    "spaceBeforePt": para_name_before,
+                    "spaceAfterPt": para_name_after
                 },
-                "MR_Content": {
-                    "fontFamily": font_family_docx,
-                    "fontSizePt": parse_font_size(font_size_body),
-                    "indentCm": docx_company_indent,
-                    "spaceAfterPt": docx_paragraph_spacing,
-                    "color": hex_to_rgb(color_primary)
+                "MR_Contact": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_contact,
+                    "color": hex_to_rgb(color_black),
+                    "alignment": "center",
+                    "spaceBeforePt": para_contact_before,
+                    "spaceAfterPt": para_contact_after
+                },
+                "MR_SectionHeader": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_section,
+                    "bold": True,
+                    "allCaps": True,
+                    "color": hex_to_rgb(color_black),
+                    "borderColor": hex_to_rgb(color_primary_blue),
+                    "borderWidthPt": border_section,
+                    "spaceBeforePt": para_section_before,
+                    "spaceAfterPt": para_section_after,
+                    "indentCm": 0.0
+                },
+                "MR_Company": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_company,
+                    "bold": True,
+                    "color": hex_to_rgb(color_primary_blue),
+                    "alignment": "left",
+                    "spaceBeforePt": para_company_before,
+                    "spaceAfterPt": para_company_after,
+                    "indentCm": 0.0,
+                    "rightTabCm": 17.59  # Page width minus margins
+                },
+                "MR_RoleBox": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_role,
+                    "bold": True,
+                    "color": hex_to_rgb(color_black),
+                    "backgroundColor": hex_to_rgb(color_rolebox_fill),
+                    "borderColor": hex_to_rgb(color_primary_blue),
+                    "borderWidthPt": border_role,
+                    "spaceBeforePt": para_role_before,
+                    "spaceAfterPt": para_role_after,
+                    "indentCm": 0.0
                 },
                 "MR_RoleDescription": {
-                    "fontFamily": font_family_docx,
-                    "fontSizePt": parse_font_size(get_typography_value(tokens, "fontSize", "roleDescription", "11pt")),
-                    "indentCm": docx_role_indent,
-                    "spaceAfterPt": docx_paragraph_spacing,
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_roledesc,
                     "italic": True,
-                    "color": hex_to_rgb(color_primary)
+                    "color": hex_to_rgb(color_black),
+                    "spaceBeforePt": para_roledesc_before,
+                    "spaceAfterPt": para_roledesc_after,
+                    "indentCm": 0.0
                 },
                 "MR_BulletPoint": {
-                    "fontFamily": font_family_docx,
-                    "fontSizePt": parse_font_size(get_typography_value(tokens, "fontSize", "bulletPoint", "11pt")),
-                    "indentCm": docx_bullet_indent,
-                    "hangingIndentCm": docx_bullet_hanging,
-                    "spaceAfterPt": docx_bullet_spacing,
-                    "color": hex_to_rgb(color_primary)
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_bullet,
+                    "color": hex_to_rgb(color_black),
+                    "indentCm": bullet_indent,
+                    "hangingIndentCm": bullet_hanging,
+                    "spaceBeforePt": para_bullet_before,
+                    "spaceAfterPt": para_bullet_after,
+                    "lineHeight": line_spacing_bullet,
+                    "bulletCharacter": "–"  # En-dash as specified
+                },
+                "MR_SummaryText": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_base,
+                    "color": hex_to_rgb(color_black),
+                    "spaceBeforePt": para_default_before,
+                    "spaceAfterPt": para_default_after,
+                    "indentCm": 0.0
+                },
+                "MR_SkillCategory": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_base,
+                    "bold": True,
+                    "color": hex_to_rgb(color_black),
+                    "spaceBeforePt": para_default_before,
+                    "spaceAfterPt": para_default_after,
+                    "indentCm": 0.0
+                },
+                "MR_SkillList": {
+                    "fontFamily": font_family_base,
+                    "fontSizePt": font_size_base,
+                    "color": hex_to_rgb(color_black),
+                    "spaceBeforePt": para_default_before,
+                    "spaceAfterPt": para_default_after,
+                    "indentCm": 0.0
                 }
             }
         }
@@ -386,6 +405,8 @@ def generate_docx_style_mappings():
             json.dump(docx_styles, f, indent=2)
         
         print(f"Successfully generated {output_path}")
+        print(f"DOCX styles path: {output_path}")
+        print(f"Loaded DOCX styles: {docx_styles}")
         
     except Exception as e:
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
@@ -427,9 +448,12 @@ def em_to_cm(em_value, base_font_pt):
 def auto_convert_em_to_docx_cm(tokens):
     """Auto-generate DOCX cm values from HTML em values for perfect alignment"""
     
-    # Extract base font size
-    base_font_str = tokens.get('baseFontSize', '11pt')
-    base_font_pt = float(base_font_str.rstrip('pt'))
+    # Extract base font size using the correct token name
+    base_font_str = tokens.get('font-size-base-pt', '10')  # Updated token name
+    if isinstance(base_font_str, str) and base_font_str.endswith('pt'):
+        base_font_pt = float(base_font_str.rstrip('pt'))
+    else:
+        base_font_pt = float(str(base_font_str))  # Handle numeric values
     
     # Auto-convert bullet indentation
     bullet_padding_str = tokens.get('bullet-item-padding-left', '1em')
