@@ -578,3 +578,16 @@ def apply_direct_paragraph_formatting(paragraph, style_name: str):
     except Exception as e:
         logger.error(f"Failed to apply direct formatting from style '{style_name}': {e}")
         return paragraph 
+
+
+# Enable/disable flag for style registry system
+USE_STYLE_REGISTRY = True
+
+# Expose main functions for external use
+__all__ = [
+    'StyleRegistry', 
+    'ParagraphBoxStyle', 
+    'get_or_create_style', 
+    'apply_direct_paragraph_formatting',
+    'USE_STYLE_REGISTRY'
+] 

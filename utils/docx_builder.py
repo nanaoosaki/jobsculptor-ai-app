@@ -20,8 +20,36 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.text.paragraph import Paragraph
 from docx.oxml.ns import qn
 
-from style_manager import StyleManager
-from style_engine import StyleEngine
+# Enhanced architecture imports
+try:
+    from style_manager import StyleManager
+    USE_STYLE_MANAGER = True
+except ImportError:
+    USE_STYLE_MANAGER = False
+
+try:
+    from style_engine import StyleEngine
+    USE_STYLE_ENGINE = True
+except ImportError:
+    USE_STYLE_ENGINE = False
+
+# Import our style registry and section builder
+try:
+    from word_styles.registry import USE_STYLE_REGISTRY, get_or_create_style, apply_direct_paragraph_formatting
+    from word_styles.section_builder import add_section_header as registry_add_section_header
+    from word_styles.section_builder import add_content_paragraph, add_bullet_point, remove_empty_paragraphs
+    from word_styles.section_builder import add_role_box
+except ImportError:
+    USE_STYLE_REGISTRY = False
+    logger.warning("⚠️ Style registry not available - using fallback mode")
+
+# Import native numbering engine
+try:
+    from word_styles.numbering_engine import NumberingEngine
+    USE_NATIVE_NUMBERING = True
+except ImportError:
+    USE_NATIVE_NUMBERING = False
+    logger.warning("⚠️ NumberingEngine not available - native bullets disabled")
 
 # Simple stub for rendering tracer to avoid import errors
 def trace(name):
@@ -37,24 +65,15 @@ try:
 except ImportError:
     USE_UNIVERSAL_RENDERERS = False
 
-# Import our new style registry
-try:
-    from word_styles.registry import StyleRegistry, get_or_create_style, apply_direct_paragraph_formatting
-    from word_styles.section_builder import add_section_header as registry_add_section_header
-    from word_styles.section_builder import add_content_paragraph, add_bullet_point, remove_empty_paragraphs
-    from word_styles.section_builder import add_role_box  # Add role box function for title/position formatting
-    USE_STYLE_REGISTRY = True
-except ImportError:
-    USE_STYLE_REGISTRY = False
+# FEATURE FLAGS FOR GRADUAL ROLLOUT
+DOCX_USE_NATIVE_BULLETS = os.getenv('DOCX_USE_NATIVE_BULLETS', 'false').lower() == 'true'
 
-# Use style engine if available, otherwise fall back to old approach
-try:
-    from style_engine import StyleEngine
-    USE_STYLE_ENGINE = True
-except ImportError:
-    USE_STYLE_ENGINE = False
+# Only enable native bullets if both the flag is set AND the engine is available
+NATIVE_BULLETS_ENABLED = DOCX_USE_NATIVE_BULLETS and USE_NATIVE_NUMBERING
 
 logger = logging.getLogger(__name__)
+
+logger.info(f"🎯 DOCX Feature Flags: NATIVE_BULLETS={DOCX_USE_NATIVE_BULLETS}, ENGINE_AVAILABLE={USE_NATIVE_NUMBERING}, ENABLED={NATIVE_BULLETS_ENABLED}")
 
 def load_section_json(request_id: str, section_name: str, temp_dir: str) -> Dict[str, Any]:
     """Load a section's JSON data from the temporary session directory."""
@@ -395,24 +414,189 @@ def format_right_aligned_pair(doc: Document, left_text: str, right_text: str, le
     # Spacing and indentation are now handled by the 'MR_Company' style
     return para
 
-def create_bullet_point(doc, text, docx_styles):
-    """Creates a properly styled bullet point with consistent formatting."""
-    # from docx.oxml.ns import nsdecls # Not needed if XML is removed
-    # from docx.oxml import parse_xml # Not needed if XML is removed
-    # from docx.shared import Cm, Pt # Not needed if direct formatting is removed
+def add_bullet_point_native(doc: Document, text: str, numbering_engine: NumberingEngine = None, 
+                           num_id: int = 1, level: int = 0, docx_styles: Dict[str, Any] = None) -> Paragraph:
+    """
+    Create a bullet point using Word's native numbering system.
     
-    # Use our new custom style
-    bullet_para = doc.add_paragraph(style='MR_BulletPoint')
+    Implements O3 safeguards:
+    - G-1: Content-first architecture enforcement
+    - G-2: Idempotent numbering creation  
+    - B-1: Proper bullet glyph (Word auto-generates •)
+    - B-2: Cross-format indent consistency (221 twips = 1em)
+    - Design token integration for zero spacing
     
-    # Add the text content with the bullet character
-    bullet_para.add_run(f"• {text}")
+    Args:
+        doc: Document to add bullet to
+        text: Bullet text content
+        numbering_engine: Optional pre-configured NumberingEngine (recommended for performance)
+        num_id: Numbering definition ID (default: 1)
+        level: List level (0-based, default: 0)
+        docx_styles: Style definitions for design token system
+        
+    Returns:
+        The created paragraph with native numbering
+        
+    Raises:
+        ValueError: If text is empty (violates content-first architecture)
+    """
+    if not text or not text.strip():
+        raise ValueError("add_bullet_point_native requires non-empty text (content-first architecture)")
     
-    # Indentation, hanging indent, and spacing are now handled by the 'MR_BulletPoint' style.
-    # Removed direct paragraph formatting for left_indent, first_line_indent.
-    # Removed direct XML formatting for indentation (w:ind) and spacing (w:spacing).
+    logger.debug(f"Creating native bullet: '{text[:50]}...'")
     
-    logger.info(f"Applied MR_BulletPoint style to: {str(text)[:30]}...")
+    # Use provided engine or create fresh one (per-document isolation)
+    if numbering_engine is None:
+        numbering_engine = NumberingEngine()
+    
+    try:
+        # Ensure numbering definition exists (idempotent)
+        numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id)
+        
+        # Create paragraph with content FIRST (G-1 fix)
+        para = doc.add_paragraph()
+        para.add_run(text.strip())  # Content before styling!
+        
+        # CRITICAL: Apply MR_BulletPoint style through design token system
+        # This ensures the zero spacing from design tokens is properly applied
+        if docx_styles:
+            try:
+                _apply_paragraph_style(doc, para, "MR_BulletPoint", docx_styles)
+                logger.debug("✅ Applied MR_BulletPoint style via design token system")
+            except Exception as e:
+                logger.warning(f"Could not apply MR_BulletPoint via design tokens: {e}")
+                # Fallback to direct style assignment
+                try:
+                    para.style = 'MR_BulletPoint'
+                    logger.debug("✅ Applied MR_BulletPoint style via direct assignment")
+                except Exception as e2:
+                    logger.warning(f"Could not apply MR_BulletPoint style at all: {e2}")
+        else:
+            # Fallback when no docx_styles provided
+            try:
+                para.style = 'MR_BulletPoint'
+                logger.debug("✅ Applied MR_BulletPoint style via direct assignment (no docx_styles)")
+            except Exception as e:
+                logger.warning(f"Could not apply MR_BulletPoint style: {e}")
+        
+        # Apply native numbering (works WITH the style, not against it)
+        numbering_engine.apply_native_bullet(para, num_id=num_id, level=level)
+        
+        logger.debug(f"✅ Native bullet created with design token zero spacing")
+        return para
+        
+    except Exception as e:
+        logger.error(f"❌ Native bullet creation failed: {e}")
+        # Don't raise - let caller handle fallback
+        raise
+
+def add_bullet_point_legacy(doc: Document, text: str, docx_styles: Dict[str, Any] = None) -> Paragraph:
+    """
+    LEGACY: Create bullet point with manual formatting (deprecated).
+    
+    ⚠️ G-3 FIX: All direct indent overrides removed to prevent spacing bug resurrection.
+    This function should only be used as fallback when native numbering fails.
+    
+    Args:
+        doc: Document to add bullet to  
+        text: Bullet text content
+        docx_styles: Style definitions for design token system
+        
+    Returns:
+        The created paragraph with manual bullet
+    """
+    import warnings
+    warnings.warn(
+        "Legacy bullet path deprecated; may produce wrong spacing. "
+        "Use add_bullet_point_native() for professional Word behavior.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    
+    logger.debug(f"Creating legacy bullet: '{text[:50]}...'")
+    
+    # Create paragraph with content FIRST (content-first architecture)
+    bullet_para = doc.add_paragraph()
+    bullet_para.add_run(f"• {text.strip()}")
+    
+    # FIXED: Apply MR_BulletPoint style through design token system
+    # This ensures the zero spacing from design tokens is properly applied
+    if docx_styles:
+        try:
+            _apply_paragraph_style(doc, bullet_para, "MR_BulletPoint", docx_styles)
+            logger.debug("✅ Applied MR_BulletPoint style via design token system")
+        except Exception as e:
+            logger.warning(f"Could not apply MR_BulletPoint via design tokens: {e}")
+            # Fallback to direct style assignment
+            try:
+                bullet_para.style = 'MR_BulletPoint'
+                logger.debug("✅ Applied MR_BulletPoint style via direct assignment")
+            except Exception as e2:
+                logger.warning(f"Could not apply MR_BulletPoint style at all: {e2}")
+    else:
+        # Fallback when no docx_styles provided
+        try:
+            bullet_para.style = 'MR_BulletPoint'
+            logger.debug("✅ Applied MR_BulletPoint style via direct assignment (no docx_styles)")
+        except Exception as e:
+            logger.warning(f"Could not apply MR_BulletPoint style: {e}")
+    
+    # ❌ REMOVED: XML override that was fighting the design token system
+    # The MR_BulletPoint style from design tokens already has spaceAfterPt: 0
+    # Adding XML spacing was OVERRIDING the design token values!
+    
+    # ❌ G-3 FIX: These lines REMOVED to prevent spacing override bug:
+    # bullet_para.paragraph_format.left_indent = Pt(18)
+    # bullet_para.paragraph_format.first_line_indent = Pt(-18)
+    
+    logger.debug(f"✅ Legacy bullet created with design token zero spacing")
     return bullet_para
+
+def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = None, 
+                       numbering_engine: NumberingEngine = None) -> Paragraph:
+    """
+    Enhanced bullet creation with feature flag support and graceful degradation.
+    
+    This function implements O3's deployment strategy:
+    1. Try native numbering if enabled
+    2. Fall back to legacy approach if native fails
+    3. Maintain 100% document generation success rate
+    
+    Args:
+        doc: Document to add bullet to
+        text: Bullet text content  
+        docx_styles: Style definitions (for legacy fallback)
+        numbering_engine: Optional pre-configured NumberingEngine for performance
+        
+    Returns:
+        The created paragraph with bullets
+    """
+    if not text or not text.strip():
+        logger.warning("Empty bullet text provided, skipping")
+        return None
+    
+    # Phase 1: Try native numbering if enabled
+    if NATIVE_BULLETS_ENABLED:
+        try:
+            para = add_bullet_point_native(doc, text, numbering_engine, docx_styles=docx_styles)
+            logger.debug(f"✅ Used native bullets for: {text[:30]}...")
+            return para
+        except Exception as e:
+            logger.warning(f"Native bullet failed, falling back to legacy: {e}")
+            # Continue to fallback
+    
+    # Phase 2: Fallback to legacy approach
+    try:
+        para = add_bullet_point_legacy(doc, text, docx_styles)
+        logger.debug(f"✅ Used legacy bullets for: {text[:30]}...")
+        return para
+    except Exception as e:
+        logger.error(f"❌ Both native and legacy bullet creation failed: {e}")
+        # Emergency fallback - basic paragraph
+        para = doc.add_paragraph()
+        para.add_run(f"• {text.strip()}")
+        logger.warning(f"Used emergency fallback for: {text[:30]}...")
+        return para
 
 @trace("docx.section_header")
 def add_section_header(doc: Document, section_name: str) -> Any:
@@ -695,6 +879,16 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         # Create a new Document
         doc = Document()
         
+        # Initialize NumberingEngine for optimal performance (O3 recommendation)
+        numbering_engine = None
+        if NATIVE_BULLETS_ENABLED:
+            try:
+                numbering_engine = NumberingEngine()
+                logger.info("✅ NumberingEngine initialized for native bullets")
+            except Exception as e:
+                logger.warning(f"Failed to initialize NumberingEngine: {e}")
+                numbering_engine = None
+        
         # Create custom document styles
         custom_styles = _create_document_styles(doc, docx_styles)
         
@@ -950,7 +1144,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Achievements/bullets - use the helper function for consistent formatting
                     for achievement in job.get('achievements', []):
-                        bullet_para = create_bullet_point(doc, achievement, docx_styles)
+                        bullet_para = create_bullet_point(doc, achievement, docx_styles, numbering_engine)
                 
         # ------ EDUCATION SECTION ------
         logger.info("Processing Education section...")
@@ -1024,7 +1218,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Highlights/bullets - use the helper function for consistent formatting
                     for highlight in school.get('highlights', []):
-                        bullet_para = create_bullet_point(doc, highlight, docx_styles)
+                        bullet_para = create_bullet_point(doc, highlight, docx_styles, numbering_engine)
         
         # ------ SKILLS SECTION ------
         logger.info("Processing Skills section...")
@@ -1184,7 +1378,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Project details - use the helper function for consistent formatting
                     for detail in project.get('details', []):
-                        bullet_para = create_bullet_point(doc, detail, docx_styles)
+                        bullet_para = create_bullet_point(doc, detail, docx_styles, numbering_engine)
         
         # Fix spacing between sections - use our enhanced implementation
         if USE_STYLE_REGISTRY:
