@@ -156,7 +156,7 @@
       ],
       "spaceBeforePt": 0,
       "spaceAfterPt": 0,
-      "indentCm": 0.0
+      "indentCm": 0.254
     },
     "MR_BulletPoint": {
       "fontFamily": "Palatino Linotype",
