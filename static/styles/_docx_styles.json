@@ -148,7 +148,7 @@
     "MR_RoleDescription": {
       "fontFamily": "Palatino Linotype",
       "fontSizePt": 10,
-      "italic": true,
+      "bold": true,
       "color": [
         0,
         0,
