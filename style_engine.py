@@ -554,11 +554,16 @@ class StyleEngine:
                 else:
                     paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 
-                # Indentation
-                if "indentCm" in cfg:
+                # Indentation (✅ o3's FIX: Skip indentation for bullet points to prevent layer conflicts)
+                if "indentCm" in cfg and style_name != "MR_BulletPoint":
                     paragraph_format.left_indent = Cm(cfg["indentCm"])
-                if "hangingIndentCm" in cfg:
+                elif style_name == "MR_BulletPoint":
+                    logger.info(f"🚫 Skipped style indentation for {style_name} - letting XML numbering (L-1) control it")
+                    
+                if "hangingIndentCm" in cfg and style_name != "MR_BulletPoint":
                     paragraph_format.first_line_indent = Cm(-cfg["hangingIndentCm"])
+                elif style_name == "MR_BulletPoint":
+                    logger.info(f"🚫 Skipped style hanging indent for {style_name} - letting XML numbering (L-1) control it")
                 
                 # Line spacing
                 if "lineHeight" in cfg:

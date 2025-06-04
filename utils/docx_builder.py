@@ -66,7 +66,7 @@ except ImportError:
     USE_UNIVERSAL_RENDERERS = False
 
 # FEATURE FLAGS FOR GRADUAL ROLLOUT
-DOCX_USE_NATIVE_BULLETS = os.getenv('DOCX_USE_NATIVE_BULLETS', 'false').lower() == 'true'
+DOCX_USE_NATIVE_BULLETS = os.getenv('DOCX_USE_NATIVE_BULLETS', 'true').lower() == 'true'
 
 # Only enable native bullets if both the flag is set AND the engine is available
 NATIVE_BULLETS_ENABLED = DOCX_USE_NATIVE_BULLETS and USE_NATIVE_NUMBERING
@@ -216,12 +216,21 @@ def _apply_paragraph_style(doc: Document, p: Paragraph, style_name: str, docx_st
     # Apply paragraph formatting (REMOVED spaceAfterPt and spaceBeforePt to prevent style override)
     # NOTE: Per O3's advice, removing direct spacing formatting to let the style handle it
     logger.info(f"🔧 Applying paragraph formatting...")
-    if "indentCm" in style_config:
+    
+    # ✅ o3's FIX 1: Remove conflicting direct indentation for bullet points
+    # Only apply direct indentation for NON-BULLET styles to prevent L-0/L-1 conflicts
+    if style_name != "MR_BulletPoint" and "indentCm" in style_config:
         p.paragraph_format.left_indent = Cm(style_config["indentCm"])
         logger.info(f"🔧 Applied left indent: {style_config['indentCm']}cm")
-    if "hangingIndentCm" in style_config:
+    elif style_name == "MR_BulletPoint":
+        logger.info(f"🚫 Skipped direct left indent for {style_name} - letting XML numbering (L-1) control it")
+        
+    if style_name != "MR_BulletPoint" and "hangingIndentCm" in style_config:
         p.paragraph_format.first_line_indent = Cm(-style_config["hangingIndentCm"])
         logger.info(f"🔧 Applied hanging indent: {style_config['hangingIndentCm']}cm")
+    elif style_name == "MR_BulletPoint":
+        logger.info(f"🚫 Skipped direct hanging indent for {style_name} - letting XML numbering (L-1) control it")
+        
     if "lineHeight" in style_config:
         p.paragraph_format.line_spacing = style_config["lineHeight"]
         logger.info(f"🔧 Applied line spacing: {style_config['lineHeight']}")
@@ -415,7 +424,7 @@ def format_right_aligned_pair(doc: Document, left_text: str, right_text: str, le
     return para
 
 def add_bullet_point_native(doc: Document, text: str, numbering_engine: NumberingEngine = None, 
-                           num_id: int = 1, level: int = 0, docx_styles: Dict[str, Any] = None) -> Paragraph:
+                           num_id: int = 100, level: int = 0, docx_styles: Dict[str, Any] = None) -> Paragraph:
     """
     Create a bullet point using Word's native numbering system.
     
@@ -423,14 +432,14 @@ def add_bullet_point_native(doc: Document, text: str, numbering_engine: Numberin
     - G-1: Content-first architecture enforcement
     - G-2: Idempotent numbering creation  
     - B-1: Proper bullet glyph (Word auto-generates •)
-    - B-2: Cross-format indent consistency (221 twips = 1em)
-    - Design token integration for zero spacing
+    - B-2: Cross-format indent consistency with design tokens
+    - ✅ NEW: Creates proper numbering definitions instead of relying on paragraph properties
     
     Args:
         doc: Document to add bullet to
         text: Bullet text content
         numbering_engine: Optional pre-configured NumberingEngine (recommended for performance)
-        num_id: Numbering definition ID (default: 1)
+        num_id: Numbering definition ID (default: 100 for custom definitions)
         level: List level (0-based, default: 0)
         docx_styles: Style definitions for design token system
         
@@ -450,8 +459,19 @@ def add_bullet_point_native(doc: Document, text: str, numbering_engine: Numberin
         numbering_engine = NumberingEngine()
     
     try:
-        # Ensure numbering definition exists (idempotent)
-        numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id)
+        # ✅ FIX: Only create numbering definition once per document
+        # Check if we've already created the numbering definition for this document
+        if not hasattr(doc, '_mr_numbering_definitions_created'):
+            doc._mr_numbering_definitions_created = set()
+        
+        if num_id not in doc._mr_numbering_definitions_created:
+            # CRITICAL: Ensure numbering definition exists BEFORE applying to paragraphs
+            # This creates the actual /word/numbering.xml entries that Word needs
+            numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id)
+            doc._mr_numbering_definitions_created.add(num_id)
+            logger.debug(f"✅ Created numbering definition for num_id={num_id}")
+        else:
+            logger.debug(f"✅ Numbering definition for num_id={num_id} already exists")
         
         # Create paragraph with content FIRST (G-1 fix)
         para = doc.add_paragraph()
@@ -479,10 +499,10 @@ def add_bullet_point_native(doc: Document, text: str, numbering_engine: Numberin
             except Exception as e:
                 logger.warning(f"Could not apply MR_BulletPoint style: {e}")
         
-        # Apply native numbering (works WITH the style, not against it)
+        # ✅ Apply native numbering (now references proper numbering definition)
         numbering_engine.apply_native_bullet(para, num_id=num_id, level=level)
         
-        logger.debug(f"✅ Native bullet created with design token zero spacing")
+        logger.debug(f"✅ Native bullet created with proper numbering definition")
         return para
         
     except Exception as e:
@@ -496,6 +516,9 @@ def add_bullet_point_legacy(doc: Document, text: str, docx_styles: Dict[str, Any
     
     ⚠️ G-3 FIX: All direct indent overrides removed to prevent spacing bug resurrection.
     This function should only be used as fallback when native numbering fails.
+    
+    🚨 o3's WARNING: This function creates L-0 direct formatting that can override
+    native numbering indentation. Use should be eliminated in production.
     
     Args:
         doc: Document to add bullet to  
@@ -513,11 +536,29 @@ def add_bullet_point_legacy(doc: Document, text: str, docx_styles: Dict[str, Any
         stacklevel=2
     )
     
+    # o3's ENHANCED WARNING
+    logger.error(f"🚨 LEGACY BULLET PATH ACTIVE - This creates L-0 direct formatting!")
+    logger.error(f"🚨 Text: '{text[:50]}...'")
+    logger.error(f"🚨 This may override native numbering indentation!")
+    
+    # Optional: Completely disable legacy path in production
+    if os.getenv('DOCX_DISABLE_LEGACY_BULLETS', 'false').lower() == 'true':
+        raise RuntimeError(f"Legacy bullet path disabled by DOCX_DISABLE_LEGACY_BULLETS. Fix native path instead.")
+    
     logger.debug(f"Creating legacy bullet: '{text[:50]}...'")
     
     # Create paragraph with content FIRST (content-first architecture)
     bullet_para = doc.add_paragraph()
-    bullet_para.add_run(f"• {text.strip()}")
+    
+    # ✅ CRITICAL FIX: Ensure bullet character is always added
+    clean_text = text.strip()
+    if not clean_text.startswith('•'):
+        bullet_text = f"• {clean_text}"
+    else:
+        bullet_text = clean_text
+    
+    bullet_para.add_run(bullet_text)
+    logger.info(f"🔫 LEGACY: Added bullet text: '{bullet_text[:50]}...'")
     
     # FIXED: Apply MR_BulletPoint style through design token system
     # This ensures the zero spacing from design tokens is properly applied
@@ -549,11 +590,19 @@ def add_bullet_point_legacy(doc: Document, text: str, docx_styles: Dict[str, Any
     # bullet_para.paragraph_format.left_indent = Pt(18)
     # bullet_para.paragraph_format.first_line_indent = Pt(-18)
     
+    # o3's WARNING: Check if style application secretly added direct formatting
+    if bullet_para.paragraph_format.left_indent or bullet_para.paragraph_format.first_line_indent:
+        left_info = f"{int(bullet_para.paragraph_format.left_indent.twips)} twips" if bullet_para.paragraph_format.left_indent else "None"
+        first_info = f"{int(bullet_para.paragraph_format.first_line_indent.twips)} twips" if bullet_para.paragraph_format.first_line_indent else "None"
+        logger.error(f"🚨 STYLE APPLICATION ADDED DIRECT FORMATTING!")
+        logger.error(f"🚨 Left: {left_info}, First Line: {first_info}")
+        logger.error(f"🚨 This is the source of L-0 override bug!")
+    
     logger.debug(f"✅ Legacy bullet created with design token zero spacing")
     return bullet_para
 
 def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = None, 
-                       numbering_engine: NumberingEngine = None) -> Paragraph:
+                       numbering_engine: NumberingEngine = None, num_id: int = 100) -> Paragraph:
     """
     Enhanced bullet creation with feature flag support and graceful degradation.
     
@@ -567,6 +616,7 @@ def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = 
         text: Bullet text content  
         docx_styles: Style definitions (for legacy fallback)
         numbering_engine: Optional pre-configured NumberingEngine for performance
+        num_id: Custom numbering ID (default: 100 for our custom definitions)
         
     Returns:
         The created paragraph with bullets
@@ -574,28 +624,66 @@ def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = 
     if not text or not text.strip():
         logger.warning("Empty bullet text provided, skipping")
         return None
+
+    # o3's ENHANCED DIAGNOSTIC LOGGING
+    logger.info(f"🔫 BULLET CREATION START: '{text[:30]}...'")
+    logger.info(f"🔫 Native bullets enabled: {NATIVE_BULLETS_ENABLED}")
+    logger.info(f"🔫 NumberingEngine available: {USE_NATIVE_NUMBERING}")
     
     # Phase 1: Try native numbering if enabled
     if NATIVE_BULLETS_ENABLED:
         try:
-            para = add_bullet_point_native(doc, text, numbering_engine, docx_styles=docx_styles)
-            logger.debug(f"✅ Used native bullets for: {text[:30]}...")
-            return para
+            logger.info(f"🔫 ATTEMPTING NATIVE PATH for: '{text[:30]}...'")
+            para = add_bullet_point_native(doc, text, numbering_engine, num_id=num_id, docx_styles=docx_styles)
+            
+            # ✅ CRITICAL FIX: Verify numbering was actually applied after creation
+            pPr = para._element.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}pPr')
+            numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr') if pPr is not None else None
+            
+            if numPr is not None:
+                # Success - numbering was applied
+                logger.info(f"🔫 BULLET PATH: NATIVE ✅ - '{text[:30]}...'")
+                logger.debug("Bullet created via native")  
+                return para
+            else:
+                # Silent failure - numbering claimed success but wasn't applied
+                logger.error(f"🔫 NATIVE PATH SILENT FAILURE: numPr not found after creation for '{text[:30]}...'")
+                logger.error(f"🔫 FALLING BACK TO LEGACY due to silent failure")
+                # Remove the failed paragraph and try legacy
+                doc._body._element.remove(para._element)
+                raise RuntimeError("Native numbering silent failure detected")
+                
         except Exception as e:
-            logger.warning(f"Native bullet failed, falling back to legacy: {e}")
+            logger.error(f"🔫 NATIVE PATH FAILED: {e}")
+            logger.error(f"🔫 FALLING BACK TO LEGACY for: '{text[:30]}...'")
             # Continue to fallback
+    else:
+        logger.info(f"🔫 NATIVE DISABLED, USING LEGACY for: '{text[:30]}...'")
     
     # Phase 2: Fallback to legacy approach
     try:
+        logger.info(f"🔫 EXECUTING LEGACY PATH for: '{text[:30]}...'")
         para = add_bullet_point_legacy(doc, text, docx_styles)
-        logger.debug(f"✅ Used legacy bullets for: {text[:30]}...")
+        
+        logger.warning(f"🔫 BULLET PATH: LEGACY ⚠️ - '{text[:30]}...'")
+        logger.debug("Bullet created via legacy")  
+        logger.warning(f"🔫 LEGACY PATH USED - this creates manual bullet formatting!")
         return para
     except Exception as e:
         logger.error(f"❌ Both native and legacy bullet creation failed: {e}")
-        # Emergency fallback - basic paragraph
+        # Emergency fallback - basic paragraph with bullet
         para = doc.add_paragraph()
         para.add_run(f"• {text.strip()}")
-        logger.warning(f"Used emergency fallback for: {text[:30]}...")
+        
+        # Apply basic bullet styling if available
+        if docx_styles:
+            try:
+                _apply_paragraph_style(doc, para, "MR_BulletPoint", docx_styles)
+                logger.info(f"🔫 EMERGENCY: Applied MR_BulletPoint style to emergency bullet")
+            except Exception:
+                logger.error(f"🔫 EMERGENCY: Could not apply MR_BulletPoint style")
+        
+        logger.error(f"🔫 BULLET PATH: EMERGENCY ❌ - '{text[:30]}...'")
         return para
 
 @trace("docx.section_header")
@@ -839,6 +927,95 @@ def parse_contact_string(contact_text: str) -> Dict[str, str]:
     logger.info(f"Final parsed contact data: {contact_data}")
     return contact_data
 
+def _cleanup_bullet_direct_formatting(doc: Document) -> int:
+    """
+    o3's Nuclear Option: Remove all direct indentation from bullet paragraphs.
+    
+    This addresses the rogue L-0 direct formatting that causes Word to show
+    "Left: 0" instead of the proper bullet indentation from L-1 XML numbering.
+    
+    Returns:
+        Number of bullet paragraphs cleaned
+    """
+    cleaned_count = 0
+    
+    for para in doc.paragraphs:
+        if para.style and para.style.name == "MR_BulletPoint":
+            # Check if paragraph has rogue direct formatting
+            before_left = para.paragraph_format.left_indent
+            before_first = para.paragraph_format.first_line_indent
+            
+            if before_left or before_first:
+                # o3's nuclear cleanup - remove ALL direct formatting
+                para.paragraph_format.left_indent = None
+                para.paragraph_format.first_line_indent = None
+                cleaned_count += 1
+                
+                if before_left:
+                    left_twips = int(before_left.twips)
+                    logger.debug(f"🧹 Removed rogue left indent: {left_twips} twips from '{para.text[:30]}...'")
+                if before_first:
+                    first_twips = int(before_first.twips)
+                    logger.debug(f"🧹 Removed rogue first line indent: {first_twips} twips from '{para.text[:30]}...'")
+    
+    if cleaned_count > 0:
+        logger.info(f"🧹 o3's Nuclear Cleanup: Removed direct formatting from {cleaned_count} bullet paragraphs")
+    else:
+        logger.debug("🧹 o3's Nuclear Cleanup: No direct formatting found to remove")
+    
+    return cleaned_count
+
+def _detect_rogue_bullet_formatting(doc: Document, checkpoint_name: str) -> int:
+    """
+    o3's DRAMATIC DIAGNOSTIC: Detect rogue direct formatting on bullet paragraphs.
+    
+    This runs after every major operation to catch exactly when and where
+    direct formatting gets added to bullet paragraphs.
+    
+    Args:
+        doc: Document to scan
+        checkpoint_name: Name of the checkpoint for logging
+        
+    Returns:
+        Number of paragraphs with rogue formatting
+    """
+    rogue_count = 0
+    
+    logger.info(f"🔍 CHECKPOINT '{checkpoint_name}': Scanning for rogue bullet formatting...")
+    
+    for i, para in enumerate(doc.paragraphs):
+        if para.style and para.style.name == "MR_BulletPoint":
+            # Check for rogue direct formatting
+            left_indent = para.paragraph_format.left_indent
+            first_line_indent = para.paragraph_format.first_line_indent
+            
+            if left_indent or first_line_indent:
+                rogue_count += 1
+                
+                left_info = f"{int(left_indent.twips)} twips" if left_indent else "None"
+                first_info = f"{int(first_line_indent.twips)} twips" if first_line_indent else "None"
+                
+                logger.error(f"🚨 ROGUE FORMATTING DETECTED at checkpoint '{checkpoint_name}':")
+                logger.error(f"   Paragraph {i}: '{para.text[:50]}...'")
+                logger.error(f"   Left indent: {left_info}")
+                logger.error(f"   First line indent: {first_info}")
+                
+                # Check if it has numbering properties
+                pPr = para._element.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}pPr')
+                if pPr is not None:
+                    numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr')
+                    if numPr is not None:
+                        logger.error(f"   Has numbering: YES (this is the L-0 override bug!)")
+                    else:
+                        logger.error(f"   Has numbering: NO")
+    
+    if rogue_count == 0:
+        logger.info(f"✅ CHECKPOINT '{checkpoint_name}': No rogue formatting detected")
+    else:
+        logger.error(f"❌ CHECKPOINT '{checkpoint_name}': {rogue_count} paragraphs have rogue formatting")
+    
+    return rogue_count
+
 def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
     """
     Build a DOCX file from the resume data for the given request ID.
@@ -884,13 +1061,25 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         if NATIVE_BULLETS_ENABLED:
             try:
                 numbering_engine = NumberingEngine()
-                logger.info("✅ NumberingEngine initialized for native bullets")
+                
+                # o3's CRITICAL FIX: Create our custom numbering definition ONCE at document start
+                # Use unique IDs to avoid conflicts with Word's built-in numbering
+                custom_num_id = 100  # Use ID 100 to avoid conflicts with Word defaults
+                custom_abstract_id = 50  # Use ID 50 to avoid conflicts
+                
+                logger.info(f"🔧 Creating custom numbering definition (numId={custom_num_id})...")
+                numbering_engine.get_or_create_numbering_definition(doc, num_id=custom_num_id)
+                
+                logger.info("✅ NumberingEngine initialized with custom bullet definition")
             except Exception as e:
                 logger.warning(f"Failed to initialize NumberingEngine: {e}")
                 numbering_engine = None
         
         # Create custom document styles
         custom_styles = _create_document_styles(doc, docx_styles)
+        
+        # o3's CHECKPOINT 1: After style creation
+        _detect_rogue_bullet_formatting(doc, "AFTER_STYLE_CREATION")
         
         # **FIX: Ensure all custom styles are actually available in the document**
         logger.info("🔧 VERIFYING: Checking if all custom styles are available...")
@@ -1144,8 +1333,14 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Achievements/bullets - use the helper function for consistent formatting
                     for achievement in job.get('achievements', []):
-                        bullet_para = create_bullet_point(doc, achievement, docx_styles, numbering_engine)
+                        bullet_para = create_bullet_point(doc, achievement, docx_styles, numbering_engine, num_id=custom_num_id)
+                        
+                        # o3's CHECKPOINT: After each bullet creation
+                        _detect_rogue_bullet_formatting(doc, f"AFTER_BULLET_{achievement[:20]}")
                 
+                # o3's CHECKPOINT 2: After all experience bullets
+                _detect_rogue_bullet_formatting(doc, "AFTER_ALL_EXPERIENCE_BULLETS")
+        
         # ------ EDUCATION SECTION ------
         logger.info("Processing Education section...")
         education = load_section_json(request_id, "education", temp_dir)
@@ -1218,7 +1413,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Highlights/bullets - use the helper function for consistent formatting
                     for highlight in school.get('highlights', []):
-                        bullet_para = create_bullet_point(doc, highlight, docx_styles, numbering_engine)
+                        bullet_para = create_bullet_point(doc, highlight, docx_styles, numbering_engine, num_id=custom_num_id)
         
         # ------ SKILLS SECTION ------
         logger.info("Processing Skills section...")
@@ -1378,7 +1573,7 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Project details - use the helper function for consistent formatting
                     for detail in project.get('details', []):
-                        bullet_para = create_bullet_point(doc, detail, docx_styles, numbering_engine)
+                        bullet_para = create_bullet_point(doc, detail, docx_styles, numbering_engine, num_id=custom_num_id)
         
         # Fix spacing between sections - use our enhanced implementation
         if USE_STYLE_REGISTRY:
@@ -1398,6 +1593,131 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
             _create_robust_company_style(doc)
         
         logger.info("Saving DOCX to BytesIO...")
+        
+        # o3's FINAL CHECKPOINT: Before nuclear cleanup
+        rogue_count_before = _detect_rogue_bullet_formatting(doc, "BEFORE_NUCLEAR_CLEANUP")
+        
+        # o3's Nuclear Option: Clean all direct formatting from bullet paragraphs
+        # This addresses the rogue L-0 direct formatting that causes Word to show "Left: 0"
+        cleaned_count = _cleanup_bullet_direct_formatting(doc)
+        if cleaned_count > 0:
+            logger.info(f"🧹 o3's Nuclear Cleanup applied: Fixed {cleaned_count} bullet paragraphs before save")
+        
+        # o3's FINAL CHECKPOINT: After nuclear cleanup (should be 0)
+        rogue_count_after = _detect_rogue_bullet_formatting(doc, "AFTER_NUCLEAR_CLEANUP")
+        
+        # o3's MINIMAL PATCH: Verify numbering part exists and paragraphs reference it
+        logger.info("🔍 o3's DIAGNOSTIC: Verifying numbering part and paragraph references...")
+        bullet_paragraphs_found = 0
+        numbering_issues = []
+        
+        for i, p in enumerate(doc.paragraphs):
+            if p.style and p.style.name == "MR_BulletPoint":
+                bullet_paragraphs_found += 1
+                
+                # Check if paragraph has numPr
+                try:
+                    pPr = p._element.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}pPr')
+                    numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr') if pPr is not None else None
+                    
+                    if numPr is not None:
+                        # Extract numId and ilvl values
+                        numId_elem = numPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numId')
+                        ilvl_elem = numPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ilvl')
+                        
+                        numId_val = numId_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val') if numId_elem is not None else 'None'
+                        ilvl_val = ilvl_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val') if ilvl_elem is not None else 'None'
+                        
+                        logger.info(f"✅ Bullet paragraph {i} has numPr: numId={numId_val}, ilvl={ilvl_val}")
+                        logger.info(f"   Text: '{p.text[:40]}...'")
+                    else:
+                        numbering_issues.append(f"Paragraph {i} missing numPr: '{p.text[:40]}...'")
+                        logger.error(f"❌ Bullet paragraph {i} missing numPr: '{p.text[:40]}...'")
+                        
+                except Exception as e:
+                    numbering_issues.append(f"Paragraph {i} numPr check failed: {e}")
+                    logger.error(f"❌ Failed to check numPr for paragraph {i}: {e}")
+                
+                # o3's PATCH: Remove any stray direct indentation that utilities might have added
+                if p.paragraph_format.left_indent or p.paragraph_format.first_line_indent:
+                    logger.warning(f"🧹 o3's PATCH: Removing stray indentation from bullet paragraph {i}")
+                    p.paragraph_format.left_indent = None
+                    p.paragraph_format.first_line_indent = None
+        
+        logger.info(f"🔍 o3's DIAGNOSTIC SUMMARY:")
+        logger.info(f"   Total bullet paragraphs found: {bullet_paragraphs_found}")
+        logger.info(f"   Numbering issues found: {len(numbering_issues)}")
+        
+        if numbering_issues:
+            logger.error(f"❌ NUMBERING ISSUES DETECTED:")
+            for issue in numbering_issues:
+                logger.error(f"   {issue}")
+        else:
+            logger.info(f"✅ ALL BULLET PARAGRAPHS HAVE PROPER NUMBERING REFERENCES")
+        
+        # Check if numbering part exists in the document
+        try:
+            numbering_part = doc.part.numbering_part
+            if numbering_part is not None:
+                logger.info(f"✅ Numbering part exists in document")
+                
+                # Try to access the numbering XML content
+                try:
+                    numbering_xml = numbering_part._element
+                    abstractNums = numbering_xml.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}abstractNum')
+                    nums = numbering_xml.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}num')
+                    
+                    logger.info(f"📋 Numbering part contains:")
+                    logger.info(f"   AbstractNum definitions: {len(abstractNums)}")
+                    logger.info(f"   Num instances: {len(nums)}")
+                    
+                    # Log details of each abstractNum
+                    for abstractNum in abstractNums:
+                        abstractNumId = abstractNum.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}abstractNumId')
+                        logger.info(f"   AbstractNum ID: {abstractNumId}")
+                        
+                        # Check for bullet definition
+                        lvl = abstractNum.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}lvl')
+                        if lvl is not None:
+                            lvlText = lvl.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}lvlText')
+                            if lvlText is not None:
+                                bullet_char = lvlText.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+                                logger.info(f"     Bullet character: '{bullet_char}'")
+                            
+                            # Check indentation
+                            ind = lvl.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ind')
+                            if ind is not None:
+                                left = ind.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}left')
+                                hanging = ind.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hanging')
+                                logger.info(f"     Indentation: left={left} twips, hanging={hanging} twips")
+                    
+                    # Log details of each num instance
+                    for num in nums:
+                        numId = num.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numId')
+                        abstractNumIdRef = num.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}abstractNumId')
+                        abstractNumIdVal = abstractNumIdRef.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val') if abstractNumIdRef is not None else 'None'
+                        logger.info(f"   Num instance: numId={numId} → abstractNumId={abstractNumIdVal}")
+                        
+                except Exception as e:
+                    logger.error(f"❌ Failed to parse numbering XML content: {e}")
+                    
+            else:
+                logger.error(f"❌ NO NUMBERING PART EXISTS IN DOCUMENT!")
+                logger.error(f"   This explains why bullets have no indentation!")
+                
+        except AttributeError:
+            logger.error(f"❌ NO NUMBERING PART EXISTS IN DOCUMENT!")
+            logger.error(f"   This explains why bullets have no indentation!")
+        except Exception as e:
+            logger.error(f"❌ Failed to check numbering part: {e}")
+        
+        # o3's DRAMATIC ANALYSIS
+        if rogue_count_before > 0 and rogue_count_after == 0:
+            logger.info(f"✅ NUCLEAR CLEANUP SUCCESS: {rogue_count_before} → 0 rogue paragraphs")
+        elif rogue_count_before == 0:
+            logger.info(f"✅ NO ROGUE FORMATTING: Document was clean before cleanup")
+        else:
+            logger.error(f"❌ NUCLEAR CLEANUP FAILED: Still {rogue_count_after} rogue paragraphs after cleanup!")
         
         output = BytesIO()
         doc.save(output)
