@@ -365,6 +365,12 @@ def format_right_aligned_pair(doc: Document, left_text: str, right_text: str, le
     # NOW apply the paragraph style (paragraph has runs, so it won't be skipped)
     _apply_paragraph_style(doc, para, left_style, docx_styles) 
     
+    # SPACING: Add 6pt before company/institution names for better separation between entries
+    # This creates visual breaks between different experience/education entries
+    if left_style == "MR_Company":
+        para.paragraph_format.space_before = Pt(6)  # 6pt before for section separation
+        logger.info(f"Applied 6pt before spacing to company entry: '{left_text}'")
+    
     # Verify the final style assignment specifically for company entries
     final_style_name = para.style.name if para.style else "None"
     logger.info(f"🔍 COMPANY/INSTITUTION STYLE CHECK: Final style = '{final_style_name}' (Expected: '{left_style}')")
@@ -420,7 +426,7 @@ def format_right_aligned_pair(doc: Document, left_text: str, right_text: str, le
         para.add_run('\t')  # Add tab
         right_run = para.add_run(right_text)
     
-    # Spacing and indentation are now handled by the 'MR_Company' style
+    # Spacing and indentation are now handled by the 'MR_Company' style plus direct formatting
     return para
 
 def add_bullet_point_native(doc: Document, text: str, numbering_engine: NumberingEngine = None, 
@@ -738,12 +744,12 @@ def add_role_description(doc, text, docx_styles):
     # Use our new custom style
     role_para = doc.add_paragraph(text, style='MR_RoleDescription')
     
-    # CRITICAL: Ensure tight spacing before role description for the effect the user wants
-    # This eliminates gaps between role boxes (tables) and role descriptions (paragraphs)
-    role_para.paragraph_format.space_before = Pt(0)  # Force 0pt before
-    role_para.paragraph_format.space_after = Pt(0)   # Force 0pt after for tight bullets
+    # SPACING: Add 6pt before role description for visual separation from role title
+    # Keep 0pt after for tight spacing with bullets below
+    role_para.paragraph_format.space_before = Pt(6)   # 6pt before for separation
+    role_para.paragraph_format.space_after = Pt(0)    # 0pt after for tight bullets
     
-    logger.info(f"Applied MR_RoleDescription with tight spacing to: {str(text)[:30]}...")
+    logger.info(f"Applied MR_RoleDescription with 6pt before spacing to: {str(text)[:30]}...")
     return role_para
 
 def tighten_before_headers(doc):
