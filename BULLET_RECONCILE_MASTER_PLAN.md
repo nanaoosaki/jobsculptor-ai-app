@@ -73,7 +73,7 @@ RECONCILE PHASE (after complete build):
 
 ---
 
-## 🎯 O3's Critical Improvements (24 Items Total)
+## 🎯 O3's Critical Improvements (26 Items Total)
 
 ### Critical Edge Cases & Technical Gaps
 
@@ -118,6 +118,8 @@ RECONCILE PHASE (after complete build):
 | **B7** | **Feature-Flag Awareness in CI** | New tests should auto-skip when `ENABLE_RECONCILE_ARCHITECTURE=false` | Mark tests with `@pytest.mark.requires_reconcile_arch` |
 | **B8** | **Request-ID Propagation** | Multi-tenant log search difficult without request context | Pass `request_id` into reconciliation engine; use `logger.bind(request_id=rid)` |
 | **B9** | **NumId Collision on Round-Trip** | User edits tailored doc, re-uploads → numId=100 collides with existing | Scan existing `numbering.xml`, pick `max(numId)+1`, cache per-document |
+| **B10** | **Bullets in Headers/Footers/Text-Boxes** | Corporate templates put bullets in headers/footers → mismatch with main body | Extend paragraph scanner to iterate `doc.part._header_parts + _footer_parts` and drawing canvases |
+| **B11** | **Section Restarts & List-Continuation** | Implicit section breaks restart numbering at page boundaries | Add `<w:restart w:val="0"/>` to `<w:lvl>` definition in `NumberingEngine._create_numbering_definition()` |
 
 ---
 
@@ -166,6 +168,7 @@ RECONCILE PHASE (after complete build):
 - [ ] **B2 - Header-Spacing in Tables:** Extend full-tree walk (A3) to header-spacing routine for table cells
 - [ ] **B3 - Locale-Specific Bullets:** Extend prefix-strip regex to include Unicode "General Punctuation" bullet chars
 - [ ] **B6 - Broken XML Handling:** Wrap `_verify_numbering` and XPath calls in `try/except lxml.etree.Error`
+- [ ] **B10 - Headers/Footers/Text-Boxes:** Extend paragraph scanner to iterate `doc.part._header_parts + _footer_parts` and drawing canvases
 
 ---
 
@@ -177,6 +180,7 @@ RECONCILE PHASE (after complete build):
 - [ ] Prevent `numId` conflicts between sections
 - [ ] Add state consistency tracking
 - [ ] Update instantiation logic in `docx_builder.py`
+- [ ] **B11 - Section Restart Prevention:** Add `<w:restart w:val="0"/>` to `<w:lvl>` definition in `NumberingEngine._create_numbering_definition()`
 
 #### 2.2 Enhanced Logging & Performance
 - [ ] Add DEBUG logging for all numbering operations
@@ -342,13 +346,13 @@ RECONCILE PHASE (after complete build):
 - Core reconciliation engine
 - Remove verify-in-loop logic
 - Implement A1-A5 critical edge cases
-- **NEW:** B-series edge-hardening (B1, B2, B3, B6)
+- **NEW:** B-series edge-hardening (B1, B2, B3, B6, B10)
 
 ### 🟡 **Should-Do (Phase 2):** 
 - NumberingEngine improvements
 - Performance monitoring (A6, A9)
 - Code quality improvements (A12, A13)
-- **NEW:** Memory guard-rails (B5), request-ID logging (B8), numId collision prevention (B9)
+- **NEW:** Memory guard-rails (B5), request-ID logging (B8), numId collision prevention (B9), section restart prevention (B11)
 
 ### 🔵 **Nice-to-Have (Phase 3):**
 - Enhanced testing (A8, A11, A14, A15)
@@ -364,7 +368,7 @@ RECONCILE PHASE (after complete build):
 
 ## 🎉 Ready for Implementation
 
-**Current Status:** ✅ Planning Complete - All O3 Improvements Integrated (24 Items)
+**Current Status:** ✅ Planning Complete - All O3 Improvements Integrated (26 Items)
 
 **Next Action:** Begin Phase 1.1 - Create Reconciliation Engine
 
@@ -374,14 +378,15 @@ RECONCILE PHASE (after complete build):
 - **Performance Risk:** Very Low
 - **Operational Risk:** Low
 
-**O3's Latest Assessment:** *"Incorporate these nine micro-items and you will have a **bullet-proof bullet pipeline**."*
+**O3's Latest Assessment:** *"Add these two and you'll have a plan that even the most instrumented QA résumé can't break. 👍"*
 
 **Total O3 Improvements:** 
 - **15 A-series items** (critical architecture and edge cases)
-- **9 B-series items** (edge-hardening for production resilience)
-- **Timeline Impact:** Negligible (most items ≈ 5-15 LOC each)
-- **Risk Reduction:** Closes last "long-tail" failures from production résumé systems
+- **11 B-series items** (edge-hardening for production resilience + ultra-niche scenarios)
+- **Timeline Impact:** Negligible (most items ≈ 3-15 LOC each)
+- **Risk Reduction:** Maximum - covers every failure mode from Word automation projects
+- **Final Status:** Plan covers "almost every failure mode we've ever seen in Word automation projects"
 
 ---
 
-*Last Updated: 2025-01-27 | Single Document Master Plan + B-Series Edge-Hardening* 
+*Last Updated: 2025-01-27 | Single Document Master Plan + Complete B-Series Edge-Hardening* 
