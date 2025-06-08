@@ -73,7 +73,7 @@ RECONCILE PHASE (after complete build):
 
 ---
 
-## 🎯 O3's Critical Improvements (15 Items)
+## 🎯 O3's Critical Improvements (24 Items Total)
 
 ### Critical Edge Cases & Technical Gaps
 
@@ -104,6 +104,20 @@ RECONCILE PHASE (after complete build):
 | **A13** | **Concurrency in Web Workers** | Multiple threads may share same singleton | Same fix as A4 - per-document state management |
 | **A14** | **Legacy-Off Test** | Need to verify `DOCX_USE_NATIVE_BULLETS=false` still works | Add unit + visual test for legacy bullet mode |
 | **A15** | **Document-Level Data-Integrity** | Reconciliation might leave invalid XML | Add lxml schema validation pass on final document |
+
+### O3's Additional Edge-Hardening (B-Series)
+
+| ID | Gap/Scenario | Why It Matters | Concrete Action |
+|---|---|---|---|
+| **B1** | **User-Supplied Style Name Collision** | Uploaded résumé contains `MR_BulletPoint` style → wrong font/size | Scan `doc.styles` at start; rename existing to `MR_BulletPoint__orig` |
+| **B2** | **Header-Spacing Fix Inside Tables** | Section headers in table cells aren't visited by `tighten_before_headers` | Reuse full-tree walk (A3) for header-spacing routine |
+| **B3** | **Locale-Specific Bullet Glyphs** | Chinese "·", Japanese "・" missed by sanitizer → duplicate symbols | Extend prefix-strip regex to include Unicode "General Punctuation" chars |
+| **B4** | **DOCX→PDF Export Drift** | LibreOffice converter re-evaluates numbering → gaps resurface in PDF | Add CI step: convert to PDF, text-search for "• "; fail if found |
+| **B5** | **Memory Guard Rail** | Very large CVs (150+ pages) could OOM in multi-tenant pod | Capture `tracemalloc` before/after; WARN if diff > 30MB or >5000 paragraphs |
+| **B6** | **Pre-Existing Broken `<w:numPr>`** | Uploaded résumé has malformed XML → lxml throws during xpath | Wrap `_verify_numbering` in `try/except lxml.etree.Error` |
+| **B7** | **Feature-Flag Awareness in CI** | New tests should auto-skip when `ENABLE_RECONCILE_ARCHITECTURE=false` | Mark tests with `@pytest.mark.requires_reconcile_arch` |
+| **B8** | **Request-ID Propagation** | Multi-tenant log search difficult without request context | Pass `request_id` into reconciliation engine; use `logger.bind(request_id=rid)` |
+| **B9** | **NumId Collision on Round-Trip** | User edits tailored doc, re-uploads → numId=100 collides with existing | Scan existing `numbering.xml`, pick `max(numId)+1`, cache per-document |
 
 ---
 
@@ -147,6 +161,12 @@ RECONCILE PHASE (after complete build):
 - [ ] **A4 - Per-Document State:** Store engine state in `doc.part` instead of global
 - [ ] **A5 - Prefix Race:** Strip leading bullet glyphs in reconcile before numbering
 
+#### 1.5 B-Series Edge-Hardening (Phase 1)
+- [ ] **B1 - Style Name Collision:** Scan `doc.styles` at start; rename existing `MR_BulletPoint` to `MR_BulletPoint__orig`
+- [ ] **B2 - Header-Spacing in Tables:** Extend full-tree walk (A3) to header-spacing routine for table cells
+- [ ] **B3 - Locale-Specific Bullets:** Extend prefix-strip regex to include Unicode "General Punctuation" bullet chars
+- [ ] **B6 - Broken XML Handling:** Wrap `_verify_numbering` and XPath calls in `try/except lxml.etree.Error`
+
 ---
 
 ### ⚡ Phase 2: NumberingEngine Improvements (Medium Priority)
@@ -167,6 +187,9 @@ RECONCILE PHASE (after complete build):
 - [ ] **A9 - Production Logging:** Default to INFO with summary line format
 - [ ] **A12 - XML Constants:** Extract WordprocessingML namespace constant
 - [ ] **A13 - Concurrency Safety:** Ensure NumberingEngine thread-safety
+- [ ] **B5 - Memory Guard Rail:** Capture `tracemalloc` before/after; WARN if diff > 30MB or >5000 paragraphs
+- [ ] **B8 - Request-ID Propagation:** Pass `request_id` into reconciliation engine; use `logger.bind(request_id=rid)`
+- [ ] **B9 - NumId Collision Prevention:** Scan existing `numbering.xml`, pick `max(numId)+1`, cache per-document
 
 ---
 
@@ -179,6 +202,7 @@ RECONCILE PHASE (after complete build):
 - [ ] Implement `test_idempotent_repairs()`
 - [ ] Implement `test_performance_impact()`
 - [ ] Add edge case tests (empty bullets, special characters)
+- [ ] **B7 - Feature-Flag CI:** Mark new tests with `@pytest.mark.requires_reconcile_arch`
 
 #### 3.2 Integration Testing
 - [ ] Test with existing `test_o3_comprehensive_fix.py`
@@ -192,6 +216,7 @@ RECONCILE PHASE (after complete build):
 - [ ] Memory usage monitoring
 - [ ] Execution time comparisons (old vs new)
 - [ ] Identify any performance regressions
+- [ ] **B4 - PDF Export Validation:** Add CI step to convert DOCX to PDF and text-search for "• "; fail if found
 
 #### 3.4 O3 Enhanced Testing & Quality (Phase 3)
 - [ ] **A8 - Idempotence Test:** Test opening saved document and running reconcile again
@@ -317,15 +342,18 @@ RECONCILE PHASE (after complete build):
 - Core reconciliation engine
 - Remove verify-in-loop logic
 - Implement A1-A5 critical edge cases
+- **NEW:** B-series edge-hardening (B1, B2, B3, B6)
 
 ### 🟡 **Should-Do (Phase 2):** 
 - NumberingEngine improvements
 - Performance monitoring (A6, A9)
 - Code quality improvements (A12, A13)
+- **NEW:** Memory guard-rails (B5), request-ID logging (B8), numId collision prevention (B9)
 
 ### 🔵 **Nice-to-Have (Phase 3):**
 - Enhanced testing (A8, A11, A14, A15)
 - Comprehensive edge case coverage
+- **NEW:** Feature-flag CI awareness (B7), PDF export validation (B4)
 
 ### 🟢 **Deployment (Phase 4-5):**
 - Documentation updates (A7)
@@ -336,7 +364,7 @@ RECONCILE PHASE (after complete build):
 
 ## 🎉 Ready for Implementation
 
-**Current Status:** ✅ Planning Complete - All O3 Improvements Integrated
+**Current Status:** ✅ Planning Complete - All O3 Improvements Integrated (24 Items)
 
 **Next Action:** Begin Phase 1.1 - Create Reconciliation Engine
 
@@ -346,8 +374,14 @@ RECONCILE PHASE (after complete build):
 - **Performance Risk:** Very Low
 - **Operational Risk:** Low
 
-**O3's Final Assessment:** *"Adding the [15 punch-list] items will close the last edge-case holes and keep ops noise and rollout risk low."*
+**O3's Latest Assessment:** *"Incorporate these nine micro-items and you will have a **bullet-proof bullet pipeline**."*
+
+**Total O3 Improvements:** 
+- **15 A-series items** (critical architecture and edge cases)
+- **9 B-series items** (edge-hardening for production resilience)
+- **Timeline Impact:** Negligible (most items ≈ 5-15 LOC each)
+- **Risk Reduction:** Closes last "long-tail" failures from production résumé systems
 
 ---
 
-*Last Updated: 2025-01-27 | Single Document Master Plan* 
+*Last Updated: 2025-01-27 | Single Document Master Plan + B-Series Edge-Hardening* 
