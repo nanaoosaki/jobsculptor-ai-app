@@ -1,0 +1,360 @@
+{
+  "total_bullets": 19,
+  "bullets_with_numPr": 11,
+  "unique_numIds": [
+    "100"
+  ],
+  "duplicate_numIds": [
+    "100"
+  ],
+  "bullet_details": [
+    {
+      "index": 7,
+      "text": "Architected a batch system coordinating 24k+ rollo...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 8,
+      "text": "Achieved 99.99% update coverage for hybrid clouds ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 9,
+      "text": "Led cross-team effort building data warehouses, en...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 10,
+      "text": "Pioneered enhancing small LLMs' reasoning via RL s...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 13,
+      "text": "Identified 49 new metrics for rollout failure anal...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 14,
+      "text": "• Simplified watermark algorithm for RTB Ad Exchan...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 15,
+      "text": "Improved customer satisfaction by ?? refining lega...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 16,
+      "text": "• Innovated alert merging, cutting Mean Time to ??...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 19,
+      "text": "Led ML infra migration to ?? AWS, achieving 99.9% ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 20,
+      "text": "• Designed a distributed message queue streamlinin...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 21,
+      "text": "• Implemented a Bloom-Filter caching service for p...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 24,
+      "text": "• Designed a data placement service for S3-like st...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 25,
+      "text": "• Built a garbage collector to ?? reclaim space vi...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 28,
+      "text": "Specialized in AI technologies and data analysis, ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 29,
+      "text": "Completed a thesis on machine learning application...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 30,
+      "text": "Led a collaborative project developing AI-driven s...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 32,
+      "text": "Coursework included data science and consumer prod...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 33,
+      "text": "• Graduated with honors, emphasizing AI methodolog...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 34,
+      "text": "• Participated in a cross-functional team project ...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    }
+  ],
+  "numbering_definitions": [
+    {
+      "abstractNumId": "0",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 1800,
+          "left_inches": 1.25,
+          "left_cm": 3.1746031746031744,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "1",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 1440,
+          "left_inches": 1.0,
+          "left_cm": 2.5396825396825395,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "2",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 1080,
+          "left_inches": 0.75,
+          "left_cm": 1.9047619047619047,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "3",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 720,
+          "left_inches": 0.5,
+          "left_cm": 1.2698412698412698,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "4",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 1440,
+          "left_inches": 1.0,
+          "left_cm": 2.5396825396825395,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "5",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 1080,
+          "left_inches": 0.75,
+          "left_cm": 1.9047619047619047,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "6",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 720,
+          "left_inches": 0.5,
+          "left_cm": 1.2698412698412698,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "7",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 360,
+          "left_inches": 0.25,
+          "left_cm": 0.6349206349206349,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "8",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 360,
+          "left_inches": 0.25,
+          "left_cm": 0.6349206349206349,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "100",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "•",
+          "left_twips": 331,
+          "left_inches": 0.2298611111111111,
+          "left_cm": 0.5837742504409171,
+          "hanging_twips": 187,
+          "hanging_inches": 0.12986111111111112,
+          "hanging_cm": 0.3298059964726631
+        }
+      ]
+    }
+  ],
+  "compatibility_check": {
+    "current_mode": "modern",
+    "updated_mode": null,
+    "was_updated": false,
+    "errors": []
+  },
+  "uniqueness_validation": {
+    "unique_numIds": [
+      "9",
+      "4",
+      "3",
+      "5",
+      "8",
+      "2",
+      "6",
+      "1",
+      "100",
+      "7"
+    ],
+    "duplicate_numIds": [],
+    "total_definitions": 10,
+    "validation_passed": true,
+    "errors": []
+  },
+  "errors": []
+}

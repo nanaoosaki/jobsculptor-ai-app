@@ -1,0 +1,52 @@
+{
+  "jobs": [
+    {
+      "company": "Landmark Health LLC",
+      "location": "Los Angeles, CA",
+      "position": "Senior Software Engineer",
+      "dates": "2021.01–2023.12",
+      "role_description": "Led development of cloud-based healthcare platform solutions, focusing on scalable data processing and analytics.",
+      "achievements": [
+        "Architected microservices architecture serving 100K+ healthcare providers, achieving 99.9% uptime and reducing response times by 40%",
+        "Implemented real-time analytics dashboard using React and D3.js, enabling care teams to visualize patient outcomes and optimize treatment protocols",
+        "Developed automated data pipeline processing 50TB of healthcare data monthly, improving clinical decision-making through machine learning insights",
+        "Led cross-functional team of 8 engineers in migrating legacy systems to AWS, reducing infrastructure costs by 35% while improving scalability"
+      ]
+    },
+    {
+      "company": "Capital Blue Cross",
+      "location": "Harrisburg, PA",
+      "position": "Software Development Engineer II",
+      "dates": "2019.03–2020.12",
+      "role_description": "Developed insurance processing systems and member portal enhancements to improve customer experience and operational efficiency.",
+      "achievements": [
+        "Built member portal serving 500K+ customers, implementing secure authentication and real-time claims tracking functionality",
+        "Optimized claims processing algorithms, reducing average processing time from 5 days to 2 hours and improving customer satisfaction scores by 25%",
+        "Integrated third-party APIs for pharmacy benefits management, streamlining prescription coverage verification and reducing manual processing by 80%"
+      ]
+    },
+    {
+      "company": "Pennsylvania Department of Education",
+      "location": "Harrisburg, PA",
+      "position": "Software Engineer",
+      "dates": "2017.06–2019.02",
+      "role_description": "Developed educational data management systems and student information platforms for K-12 schools across Pennsylvania.",
+      "achievements": [
+        "Created statewide student assessment reporting system used by 500+ school districts, providing real-time analytics on academic performance",
+        "Implemented data warehouse solution consolidating information from 3,000+ schools, enabling comprehensive educational outcome analysis and policy decision support"
+      ]
+    },
+    {
+      "company": "TechStart Solutions",
+      "location": "Philadelphia, PA", 
+      "position": "Junior Software Engineer",
+      "dates": "2015.08–2017.05",
+      "role_description": "Contributed to early-stage startup building enterprise software solutions for small and medium businesses.",
+      "achievements": [
+        "Developed customer relationship management platform used by 200+ small businesses, featuring automated lead tracking and sales pipeline management",
+        "Built responsive web applications using Angular and Node.js, improving user engagement metrics by 45% and reducing bounce rates",
+        "Implemented CI/CD pipeline using Jenkins and Docker, reducing deployment time from 4 hours to 15 minutes and improving development velocity"
+      ]
+    }
+  ]
+} 

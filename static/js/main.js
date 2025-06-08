@@ -214,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Enable both download buttons
             downloadPdfBtn.disabled = false;
             downloadDocxBtn.disabled = false;
+            
+            // 🚨 Check for O3 debugging artifacts
+            checkForO3Artifacts(currentRequestId);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -653,5 +656,92 @@ document.addEventListener('DOMContentLoaded', function() {
         downloadPdfBtn.disabled = true; 
         downloadDocxBtn.disabled = true;
     }
+    
+    // 🚨 O3 DEBUGGING FUNCTIONS
+    function toggleO3Panel() {
+        const content = document.getElementById('o3DebugContent');
+        const icon = document.getElementById('o3PanelIcon');
+        
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.className = 'fas fa-chevron-up';
+        } else {
+            content.style.display = 'none';
+            icon.className = 'fas fa-chevron-down';
+        }
+    }
+    
+    function checkForO3Artifacts(requestId) {
+        if (!requestId) return;
+        
+        fetch(`/o3-artifacts/${requestId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.artifact_count > 0) {
+                    displayO3Artifacts(data.artifacts);
+                    document.getElementById('o3DebugPanel').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.log('No O3 artifacts found or error checking:', error);
+                // Don't show debug panel if no artifacts
+            });
+    }
+    
+    function displayO3Artifacts(artifacts) {
+        const coreArtifacts = document.getElementById('o3CoreArtifacts');
+        const debugArtifacts = document.getElementById('o3DebugArtifacts');
+        
+        coreArtifacts.innerHTML = '';
+        debugArtifacts.innerHTML = '';
+        
+        // Core artifacts (most important for O3)
+        if (artifacts.pre_reconciliation_docx) {
+            coreArtifacts.innerHTML += `
+                <a href="${artifacts.pre_reconciliation_docx}" class="btn btn-sm btn-outline-warning mb-2 d-block">
+                    <i class="fas fa-file-word"></i> Pre-Reconciliation DOCX
+                </a>`;
+        }
+        
+        if (artifacts.debug_log) {
+            coreArtifacts.innerHTML += `
+                <a href="${artifacts.debug_log}" class="btn btn-sm btn-outline-warning mb-2 d-block">
+                    <i class="fas fa-file-alt"></i> Complete DEBUG Log
+                </a>`;
+        }
+        
+        // Debug artifacts (additional analysis)
+        if (artifacts.pre_reconciliation_debug) {
+            debugArtifacts.innerHTML += `
+                <a href="${artifacts.pre_reconciliation_debug}" class="btn btn-sm btn-outline-info mb-2 d-block">
+                    <i class="fas fa-file-code"></i> Pre-Reconciliation Analysis
+                </a>`;
+        }
+        
+        if (artifacts.final_debug) {
+            debugArtifacts.innerHTML += `
+                <a href="${artifacts.final_debug}" class="btn btn-sm btn-outline-info mb-2 d-block">
+                    <i class="fas fa-file-code"></i> Final State Analysis
+                </a>`;
+        }
+        
+        if (artifacts.final_debug_docx) {
+            debugArtifacts.innerHTML += `
+                <a href="${artifacts.final_debug_docx}" class="btn btn-sm btn-outline-info mb-2 d-block">
+                    <i class="fas fa-file-word"></i> Final Debug DOCX
+                </a>`;
+        }
+        
+        // If no artifacts in either category, show a message
+        if (!coreArtifacts.innerHTML) {
+            coreArtifacts.innerHTML = '<p class="text-muted">No core artifacts found</p>';
+        }
+        if (!debugArtifacts.innerHTML) {
+            debugArtifacts.innerHTML = '<p class="text-muted">No debug artifacts found</p>';
+        }
+    }
+    
+    // Make toggleO3Panel available globally
+    window.toggleO3Panel = toggleO3Panel;
 });
 

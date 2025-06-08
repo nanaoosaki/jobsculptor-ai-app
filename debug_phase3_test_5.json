@@ -1,0 +1,1619 @@
+{
+  "paragraphs": [
+    {
+      "index": 0,
+      "text": "Phase 3 Test User",
+      "style": "MR_Name",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 1,
+      "text": "Test City, ST \u2022 555-PHASE3 \u2022 phase3test@example.co...",
+      "style": "MR_Contact",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 2,
+      "text": "PROFESSIONAL SUMMARY",
+      "style": "MR_SectionHeader",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 3,
+      "text": "Phase 3 Surgical Fix Test - Validating 100% bullet...",
+      "style": "MR_SummaryText",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 4,
+      "text": "EXPERIENCE",
+      "style": "MR_SectionHeader",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 5,
+      "text": "Landmark Health LLC\tLos Angeles, CA",
+      "style": "MR_Company",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "before_twips": 76200,
+        "before_pt": "3810.00",
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 6,
+      "text": "Led development of cloud-based healthcare platform...",
+      "style": "MR_RoleDescription",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "before_twips": 76200,
+        "before_pt": "3810.00",
+        "style_left_indent_cm": 0.254,
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 7,
+      "text": "Architected microservices architecture serving 100...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 8,
+      "text": "Implemented real-time analytics dashboard using Re...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 9,
+      "text": "Developed automated data pipeline processing 50TB ...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 10,
+      "text": "Led cross-functional team of 8 engineers in migrat...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 11,
+      "text": "Capital Blue Cross\tHarrisburg, PA",
+      "style": "MR_Company",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 12,
+      "text": "Developed insurance processing systems and member ...",
+      "style": "MR_RoleDescription",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "before_twips": 76200,
+        "before_pt": "3810.00",
+        "style_left_indent_cm": 0.254,
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 13,
+      "text": "Built member portal serving 500K+ customers, imple...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 14,
+      "text": "Optimized claims processing algorithms, reducing a...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 15,
+      "text": "\u2022 Integrated third-party APIs for pharmacy benefit...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 16,
+      "text": "Pennsylvania Department of Education\tHarrisburg, P...",
+      "style": "MR_Company",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 17,
+      "text": "Developed educational data management systems and ...",
+      "style": "MR_RoleDescription",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "before_twips": 76200,
+        "before_pt": "3810.00",
+        "style_left_indent_cm": 0.254,
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 18,
+      "text": "Created statewide student assessment reporting sys...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 19,
+      "text": "Implemented data warehouse solution consolidating ...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 20,
+      "text": "TechStart Solutions\tPhiladelphia, PA",
+      "style": "MR_Company",
+      "bold": true,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "before_twips": 76200,
+        "before_pt": "3810.00",
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 21,
+      "text": "Contributed to early-stage startup building enterp...",
+      "style": "MR_RoleDescription",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "before_twips": 76200,
+        "before_pt": "3810.00",
+        "style_left_indent_cm": 0.254,
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 22,
+      "text": "\u2022 Developed customer relationship management platf...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 23,
+      "text": "Built responsive web applications using Angular an...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": true,
+      "numbering_id": 100,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    },
+    {
+      "index": 24,
+      "text": "\u2022 Implemented CI/CD pipeline using Jenkins and Doc...",
+      "style": "MR_BulletPoint",
+      "bold": false,
+      "italic": false,
+      "left_indent": "None",
+      "first_line_indent": "None",
+      "has_numbering": false,
+      "numbering_id": null,
+      "xml_values": {
+        "style_left_indent_cm": "None",
+        "style_first_line_indent_cm": "None"
+      }
+    }
+  ],
+  "styles": [
+    {
+      "name": "Normal",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Header",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Footer",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Heading 1",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 24.0,
+      "font_size_pt": 14.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "Heading 2",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "font_size_pt": 13.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "Heading 3",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "Heading 4",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "bold": true,
+      "italic": true
+    },
+    {
+      "name": "Heading 5",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Heading 6",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "bold": null,
+      "italic": true
+    },
+    {
+      "name": "Heading 7",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "bold": null,
+      "italic": true
+    },
+    {
+      "name": "Heading 8",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Heading 9",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": true
+    },
+    {
+      "name": "Normal Table",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "No Spacing",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Title",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_after_pt": 15.0,
+      "font_size_pt": 26.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Subtitle",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_size_pt": 12.0,
+      "bold": null,
+      "italic": true
+    },
+    {
+      "name": "List Paragraph",
+      "base_style": "Normal",
+      "left_indent": 1.27,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Body Text",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_after_pt": 6.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Body Text 2",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_after_pt": 6.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Body Text 3",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "space_after_pt": 6.0,
+      "font_size_pt": 8.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List",
+      "base_style": "Normal",
+      "left_indent": 0.635,
+      "first_line_indent": -0.635,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List 2",
+      "base_style": "Normal",
+      "left_indent": 1.27,
+      "first_line_indent": -0.635,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List 3",
+      "base_style": "Normal",
+      "left_indent": 1.905,
+      "first_line_indent": -0.635,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Bullet",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Bullet 2",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Bullet 3",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Number",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Number 2",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Number 3",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Continue",
+      "base_style": "Normal",
+      "left_indent": 0.635,
+      "first_line_indent": null,
+      "space_after_pt": 6.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Continue 2",
+      "base_style": "Normal",
+      "left_indent": 1.27,
+      "first_line_indent": null,
+      "space_after_pt": 6.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "List Continue 3",
+      "base_style": "Normal",
+      "left_indent": 1.905,
+      "first_line_indent": null,
+      "space_after_pt": 6.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "macro",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Courier",
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Quote",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": true
+    },
+    {
+      "name": "Caption",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_size_pt": 9.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "Intense Quote",
+      "base_style": "Normal",
+      "left_indent": 1.651,
+      "first_line_indent": null,
+      "space_before_pt": 10.0,
+      "space_after_pt": 14.0,
+      "bold": true,
+      "italic": true
+    },
+    {
+      "name": "TOC Heading",
+      "base_style": "Heading 1",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Table Grid",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Shading Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light List Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Light Grid Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 1 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Shading 2 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 1 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium List 2 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 1 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 2 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3 Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3 Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3 Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3 Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3 Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Medium Grid 3 Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Dark List Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Shading Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful List Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid Accent 1",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid Accent 2",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid Accent 3",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid Accent 4",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid Accent 5",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "Colorful Grid Accent 6",
+      "base_style": "Normal Table",
+      "left_indent": null,
+      "first_line_indent": null,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "MR_Name",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 20.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "MR_Contact",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "MR_SectionHeader",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 12.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "MR_Company",
+      "base_style": "No Spacing",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 11.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "MR_RoleBox",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "MR_RoleDescription",
+      "base_style": "None",
+      "left_indent": 0.254,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "MR_BulletPoint",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "MR_SummaryText",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "MR_SkillCategory",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": true,
+      "italic": null
+    },
+    {
+      "name": "MR_SkillList",
+      "base_style": "None",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Palatino Linotype",
+      "font_size_pt": 10.0,
+      "bold": null,
+      "italic": null
+    },
+    {
+      "name": "RoleBoxText",
+      "base_style": "Normal",
+      "left_indent": null,
+      "first_line_indent": null,
+      "font_name": "Calibri",
+      "font_size_pt": 11.0,
+      "bold": true,
+      "italic": false
+    }
+  ]
+}

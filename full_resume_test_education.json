@@ -1,0 +1,35 @@
+{
+  "institutions": [
+    {
+      "university": "Johns Hopkins University",
+      "location": "US",
+      "degree": "MS in Artificial Intelligence",
+      "dates": "2018-2023",
+      "achievements": [
+        "Transitioned from a business-background to AI, focusing on AI technologies and their implications in media.",
+        "Completed 7 prerequisites in advanced math and programming and 11 graduate courses, including machine learning applications and data analysis.",
+        "Collaborated on projects involving AI-driven solutions for editorial workflows, enhancing consumer-facing products."
+      ]
+    },
+    {
+      "university": "University of Maryland",
+      "location": "US",
+      "degree": "MS in Finance",
+      "dates": "2012-2014",
+      "achievements": [
+        "Developed strong analytical skills applicable to data analysis and consumer product development.",
+        "Engaged in cross-functional projects, fostering collaboration and leadership skills."
+      ]
+    },
+    {
+      "university": "University of Nottingham",
+      "location": "China",
+      "degree": "BS in Finance",
+      "dates": "2008-2012",
+      "achievements": [
+        "Graduated with First Honors Degree, GPA 4.0, awarded Dean's Scholarship (top 5%).",
+        "Acquired foundational skills in data analysis and strategic decision-making."
+      ]
+    }
+  ]
+} 

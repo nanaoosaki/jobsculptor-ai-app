@@ -161,6 +161,46 @@
                 </div>
             </div>
         </div>
+
+        <!-- 🚨 O3 Debugging Panel - Hidden by default, shown when artifacts are available -->
+        <div class="row mt-4" id="o3DebugPanel" style="display: none;">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bug"></i> O3 Debugging Artifacts Available
+                        </h5>
+                        <button class="btn btn-sm btn-outline-dark" onclick="toggleO3Panel()">
+                            <i class="fas fa-chevron-down" id="o3PanelIcon"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" id="o3DebugContent" style="display: none;">
+                        <p class="text-muted mb-3">
+                            <strong>For Debugging Bullet Consistency Issues:</strong> 
+                            The following artifacts have been automatically generated and can help diagnose bullet formatting problems.
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>📄 Core Artifacts:</h6>
+                                <div id="o3CoreArtifacts" class="mb-3">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>🔍 Debug Information:</h6>
+                                <div id="o3DebugArtifacts" class="mb-3">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>Usage:</strong> These files contain detailed information about the DOCX generation process, 
+                            including pre-reconciliation states, bullet numbering analysis, and comprehensive debug logs.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->

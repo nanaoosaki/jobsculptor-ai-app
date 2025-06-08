@@ -1,0 +1,369 @@
+{
+  "total_bullets": 20,
+  "bullets_with_numPr": 13,
+  "unique_numIds": [
+    "100"
+  ],
+  "duplicate_numIds": [
+    "100"
+  ],
+  "bullet_details": [
+    {
+      "index": 7,
+      "text": "Transformed call-center KPIs, saving $2M+ annually...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 8,
+      "text": "Secured buy-ins from senior leaders, fostering col...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 9,
+      "text": "Redefined KPIs, reducing repeats and disconnects, ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 10,
+      "text": "• Redefined Engineering diagnostics KPIs, boosting...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 11,
+      "text": "• Built 23 new metrics for churn models, increasin...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 14,
+      "text": "• Reduced hospital admissions by ?? 14%, impacting...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 15,
+      "text": "Rebuilt prediction model, boosting accuracy by ?? ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 16,
+      "text": "Increased operational performance, saving 50% time...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 17,
+      "text": "• Developed algorithms for PCPs attribution, optim...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 20,
+      "text": "Managed CMS regulatory reporting, delivering 100+ ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 21,
+      "text": "Coordinated relations with 2 auditor agencies and ...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 24,
+      "text": "Created 10 new metrics, enhancing educators' capab...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 25,
+      "text": "Designed ETL pipelines, replacing vendor solutions...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 28,
+      "text": "Transitioned from a business background to AI, foc...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 29,
+      "text": "• Completed 7 prerequisites in advanced math and p...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 30,
+      "text": "• Undertook 11 graduate courses, including project...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 32,
+      "text": "Developed strong analytical skills applicable to d...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 33,
+      "text": "Engaged in cross-functional projects, enhancing co...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 35,
+      "text": "Graduated with First Honors Degree, GPA 4.0, demon...",
+      "has_numPr": true,
+      "numId": "100",
+      "ilvl": "0",
+      "measurements": {},
+      "runs_count": 1
+    },
+    {
+      "index": 36,
+      "text": "• Received Dean’s Scholarship (top 5%), showcasing...",
+      "has_numPr": false,
+      "numId": null,
+      "ilvl": null,
+      "measurements": {},
+      "runs_count": 1
+    }
+  ],
+  "numbering_definitions": [
+    {
+      "abstractNumId": "0",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 1800,
+          "left_inches": 1.25,
+          "left_cm": 3.1746031746031744,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "1",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 1440,
+          "left_inches": 1.0,
+          "left_cm": 2.5396825396825395,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "2",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 1080,
+          "left_inches": 0.75,
+          "left_cm": 1.9047619047619047,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "3",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 720,
+          "left_inches": 0.5,
+          "left_cm": 1.2698412698412698,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "4",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 1440,
+          "left_inches": 1.0,
+          "left_cm": 2.5396825396825395,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "5",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 1080,
+          "left_inches": 0.75,
+          "left_cm": 1.9047619047619047,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "6",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 720,
+          "left_inches": 0.5,
+          "left_cm": 1.2698412698412698,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "7",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "%1.",
+          "left_twips": 360,
+          "left_inches": 0.25,
+          "left_cm": 0.6349206349206349,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "8",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "",
+          "left_twips": 360,
+          "left_inches": 0.25,
+          "left_cm": 0.6349206349206349,
+          "hanging_twips": 360,
+          "hanging_inches": 0.25,
+          "hanging_cm": 0.6349206349206349
+        }
+      ]
+    },
+    {
+      "abstractNumId": "100",
+      "levels": [
+        {
+          "ilvl": "0",
+          "bullet_char": "•",
+          "left_twips": 331,
+          "left_inches": 0.2298611111111111,
+          "left_cm": 0.5837742504409171,
+          "hanging_twips": 187,
+          "hanging_inches": 0.12986111111111112,
+          "hanging_cm": 0.3298059964726631
+        }
+      ]
+    }
+  ],
+  "compatibility_check": {
+    "current_mode": "modern",
+    "updated_mode": null,
+    "was_updated": false,
+    "errors": []
+  },
+  "uniqueness_validation": {
+    "unique_numIds": [
+      "9",
+      "4",
+      "3",
+      "5",
+      "8",
+      "2",
+      "6",
+      "1",
+      "100",
+      "7"
+    ],
+    "duplicate_numIds": [],
+    "total_definitions": 10,
+    "validation_passed": true,
+    "errors": []
+  },
+  "errors": []
+}
