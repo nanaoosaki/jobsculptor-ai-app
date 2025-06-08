@@ -32,6 +32,17 @@
 - [ ] Move pre-reconciliation DOCX save earlier
 - [ ] Update logging for new flow
 
+### 1.4 O3 Critical Edge Cases (Phase 1)
+- [ ] **A1 - Tighten-Before-Headers Audit:** Add test for empty paragraph with `MR_BulletPoint` survival
+- [ ] **A1 - Tighten-Before-Headers Fix:** Make `tighten_before_headers` skip bullet paragraphs entirely
+- [ ] **A2 - Multi-Level List Support:** Capture original `ilvl` during paragraph scanning
+- [ ] **A2 - Multi-Level List Repair:** Re-apply same level when repairing nested bullets
+- [ ] **A3 - Table-Cell Bullets:** Use `doc._body._element.xpath('//w:p')` for full tree iteration
+- [ ] **A3 - Table Test:** Add unit test with bullets embedded in Word tables
+- [ ] **A4 - Singleton Reset:** Implement `NumberingEngine.for_doc(document_id)` factory
+- [ ] **A4 - Per-Document State:** Store engine state in `doc.part` instead of module global
+- [ ] **A5 - Character-Prefix Race:** Strip leading bullet glyphs in reconcile before numbering
+
 ---
 
 ## 🔧 Phase 2: NumberingEngine Improvements
@@ -48,6 +59,15 @@
 - [ ] Track before/after states in reconciliation
 - [ ] Add performance timing logs
 - [ ] Include XML state logging for debugging
+
+### 2.3 O3 Performance & Code Quality (Phase 2)
+- [ ] **A6 - Performance Guard-Rail:** Time reconciliation pass and log WARNING if > 200ms
+- [ ] **A6 - Performance Monitoring:** Add paragraph count and timing to reconciliation logs
+- [ ] **A9 - Logging Noise Control:** Keep full DEBUG under `if current_app.debug` flag
+- [ ] **A9 - Production Logging:** Default to INFO with summary line format
+- [ ] **A12 - XML Namespace Helper:** Extract `W = '{namespace}'` constant for WordprocessingML
+- [ ] **A12 - Namespace Cleanup:** Replace all hardcoded namespace strings with constant
+- [ ] **A13 - Concurrency Safety:** Ensure NumberingEngine thread-safety (same as A4)
 
 ---
 
@@ -73,6 +93,18 @@
 - [ ] Memory usage monitoring
 - [ ] Execution time comparisons (old vs new)
 - [ ] Identify any performance regressions
+
+### 3.4 O3 Enhanced Testing & Quality (Phase 3)
+- [ ] **A8 - Idempotence Test:** Test opening saved document and running reconcile again
+- [ ] **A8 - Cross-Cycle Validation:** Assert 0 repairs needed after save/load cycle
+- [ ] **A11 - Fixture Diversity:** Add Unicode bullet character test cases
+- [ ] **A11 - Long Achievement Test:** Add 500+ character achievement test cases
+- [ ] **A11 - Zero-Bullet Sections:** Add test with sections containing no bullets
+- [ ] **A11 - Edge Case Coverage:** Test wide Unicode, empty sections, malformed bullets
+- [ ] **A14 - Legacy-Off Test:** Unit test with `DOCX_USE_NATIVE_BULLETS=false`
+- [ ] **A14 - Legacy Visual Test:** Manual document visual diff for legacy bullet mode
+- [ ] **A15 - XML Schema Validation:** Add lxml schema pass on final `document.xml`
+- [ ] **A15 - Data Integrity Check:** Ensure reconciliation never leaves invalid XML
 
 ---
 
@@ -115,6 +147,14 @@
 - [ ] Document new reconciliation process
 - [ ] Update API documentation if needed
 - [ ] Create migration guide
+
+### 5.3 O3 Documentation & Deployment (Phase 4/5)
+- [ ] **A7 - Pre-Reconciliation Artifact:** Document new meaning - "Spacing tweaks not present"
+- [ ] **A7 - Debug Panel Legend:** Add explanation in O3 debug panel about artifact timing
+- [ ] **A10 - Staging Deployment:** Deploy to staging with 100% traffic for 24h
+- [ ] **A10 - Prod Canary:** Deploy to production with 10% traffic canary
+- [ ] **A10 - Full Cutover:** Monitor error rate and complete deployment
+- [ ] **A10 - Rollout Documentation:** Document each stage of deployment process
 
 ---
 
@@ -175,4 +215,47 @@ This refactor is complete when:
 **Status:** 🟡 Planning Complete - Ready for Implementation  
 **Next Step:** Begin Phase 1.1 - Create Reconciliation Engine
 
-*Last Updated: 2025-01-27* 
+*Last Updated: 2025-01-27*
+
+---
+
+## 📋 **O3 Review Integration Summary**
+
+**Status:** ✅ All 15 O3 punch-list items integrated into checklist
+
+### O3 Critical Improvements Added:
+
+**🔴 Critical Edge Cases (Phase 1):**
+- A1: Tighten-before-headers audit & fix
+- A2: Multi-level list support 
+- A3: Table-cell bullets support
+- A4: Singleton reset between requests
+- A5: Character-prefix sanitizer race condition
+
+**🟡 Performance & Code Quality (Phase 2):**
+- A6: Performance guard-rails (200ms warning)
+- A9: Logging noise control
+- A12: XML namespace helper constants
+- A13: Concurrency safety
+
+**🔵 Enhanced Testing (Phase 3):**
+- A8: Idempotence testing across save/load
+- A11: Diverse test fixtures (Unicode, long text, zero bullets)
+- A14: Legacy-off testing
+- A15: XML schema validation
+
+**🟢 Documentation & Deployment (Phase 4/5):**
+- A7: Pre-reconciliation artifact documentation
+- A10: Staged rollout strategy
+
+### Risk Profile After O3 Review:
+- **Edge Cases:** Medium Risk → **Low Risk**
+- **Performance:** Low Risk → **Very Low Risk** 
+- **Concurrency:** Unknown → **Low Risk**
+- **Operational:** Medium Risk → **Low Risk**
+
+**O3's Assessment:** *"The plan is excellent and already covers 90% of the battlefield. Adding the items above will close the last edge-case holes and keep ops noise and rollout risk low."*
+
+---
+
+*Last Updated: 2025-01-27 (O3 Review Integrated)* 

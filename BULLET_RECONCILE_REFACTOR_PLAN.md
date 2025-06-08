@@ -371,4 +371,75 @@ python -m pytest tests/ -v
 
 **Ready to begin implementation when approved.**
 
-*Last Updated: 2025-01-27* 
+*Last Updated: 2025-01-27*
+
+---
+
+## 10. **O3's Punch-List Review: Critical Gaps & Improvements**
+
+*Status: Feedback Received | Author: O3 | Integration Required*
+
+O3 has provided a comprehensive review identifying 15 specific gaps that need to be addressed to make the refactor "rock-solid." These are concrete, actionable improvements that close edge-case holes and reduce operational risk.
+
+### 10.1 Critical Edge Cases & Technical Gaps
+
+| ID | Gap/Improvement | Impact | Concrete Action |
+|---|---|---|---|
+| **A1** | **Tighten-Before-Headers Audit** | Empty paragraphs with `MR_BulletPoint` might be deleted before reconcile can fix them | Add test: "empty paragraph with MR_BulletPoint survives". Make `tighten_before_headers` skip bullets entirely if needed |
+| **A2** | **Multi-Level List Support** | Nested bullets get forced to level=0, overwriting original hierarchy | Capture original `ilvl` during scan and re-apply same level when repairing. Add nested test cases |
+| **A3** | **Table-Cell Bullets** | `doc.paragraphs` only walks main body, missing bullets in table cells | Use `doc._body._element.xpath('//w:p')` to iterate full tree. Add table bullet unit test |
+| **A4** | **Singleton Reset Between Requests** | `NumberingEngine` singleton may keep state between Flask requests | Implement `NumberingEngine.for_doc(document_id)` factory storing state in `doc.part` |
+| **A5** | **Character-Prefix Sanitizer Race** | User-injected "• " at runtime creates duplicate bullet glyphs | Strip leading bullet glyphs in `reconcile_bullet_styles` before applying numbering |
+
+### 10.2 Performance & Operational Improvements
+
+| ID | Gap/Improvement | Impact | Concrete Action |
+|---|---|---|---|
+| **A6** | **Performance Guard-Rail** | Large documents could cause reconciliation slowdown | Time reconciliation pass; log WARNING if > 200ms for profiling |
+| **A7** | **Pre-Reconciliation DOCX Timing** | Artifact now lacks spacing fixes, may confuse diff analysis | Document new artifact meaning: "Spacing tweaks not present in this file" |
+| **A8** | **Idempotence Test** | Need to verify reconciliation works across save/load cycles | Test opening saved document, running reconcile again, asserting 0 repairs |
+| **A9** | **Logging Noise** | DEBUG logs for every paragraph will balloon production logs | Keep full DEBUG under `if current_app.debug` flag, default to INFO summary |
+| **A10** | **Feature-Flag Flight Plan** | Rollout strategy not detailed in checklist | Add staged deployment: Staging 24h → Prod 10% canary → Full cutover |
+
+### 10.3 Testing & Quality Assurance Gaps
+
+| ID | Gap/Improvement | Impact | Concrete Action |
+|---|---|---|---|
+| **A11** | **Unit-Test Fixture Diversity** | Current tests use same JSON pattern, missing edge cases | Add fixtures: Unicode bullets, 500+ char achievements, zero-bullet sections |
+| **A12** | **XML Namespace Helper** | Repeated long namespace strings prone to typos | Extract `W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'` constant |
+| **A13** | **Concurrency in Web Workers** | Multiple threads may share same `NumberingEngine` singleton | Same fix as A4 - per-document state management |
+| **A14** | **Legacy-Off Test** | Need to verify `DOCX_USE_NATIVE_BULLETS=false` still works | Add unit + visual test for legacy bullet mode |
+| **A15** | **Document-Level Data-Integrity** | Reconciliation might leave invalid XML structure | Add lxml schema validation pass on final `document.xml` |
+
+### 10.4 Updated Implementation Priority
+
+These improvements should be integrated into our existing phases:
+
+**Phase 1 Additions (Critical):**
+- A1, A2, A3, A4, A5 - Core edge case handling
+
+**Phase 2 Additions (Performance):**
+- A6, A9, A12, A13 - Performance and code quality
+
+**Phase 3 Additions (Testing):**
+- A8, A11, A14, A15 - Enhanced test coverage
+
+**Phase 4 Additions (Deployment):**
+- A7, A10 - Documentation and rollout strategy
+
+### 10.5 Risk Mitigation Update
+
+With these improvements, our risk profile becomes:
+
+| Risk Category | Before O3 Review | After O3 Review |
+|---|---|---|
+| **Edge Cases** | Medium Risk | Low Risk |
+| **Performance** | Low Risk | Very Low Risk |
+| **Concurrency** | Unknown | Low Risk |
+| **Operational** | Medium Risk | Low Risk |
+
+**O3's Assessment:** *"The plan is excellent and already covers 90% of the battlefield. Adding the items above will close the last edge-case holes and keep ops noise and rollout risk low."*
+
+---
+
+*Last Updated: 2025-01-27 (O3 Review Integrated)* 
