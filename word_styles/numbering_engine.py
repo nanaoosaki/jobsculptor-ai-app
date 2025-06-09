@@ -13,6 +13,7 @@ Key Features:
 - ✅ Design token integration for professional bullet formatting
 - A4: Singleton reset between requests
 - B9: NumId collision prevention for round-trip editing
+- C1-C4: O3's comprehensive numId collision fixes
 
 Created: January 2025
 """
@@ -20,7 +21,8 @@ Created: January 2025
 import logging
 import traceback
 import itertools
-from typing import Dict, Set, Optional, Any, ClassVar
+import os
+from typing import Dict, Set, Optional, Any, ClassVar, Tuple
 from docx import Document
 from docx.shared import Pt
 from docx.text.paragraph import Paragraph
@@ -115,6 +117,59 @@ class NumberingEngine:
         logger.debug(f"B9: Allocated unique numId {unique_num_id}")
         return unique_num_id
     
+    @staticmethod
+    def _allocate_safe_ids(doc: Document) -> Tuple[int, int]:
+        """
+        C1/C2: Allocate both numId and abstractNumId that won't conflict with existing definitions.
+        
+        O3's comprehensive fix for numId collision issues:
+        - C1: Scans BOTH numId and abstractNumId ranges (not just numId)
+        - C2: Adds PID-salt for multiprocess deployment safety
+        
+        Args:
+            doc: Document to scan for existing numbering definitions
+            
+        Returns:
+            Tuple of (safe_num_id, safe_abstract_num_id)
+        """
+        try:
+            # Access numbering part (may not exist yet)
+            try:
+                numbering_part = doc.part.numbering_part
+                numbering_root = numbering_part._element
+                
+                # C1: Scan existing numId AND abstractNumId ranges
+                nums = {int(n) for n in numbering_root.xpath('.//w:num/@w:numId')}
+                absts = {int(a) for a in numbering_root.xpath('.//w:abstractNum/@w:abstractNumId')}
+                
+                logger.debug(f"C1: Found existing numIds: {sorted(nums)}")
+                logger.debug(f"C1: Found existing abstractNumIds: {sorted(absts)}")
+                
+                # C1: Allocate BOTH fresh integers
+                new_num = max(nums or (99,)) + 1
+                new_abs = max(absts or (99,)) + 1
+                
+            except AttributeError:
+                # No numbering part exists yet - start fresh
+                logger.debug("C1: No existing numbering part found, starting with safe defaults")
+                new_num = 100
+                new_abs = 100
+            
+            # C2: PID-salt for multiprocess safety
+            pid_base = os.getpid() % 5 * 5000
+            if new_num < pid_base:
+                logger.debug(f"C2: Applying PID-salt: {pid_base} (current PID: {os.getpid()})")
+                new_num = pid_base + 100
+                new_abs = pid_base + 100
+            
+            logger.info(f"✅ C1/C2: Allocated safe IDs - numId: {new_num}, abstractNumId: {new_abs}")
+            return new_num, new_abs
+            
+        except Exception as e:
+            # Conservative fallback as O3 recommended
+            logger.warning(f"C1/C2: Safe ID allocation failed, using conservative fallback: {e}")
+            return 50, 50
+    
     def apply_native_bullet(self, para: Paragraph, num_id: int = 1, level: int = 0, 
                            design_tokens: Optional[Dict[str, Any]] = None) -> None:
         """
@@ -181,16 +236,25 @@ class NumberingEngine:
         """Convert twips to inches for verification."""
         return twips_value / NumberingEngine.TWIPS_PER_INCH
     
-    def get_or_create_numbering_definition(self, doc: Document, num_id: int = 100) -> bool:
+    def get_or_create_numbering_definition(self, doc: Document, num_id: int = 100, abstract_num_id: Optional[int] = None) -> bool:
         """
         Get or create a numbering definition for bullets.
         
-        Enhanced for B9: Uses unique numIds to prevent conflicts with
-        existing numbering in uploaded resumes.
+        Enhanced for C1: Uses separate numId and abstractNumId to prevent conflicts.
+        Enhanced for B9: Uses unique numIds to prevent conflicts with existing numbering.
         
+        Args:
+            doc: Document to create numbering in
+            num_id: Numbering instance ID
+            abstract_num_id: Abstract numbering definition ID (defaults to num_id if not provided)
+            
         Returns:
             bool: True if numbering definition exists or was created successfully
         """
+        # C1: Use separate abstractNumId if provided, otherwise default to num_id for backward compatibility
+        if abstract_num_id is None:
+            abstract_num_id = num_id
+            
         try:
             # Check if we already have this numbering definition cached
             if num_id in self._created_num_ids:
@@ -228,15 +292,14 @@ class NumberingEngine:
                 self._created_num_ids.add(num_id)
                 return True
             
-            logger.debug(f"🔧 Creating new numbering definition for num_id={num_id}")
+            logger.debug(f"🔧 Creating new numbering definition for num_id={num_id}, abstract_num_id={abstract_num_id}")
             
             # B2: Header-spacing table cell compatibility
             # Use tighter spacing for bullets that might appear in tables
             left_indent = "331"    # ~0.23" for table compatibility
             hanging_indent = "187" # ~0.13" hanging indent
             
-            # Create abstractNum definition (style template)
-            abstract_num_id = num_id
+            # C1: Create abstractNum definition with separate ID
             abstract_num = f"""
             <w:abstractNum w:abstractNumId="{abstract_num_id}" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
                 <w:lvl w:ilvl="0">
@@ -255,7 +318,7 @@ class NumberingEngine:
             </w:abstractNum>
             """
             
-            # Create concrete num definition (instance)
+            # C1: Create concrete num definition linking to abstract definition
             num_def = f"""
             <w:num w:numId="{num_id}" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
                 <w:abstractNumId w:val="{abstract_num_id}"/>
@@ -269,7 +332,7 @@ class NumberingEngine:
             numbering_root.append(abstract_elem)
             numbering_root.append(num_elem)
             
-            logger.debug(f"✅ Successfully created numbering definition num_id={num_id}")
+            logger.debug(f"✅ Successfully created numbering definition num_id={num_id} → abstract_num_id={abstract_num_id}")
             
             # Cache this as created
             self._created_num_ids.add(num_id)

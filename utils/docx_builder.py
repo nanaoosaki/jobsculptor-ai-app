@@ -438,44 +438,52 @@ def format_right_aligned_pair(doc: Document, left_text: str, right_text: str, le
     return para
 
 def add_bullet_point_native(doc: Document, text: str, numbering_engine: NumberingEngine = None, 
-                           num_id: int = 100, level: int = 0, docx_styles: Dict[str, Any] = None) -> Paragraph:
+                           num_id: int = None, level: int = 0, docx_styles: Dict[str, Any] = None) -> Paragraph:
     """
-    Create a bullet point using Word's native numbering system.
+    Create native Word bullet point using built-in numbering system.
     
-    Simplified implementation for O3's "Build-Then-Reconcile" architecture:
-    - Create content
-    - Apply style
-    - Apply numbering
-    - TRUST that it works (reconciliation will fix any issues)
+    This is the enhanced bullet creation that produces professional Word behavior
+    instead of manual spacing that can be overridden.
     
     Args:
         doc: Document to add bullet to
         text: Bullet text content
-        numbering_engine: NumberingEngine instance
-        num_id: Numbering definition ID (default: 100)
-        level: List level (0-based, default: 0)
-        docx_styles: Style definitions
+        numbering_engine: Pre-configured NumberingEngine (optional)
+        num_id: Override numbering ID (if None, uses safe allocation)
+        level: Indentation level (default: 0)
+        docx_styles: Style definitions for design token system
         
     Returns:
-        The created paragraph with native numbering
-        
-    Raises:
-        ValueError: If text is empty
+        The created paragraph with native bullets
     """
-    if not text or not text.strip():
-        raise ValueError("add_bullet_point_native requires non-empty text")
+    logger.debug(f"Creating native bullet: '{text[:40]}...'")
     
-    # Use provided engine or create fresh one
+    # Ensure we have a numbering engine
     if numbering_engine is None:
         numbering_engine = NumberingEngine()
+
+    # C1/C2: Use safe ID allocation if no specific numId provided
+    if num_id is None:
+        # O3's Guard Rail: In production, num_id should be provided by safe allocation
+        logger.warning("add_bullet_point_native: num_id=None - using emergency safe allocation")
+        safe_num_id, safe_abstract_num_id = NumberingEngine._allocate_safe_ids(doc)
+        num_id = safe_num_id
+        abstract_num_id = safe_abstract_num_id
+        logger.debug(f"C1/C2: Emergency safe allocation - numId: {num_id}, abstractNumId: {abstract_num_id}")
+    else:
+        # Backward compatibility - if num_id is provided, use it for abstract too
+        abstract_num_id = num_id
 
     # Only create numbering definition once per document
     if not hasattr(doc, '_mr_numbering_definitions_created'):
         doc._mr_numbering_definitions_created = set()
     
     if num_id not in doc._mr_numbering_definitions_created:
-        numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id)
+        numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id, abstract_num_id=abstract_num_id)
         doc._mr_numbering_definitions_created.add(num_id)
+        logger.info(f"✅ C1/C2: Created numbering definition - numId: {num_id}, abstractNumId: {abstract_num_id}")
+    else:
+        logger.debug(f"✅ C1/C2: Using cached numbering definition - numId: {num_id}")
     
     # Create paragraph with content FIRST
     para = doc.add_paragraph()
@@ -487,9 +495,18 @@ def add_bullet_point_native(doc: Document, text: str, numbering_engine: Numberin
             _apply_paragraph_style(doc, para, "MR_BulletPoint", docx_styles)
         except Exception as e:
             logger.warning(f"Could not apply MR_BulletPoint via design tokens: {e}")
-            para.style = 'MR_BulletPoint'
+            # Try fallback style application
+            try:
+                para.style = 'MR_BulletPoint'
+            except Exception as e2:
+                logger.warning(f"MR_BulletPoint style not available, using default: {e2}")
     else:
-        para.style = 'MR_BulletPoint'
+        # Handle case where docx_styles is None (test environment)
+        try:
+            para.style = 'MR_BulletPoint'
+        except Exception as e:
+            logger.warning(f"MR_BulletPoint style not available in test environment, using default: {e}")
+            # In test environment, just use default paragraph style
     
     # Apply native numbering - TRUST that it works
     numbering_engine.apply_native_bullet(para, num_id=num_id, level=level)
@@ -625,7 +642,8 @@ def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = 
                 text=text,
                 section_name=section_name,
                 numbering_engine=numbering_engine,
-                docx_styles=docx_styles
+                docx_styles=docx_styles,
+                num_id=num_id  # C1/C2: Pass the safe numId from caller
             )
             logger.debug(f"O3: Bullet created successfully with ID {bullet_id}")
             return para
@@ -1049,18 +1067,18 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 # A4: Get singleton instance with request isolation
                 numbering_engine = NumberingEngine.get_instance(request_id)
                 
-                # B9: Use globally unique numId to prevent collisions
-                custom_num_id = NumberingEngine.allocate_num_id()
+                # C1/C2: Use safe allocation instead of global counter
+                custom_num_id, custom_abstract_num_id = NumberingEngine._allocate_safe_ids(doc)
                 
-                logger.info(f"🔧 Creating custom numbering definition (numId={custom_num_id})...")
-                numbering_engine.get_or_create_numbering_definition(doc, num_id=custom_num_id)
+                logger.info(f"🔧 C1/C2: Creating safe numbering definition (numId={custom_num_id}, abstractNumId={custom_abstract_num_id})...")
+                numbering_engine.get_or_create_numbering_definition(doc, num_id=custom_num_id, abstract_num_id=custom_abstract_num_id)
                 
                 # O3: Initialize O3 core engine for enhanced bullet management
                 from utils.o3_bullet_core_engine import get_o3_engine
                 o3_engine = get_o3_engine(request_id)
                 logger.info("🚀 O3: Core bullet engine initialized")
                 
-                logger.info("✅ NumberingEngine initialized with custom bullet definition")
+                logger.info("✅ NumberingEngine initialized with safe bullet definition")
             except Exception as e:
                 logger.warning(f"Failed to initialize NumberingEngine: {e}")
                 numbering_engine = None

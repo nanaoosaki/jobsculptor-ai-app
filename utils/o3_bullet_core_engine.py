@@ -103,7 +103,7 @@ class O3BulletCoreEngine:
         logger.info(f"O3: Core bullet engine initialized for document {document_id}")
     
     def create_bullet_trusted(self, doc: Document, text: str, section_name: str,
-                            numbering_engine: Any, docx_styles: Dict[str, Any]) -> Tuple[Any, str]:
+                            numbering_engine: Any, docx_styles: Dict[str, Any], num_id: int = None) -> Tuple[Any, str]:
         """
         Create bullet point using O3's "trust" approach - no immediate validation.
         
@@ -113,6 +113,7 @@ class O3BulletCoreEngine:
             section_name: Section name for numId allocation
             numbering_engine: Numbering engine instance
             docx_styles: Style configuration
+            num_id: Safe numId to use (from C1/C2 allocation)
             
         Returns:
             Tuple of (paragraph, bullet_id)
@@ -127,13 +128,22 @@ class O3BulletCoreEngine:
             # O3: Generate unique bullet ID
             bullet_id = f"bullet_{self.document_id}_{len(self.bullet_registry)}"
             
-            # O3: Allocate safe numId using B9
-            if self.config['enable_b_series_integration']:
-                num_id, abstract_num_id = allocate_safe_numid(self.document_id, section_name, "MR_BulletPoint")
+            # C1/C2: Use provided safe numId if available, otherwise allocate
+            if num_id is not None:
+                # Use the safe numId from C1/C2 allocation
+                safe_num_id = num_id
+                safe_abstract_num_id = num_id  # For backward compatibility
+                logger.debug(f"O3: Using provided safe numId: {safe_num_id}")
             else:
-                # Fallback to simple allocation
-                num_id = 100
-                abstract_num_id = 100
+                # O3: Fallback - use C1/C2 safe allocation instead of B9
+                if self.config['enable_b_series_integration'] and hasattr(numbering_engine, '_allocate_safe_ids'):
+                    safe_num_id, safe_abstract_num_id = numbering_engine._allocate_safe_ids(doc)
+                    logger.debug(f"O3: C1/C2 safe allocation: numId={safe_num_id}, abstractNumId={safe_abstract_num_id}")
+                else:
+                    # Legacy fallback
+                    from utils.numid_collision_manager import allocate_safe_numid
+                    safe_num_id, safe_abstract_num_id = allocate_safe_numid(self.document_id, section_name, "MR_BulletPoint")
+                    logger.warning(f"O3: Using legacy B9 allocation: {safe_num_id}")
             
             # O3: Create paragraph with trust-based approach
             para = doc.add_paragraph()
@@ -147,10 +157,10 @@ class O3BulletCoreEngine:
             except KeyError:
                 logger.warning("O3: MR_BulletPoint style not found, creating bullets may fail")
             
-            # O3: Apply numbering (trust that it will work)
+            # O3: Apply numbering with safe numId (trust that it will work)
             try:
-                numbering_engine.apply_native_bullet(para, num_id=num_id, level=0)
-                logger.debug(f"O3: Applied numbering numId={num_id} to bullet '{text[:30]}...'")
+                numbering_engine.apply_native_bullet(para, num_id=safe_num_id, level=0)
+                logger.debug(f"O3: Applied numbering numId={safe_num_id} to bullet '{text[:30]}...'")
             except Exception as e:
                 logger.warning(f"O3: Numbering application failed for bullet '{text[:30]}...': {e}")
             
@@ -158,8 +168,8 @@ class O3BulletCoreEngine:
             metadata = BulletMetadata(
                 paragraph_id=bullet_id,
                 text_content=text,
-                num_id=num_id,
-                abstract_num_id=abstract_num_id,
+                num_id=safe_num_id,
+                abstract_num_id=safe_abstract_num_id,
                 level=0,
                 style_name="MR_BulletPoint",
                 state=BulletState.PENDING,
@@ -167,11 +177,11 @@ class O3BulletCoreEngine:
             )
             
             self.bullet_registry[bullet_id] = metadata
-            self.numbering_allocations[num_id] = section_name
+            self.numbering_allocations[safe_num_id] = section_name
             self.stats['bullets_created'] += 1
             
             processing_time = (time.time() - start_time) * 1000
-            logger.debug(f"O3: Created trusted bullet '{text[:30]}...' in {processing_time:.1f}ms")
+            logger.debug(f"O3: Created trusted bullet '{text[:30]}...' with numId={safe_num_id} in {processing_time:.1f}ms")
             
             return para, bullet_id
             
