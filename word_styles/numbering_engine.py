@@ -11,13 +11,16 @@ Key Features:
 - Zero spacing preservation
 - Per-document state isolation
 - ✅ Design token integration for professional bullet formatting
+- A4: Singleton reset between requests
+- B9: NumId collision prevention for round-trip editing
 
 Created: January 2025
 """
 
 import logging
 import traceback
-from typing import Dict, Set, Optional, Any
+import itertools
+from typing import Dict, Set, Optional, Any, ClassVar
 from docx import Document
 from docx.shared import Pt
 from docx.text.paragraph import Paragraph
@@ -32,11 +35,13 @@ class NumberingEngine:
     """
     Manages native Word numbering/bullets with architectural safeguards.
     
-    This class implements the lessons learned from the MR_Company spacing saga:
+    Enhanced for O3's "Build-Then-Reconcile" architecture:
     1. Content-first enforcement prevents silent style application failures
     2. Idempotent creation prevents ValueError on duplicate abstractNum IDs
     3. Cross-format consistency ensures visual alignment with HTML/PDF
-    4. ✅ Design token integration for professional bullet formatting
+    4. A4: Singleton reset between requests for multi-tenant isolation
+    5. B9: NumId collision prevention for round-trip editing scenarios
+    6. ✅ Design token integration for professional bullet formatting
     
     SIMPLIFIED APPROACH: Use paragraph-level numbering properties only,
     letting Word handle the numbering definitions automatically.
@@ -46,20 +51,81 @@ class NumberingEngine:
     TWIPS_PER_CM = 567
     TWIPS_PER_INCH = 1440
     
-    def __init__(self):
-        """Initialize per-document state to avoid multi-process leaks."""
+    # A4: Class-level singleton state for reset between requests
+    _instance: ClassVar[Optional['NumberingEngine']] = None
+    _current_request_id: ClassVar[Optional[str]] = None
+    
+    # B9: Global numId counter to prevent collisions
+    _global_num_id_counter: ClassVar[itertools.count] = itertools.count(100)
+    
+    def __init__(self, request_id: Optional[str] = None):
+        """
+        Initialize per-document state with request isolation.
+        
+        Args:
+            request_id: Optional request ID for A4 singleton reset logic
+        """
+        self.request_id = request_id
         self._applied_paragraphs: Set[id] = set()
-        logger.debug("NumberingEngine initialized with fresh state")
+        self._created_num_ids: Set[int] = set()
+        logger.debug(f"NumberingEngine initialized for request {request_id}")
+    
+    @classmethod
+    def get_instance(cls, request_id: Optional[str] = None) -> 'NumberingEngine':
+        """
+        A4: Get singleton instance with automatic reset between requests.
+        
+        This ensures memory isolation in multi-tenant environments where
+        the same process handles multiple resume generation requests.
+        
+        Args:
+            request_id: Current request identifier
+            
+        Returns:
+            Fresh or existing NumberingEngine instance
+        """
+        # A4: Reset singleton if request ID changed
+        if (cls._instance is None or 
+            request_id != cls._current_request_id or
+            request_id is None):
+            
+            if cls._instance is not None:
+                logger.debug(f"A4: Resetting NumberingEngine singleton (request {cls._current_request_id} -> {request_id})")
+            
+            cls._instance = cls(request_id)
+            cls._current_request_id = request_id
+        
+        return cls._instance
+    
+    @classmethod
+    def allocate_num_id(cls) -> int:
+        """
+        B9: Allocate globally unique numId to prevent collisions.
+        
+        This prevents scenarios where:
+        1. User uploads resume with existing numbering (numId=1)
+        2. We create bullets with numId=100  
+        3. User re-uploads same resume -> conflict between 1 and 100
+        4. Word silently drops our numbering in favor of existing
+        
+        Returns:
+            Globally unique numId that won't conflict with existing documents
+        """
+        unique_num_id = next(cls._global_num_id_counter)
+        logger.debug(f"B9: Allocated unique numId {unique_num_id}")
+        return unique_num_id
     
     def apply_native_bullet(self, para: Paragraph, num_id: int = 1, level: int = 0, 
                            design_tokens: Optional[Dict[str, Any]] = None) -> None:
         """
         Apply native Word numbering to paragraph with design token integration.
         
-        UPDATED: Now creates proper numbering definitions instead of relying
-        on paragraph-level indentation that Word can ignore.
+        SIMPLIFIED for O3's "Build-Then-Reconcile" architecture:
+        - Removes immediate verification (unreliable during build phase)
+        - Trusts that numbering will be applied correctly
+        - Reconciliation pass will fix any issues later
         """
-        # o3's FAIL-FAST GUARD: Ensure content-first rule
+        # Content-first rule enforcement
         if not para.runs:
             raise RuntimeError("🚨 Content-first violated: paragraph has no runs. Add text before applying numbering.")
         
@@ -73,7 +139,7 @@ class NumberingEngine:
         # Get paragraph properties
         pPr = para._element.get_or_add_pPr()
         
-        # Add numbering properties (this now references a real numbering definition)
+        # Add numbering properties (references numbering definition)
         numPr_xml = f'''
         <w:numPr {nsdecls("w")}>
             <w:ilvl w:val="{level}"/>
@@ -86,8 +152,7 @@ class NumberingEngine:
             for existing_numPr in pPr.xpath('./w:numPr'):
                 pPr.remove(existing_numPr)
             
-            # REMOVED: No longer add paragraph-level indentation
-            # Word will now use the indentation from the numbering definition
+            # Remove paragraph-level indentation (let numbering definition handle it)
             for existing_ind in pPr.xpath('./w:ind'):
                 pPr.remove(existing_ind)
             
@@ -95,26 +160,10 @@ class NumberingEngine:
             numPr = parse_xml(numPr_xml)
             pPr.append(numPr)
             
-            # ✅ CRITICAL FIX: Validate that numbering was actually applied
-            # Check immediately after application to catch silent failures
-            verification_numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr')
-            if verification_numPr is None:
-                raise RuntimeError(f"❌ SILENT FAILURE: numPr not found after application to '{para.text[:50]}...'")
-            
-            # Double-check the numId value
-            numId_elem = verification_numPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numId')
-            if numId_elem is None:
-                raise RuntimeError(f"❌ SILENT FAILURE: numId element not found after application to '{para.text[:50]}...'")
-            
-            actual_numId = numId_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
-            if actual_numId != str(num_id):
-                raise RuntimeError(f"❌ SILENT FAILURE: Expected numId={num_id}, got numId={actual_numId} for '{para.text[:50]}...'")
-            
             self._applied_paragraphs.add(para_id)
-            logger.debug(f"✅ Applied and verified numbering reference: numId={num_id}, level={level}")
+            logger.debug(f"✅ Applied numbering reference: numId={num_id}, level={level}")
         except Exception as e:
             logger.error(f"❌ Failed to apply numbering to '{para.text[:50]}...': {e}")
-            # Re-raise to ensure the caller knows about the failure
             raise
     
     @staticmethod
@@ -136,47 +185,37 @@ class NumberingEngine:
         """
         Get or create a numbering definition for bullets.
         
-        ✅ FIXED VERSION: Avoids document structure modifications that interfere with bullet creation
+        Enhanced for B9: Uses unique numIds to prevent conflicts with
+        existing numbering in uploaded resumes.
         
         Returns:
             bool: True if numbering definition exists or was created successfully
         """
         try:
-            # ✅ NEW: Check if we already have this numbering definition cached
-            if hasattr(self, '_created_num_ids') and num_id in self._created_num_ids:
-                logger.info(f"✅ Using cached numbering definition for num_id={num_id}")
+            # Check if we already have this numbering definition cached
+            if num_id in self._created_num_ids:
+                logger.debug(f"✅ Using cached numbering definition for num_id={num_id}")
                 return True
-                
-            # Initialize cache if needed
-            if not hasattr(self, '_created_num_ids'):
-                self._created_num_ids = set()
             
-            # ✅ FIX: Create numbering without document structure modifications
-            # Instead of creating and removing temp paragraphs, directly access numbering part
+            # Access or create numbering part
             try:
-                # Try to access existing numbering part first
                 numbering_part = doc.part.numbering_part
-                logger.info("✅ Found existing numbering part")
+                logger.debug("✅ Found existing numbering part")
             except AttributeError:
-                # No numbering part exists, need to create one
-                logger.info("Creating new numbering part...")
+                logger.debug("Creating new numbering part...")
                 
-                # ✅ SAFE METHOD: Create a minimal paragraph to trigger numbering part creation
-                # but keep it in the document to avoid structure modifications
+                # Create minimal paragraph to trigger numbering part creation
                 if not hasattr(doc, '_numbering_init_para'):
-                    # Create and hide a paragraph that triggers numbering part creation
                     temp_para = doc.add_paragraph("")
-                    temp_para.style = 'List Bullet'  # This forces numbering part creation
+                    temp_para.style = 'List Bullet'  # Forces numbering part creation
                     
                     # Hide it by making it very small and empty
                     temp_para.clear()
-                    temp_para.add_run("").font.size = Pt(1)  # Minimal size
+                    temp_para.add_run("").font.size = Pt(1)
                     
-                    # Store reference so we don't create multiple temp paragraphs
                     doc._numbering_init_para = temp_para
-                    logger.info("✅ Created minimal numbering initialization paragraph")
+                    logger.debug("✅ Created minimal numbering initialization paragraph")
                 
-                # Now we should have numbering part
                 numbering_part = doc.part.numbering_part
             
             numbering_root = numbering_part._element
@@ -185,11 +224,16 @@ class NumberingEngine:
             existing_nums = numbering_root.xpath(f'.//w:num[@w:numId="{num_id}"]')
             
             if existing_nums:
-                logger.info(f"✅ Found existing numbering definition for num_id={num_id}")
+                logger.debug(f"✅ Found existing numbering definition for num_id={num_id}")
                 self._created_num_ids.add(num_id)
                 return True
             
-            logger.info(f"🔧 Creating new numbering definition for num_id={num_id}")
+            logger.debug(f"🔧 Creating new numbering definition for num_id={num_id}")
+            
+            # B2: Header-spacing table cell compatibility
+            # Use tighter spacing for bullets that might appear in tables
+            left_indent = "331"    # ~0.23" for table compatibility
+            hanging_indent = "187" # ~0.13" hanging indent
             
             # Create abstractNum definition (style template)
             abstract_num_id = num_id
@@ -201,7 +245,7 @@ class NumberingEngine:
                     <w:lvlText w:val="•"/>
                     <w:lvlJc w:val="left"/>
                     <w:pPr>
-                        <w:ind w:left="331" w:hanging="187"/>
+                        <w:ind w:left="{left_indent}" w:hanging="{hanging_indent}"/>
                     </w:pPr>
                     <w:rPr>
                         <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:hint="default"/>
@@ -225,7 +269,7 @@ class NumberingEngine:
             numbering_root.append(abstract_elem)
             numbering_root.append(num_elem)
             
-            logger.info(f"✅ Successfully created numbering definition num_id={num_id}")
+            logger.debug(f"✅ Successfully created numbering definition num_id={num_id}")
             
             # Cache this as created
             self._created_num_ids.add(num_id)

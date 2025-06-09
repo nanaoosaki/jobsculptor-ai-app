@@ -14,6 +14,34 @@ import uuid
 from datetime import datetime
 import logging
 from pathlib import Path
+import time
+
+# A-Series Improvements: Testing and Correlation
+from utils.bullet_testing_framework import BulletTestingFramework, TestScenario
+from utils.bullet_error_categorizer import BulletErrorCategorizer
+from utils.request_correlation import (
+    start_request, end_request, get_current_request_id, 
+    correlation_manager, set_metadata
+)
+from utils.memory_manager import memory_manager, get_memory_status, estimate_document_memory_mb
+from utils.staged_testing import StagedTestingPipeline, TestPipelineConfig
+
+# B-Series Improvements: Edge Cases and Core Fixes
+from utils.unicode_bullet_sanitizer import (
+    unicode_sanitizer, sanitize_bullet_text, analyze_bullet_characters,
+    get_supported_bullet_types
+)
+from utils.numid_collision_manager import (
+    collision_manager, allocate_safe_numid, get_numid_allocation_summary
+)
+from utils.xml_repair_system import (
+    xml_repair_system, analyze_docx_xml_issues, repair_docx_xml,
+    get_xml_repair_summary
+)
+from utils.style_collision_handler import (
+    style_handler, register_document_style, validate_style_for_bullets,
+    get_style_collision_summary
+)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -369,6 +397,932 @@ def download_pdf():
         as_attachment=True,
         download_name=filename
     )
+
+# ==== A-SERIES IMPROVEMENTS: TESTING AND MONITORING ROUTES ====
+
+@app.route('/api/test-framework/run')
+def run_bullet_testing():
+    """Run comprehensive bullet testing framework (A1)."""
+    try:
+        request_id = start_request(user_id="test_user", session_id="test_session")
+        set_metadata("feature_native_bullets", True, request_id)
+        set_metadata("feature_testing_framework", True, request_id)
+        
+        # Initialize testing framework
+        testing_framework = BulletTestingFramework(request_id)
+        
+        # Run comprehensive tests
+        results = testing_framework.run_comprehensive_tests()
+        
+        # Generate report
+        report = testing_framework.generate_test_report()
+        
+        end_request(request_id)
+        
+        return jsonify({
+            'success': True,
+            'request_id': request_id,
+            'test_results': report,
+            'tests_run': len(results),
+            'message': f'A1: Comprehensive testing completed with {len(results)} test scenarios'
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A1: Error running bullet testing framework: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Testing framework error: {str(e)}'
+        }), 500
+
+@app.route('/api/test-framework/scenario/<scenario_name>')
+def run_single_test_scenario(scenario_name):
+    """Run a single test scenario (A1)."""
+    try:
+        # Validate scenario name
+        scenario_map = {
+            'basic_bullets': TestScenario.BASIC_BULLETS,
+            'edge_cases': TestScenario.EDGE_CASES,
+            'unicode_content': TestScenario.UNICODE_CONTENT,
+            'large_document': TestScenario.LARGE_DOCUMENT,
+            'malformed_data': TestScenario.MALFORMED_DATA
+        }
+        
+        if scenario_name not in scenario_map:
+            return jsonify({
+                'success': False,
+                'error': f'Unknown test scenario: {scenario_name}',
+                'available_scenarios': list(scenario_map.keys())
+            }), 400
+        
+        request_id = start_request(user_id="test_user")
+        set_metadata("feature_single_test", True, request_id)
+        
+        # Initialize testing framework
+        testing_framework = BulletTestingFramework(request_id)
+        
+        # Run single test
+        scenario = scenario_map[scenario_name]
+        result = testing_framework.run_test(scenario, f"single_{scenario_name}")
+        
+        end_request(request_id)
+        
+        return jsonify({
+            'success': True,
+            'request_id': request_id,
+            'scenario': scenario_name,
+            'result': {
+                'success': result.success,
+                'total_bullets': result.total_bullets,
+                'consistent_bullets': result.consistent_bullets,
+                'inconsistent_bullets': result.inconsistent_bullets,
+                'duration_ms': result.duration_ms,
+                'errors': result.errors,
+                'consistency_rate': result.details.get('consistency_rate', 0)
+            }
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A1: Error running single test scenario {scenario_name}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Single test error: {str(e)}'
+        }), 500
+
+@app.route('/api/analytics/summary')
+def get_analytics_summary():
+    """Get request analytics summary (A8)."""
+    try:
+        lookback_hours = request.args.get('hours', default=24, type=int)
+        summary = correlation_manager.get_analytics_summary(lookback_hours)
+        
+        return jsonify({
+            'success': True,
+            'analytics': summary,
+            'lookback_hours': lookback_hours
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A8: Error generating analytics summary: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Analytics error: {str(e)}'
+        }), 500
+
+@app.route('/api/analytics/user/<user_id>')
+def get_user_analytics(user_id):
+    """Get analytics for a specific user (A8)."""
+    try:
+        limit = request.args.get('limit', default=10, type=int)
+        user_requests = correlation_manager.get_user_request_history(user_id, limit)
+        
+        # Convert to serializable format
+        request_data = []
+        for req in user_requests:
+            request_data.append({
+                'request_id': req.request_id,
+                'start_time': req.start_time,
+                'end_time': req.end_time,
+                'total_bullets': req.total_bullets,
+                'successful_bullets': req.successful_bullets,
+                'failed_bullets': req.failed_bullets,
+                'total_duration_ms': req.total_duration_ms,
+                'errors': req.errors,
+                'warnings': req.warnings,
+                'features_enabled': req.features_enabled
+            })
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'request_count': len(request_data),
+            'requests': request_data
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A8: Error getting user analytics for {user_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'User analytics error: {str(e)}'
+        }), 500
+
+@app.route('/api/error-categorizer/summary')
+def get_error_categorizer_summary():
+    """Get error categorization summary (A7)."""
+    try:
+        # For now, create a test categorizer since we don't have persistent state
+        # In production, this would be integrated with the main request flow
+        categorizer = BulletErrorCategorizer("demo_categorizer")
+        
+        # Add some demo error contexts for demonstration
+        demo_errors = [
+            {
+                'paragraph_index': 0,
+                'paragraph_text': 'Sample bullet point text',
+                'error_message': 'Missing numPr element in paragraph',
+                'xml_element': None
+            },
+            {
+                'paragraph_index': 1,
+                'paragraph_text': '• Pre-existing bullet character',
+                'error_message': 'Sanitization failure detected',
+                'xml_element': None
+            }
+        ]
+        
+        for error_context in demo_errors:
+            categorizer.categorize_error(error_context)
+        
+        summary = categorizer.get_error_summary()
+        recommendations = categorizer.get_fix_recommendations()
+        
+        return jsonify({
+            'success': True,
+            'error_summary': summary,
+            'fix_recommendations': recommendations,
+            'message': 'A7: Error categorization summary (demo data)'
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A7: Error getting error categorizer summary: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error categorizer error: {str(e)}'
+        }), 500
+
+@app.route('/api/memory/status')
+def get_memory_status_endpoint():
+    """Get current memory status (A5)."""
+    try:
+        status = get_memory_status()
+        return jsonify({
+            'success': True,
+            'memory_status': status
+        })
+    except Exception as e:
+        app.logger.error(f"A5: Error getting memory status: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Memory status error: {str(e)}'
+        }), 500
+
+@app.route('/api/memory/estimate')
+def estimate_memory_usage():
+    """Estimate memory usage for document parameters (A5)."""
+    try:
+        paragraphs = request.args.get('paragraphs', default=50, type=int)
+        bullets = request.args.get('bullets', default=20, type=int)
+        has_images = request.args.get('images', default=False, type=bool)
+        
+        estimated_mb = estimate_document_memory_mb(paragraphs, bullets, has_images)
+        strategy = memory_manager.get_optimization_strategy(estimated_mb)
+        is_large = memory_manager.is_large_document(estimated_mb)
+        
+        return jsonify({
+            'success': True,
+            'estimation': {
+                'estimated_memory_mb': round(estimated_mb, 2),
+                'optimization_strategy': strategy,
+                'is_large_document': is_large,
+                'parameters': {
+                    'paragraphs': paragraphs,
+                    'bullets': bullets,
+                    'has_images': has_images
+                }
+            }
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A5: Error estimating memory: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Memory estimation error: {str(e)}'
+        }), 500
+
+@app.route('/api/staged-testing/run')
+def run_staged_testing_pipeline():
+    """Run comprehensive staged testing pipeline (A11)."""
+    try:
+        # Get optional configuration parameters
+        skip_on_failure = request.args.get('skip_on_failure', default=False, type=bool)
+        min_consistency = request.args.get('min_consistency', default=95.0, type=float)
+        
+        # Create pipeline configuration
+        config = TestPipelineConfig(
+            skip_on_failure=skip_on_failure,
+            min_consistency_rate=min_consistency
+        )
+        
+        # Initialize and run pipeline
+        pipeline = StagedTestingPipeline(config)
+        results = pipeline.run_full_pipeline()
+        
+        return jsonify({
+            'success': True,
+            'pipeline_results': results,
+            'message': 'A11: Staged testing pipeline completed'
+        })
+        
+    except Exception as e:
+        app.logger.error(f"A11: Error running staged testing pipeline: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Staged testing error: {str(e)}'
+        }), 500
+
+@app.route('/api/phase2-summary')
+def get_phase2_summary():
+    """Get comprehensive Phase 2 A-series implementation summary."""
+    try:
+        return jsonify({
+            'success': True,
+            'phase2_summary': {
+                'title': 'Phase 2: A-Series Improvements Implementation',
+                'status': 'COMPLETED',
+                'implementation_date': '2025-06-08',
+                'total_improvements': 5,
+                'completed_improvements': [
+                    {
+                        'id': 'A1',
+                        'name': 'Comprehensive Testing Framework',
+                        'status': 'IMPLEMENTED',
+                        'description': 'Systematic test automation across multiple scenarios',
+                        'endpoints': ['/api/test-framework/run', '/api/test-framework/scenario/<name>'],
+                        'features': ['Automated bullet consistency validation', 'Edge case testing', 'Performance benchmarking']
+                    },
+                    {
+                        'id': 'A5',
+                        'name': 'Memory Guard Rails',
+                        'status': 'IMPLEMENTED', 
+                        'description': 'Memory monitoring and resource management',
+                        'endpoints': ['/api/memory/status', '/api/memory/estimate'],
+                        'features': ['Memory usage monitoring', 'Large document detection', 'Resource cleanup']
+                    },
+                    {
+                        'id': 'A7',
+                        'name': 'Error Categorization System',
+                        'status': 'IMPLEMENTED',
+                        'description': 'Systematic error classification and analysis',
+                        'endpoints': ['/api/error-categorizer/summary'],
+                        'features': ['Automatic error classification', 'Root cause analysis', 'Fix recommendations']
+                    },
+                    {
+                        'id': 'A8',
+                        'name': 'Request Correlation IDs',
+                        'status': 'IMPLEMENTED',
+                        'description': 'Cross-request tracking and analytics',
+                        'endpoints': ['/api/analytics/summary', '/api/analytics/user/<id>'],
+                        'features': ['Request tracking', 'Performance analytics', 'User session correlation']
+                    },
+                    {
+                        'id': 'A11',
+                        'name': 'Staged Testing Pipeline',
+                        'status': 'IMPLEMENTED',
+                        'description': 'Multi-stage validation and quality gates',
+                        'endpoints': ['/api/staged-testing/run'],
+                        'features': ['Multi-stage validation', 'Quality gates', 'Regression testing']
+                    }
+                ],
+                'architecture_benefits': [
+                    'Systematic identification of bullet consistency patterns',
+                    'Real-time performance and error monitoring',
+                    'Comprehensive test coverage and validation',
+                    'Memory-aware processing for large documents',
+                    'Detailed analytics and trending capabilities'
+                ],
+                'next_phase': {
+                    'name': 'Phase 3: B-Series Edge Cases',
+                    'description': 'Implementation of edge case handling and advanced features',
+                    'priority_items': ['B1: Style collisions', 'B3: Unicode bullet handling', 'B9: numId collision prevention']
+                },
+                'testing_dashboard': '/debug/testing-dashboard'
+            }
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error generating Phase 2 summary: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Summary generation error: {str(e)}'
+        }), 500
+
+@app.route('/debug/testing-dashboard')
+def testing_dashboard():
+    """Debugging dashboard for A-series improvements."""
+    return render_template('testing_dashboard.html')
+
+# ==== END A-SERIES IMPROVEMENTS ====
+
+# ===== B-SERIES ENDPOINTS: Edge Cases and Core Fixes =====
+
+@app.route('/api/unicode-sanitizer/analyze', methods=['POST'])
+def analyze_unicode_bullets():
+    """Analyze text for bullet characters without modifying it (B3)."""
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # B3: Analyze bullet characters
+        detections = analyze_bullet_characters(text)
+        
+        result = {
+            'original_text': text,
+            'detections_found': len(detections),
+            'bullet_types_detected': list(set(d.bullet_type.value for d in detections)),
+            'detections': [
+                {
+                    'bullet_type': d.bullet_type.value,
+                    'character': d.character,
+                    'position': d.position,
+                    'confidence': d.confidence,
+                    'should_remove': d.should_remove,
+                    'replacement_suggestion': d.replacement_suggestion
+                }
+                for d in detections
+            ],
+            'supported_types': get_supported_bullet_types()
+        }
+        
+        return jsonify({
+            'success': True,
+            'analysis': result
+        })
+        
+    except Exception as e:
+        app.logger.error(f"B3: Unicode bullet analysis failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Analysis failed: {str(e)}'
+        }), 500
+
+@app.route('/api/unicode-sanitizer/sanitize', methods=['POST'])
+def sanitize_unicode_bullets():
+    """Sanitize text by removing bullet characters (B3)."""
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        locale = data.get('locale', None)
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # B3: Sanitize bullet characters
+        sanitized_text, detections = unicode_sanitizer.sanitize_text(text, locale)
+        
+        result = {
+            'original_text': text,
+            'sanitized_text': sanitized_text,
+            'changes_made': sanitized_text != text,
+            'detections': [
+                {
+                    'bullet_type': d.bullet_type.value,
+                    'character': d.character,
+                    'removed': d.should_remove
+                }
+                for d in detections
+            ],
+            'sanitization_stats': unicode_sanitizer.get_sanitization_stats()
+        }
+        
+        return jsonify({
+            'success': True,
+            'sanitization': result
+        })
+        
+    except Exception as e:
+        app.logger.error(f"B3: Unicode bullet sanitization failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Sanitization failed: {str(e)}'
+        }), 500
+
+@app.route('/api/unicode-sanitizer/stats')
+def get_unicode_sanitizer_stats():
+    """Get unicode sanitizer statistics (B3)."""
+    try:
+        stats = unicode_sanitizer.get_sanitization_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        app.logger.error(f"B3: Failed to get unicode sanitizer stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to get stats: {str(e)}'
+        }), 500
+
+@app.route('/api/numid-manager/allocate', methods=['POST'])
+def allocate_numid():
+    """Allocate a safe numId for a document section (B9)."""
+    try:
+        data = request.get_json()
+        document_id = data.get('document_id')
+        section_name = data.get('section_name')
+        style_name = data.get('style_name', None)
+        
+        if not document_id or not section_name:
+            return jsonify({'error': 'document_id and section_name are required'}), 400
+        
+        # B9: Allocate safe numId
+        num_id, abstract_num_id = allocate_safe_numid(document_id, section_name, style_name)
+        
+        result = {
+            'allocated': True,
+            'num_id': num_id,
+            'abstract_num_id': abstract_num_id,
+            'document_id': document_id,
+            'section_name': section_name,
+            'style_name': style_name
+        }
+        
+        return jsonify({
+            'success': True,
+            'allocation': result
+        })
+        
+    except Exception as e:
+        app.logger.error(f"B9: NumId allocation failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Allocation failed: {str(e)}'
+        }), 500
+
+@app.route('/api/numid-manager/summary')
+def get_numid_summary():
+    """Get numId allocation summary (B9)."""
+    try:
+        summary = get_numid_allocation_summary()
+        return jsonify({
+            'success': True,
+            'summary': summary
+        })
+    except Exception as e:
+        app.logger.error(f"B9: Failed to get numId summary: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to get summary: {str(e)}'
+        }), 500
+
+@app.route('/api/xml-repair/analyze', methods=['POST'])
+def analyze_xml_issues():
+    """Analyze DOCX file for XML issues (B6)."""
+    try:
+        # Check if file was uploaded
+        if 'docx_file' not in request.files:
+            return jsonify({'error': 'No DOCX file provided'}), 400
+        
+        file = request.files['docx_file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # B6: Analyze XML issues
+        issues = analyze_docx_xml_issues(file)
+        
+        result = {
+            'filename': file.filename,
+            'total_issues': len(issues),
+            'critical_issues': len([i for i in issues if i.severity == 'critical']),
+            'auto_fixable_issues': len([i for i in issues if i.auto_fixable]),
+            'issues_by_type': {},
+            'issues': [
+                {
+                    'type': issue.issue_type.value,
+                    'element_path': issue.element_path,
+                    'description': issue.description,
+                    'severity': issue.severity,
+                    'auto_fixable': issue.auto_fixable,
+                    'suggested_fix': issue.suggested_fix,
+                    'line_number': issue.line_number
+                }
+                for issue in issues
+            ]
+        }
+        
+        # Count issues by type
+        for issue in issues:
+            issue_type = issue.issue_type.value
+            if issue_type not in result['issues_by_type']:
+                result['issues_by_type'][issue_type] = 0
+            result['issues_by_type'][issue_type] += 1
+        
+        return jsonify({
+            'success': True,
+            'analysis': result
+        })
+        
+    except Exception as e:
+        app.logger.error(f"B6: XML analysis failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Analysis failed: {str(e)}'
+        }), 500
+
+@app.route('/api/xml-repair/summary')
+def get_xml_repair_summary_endpoint():
+    """Get XML repair system summary (B6)."""
+    try:
+        summary = get_xml_repair_summary()
+        return jsonify({
+            'success': True,
+            'summary': summary
+        })
+    except Exception as e:
+        app.logger.error(f"B6: Failed to get XML repair summary: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to get summary: {str(e)}'
+        }), 500
+
+@app.route('/api/style-handler/validate', methods=['POST'])
+def validate_style():
+    """Validate style usage for bullets (B1)."""
+    try:
+        data = request.get_json()
+        style_name = data.get('style_name')
+        numbering_id = data.get('numbering_id')
+        
+        if not style_name:
+            return jsonify({'error': 'style_name is required'}), 400
+        
+        # B1: Validate style
+        is_valid = validate_style_for_bullets(style_name, numbering_id)
+        
+        result = {
+            'style_name': style_name,
+            'numbering_id': numbering_id,
+            'is_valid': is_valid,
+            'validation_time': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'validation': result
+        })
+        
+    except Exception as e:
+        app.logger.error(f"B1: Style validation failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Validation failed: {str(e)}'
+        }), 500
+
+@app.route('/api/style-handler/summary')
+def get_style_summary():
+    """Get style collision handler summary (B1)."""
+    try:
+        summary = get_style_collision_summary()
+        return jsonify({
+            'success': True,
+            'summary': summary
+        })
+    except Exception as e:
+        app.logger.error(f"B1: Failed to get style summary: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to get summary: {str(e)}'
+        }), 500
+
+@app.route('/api/phase3-summary')
+def get_phase3_summary():
+    """Get comprehensive Phase 3 B-series implementation summary."""
+    try:
+        # B3: Unicode Sanitizer Status
+        unicode_stats = unicode_sanitizer.get_sanitization_stats()
+        
+        # B9: NumId Manager Status
+        numid_summary = get_numid_allocation_summary()
+        
+        # B6: XML Repair Status
+        xml_summary = get_xml_repair_summary()
+        
+        # B1: Style Handler Status
+        style_summary = get_style_collision_summary()
+        
+        phase3_summary = {
+            'title': 'Phase 3: B-Series Edge Cases Implementation',
+            'status': 'COMPLETED',
+            'implementation_date': '2025-06-08',
+            'total_improvements': 4,
+            'completed_improvements': [
+                {
+                    'id': 'B3',
+                    'name': 'Unicode Bullet Sanitization',
+                    'status': 'IMPLEMENTED',
+                    'description': 'Comprehensive detection and removal of bullet characters',
+                    'endpoints': ['/api/unicode-sanitizer/analyze', '/api/unicode-sanitizer/sanitize', '/api/unicode-sanitizer/stats'],
+                    'features': ['Multi-locale bullet detection', 'Context-aware sanitization', 'False positive prevention'],
+                    'statistics': unicode_stats
+                },
+                {
+                    'id': 'B9',
+                    'name': 'NumId Collision Prevention',
+                    'status': 'IMPLEMENTED',
+                    'description': 'Global numbering ID management and collision detection',
+                    'endpoints': ['/api/numid-manager/allocate', '/api/numid-manager/summary'],
+                    'features': ['Thread-safe ID allocation', 'Collision detection', 'Document-scoped tracking'],
+                    'summary': numid_summary
+                },
+                {
+                    'id': 'B6',
+                    'name': 'XML Structure Repair',
+                    'status': 'IMPLEMENTED',
+                    'description': 'Detection and repair of malformed XML in DOCX documents',
+                    'endpoints': ['/api/xml-repair/analyze', '/api/xml-repair/summary'],
+                    'features': ['XML validation', 'Automatic repair', 'Namespace checking'],
+                    'summary': xml_summary
+                },
+                {
+                    'id': 'B1',
+                    'name': 'Style Collision Handling',
+                    'status': 'IMPLEMENTED',
+                    'description': 'Prevention and resolution of style conflicts',
+                    'endpoints': ['/api/style-handler/validate', '/api/style-handler/summary'],
+                    'features': ['Style conflict detection', 'Automatic resolution', 'Hierarchy management'],
+                    'summary': style_summary
+                }
+            ],
+            'core_fixes_implemented': [
+                'Unicode bullet character sanitization with locale awareness',
+                'Thread-safe numId allocation and collision prevention',
+                'Comprehensive XML structure validation and repair',
+                'Style conflict detection and automatic resolution'
+            ],
+            'integration_points': [
+                'Document generation pipeline integration',
+                'Bullet reconciliation system enhancement',
+                'Error categorization framework extension',
+                'Testing and monitoring infrastructure expansion'
+            ],
+            'architecture_benefits': [
+                'Proactive edge case handling',
+                'Real-time conflict detection and resolution',
+                'Comprehensive XML validation',
+                'Robust numbering ID management'
+            ],
+            'next_phase': {
+                'name': 'Phase 4: O3 Core Implementation',
+                'description': 'Implementation of final O3 bullet consistency fixes',
+                'priority_items': ['Final bullet reconciliation', 'Document state management', 'Production optimization']
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'phase3_summary': phase3_summary
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error generating Phase 3 summary: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Summary generation error: {str(e)}'
+        }), 500
+
+# ==== END B-SERIES IMPROVEMENTS ====
+
+# O3 Core Implementation API Endpoints
+
+@app.route('/api/o3-core/summary/<doc_id>')
+def o3_core_summary(doc_id):
+    """Get O3 core engine summary for a document."""
+    try:
+        from utils.o3_bullet_core_engine import get_o3_engine
+        
+        engine = get_o3_engine(doc_id)
+        summary = engine.get_engine_summary()
+        
+        return jsonify({
+            'success': True,
+            'doc_id': doc_id,
+            'summary': summary,
+            'timestamp': time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/o3-core/all-engines')
+def o3_core_all_engines():
+    """Get summary of all active O3 engines."""
+    try:
+        from utils.o3_bullet_core_engine import get_all_engines_summary
+        
+        summary = get_all_engines_summary()
+        
+        return jsonify({
+            'success': True,
+            'engines_summary': summary,
+            'timestamp': time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/o3-core/cleanup/<doc_id>', methods=['POST'])
+def o3_core_cleanup(doc_id):
+    """Clean up O3 engine for a document."""
+    try:
+        from utils.o3_bullet_core_engine import cleanup_o3_engine
+        
+        cleanup_o3_engine(doc_id)
+        
+        return jsonify({
+            'success': True,
+            'doc_id': doc_id,
+            'message': f'O3 engine cleaned up for document {doc_id}',
+            'timestamp': time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/o3-core/test-engine', methods=['POST'])
+def o3_core_test_engine():
+    """Test O3 engine functionality with sample data."""
+    try:
+        from utils.o3_bullet_core_engine import get_o3_engine
+        from docx import Document
+        from word_styles.numbering_engine import NumberingEngine
+        
+        # Create test data
+        test_doc_id = f"test_{int(time.time())}"
+        test_doc = Document()
+        test_numbering_engine = NumberingEngine()
+        
+        # Initialize O3 engine
+        engine = get_o3_engine(test_doc_id)
+        
+        # Test bullet creation
+        test_bullets = [
+            "First test bullet point",
+            "Second test bullet with special characters: •",
+            "Third test bullet with numbers 123"
+        ]
+        
+        created_bullets = []
+        for i, bullet_text in enumerate(test_bullets):
+            try:
+                para, bullet_id = engine.create_bullet_trusted(
+                    doc=test_doc,
+                    text=bullet_text,
+                    section_name="test_section",
+                    numbering_engine=test_numbering_engine,
+                    docx_styles={}
+                )
+                created_bullets.append({
+                    'bullet_id': bullet_id,
+                    'text': bullet_text,
+                    'created': True
+                })
+            except Exception as e:
+                created_bullets.append({
+                    'text': bullet_text,
+                    'created': False,
+                    'error': str(e)
+                })
+        
+        # Test reconciliation
+        reconciliation_stats = engine.reconcile_document_bullets(test_doc, test_numbering_engine)
+        
+        # Get engine summary
+        summary = engine.get_engine_summary()
+        
+        # Cleanup
+        from utils.o3_bullet_core_engine import cleanup_o3_engine
+        cleanup_o3_engine(test_doc_id)
+        
+        return jsonify({
+            'success': True,
+            'test_doc_id': test_doc_id,
+            'created_bullets': created_bullets,
+            'reconciliation_stats': reconciliation_stats,
+            'engine_summary': summary,
+            'timestamp': time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# Phase 4 Summary Endpoint
+@app.route('/api/phase4-summary')
+def phase4_summary():
+    """Get comprehensive Phase 4 O3 Core Implementation summary."""
+    try:
+        from utils.o3_bullet_core_engine import get_all_engines_summary
+        
+        # Get O3 engines summary
+        o3_summary = get_all_engines_summary()
+        
+        # Combine with system status
+        summary = {
+            'phase': 'Phase 4: O3 Core Implementation',
+            'status': 'Active',
+            'implementation_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'features': {
+                'o3_core_engine': {
+                    'description': 'O3 enhanced bullet consistency engine with build-then-reconcile architecture',
+                    'active_engines': o3_summary.get('active_engines', 0),
+                    'capabilities': [
+                        'Document-level bullet state management',
+                        'Atomic bullet operations with validation',
+                        'Comprehensive post-generation reconciliation',
+                        'Integration with B-series edge case handling',
+                        'Production-ready bullet consistency guarantee'
+                    ]
+                },
+                'enhanced_reconciliation': {
+                    'description': 'Multi-pass reconciliation with nuclear cleanup capabilities',
+                    'features': [
+                        'State-aware bullet validation',
+                        'Comprehensive XML repair',
+                        'Performance-optimized processing',
+                        'Error recovery and retry logic'
+                    ]
+                },
+                'integration_status': {
+                    'docx_builder': 'Integrated',
+                    'flask_endpoints': 'Active',
+                    'b_series_modules': 'Connected',
+                    'testing_framework': 'Available'
+                }
+            },
+            'api_endpoints': [
+                '/api/o3-core/summary/<doc_id>',
+                '/api/o3-core/all-engines',
+                '/api/o3-core/cleanup/<doc_id>',
+                '/api/o3-core/test-engine',
+                '/api/phase4-summary'
+            ],
+            'o3_engines': o3_summary,
+            'compatibility': {
+                'phases_1_3': 'Backward compatible',
+                'b_series_integration': 'Active',
+                'legacy_fallback': 'Available'
+            }
+        }
+        
+        return jsonify(summary)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     # Configure Flask session

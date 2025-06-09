@@ -51,6 +51,14 @@ except ImportError:
     USE_NATIVE_NUMBERING = False
     logger.warning("⚠️ NumberingEngine not available - native bullets disabled")
 
+# Import bullet reconciliation engine
+try:
+    from utils.bullet_reconciliation import BulletReconciliationEngine
+    USE_BULLET_RECONCILIATION = True
+except ImportError:
+    USE_BULLET_RECONCILIATION = False
+    logger.warning("⚠️ BulletReconciliationEngine not available - reconciliation disabled")
+
 # Simple stub for rendering tracer to avoid import errors
 def trace(name):
     """Simple stub decorator for tracing function calls"""
@@ -434,118 +442,59 @@ def add_bullet_point_native(doc: Document, text: str, numbering_engine: Numberin
     """
     Create a bullet point using Word's native numbering system.
     
-    Implements O3 safeguards:
-    - G-1: Content-first architecture enforcement
-    - G-2: Idempotent numbering creation  
-    - B-1: Proper bullet glyph (Word auto-generates •)
-    - B-2: Cross-format indent consistency with design tokens
-    - ✅ NEW: Creates proper numbering definitions instead of relying on paragraph properties
+    Simplified implementation for O3's "Build-Then-Reconcile" architecture:
+    - Create content
+    - Apply style
+    - Apply numbering
+    - TRUST that it works (reconciliation will fix any issues)
     
     Args:
         doc: Document to add bullet to
         text: Bullet text content
-        numbering_engine: Optional pre-configured NumberingEngine (recommended for performance)
-        num_id: Numbering definition ID (default: 100 for custom definitions)
+        numbering_engine: NumberingEngine instance
+        num_id: Numbering definition ID (default: 100)
         level: List level (0-based, default: 0)
-        docx_styles: Style definitions for design token system
+        docx_styles: Style definitions
         
     Returns:
         The created paragraph with native numbering
         
     Raises:
-        ValueError: If text is empty (violates content-first architecture)
+        ValueError: If text is empty
     """
     if not text or not text.strip():
-        raise ValueError("add_bullet_point_native requires non-empty text (content-first architecture)")
+        raise ValueError("add_bullet_point_native requires non-empty text")
     
-    logger.debug(f"🔫 Creating native bullet: '{text[:50]}...'")
-    logger.debug(f"🔫 Parameters: num_id={num_id}, level={level}")
-    logger.debug(f"🔫 NumberingEngine provided: {numbering_engine is not None}")
-    
-    # Use provided engine or create fresh one (per-document isolation)
+    # Use provided engine or create fresh one
     if numbering_engine is None:
-        logger.debug(f"🔫 Creating new NumberingEngine instance")
         numbering_engine = NumberingEngine()
-    else:
-        logger.debug(f"🔫 Using provided NumberingEngine instance")
 
-    try:
-        # ✅ FIX: Only create numbering definition once per document
-        # Check if we've already created the numbering definition for this document
-        if not hasattr(doc, '_mr_numbering_definitions_created'):
-            doc._mr_numbering_definitions_created = set()
-        
-        if num_id not in doc._mr_numbering_definitions_created:
-            # CRITICAL: Ensure numbering definition exists BEFORE applying to paragraphs
-            # This creates the actual /word/numbering.xml entries that Word needs
-            logger.debug(f"🔫 Creating numbering definition for num_id={num_id}")
-            result = numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id)
-            logger.debug(f"🔫 Numbering definition creation result: {result}")
-            doc._mr_numbering_definitions_created.add(num_id)
-            logger.debug(f"✅ Created numbering definition for num_id={num_id}")
-        else:
-            logger.debug(f"✅ Numbering definition for num_id={num_id} already exists")
-        
-        # Create paragraph with content FIRST (G-1 fix)
-        logger.debug(f"🔫 Creating paragraph with content...")
-        para = doc.add_paragraph()
-        para.add_run(text.strip())  # Content before styling!
-        logger.debug(f"🔫 Paragraph created with {len(para.runs)} runs")
-        
-        # CRITICAL: Apply MR_BulletPoint style through design token system
-        # This ensures the zero spacing from design tokens is properly applied
-        logger.debug(f"🔫 Applying MR_BulletPoint style...")
-        if docx_styles:
-            try:
-                _apply_paragraph_style(doc, para, "MR_BulletPoint", docx_styles)
-                logger.debug("✅ Applied MR_BulletPoint style via design token system")
-            except Exception as e:
-                logger.warning(f"Could not apply MR_BulletPoint via design tokens: {e}")
-                # Fallback to direct style assignment
-                try:
-                    para.style = 'MR_BulletPoint'
-                    logger.debug("✅ Applied MR_BulletPoint style via direct assignment")
-                except Exception as e2:
-                    logger.warning(f"Could not apply MR_BulletPoint style at all: {e2}")
-        else:
-            # Fallback when no docx_styles provided
-            try:
-                para.style = 'MR_BulletPoint'
-                logger.debug("✅ Applied MR_BulletPoint style via direct assignment (no docx_styles)")
-            except Exception as e:
-                logger.warning(f"Could not apply MR_BulletPoint style: {e}")
-        
-        # ✅ Apply native numbering (now references proper numbering definition)
-        logger.debug(f"🔫 🚨 CALLING apply_native_bullet with num_id={num_id}, level={level}")
+    # Only create numbering definition once per document
+    if not hasattr(doc, '_mr_numbering_definitions_created'):
+        doc._mr_numbering_definitions_created = set()
+    
+    if num_id not in doc._mr_numbering_definitions_created:
+        numbering_engine.get_or_create_numbering_definition(doc, num_id=num_id)
+        doc._mr_numbering_definitions_created.add(num_id)
+    
+    # Create paragraph with content FIRST
+    para = doc.add_paragraph()
+    para.add_run(text.strip())
+    
+    # Apply MR_BulletPoint style
+    if docx_styles:
         try:
-            numbering_engine.apply_native_bullet(para, num_id=num_id, level=level)
-            logger.debug(f"🔫 ✅ apply_native_bullet completed successfully")
-        except Exception as apply_error:
-            # 🚨 O3 ARTIFACT 2: Capture the exact failure point
-            logger.error(f"🔫 🚨 apply_native_bullet FAILED: {type(apply_error).__name__}: {apply_error}")
-            logger.error(f"🔫 🚨 Failure details:")
-            logger.error(f"🔫 🚨   Text: '{text}'")
-            logger.error(f"🔫 🚨   num_id: {num_id}")
-            logger.error(f"🔫 🚨   level: {level}")
-            logger.error(f"🔫 🚨   Paragraph runs: {len(para.runs)}")
-            logger.error(f"🔫 🚨   Paragraph text: '{para.text}'")
-            logger.error(f"🔫 🚨   NumberingEngine state: {vars(numbering_engine)}")
-            logger.error(f"🔫 🚨   Document has numbering part: {hasattr(doc.part, 'numbering_part') and doc.part.numbering_part is not None}")
-            logger.error(f"🔫 🚨   Full traceback: {traceback.format_exc()}")
-            # Re-raise to let caller handle
-            raise
-        
-        logger.debug(f"✅ Native bullet created with proper numbering definition")
-        return para
-        
-    except Exception as e:
-        logger.error(f"❌ Native bullet creation failed: {e}")
-        logger.error(f"❌ 🚨 Full failure context in add_bullet_point_native:")
-        logger.error(f"❌ 🚨   Text: '{text}'")
-        logger.error(f"❌ 🚨   Document paragraphs: {len(doc.paragraphs)}")
-        logger.error(f"❌ 🚨   Full traceback: {traceback.format_exc()}")
-        # Don't raise - let caller handle fallback
-        raise
+            _apply_paragraph_style(doc, para, "MR_BulletPoint", docx_styles)
+        except Exception as e:
+            logger.warning(f"Could not apply MR_BulletPoint via design tokens: {e}")
+            para.style = 'MR_BulletPoint'
+    else:
+        para.style = 'MR_BulletPoint'
+    
+    # Apply native numbering - TRUST that it works
+    numbering_engine.apply_native_bullet(para, num_id=num_id, level=level)
+    
+    return para
 
 def add_bullet_point_legacy(doc: Document, text: str, docx_styles: Dict[str, Any] = None) -> Paragraph:
     """
@@ -639,21 +588,26 @@ def add_bullet_point_legacy(doc: Document, text: str, docx_styles: Dict[str, Any
     return bullet_para
 
 def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = None, 
-                       numbering_engine: NumberingEngine = None, num_id: int = 100) -> Paragraph:
+                       numbering_engine: NumberingEngine = None, num_id: int = 100,
+                       o3_engine: Any = None, section_name: str = "unknown") -> Paragraph:
     """
-    Enhanced bullet creation with feature flag support and graceful degradation.
+    O3 Enhanced bullet creation using "Build-Then-Reconcile" architecture.
     
-    This function implements O3's deployment strategy:
-    1. Try native numbering if enabled
-    2. Fall back to legacy approach if native fails
-    3. Maintain 100% document generation success rate
+    This function implements O3's TRUST approach:
+    1. Create content using O3 engine if available
+    2. Apply style  
+    3. Apply numbering
+    4. TRUST that it works (no immediate verification)
+    5. Reconciliation will fix any issues later
     
     Args:
         doc: Document to add bullet to
         text: Bullet text content  
-        docx_styles: Style definitions (for legacy fallback)
-        numbering_engine: Optional pre-configured NumberingEngine for performance
-        num_id: Custom numbering ID (default: 100 for our custom definitions)
+        docx_styles: Style definitions
+        numbering_engine: NumberingEngine instance for applying bullets
+        num_id: Numbering ID (default: 100)
+        o3_engine: O3 core engine for enhanced bullet handling
+        section_name: Section name for O3 engine tracking
         
     Returns:
         The created paragraph with bullets
@@ -662,75 +616,56 @@ def create_bullet_point(doc: Document, text: str, docx_styles: Dict[str, Any] = 
         logger.warning("Empty bullet text provided, skipping")
         return None
 
-    # 🚨 O3 ARTIFACT 2: Enhanced diagnostic logging for bullet creation
-    logger.info(f"🔫 BULLET CREATION START: '{text[:30]}...'")
-    logger.info(f"🔫 Native bullets enabled: {NATIVE_BULLETS_ENABLED}")
-    logger.info(f"🔫 NumberingEngine available: {USE_NATIVE_NUMBERING}")
-    logger.info(f"🔫 NumberingEngine instance: {numbering_engine is not None}")
-    logger.info(f"🔫 DOCX styles provided: {docx_styles is not None}")
-    logger.info(f"🔫 Document paragraph count before: {len(doc.paragraphs)}")
-    
+    # O3 Enhanced: Use O3 engine if available for comprehensive bullet management
+    if o3_engine is not None:
+        try:
+            logger.debug(f"O3: Creating trusted bullet via O3 engine: '{text[:40]}...'")
+            para, bullet_id = o3_engine.create_bullet_trusted(
+                doc=doc,
+                text=text,
+                section_name=section_name,
+                numbering_engine=numbering_engine,
+                docx_styles=docx_styles
+            )
+            logger.debug(f"O3: Bullet created successfully with ID {bullet_id}")
+            return para
+        except Exception as e:
+            logger.warning(f"O3: Engine failed, falling back to standard path: {e}")
+            # Continue to standard path
+
+    # B3: Locale-specific bullet glyph sanitization
+    clean_text = text.strip()
+    # Strip leading bullet glyphs (handles Western •, Chinese ·, Japanese ・, etc.)
+    import re
+    # Unicode General Punctuation bullet characters
+    bullet_pattern = r'^[\u2022\u2023\u2043\u204C\u204D\u2219\u22C5\u2010-\u2015\u2043\uFF65\u30FB\u2024\u2025\u2026]*\s*'
+    clean_text = re.sub(bullet_pattern, '', clean_text).strip()
+
     # Phase 1: Try native numbering if enabled
     if NATIVE_BULLETS_ENABLED:
         try:
-            logger.info(f"🔫 ATTEMPTING NATIVE PATH for: '{text[:30]}...'")
-            logger.debug(f"🔫 DEBUG: Calling add_bullet_point_native with num_id={num_id}")
-            
-            # 🚨 O3 CRITICAL: Catch the FIRST exception from apply_native_bullet
-            para = add_bullet_point_native(doc, text, numbering_engine, num_id=num_id, docx_styles=docx_styles)
-            
-            logger.debug(f"🔫 DEBUG: add_bullet_point_native returned successfully")
-            logger.info(f"🔫 Document paragraph count after native creation: {len(doc.paragraphs)}")
-            
-            # ✅ CRITICAL FIX: Verify numbering was actually applied after creation
-            pPr = para._element.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}pPr')
-            numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr') if pPr is not None else None
-            
-            if numPr is not None:
-                # Success - numbering was applied
-                logger.info(f"🔫 BULLET PATH: NATIVE ✅ - '{text[:30]}...'")
-                logger.debug("Bullet created via native")  
-                return para
-            else:
-                # Silent failure - numbering claimed success but wasn't applied
-                logger.error(f"🔫 NATIVE PATH SILENT FAILURE: numPr not found after creation for '{text[:30]}...'")
-                logger.error(f"🔫 FALLING BACK TO LEGACY due to silent failure")
-                logger.error(f"🔫 DEBUG: Para element XML: {para._element.xml}")
-                # Remove the failed paragraph and try legacy
-                doc._body._element.remove(para._element)
-                logger.info(f"🔫 Document paragraph count after removal: {len(doc.paragraphs)}")
-                raise RuntimeError("Native numbering silent failure detected")
+            logger.debug(f"Creating native bullet: '{clean_text[:40]}...'")
+            para = add_bullet_point_native(doc, clean_text, numbering_engine, num_id=num_id, docx_styles=docx_styles)
+            logger.debug(f"Native bullet created successfully")
+            return para
                 
         except Exception as e:
-            # 🚨 O3 ARTIFACT 2: Capture the FIRST exception in detail
-            logger.error(f"🔫 🚨 FIRST NATIVE FAILURE DETECTED: {type(e).__name__}: {e}")
-            logger.error(f"🔫 🚨 Full traceback of first failure:")
-            logger.error(f"🔫 🚨 {traceback.format_exc()}")
-            logger.error(f"🔫 🚨 Text that caused failure: '{text}'")
-            logger.error(f"🔫 🚨 Document state: paragraphs={len(doc.paragraphs)}")
-            logger.error(f"🔫 🚨 NumberingEngine state: {vars(numbering_engine) if numbering_engine else 'None'}")
-            logger.error(f"🔫 FALLING BACK TO LEGACY for: '{text[:30]}...'")
+            # Log error but don't retry - reconciliation will fix it
+            logger.warning(f"Native bullet creation failed for '{clean_text[:40]}...': {e}")
             # Continue to fallback
-    else:
-        logger.info(f"🔫 NATIVE DISABLED, USING LEGACY for: '{text[:30]}...'")
     
     # Phase 2: Fallback to legacy approach
     try:
-        logger.info(f"🔫 EXECUTING LEGACY PATH for: '{text[:30]}...'")
-        para = add_bullet_point_legacy(doc, text, docx_styles)
-        
-        logger.warning(f"🔫 BULLET PATH: LEGACY ⚠️ - '{text[:30]}...'")
-        logger.debug("Bullet created via legacy")  
-        logger.warning(f"🔫 LEGACY PATH USED - this creates manual bullet formatting!")
-        logger.info(f"🔫 Document paragraph count after legacy creation: {len(doc.paragraphs)}")
+        logger.debug(f"Using legacy bullet path for: '{clean_text[:40]}...'")
+        para = add_bullet_point_legacy(doc, clean_text, docx_styles)
+        logger.debug("Legacy bullet created successfully")  
         return para
     except Exception as e:
-        logger.error(f"❌ Both native and legacy bullet creation failed: {e}")
-        logger.error(f"❌ 🚨 TOTAL FAILURE traceback: {traceback.format_exc()}")
+        logger.error(f"Both native and legacy bullet creation failed: {e}")
         # Emergency fallback - basic paragraph with bullet
         para = doc.add_paragraph()
-        para.add_run(f"• {text.strip()}")
-        logger.error(f"❌ Using emergency fallback paragraph")
+        para.add_run(f"• {clean_text}")
+        logger.warning("Used emergency fallback paragraph")
         return para
 
 @trace("docx.section_header")
@@ -1104,23 +1039,32 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
         doc = Document()
         
         # Initialize NumberingEngine for optimal performance (O3 recommendation)
+        # A4: Use singleton with request ID for isolation
         numbering_engine = None
+        custom_num_id = None
+        o3_engine = None
+        
         if NATIVE_BULLETS_ENABLED:
             try:
-                numbering_engine = NumberingEngine()
+                # A4: Get singleton instance with request isolation
+                numbering_engine = NumberingEngine.get_instance(request_id)
                 
-                # o3's CRITICAL FIX: Create our custom numbering definition ONCE at document start
-                # Use unique IDs to avoid conflicts with Word's built-in numbering
-                custom_num_id = 100  # Use ID 100 to avoid conflicts with Word defaults
-                custom_abstract_id = 50  # Use ID 50 to avoid conflicts
+                # B9: Use globally unique numId to prevent collisions
+                custom_num_id = NumberingEngine.allocate_num_id()
                 
                 logger.info(f"🔧 Creating custom numbering definition (numId={custom_num_id})...")
                 numbering_engine.get_or_create_numbering_definition(doc, num_id=custom_num_id)
+                
+                # O3: Initialize O3 core engine for enhanced bullet management
+                from utils.o3_bullet_core_engine import get_o3_engine
+                o3_engine = get_o3_engine(request_id)
+                logger.info("🚀 O3: Core bullet engine initialized")
                 
                 logger.info("✅ NumberingEngine initialized with custom bullet definition")
             except Exception as e:
                 logger.warning(f"Failed to initialize NumberingEngine: {e}")
                 numbering_engine = None
+                custom_num_id = 100  # Fallback ID
         
         # Create custom document styles
         custom_styles = _create_document_styles(doc, docx_styles)
@@ -1380,7 +1324,10 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Achievements/bullets - use the helper function for consistent formatting
                     for achievement in job.get('achievements', []):
-                        bullet_para = create_bullet_point(doc, achievement, docx_styles, numbering_engine, num_id=custom_num_id)
+                        bullet_para = create_bullet_point(
+                            doc, achievement, docx_styles, numbering_engine, 
+                            num_id=custom_num_id, o3_engine=o3_engine, section_name="experience"
+                        )
                         
                         # o3's CHECKPOINT: After each bullet creation
                         _detect_rogue_bullet_formatting(doc, f"AFTER_BULLET_{achievement[:20]}")
@@ -1460,7 +1407,10 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Highlights/bullets - use the helper function for consistent formatting
                     for highlight in school.get('highlights', []):
-                        bullet_para = create_bullet_point(doc, highlight, docx_styles, numbering_engine, num_id=custom_num_id)
+                        bullet_para = create_bullet_point(
+                            doc, highlight, docx_styles, numbering_engine, 
+                            num_id=custom_num_id, o3_engine=o3_engine, section_name="education"
+                        )
         
         # ------ SKILLS SECTION ------
         logger.info("Processing Skills section...")
@@ -1620,7 +1570,10 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                     
                     # Project details - use the helper function for consistent formatting
                     for detail in project.get('details', []):
-                        bullet_para = create_bullet_point(doc, detail, docx_styles, numbering_engine, num_id=custom_num_id)
+                        bullet_para = create_bullet_point(
+                            doc, detail, docx_styles, numbering_engine, 
+                            num_id=custom_num_id, o3_engine=o3_engine, section_name="projects"
+                        )
         
         # Fix spacing between sections - use our enhanced implementation
         if USE_STYLE_REGISTRY:
@@ -1639,157 +1592,64 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
             logger.info("🛠️ Applying O3's backup solution: Creating robust MR_Company style...")
             _create_robust_company_style(doc)
         
+        # 🚀 O3's Enhanced "Build-Then-Reconcile" Architecture: Final Bullet Consistency Pass
+        if NATIVE_BULLETS_ENABLED and numbering_engine and custom_num_id:
+            try:
+                logger.info("🚀 O3: Starting enhanced bullet reconciliation...")
+                
+                # O3: Use enhanced reconciliation if O3 engine is available
+                if o3_engine is not None:
+                    # O3 Enhanced reconciliation
+                    reconciliation_stats = o3_engine.reconcile_document_bullets(doc, numbering_engine)
+                    
+                    # Log O3 results
+                    bullets_processed = reconciliation_stats.get('bullets_processed', 0)
+                    bullets_repaired = reconciliation_stats.get('bullets_repaired', 0)
+                    bullets_stable = reconciliation_stats.get('bullets_stable', 0)
+                    success_rate = reconciliation_stats.get('success_rate', 0)
+                    
+                    logger.info(f"🚀 O3: Processed {bullets_processed} bullets - "
+                               f"{bullets_repaired} repaired, {bullets_stable} stable ({success_rate:.1f}% success)")
+                    
+                    # Get O3 engine summary
+                    engine_summary = o3_engine.get_engine_summary()
+                    logger.info(f"🚀 O3: Engine state: {engine_summary['document_state']}, "
+                               f"Total bullets: {engine_summary['bullet_count']}")
+                    
+                else:
+                    # Fallback to legacy reconciliation if O3 engine not available
+                    if USE_BULLET_RECONCILIATION:
+                        logger.info("🛡️ Starting legacy bullet reconciliation pass...")
+                        reconciler = BulletReconciliationEngine(request_id)
+                        reconciliation_stats = reconciler.reconcile_bullet_styles(doc, numbering_engine, custom_num_id)
+                        
+                        # Log legacy results
+                        total_bullets = reconciliation_stats.get('total_bullets', 0)
+                        repaired_count = reconciliation_stats.get('repaired_count', 0)
+                        duration_ms = reconciliation_stats.get('duration_ms', 0)
+                        errors = reconciliation_stats.get('errors', [])
+                        
+                        if repaired_count > 0:
+                            logger.info(f"🛡️ Legacy reconciliation fixed {repaired_count}/{total_bullets} bullets ({duration_ms:.1f}ms)")
+                        else:
+                            logger.info(f"🛡️ All {total_bullets} bullets already consistent ({duration_ms:.1f}ms)")
+                        
+                        if errors:
+                            logger.warning(f"🛡️ {len(errors)} reconciliation errors occurred")
+                            for error in errors[:3]:  # Log first 3 errors
+                                logger.warning(f"  - {error}")
+                
+            except Exception as e:
+                logger.error(f"🚀 O3: Enhanced reconciliation failed: {e}")
+                logger.warning("🚀 O3: Proceeding with document save despite reconciliation failure")
+        
         logger.info("Saving DOCX to BytesIO...")
         
-        # 🚨 O3 ARTIFACT 1: Save DOCX BEFORE any reconciliation/cleanup
-        # This allows O3 to inspect the actual failure state
-        logger.info("🚨 O3 ARTIFACT 1: Saving pre-reconciliation DOCX...")
-        try:
-            pre_reconciliation_path = Path(__file__).parent.parent / f'pre_reconciliation_{request_id}.docx'
-            with open(pre_reconciliation_path, 'wb') as f:
-                temp_output = BytesIO()
-                doc.save(temp_output)
-                temp_output.seek(0)
-                f.write(temp_output.getvalue())
-            logger.info(f"🚨 SAVED: Pre-reconciliation DOCX at {pre_reconciliation_path}")
-            
-            # Also create a debug analysis immediately
-            from utils.docx_debug import generate_debug_report
-            import json
-            
-            debug_report = generate_debug_report(doc)
-            debug_path = Path(__file__).parent.parent / f'pre_reconciliation_debug_{request_id}.json'
-            with open(debug_path, 'w') as f:
-                json.dump(debug_report, f, indent=2)
-            logger.info(f"🚨 SAVED: Pre-reconciliation debug report at {debug_path}")
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to save pre-reconciliation artifacts: {e}")
-        
-        # o3's FINAL CHECKPOINT: Before nuclear cleanup
-        rogue_count_before = _detect_rogue_bullet_formatting(doc, "BEFORE_NUCLEAR_CLEANUP")
-        
-        # o3's Nuclear Option: Clean all direct formatting from bullet paragraphs
-        # This addresses the rogue L-0 direct formatting that causes Word to show "Left: 0"
+        # 🚨 Legacy O3 Cleanup: Remove direct formatting issues
+        # This preserves existing functionality while the reconciliation handles the main logic
         cleaned_count = _cleanup_bullet_direct_formatting(doc)
         if cleaned_count > 0:
-            logger.info(f"🧹 o3's Nuclear Cleanup applied: Fixed {cleaned_count} bullet paragraphs before save")
-        
-        # o3's FINAL CHECKPOINT: After nuclear cleanup (should be 0)
-        rogue_count_after = _detect_rogue_bullet_formatting(doc, "AFTER_NUCLEAR_CLEANUP")
-        
-        # o3's MINIMAL PATCH: Verify numbering part exists and paragraphs reference it
-        logger.info("🔍 o3's DIAGNOSTIC: Verifying numbering part and paragraph references...")
-        bullet_paragraphs_found = 0
-        numbering_issues = []
-        
-        for i, p in enumerate(doc.paragraphs):
-            if p.style and p.style.name == "MR_BulletPoint":
-                bullet_paragraphs_found += 1
-                
-                # Check if paragraph has numPr
-                try:
-                    pPr = p._element.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}pPr')
-                    numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr') if pPr is not None else None
-                    
-                    if numPr is not None:
-                        # Extract numId and ilvl values
-                        numId_elem = numPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numId')
-                        ilvl_elem = numPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ilvl')
-                        
-                        numId_val = numId_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val') if numId_elem is not None else 'None'
-                        ilvl_val = ilvl_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val') if ilvl_elem is not None else 'None'
-                        
-                        logger.info(f"✅ Bullet paragraph {i} has numPr: numId={numId_val}, ilvl={ilvl_val}")
-                        logger.info(f"   Text: '{p.text[:40]}...'")
-                    else:
-                        numbering_issues.append(f"Paragraph {i} missing numPr: '{p.text[:40]}...'")
-                        logger.error(f"❌ Bullet paragraph {i} missing numPr: '{p.text[:40]}...'")
-                        
-                except Exception as e:
-                    numbering_issues.append(f"Paragraph {i} numPr check failed: {e}")
-                    logger.error(f"❌ Failed to check numPr for paragraph {i}: {e}")
-                
-                # o3's PATCH: Remove any stray direct indentation that utilities might have added
-                if p.paragraph_format.left_indent or p.paragraph_format.first_line_indent:
-                    logger.warning(f"🧹 o3's PATCH: Removing stray indentation from bullet paragraph {i}")
-                    p.paragraph_format.left_indent = None
-                    p.paragraph_format.first_line_indent = None
-        
-        logger.info(f"🔍 o3's DIAGNOSTIC SUMMARY:")
-        logger.info(f"   Total bullet paragraphs found: {bullet_paragraphs_found}")
-        logger.info(f"   Numbering issues found: {len(numbering_issues)}")
-        
-        if numbering_issues:
-            logger.error(f"❌ NUMBERING ISSUES DETECTED:")
-            for issue in numbering_issues:
-                logger.error(f"   {issue}")
-        else:
-            logger.info(f"✅ ALL BULLET PARAGRAPHS HAVE PROPER NUMBERING REFERENCES")
-        
-        # Check if numbering part exists in the document
-        try:
-            numbering_part = doc.part.numbering_part
-            if numbering_part is not None:
-                logger.info(f"✅ Numbering part exists in document")
-                
-                # Try to access the numbering XML content
-                try:
-                    numbering_xml = numbering_part._element
-                    abstractNums = numbering_xml.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}abstractNum')
-                    nums = numbering_xml.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}num')
-                    
-                    logger.info(f"📋 Numbering part contains:")
-                    logger.info(f"   AbstractNum definitions: {len(abstractNums)}")
-                    logger.info(f"   Num instances: {len(nums)}")
-                    
-                    # Log details of each abstractNum
-                    for abstractNum in abstractNums:
-                        abstractNumId = abstractNum.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}abstractNumId')
-                        logger.info(f"   AbstractNum ID: {abstractNumId}")
-                        
-                        # Check for bullet definition
-                        lvl = abstractNum.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}lvl')
-                        if lvl is not None:
-                            lvlText = lvl.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}lvlText')
-                            if lvlText is not None:
-                                bullet_char = lvlText.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
-                                logger.info(f"     Bullet character: '{bullet_char}'")
-                            
-                            # Check indentation
-                            ind = lvl.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ind')
-                            if ind is not None:
-                                left = ind.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}left')
-                                hanging = ind.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hanging')
-                                logger.info(f"     Indentation: left={left} twips, hanging={hanging} twips")
-                    
-                    # Log details of each num instance
-                    for num in nums:
-                        numId = num.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numId')
-                        abstractNumIdRef = num.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}abstractNumId')
-                        abstractNumIdVal = abstractNumIdRef.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val') if abstractNumIdRef is not None else 'None'
-                        logger.info(f"   Num instance: numId={numId} → abstractNumId={abstractNumIdVal}")
-                        
-                except Exception as e:
-                    logger.error(f"❌ Failed to parse numbering XML content: {e}")
-                    
-            else:
-                logger.error(f"❌ NO NUMBERING PART EXISTS IN DOCUMENT!")
-                logger.error(f"   This explains why bullets have no indentation!")
-                
-        except AttributeError:
-            logger.error(f"❌ NO NUMBERING PART EXISTS IN DOCUMENT!")
-            logger.error(f"   This explains why bullets have no indentation!")
-        except Exception as e:
-            logger.error(f"❌ Failed to check numbering part: {e}")
-        
-        # o3's DRAMATIC ANALYSIS
-        if rogue_count_before > 0 and rogue_count_after == 0:
-            logger.info(f"✅ NUCLEAR CLEANUP SUCCESS: {rogue_count_before} → 0 rogue paragraphs")
-        elif rogue_count_before == 0:
-            logger.info(f"✅ NO ROGUE FORMATTING: Document was clean before cleanup")
-        else:
-            logger.error(f"❌ NUCLEAR CLEANUP FAILED: Still {rogue_count_after} rogue paragraphs after cleanup!")
+            logger.info(f"🧹 Cleaned {cleaned_count} bullet paragraphs with direct formatting issues")
         
         output = BytesIO()
         doc.save(output)
@@ -1822,6 +1682,15 @@ def build_docx(request_id: str, temp_dir: str, debug: bool = False) -> BytesIO:
                 output.seek(0)
             except Exception as e:
                 logger.error(f"Error generating debug report: {e}")
+        
+        # O3: Clean up engine resources
+        if o3_engine is not None:
+            try:
+                from utils.o3_bullet_core_engine import cleanup_o3_engine
+                cleanup_o3_engine(request_id)
+                logger.info("🚀 O3: Engine resources cleaned up")
+            except Exception as e:
+                logger.warning(f"🚀 O3: Engine cleanup failed: {e}")
         
         logger.info(f"Successfully built DOCX for request ID: {request_id}")
         return output

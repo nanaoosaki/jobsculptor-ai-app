@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Tailor - Testing Dashboard (A1/A8)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .dashboard-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-result {
+            border-left: 4px solid #28a745;
+            padding-left: 15px;
+            margin: 10px 0;
+        }
+        .test-result.failed {
+            border-left-color: #dc3545;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error-category {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <h1><i class="bi bi-graph-up"></i> Bullet Consistency Testing Dashboard</h1>
+                    <p class="mb-0">A1 Testing Framework + A8 Request Analytics + A7 Error Categorization</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- A1 Testing Framework -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="bi bi-check-circle"></i> A1: Comprehensive Testing Framework</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="runFullTests" class="btn btn-primary btn-lg w-100 mb-3">
+                            Run Full Test Suite
+                        </button>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="runSingleTest('basic_bullets')">
+                                    Basic Bullets
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="runSingleTest('edge_cases')">
+                                    Edge Cases
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="runSingleTest('unicode_content')">
+                                    Unicode Content
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="runSingleTest('large_document')">
+                                    Large Document
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="testResults" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- A8 Analytics -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="bi bi-graph-up"></i> A8: Request Analytics</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="loadAnalytics" class="btn btn-success w-100 mb-3">
+                            Load Analytics Summary
+                        </button>
+                        
+                        <div id="analyticsResults"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- A7 Error Categorization -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="bi bi-exclamation-triangle"></i> A7: Error Categorization System</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="loadErrorCategories" class="btn btn-warning w-100 mb-3">
+                            Load Error Categories & Recommendations
+                        </button>
+                        
+                        <div id="errorResults"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="bi bi-info-circle"></i> Phase 2 Progress: A-Series Improvements</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="metric-card">
+                                    <div class="metric-value text-success">✓</div>
+                                    <div><strong>A1</strong> Testing Framework</div>
+                                    <small>Comprehensive test automation</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card">
+                                    <div class="metric-value text-success">✓</div>
+                                    <div><strong>A7</strong> Error Categorization</div>
+                                    <small>Systematic error analysis</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card">
+                                    <div class="metric-value text-success">✓</div>
+                                    <div><strong>A8</strong> Request Correlation</div>
+                                    <small>Cross-request tracking</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <strong>Phase 2.1 Status:</strong> Core A-series improvements implemented! 
+                            These tools will help systematically identify and track bullet consistency patterns.
+                            Next: Continue with remaining A-series items (A5, A11, A14, A15) and then move to B-series edge cases.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // A1: Testing Framework Functions
+        document.getElementById('runFullTests').addEventListener('click', function() {
+            showLoading('testResults');
+            
+            fetch('/api/test-framework/run')
+                .then(response => response.json())
+                .then(data => {
+                    displayTestResults(data);
+                })
+                .catch(error => {
+                    showError('testResults', 'Error running tests: ' + error.message);
+                });
+        });
+
+        function runSingleTest(scenario) {
+            showLoading('testResults');
+            
+            fetch(`/api/test-framework/scenario/${scenario}`)
+                .then(response => response.json())
+                .then(data => {
+                    displaySingleTestResult(data, scenario);
+                })
+                .catch(error => {
+                    showError('testResults', `Error running ${scenario} test: ` + error.message);
+                });
+        }
+
+        function displayTestResults(data) {
+            const container = document.getElementById('testResults');
+            
+            if (!data.success) {
+                showError('testResults', data.error);
+                return;
+            }
+            
+            const results = data.test_results;
+            let html = `
+                <div class="alert alert-success">
+                    <strong>✅ Tests Completed!</strong><br>
+                    Request ID: ${data.request_id}<br>
+                    Tests Run: ${data.tests_run}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value">${results.summary.passed_tests}/${results.summary.total_tests}</div>
+                            <div>Tests Passed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value">${results.summary.bullet_consistency_rate.toFixed(1)}%</div>
+                            <div>Bullet Consistency</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add detailed results
+            html += '<h6 class="mt-3">Detailed Results:</h6>';
+            results.detailed_results.forEach(result => {
+                const statusClass = result.success ? 'test-result' : 'test-result failed';
+                const statusIcon = result.success ? '✅' : '❌';
+                
+                html += `
+                    <div class="${statusClass}">
+                        <strong>${statusIcon} ${result.scenario}/${result.test_name}</strong><br>
+                        Bullets: ${result.consistent_bullets}/${result.total_bullets} 
+                        (${result.consistency_rate.toFixed(1)}%) - 
+                        ${result.duration_ms.toFixed(1)}ms
+                        ${result.errors.length > 0 ? '<br><small>Errors: ' + result.errors.slice(0, 2).join(', ') + '</small>' : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function displaySingleTestResult(data, scenario) {
+            const container = document.getElementById('testResults');
+            
+            if (!data.success) {
+                showError('testResults', data.error);
+                return;
+            }
+            
+            const result = data.result;
+            const statusClass = result.success ? 'alert-success' : 'alert-warning';
+            const statusIcon = result.success ? '✅' : '⚠️';
+            
+            const html = `
+                <div class="alert ${statusClass}">
+                    <strong>${statusIcon} ${scenario.toUpperCase()} Test Complete</strong><br>
+                    Request ID: ${data.request_id}<br>
+                    Bullets: ${result.consistent_bullets}/${result.total_bullets} consistent 
+                    (${result.consistency_rate.toFixed(1)}%)<br>
+                    Duration: ${result.duration_ms.toFixed(1)}ms<br>
+                    ${result.errors.length > 0 ? 'Errors: ' + result.errors.slice(0, 3).join(', ') : 'No errors!'}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // A8: Analytics Functions
+        document.getElementById('loadAnalytics').addEventListener('click', function() {
+            showLoading('analyticsResults');
+            
+            fetch('/api/analytics/summary?hours=24')
+                .then(response => response.json())
+                .then(data => {
+                    displayAnalytics(data);
+                })
+                .catch(error => {
+                    showError('analyticsResults', 'Error loading analytics: ' + error.message);
+                });
+        });
+
+        function displayAnalytics(data) {
+            const container = document.getElementById('analyticsResults');
+            
+            if (!data.success) {
+                showError('analyticsResults', data.error);
+                return;
+            }
+            
+            const analytics = data.analytics;
+            
+            if (analytics.message) {
+                container.innerHTML = `<div class="alert alert-info">${analytics.message}</div>`;
+                return;
+            }
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value">${analytics.summary.total_requests}</div>
+                            <div>Total Requests</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value">${analytics.summary.bullet_success_rate.toFixed(1)}%</div>
+                            <div>Bullet Success Rate</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6 class="mt-3">Performance Metrics:</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="metric-card">
+                            <div class="metric-value">${analytics.performance.avg_total_duration_ms.toFixed(0)}ms</div>
+                            <div>Avg Duration</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-card">
+                            <div class="metric-value">${analytics.performance.avg_build_duration_ms.toFixed(0)}ms</div>
+                            <div>Avg Build Time</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-card">
+                            <div class="metric-value">${analytics.performance.avg_reconciliation_duration_ms.toFixed(0)}ms</div>
+                            <div>Avg Reconciliation</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add error patterns if any
+            if (Object.keys(analytics.error_patterns).length > 0) {
+                html += '<h6 class="mt-3">Top Error Patterns:</h6>';
+                Object.entries(analytics.error_patterns).slice(0, 5).forEach(([pattern, count]) => {
+                    html += `<div class="error-category">${pattern} (${count}x)</div>`;
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // A7: Error Categorization Functions
+        document.getElementById('loadErrorCategories').addEventListener('click', function() {
+            showLoading('errorResults');
+            
+            fetch('/api/error-categorizer/summary')
+                .then(response => response.json())
+                .then(data => {
+                    displayErrorCategories(data);
+                })
+                .catch(error => {
+                    showError('errorResults', 'Error loading error categories: ' + error.message);
+                });
+        });
+
+        function displayErrorCategories(data) {
+            const container = document.getElementById('errorResults');
+            
+            if (!data.success) {
+                showError('errorResults', data.error);
+                return;
+            }
+            
+            let html = `
+                <div class="alert alert-info">
+                    <strong>📊 ${data.message}</strong><br>
+                    Total Errors: ${data.error_summary.total_errors}
+                </div>
+            `;
+            
+            // Show error breakdown
+            if (data.error_summary.category_breakdown) {
+                html += '<h6>Error Categories:</h6>';
+                Object.entries(data.error_summary.category_breakdown).forEach(([category, count]) => {
+                    html += `<div class="error-category">${category}: ${count} errors</div>`;
+                });
+            }
+            
+            // Show fix recommendations
+            if (data.fix_recommendations && data.fix_recommendations.length > 0) {
+                html += '<h6 class="mt-3">Fix Recommendations:</h6>';
+                data.fix_recommendations.forEach(rec => {
+                    html += `
+                        <div class="alert alert-warning">
+                            <strong>${rec.category} (${rec.priority})</strong><br>
+                            <strong>Issue:</strong> ${rec.issue}<br>
+                            <strong>Fix:</strong> ${rec.fix}<br>
+                            <small>Frequency: ${rec.frequency || 'N/A'}</small>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Helper Functions
+        function showLoading(containerId) {
+            document.getElementById(containerId).innerHTML = 
+                '<div class="loading"><div class="spinner-border" role="status"></div><br>Loading...</div>';
+        }
+
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = 
+                `<div class="alert alert-danger">${message}</div>`;
+        }
+    </script>
+</body>
+</html> 
