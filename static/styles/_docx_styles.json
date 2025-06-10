@@ -116,7 +116,7 @@
         125
       ],
       "alignment": "left",
-      "spaceBeforePt": 0,
+      "spaceBeforePt": 6,
       "spaceAfterPt": 0,
       "indentCm": 0.0,
       "rightTabCm": 17.59
@@ -148,7 +148,7 @@
     "MR_RoleDescription": {
       "fontFamily": "Palatino Linotype",
       "fontSizePt": 10,
-      "bold": true,
+      "italic": true,
       "color": [
         0,
         0,
@@ -156,7 +156,7 @@
       ],
       "spaceBeforePt": 0,
       "spaceAfterPt": 0,
-      "indentCm": 0.254
+      "indentCm": 0.0
     },
     "MR_BulletPoint": {
       "fontFamily": "Palatino Linotype",
@@ -166,8 +166,8 @@
         0,
         0
       ],
-      "indentCm": 0.33,
-      "hangingIndentCm": 0.33,
+      "indentCm": 0.35,
+      "hangingIndentCm": 0.35,
       "spaceBeforePt": 0,
       "spaceAfterPt": 0,
       "lineHeight": 1.0,

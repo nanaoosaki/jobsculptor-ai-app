@@ -25,6 +25,7 @@
   --bulletListMarginTop: 0.1cm;
   --bulletListMarginBottom: 0.2cm;
   --bulletItemPaddingLeft: 1.2em;
+  --bullet-glyph: •;
   --sectionBoxBorderWidth: 2px;
   --sectionBoxBorderColor: #4a6fdc;
   --sectionBoxFontWeight: 700;
@@ -61,7 +62,7 @@
   --section-content-padding-left: 0;
   --docx-section-header-indent-cm: 0.0;
   --docx-company-name-indent-cm: 0.0;
-  --docx-role-description-indent-cm: 0.0;
+  --docx-role-description-indent-cm: 0.254;
   --docx-content-left-indent-cm: 0.0;
   --docx-content-right-indent-cm: 0;
   --docx-bullet-left-indent-cm: 0.35;
@@ -95,7 +96,7 @@
   --paragraph-spacing-contact-after: 0;
   --paragraph-spacing-section-before: 0;
   --paragraph-spacing-section-after: 0;
-  --paragraph-spacing-company-before: 0;
+  --paragraph-spacing-company-before: 6;
   --paragraph-spacing-company-after: 0;
   --paragraph-spacing-role-before: 0;
   --paragraph-spacing-role-after: 0;

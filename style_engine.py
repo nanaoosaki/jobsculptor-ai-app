@@ -494,20 +494,14 @@ class StyleEngine:
                 style = doc.styles.add_style(style_name, WD_STYLE_TYPE.PARAGRAPH)
                 logger.info(f"✅ Created custom style: {style_name}")
                 
-                # **BULLETPROOF HANDLING FOR MR_Company (per O3's advice)**
+                # **ENHANCED HANDLING FOR MR_Company (per O3's advice + design token support)**
                 if style_name == "MR_Company":
-                    # Step 1: Set base style to 'No Spacing' to inherit 0/0 spacing
+                    # Step 1: Set base style to 'No Spacing' to inherit 0/0 spacing baseline
                     try:
                         style.base_style = doc.styles['No Spacing']
                         logger.info("✅ MR_Company: Set base_style to 'No Spacing'")
                     except Exception as e:
                         logger.warning(f"⚠️ MR_Company: Could not set base_style to 'No Spacing': {e}")
-                    
-                    # Step 2: Set 0pt spacing at the high-level API
-                    pf = style.paragraph_format
-                    pf.space_before = Pt(0)
-                    pf.space_after = Pt(0)
-                    logger.info("✅ MR_Company: Set space_before and space_after to 0pt")
                     
                     # Step 3: XML-level controls to kill implicit spacing (O3's approach)
                     try:
@@ -538,12 +532,14 @@ class StyleEngine:
                 if cfg.get("allCaps", False):
                     font.all_caps = True
                 
-                # Paragraph spacing (for non-MR_Company styles)
-                if style_name != "MR_Company":  # Skip spacing for MR_Company as it's handled above
-                    if "spaceAfterPt" in cfg:
-                        paragraph_format.space_after = Pt(cfg["spaceAfterPt"])
-                    if "spaceBeforePt" in cfg:
-                        paragraph_format.space_before = Pt(cfg["spaceBeforePt"])
+                # Paragraph spacing (NOW APPLIES TO ALL STYLES INCLUDING MR_Company)
+                # FIX: Remove the hardcoded exclusion of MR_Company to respect design tokens
+                if "spaceAfterPt" in cfg:
+                    paragraph_format.space_after = Pt(cfg["spaceAfterPt"])
+                    logger.info(f"✅ {style_name}: Applied space_after = {cfg['spaceAfterPt']}pt from design tokens")
+                if "spaceBeforePt" in cfg:
+                    paragraph_format.space_before = Pt(cfg["spaceBeforePt"])
+                    logger.info(f"✅ {style_name}: Applied space_before = {cfg['spaceBeforePt']}pt from design tokens")
                 
                 # Alignment
                 alignment = cfg.get("alignment", "left")
