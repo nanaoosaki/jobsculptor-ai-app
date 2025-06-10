@@ -17,7 +17,7 @@
       "bold": 700
     },
     "fontColor": {
-      "primaryBlue": "#1F497D",
+      "primaryBlue": "#000066",
       "roleboxFill": "#D6E0F5",
       "black": "#000000",
       "greyText": "#505050"
@@ -29,12 +29,12 @@
     "spacing": {
       "defaultAfterPt": 0,
       "nameAfterPt": 0,
-      "contactAfterPt": 0,
-      "sectionAfterPt": 0,
+      "contactAfterPt": 6,
+      "sectionAfterPt": 6,
       "companyAfterPt": 0,
-      "roleAfterPt": 0,
+      "roleAfterPt": 3,
       "roleDescAfterPt": 0,
-      "bulletAfterPt": 0
+      "bulletAfterPt": 4
     }
   },
   "page": {
@@ -84,7 +84,7 @@
       ],
       "alignment": "center",
       "spaceBeforePt": 0,
-      "spaceAfterPt": 0
+      "spaceAfterPt": 6
     },
     "MR_SectionHeader": {
       "fontFamily": "Palatino Linotype",
@@ -97,13 +97,13 @@
         0
       ],
       "borderColor": [
-        31,
-        73,
-        125
+        0,
+        0,
+        102
       ],
       "borderWidthPt": 0.5,
       "spaceBeforePt": 0,
-      "spaceAfterPt": 0,
+      "spaceAfterPt": 6,
       "indentCm": 0.0
     },
     "MR_Company": {
@@ -111,9 +111,9 @@
       "fontSizePt": 11,
       "bold": true,
       "color": [
-        31,
-        73,
-        125
+        0,
+        0,
+        102
       ],
       "alignment": "left",
       "spaceBeforePt": 6,
@@ -136,27 +136,27 @@
         245
       ],
       "borderColor": [
-        31,
-        73,
-        125
+        0,
+        0,
+        102
       ],
       "borderWidthPt": 0.5,
       "spaceBeforePt": 0,
-      "spaceAfterPt": 0,
+      "spaceAfterPt": 3,
       "indentCm": 0.0
     },
     "MR_RoleDescription": {
       "fontFamily": "Palatino Linotype",
       "fontSizePt": 10,
-      "italic": true,
+      "bold": true,
       "color": [
         0,
         0,
         0
       ],
-      "spaceBeforePt": 0,
+      "spaceBeforePt": 6,
       "spaceAfterPt": 0,
-      "indentCm": 0.0
+      "indentCm": 0.254
     },
     "MR_BulletPoint": {
       "fontFamily": "Palatino Linotype",
@@ -169,7 +169,7 @@
       "indentCm": 0.35,
       "hangingIndentCm": 0.35,
       "spaceBeforePt": 0,
-      "spaceAfterPt": 0,
+      "spaceAfterPt": 4,
       "lineHeight": 1.0,
       "bulletCharacter": "\u2013"
     },

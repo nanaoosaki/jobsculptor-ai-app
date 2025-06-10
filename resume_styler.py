@@ -46,11 +46,24 @@ class YCEddieStyler:
         """Create all required paragraph styles for the document"""
         print("DEBUG: Creating custom document styles")
         
+        # Load design tokens for consistent styling
+        from style_engine import StyleEngine
+        design_tokens = StyleEngine.load_tokens()
+        primary_blue_hex = design_tokens.get("color-primary-blue", "#000066")
+        primary_blue_rgb = StyleEngine.hex_to_rgb(primary_blue_hex)
+        
         # Default style (normal text)
         style = self.document.styles['Normal']
         font = style.font
         font.name = 'Calibri'
         font.size = Pt(11)
+        
+        # Get spacing values from design tokens
+        contact_after = int(design_tokens.get("paragraph-spacing-contact-after", "6"))
+        section_after = int(design_tokens.get("paragraph-spacing-section-after", "6"))
+        bullet_after = int(design_tokens.get("paragraph-spacing-bullet-after", "4"))
+        role_after = int(design_tokens.get("paragraph-spacing-role-after", "3"))
+        date_after = int(design_tokens.get("paragraph-spacing-date-after", "4"))
         
         # Contact info style
         contact_style = self.document.styles.add_style('Contact', WD_STYLE_TYPE.PARAGRAPH)
@@ -58,7 +71,7 @@ class YCEddieStyler:
         font.name = 'Calibri'
         font.size = Pt(12)
         contact_style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        contact_style.paragraph_format.space_after = Pt(6)
+        contact_style.paragraph_format.space_after = Pt(contact_after)  # Use design token
         
         # Section header style - centered with box border
         header_style = self.document.styles.add_style('SectionHeader', WD_STYLE_TYPE.PARAGRAPH)
@@ -66,9 +79,9 @@ class YCEddieStyler:
         font.name = 'Calibri'
         font.size = Pt(14)
         font.bold = True
-        font.color.rgb = RGBColor(0, 0, 102)  # Dark blue TEXT ONLY
+        font.color.rgb = RGBColor(*primary_blue_rgb)  # Use design token color
         header_style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        header_style.paragraph_format.space_after = Pt(6)
+        header_style.paragraph_format.space_after = Pt(section_after)  # Use design token
         
         # IMPORTANT: DO NOT set background shading for headers
         print("DEBUG: Created section header style with NO background color")
@@ -80,7 +93,7 @@ class YCEddieStyler:
         font.size = Pt(11)
         bullet_style.paragraph_format.left_indent = Inches(0.25)
         bullet_style.paragraph_format.first_line_indent = Inches(-0.25)
-        bullet_style.paragraph_format.space_after = Pt(4)  # Reduced from 6pt to 4pt
+        bullet_style.paragraph_format.space_after = Pt(bullet_after)  # Use design token
         
         # Company/role style
         role_style = self.document.styles.add_style('CompanyRole', WD_STYLE_TYPE.PARAGRAPH)
@@ -88,7 +101,7 @@ class YCEddieStyler:
         font.name = 'Calibri'
         font.size = Pt(11)
         font.bold = True
-        role_style.paragraph_format.space_after = Pt(3)
+        role_style.paragraph_format.space_after = Pt(role_after)  # Use design token
         
         # Date range style
         date_style = self.document.styles.add_style('DateRange', WD_STYLE_TYPE.PARAGRAPH)
@@ -96,7 +109,7 @@ class YCEddieStyler:
         font.name = 'Calibri'
         font.size = Pt(11)
         font.italic = True
-        date_style.paragraph_format.space_after = Pt(4)  # Reduced from 6pt to 4pt
+        date_style.paragraph_format.space_after = Pt(date_after)  # Use design token
         
         print("DEBUG: All document styles created successfully")
         
@@ -168,6 +181,12 @@ class YCEddieStyler:
         """Add a section header with proper styling"""
         print(f"DEBUG: Adding section header: {title}")
         
+        # Load design tokens for consistent color
+        from style_engine import StyleEngine
+        design_tokens = StyleEngine.load_tokens()
+        primary_blue_hex = design_tokens.get("color-primary-blue", "#000066")
+        primary_blue_rgb = StyleEngine.hex_to_rgb(primary_blue_hex)
+        
         # Add some spacing before section but less than before
         spacing_para = self.document.add_paragraph().add_run()
         spacing_para.font.size = Pt(4)  # Reduced spacing
@@ -178,11 +197,11 @@ class YCEddieStyler:
         # Add the section title in all caps
         run = header_para.add_run(title.upper())
         
-        # Ensure the run has proper formatting (dark blue text, bold)
+        # Ensure the run has proper formatting (design token blue text, bold)
         run.font.name = 'Calibri'
         run.font.size = Pt(14)
         run.font.bold = True
-        run.font.color.rgb = RGBColor(0, 0, 102)  # Dark blue
+        run.font.color.rgb = RGBColor(*primary_blue_rgb)  # Use design token color
         
         # Add the box border
         self.add_box_border(header_para)

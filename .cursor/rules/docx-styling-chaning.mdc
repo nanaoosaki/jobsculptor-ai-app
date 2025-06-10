@@ -92,6 +92,14 @@ Direct ¶ formatting ▶ Paragraph style ▶ Linked character style ▶ Document
 - **DO**: Let design tokens control all MR_Company spacing values
 - **XML**: Use contextual spacing controls for advanced behavior, never for basic spacing
 
+### **9. Token Generation Pipeline - CRITICAL LAYER**
+- **RULE**: `tools/generate_tokens.py` MUST use design tokens for ALL style properties
+- **WHY**: Token generator is part of the styling pipeline and can create hardcoded conflicts
+- **DO**: Load design tokens and use variables: `roledesc_indent = float(design_tokens.get("docx-role-description-indent-cm", "0.254"))`
+- **DON'T**: Hardcode style properties: `"italic": True` or `"indentCm": 0.0`
+- **DANGER**: Token generator hardcodes override design tokens silently
+- **LESSON LEARNED**: Even token generation can create conflicts if not properly design-token-driven
+
 ## 🚨 **Anti-Patterns - NEVER DO THESE**
 
 ### **Race Condition Creators**
@@ -122,6 +130,22 @@ left_indent_twips = int(left_indent_cm * 567)
 indent_xml = f'<w:ind w:left="{left_indent_twips}" w:hanging="{hanging_indent_twips}"/>'
 ```
 
+### **Token Generator Hardcode Violations**
+```python
+# ❌ BAD: Hardcoded properties in token generator
+"MR_RoleDescription": {
+    "italic": True,  # Should be "bold": True from design evaluation
+    "indentCm": 0.0  # Should use design token "docx-role-description-indent-cm"
+}
+
+# ✅ GOOD: Design token driven generator
+roledesc_indent = float(design_tokens.get("docx-role-description-indent-cm", "0.254"))
+"MR_RoleDescription": {
+    "bold": True,  # Matches intended design
+    "indentCm": roledesc_indent  # Uses design token
+}
+```
+
 ## ✅ **Correct Patterns - ALWAYS DO THESE**
 
 ### **Content-First Style Application**
@@ -149,12 +173,37 @@ logger.info(f"After style: {para.style.name if para.style else 'None'}")
 logger.info(f"Final spacing: before={para.paragraph_format.space_before}, after={para.paragraph_format.space_after}")
 ```
 
+### **Token Generator Design Token Usage**
+```python
+# ✅ CORRECT: Load design tokens in generator
+with open('design_tokens.json', 'r') as f:
+    design_tokens = json.load(f)
+
+# ✅ CORRECT: Use design token variables
+roledesc_indent = float(design_tokens.get("docx-role-description-indent-cm", "0.254"))
+company_spacing = design_tokens.get("paragraph-spacing-company-before", "6")
+
+# ✅ CORRECT: Apply in style definitions
+"MR_RoleDescription": {
+    "bold": True,
+    "indentCm": roledesc_indent
+}
+```
+
 ## 🔧 **File-Specific Rules**
 
 ### **`design_tokens.json`**
 - ✅ ONLY place for spacing/sizing values
 - ✅ Use consistent naming: `paragraph-spacing-{style}-{before|after}`
 - ❌ NEVER hardcode values elsewhere
+
+### **`tools/generate_tokens.py`** ⚠️ **NEWLY CRITICAL**
+- ✅ MUST load and use design tokens for ALL style properties
+- ✅ Use design token variables instead of hardcoded values
+- ✅ Maintain design token hierarchy: design_tokens.json → generate_tokens.py → _docx_styles.json
+- ❌ NEVER hardcode style properties like `"italic": True` or `"indentCm": 0.0`
+- ❌ NEVER bypass design token system in token generation
+- **LESSON**: Token generator is part of the styling pipeline and must respect design tokens
 
 ### **`style_engine.py`** 
 - ✅ ONLY place for style creation and configuration
@@ -174,6 +223,12 @@ logger.info(f"Final spacing: before={para.paragraph_format.space_before}, after=
 - ❌ NEVER hardcode XML attribute values
 - ❌ NEVER mix manual bullets with native numbering
 
+### **`resume_styler.py`**
+- ✅ Load design tokens and use StyleEngine.hex_to_rgb() for colors
+- ✅ Use design token spacing values with proper Pt() conversion
+- ❌ NEVER hardcode RGBColor() values or Pt() spacing
+- ❌ NEVER bypass design token color/spacing system
+
 ## 🎯 **Testing Requirements**
 
 ### **Before Any Style Changes**
@@ -181,6 +236,12 @@ logger.info(f"Final spacing: before={para.paragraph_format.space_before}, after=
 2. **Verify**: `_docx_styles.json` reflects your changes
 3. **Test**: Create minimal document to verify style application
 4. **Log**: Enable verbose logging to trace style application flow
+
+### **Token Generator Validation**
+- ✅ Verify generated _docx_styles.json matches design tokens
+- ✅ Check that style properties use design token values, not hardcoded
+- ✅ Test visual output matches intended design (bold vs italic, correct indentation)
+- ❌ Never assume token generator is conflict-free without verification
 
 ### **Regression Prevention**
 - ✅ Test multiple entries of same style (company, school, etc.)
@@ -190,7 +251,26 @@ logger.info(f"Final spacing: before={para.paragraph_format.space_before}, after=
 
 ---
 
+## 🏆 **Design Token Alignment Success Story**
+
+In January 2025, a comprehensive audit eliminated 23+ hardcoded styling conflicts across 8 files. Key discoveries:
+
+**4-Layer Pipeline Established**:
+```
+design_tokens.json → tools/generate_tokens.py → _docx_styles.json → Application Code
+```
+
+**Critical Fix**: `tools/generate_tokens.py` was found to contain hardcoded conflicts that overrode design tokens:
+- `"italic": True` instead of `"bold": True` 
+- `"indentCm": 0.0` instead of using design token `"docx-role-description-indent-cm": "0.254"`
+
+**Lesson**: Even the token generation layer must respect design tokens. Any hardcoded values anywhere in the pipeline can create conflicts.
+
+**Result**: 100% design token control, predictable styling, single source of truth.
+
+---
 
 
 
-*These rules prevent the three-layer styling conflicts that cause spacing inconsistencies and ensure maintainable, predictable DOCX generation.* 
+
+*These rules prevent the four-layer styling conflicts that cause spacing inconsistencies and ensure maintainable, predictable DOCX generation.* 

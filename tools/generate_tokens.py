@@ -245,6 +245,9 @@ def generate_docx_style_mappings():
         bullet_indent = float(tokens.get("docx-bullet-left-indent-cm", "0.39"))
         bullet_hanging = float(tokens.get("docx-bullet-hanging-indent-cm", "0.39"))
         
+        # Role description indentation
+        roledesc_indent = float(tokens.get("docx-role-description-indent-cm", "0.254"))
+        
         # Enhanced mapping with new specification
         docx_styles = {
             "typography": {
@@ -356,11 +359,11 @@ def generate_docx_style_mappings():
                 "MR_RoleDescription": {
                     "fontFamily": font_family_base,
                     "fontSizePt": font_size_roledesc,
-                    "italic": True,
+                    "bold": True,
                     "color": hex_to_rgb(color_black),
                     "spaceBeforePt": para_roledesc_before,
                     "spaceAfterPt": para_roledesc_after,
-                    "indentCm": 0.0
+                    "indentCm": roledesc_indent
                 },
                 "MR_BulletPoint": {
                     "fontFamily": font_family_base,

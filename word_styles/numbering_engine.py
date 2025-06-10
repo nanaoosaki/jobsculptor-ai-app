@@ -294,10 +294,18 @@ class NumberingEngine:
             
             logger.debug(f"🔧 Creating new numbering definition for num_id={num_id}, abstract_num_id={abstract_num_id}")
             
-            # B2: Header-spacing table cell compatibility
-            # Use tighter spacing for bullets that might appear in tables
-            left_indent = "331"    # ~0.23" for table compatibility
-            hanging_indent = "187" # ~0.13" hanging indent
+            # B2: Use design tokens instead of hardcoded values
+            from style_engine import StyleEngine
+            design_tokens = StyleEngine.load_tokens()
+            
+            # Convert design token cm values to twips for XML
+            left_indent_cm = float(design_tokens.get("docx-bullet-left-indent-cm", "0.584"))
+            hanging_indent_cm = float(design_tokens.get("docx-bullet-hanging-indent-cm", "0.330"))
+            
+            left_indent = str(self.cm_to_twips(left_indent_cm))
+            hanging_indent = str(self.cm_to_twips(hanging_indent_cm))
+            
+            logger.info(f"Using design token bullet indentation: left={left_indent_cm}cm ({left_indent} twips), hanging={hanging_indent_cm}cm ({hanging_indent} twips)")
             
             # C1: Create abstractNum definition with separate ID
             abstract_num = f"""

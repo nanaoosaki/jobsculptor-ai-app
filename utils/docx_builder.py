@@ -735,12 +735,28 @@ def add_role_description(doc, text, docx_styles):
     # Use our new custom style
     role_para = doc.add_paragraph(text, style='MR_RoleDescription')
     
-    # SPACING: Add 6pt before role description for visual separation from role title
-    # Keep 0pt after for tight spacing with bullets below
-    role_para.paragraph_format.space_before = Pt(6)   # 6pt before for separation
-    role_para.paragraph_format.space_after = Pt(0)    # 0pt after for tight bullets
+    # USE DESIGN TOKENS instead of hardcoded values
+    if docx_styles and 'MR_RoleDescription' in docx_styles:
+        # Get spacing from the style configuration (which comes from design tokens)
+        style_config = docx_styles['MR_RoleDescription']
+        space_before = style_config.get('spaceBeforePt', 0)
+        space_after = style_config.get('spaceAfterPt', 0)
+        
+        role_para.paragraph_format.space_before = Pt(space_before)
+        role_para.paragraph_format.space_after = Pt(space_after)
+        
+        logger.info(f"Applied design token spacing: before={space_before}pt, after={space_after}pt")
+    else:
+        # Fallback to design tokens directly if style config not available
+        from style_engine import StyleEngine
+        design_tokens = StyleEngine.load_tokens()
+        space_before = int(design_tokens.get("paragraph-spacing-roledesc-before", "0"))
+        space_after = int(design_tokens.get("paragraph-spacing-roledesc-after", "0"))
+        
+        role_para.paragraph_format.space_before = Pt(space_before)
+        role_para.paragraph_format.space_after = Pt(space_after)
     
-    logger.info(f"Applied MR_RoleDescription with 6pt before spacing to: {str(text)[:30]}...")
+    logger.info(f"Applied MR_RoleDescription with design token spacing to: {str(text)[:30]}...")
     return role_para
 
 def tighten_before_headers(doc):
