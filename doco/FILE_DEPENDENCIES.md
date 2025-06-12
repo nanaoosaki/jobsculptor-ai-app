@@ -3,6 +3,67 @@
 ## Overview
 This document outlines the dependencies and interactions between various modules in the resume tailoring application, focusing on the newly implemented features and scripts.
 
+## 🌳 **Quick Reference: Core Dependencies Tree**
+
+```
+app.py
+  ├── tailoring_handler.py
+  │     ├── claude_integration.py
+  │     ├── html_generator.py
+  │     └── resume_index.py
+  ├── upload_handler.py
+  │     └── resume_processor.py
+  │           ├── llm_resume_parser.py
+  │           ├── pdf_parser.py
+  │           └── format_handler.py
+  ├── job_parser_handler.py
+  │     ├── job_parser.py
+  │     └── llm_job_analyzer.py
+  ├── pdf_exporter.py
+  │     └── style_manager.py
+  └── utils/docx_builder.py
+        ├── word_styles/registry.py
+        ├── word_styles/section_builder.py
+        ├── word_styles/numbering_engine.py ← ✅ Native Bullets
+        └── utils/o3_bullet_core_engine.py ← ✅ O3 Enhanced
+```
+
+## 🔄 **Styling System Dependencies**
+
+```
+design_tokens.json
+  ├── style_engine.py
+  │     └── style_manager.py
+  │           ├── html_generator.py
+  │           ├── pdf_exporter.py
+  │           └── utils/docx_builder.py
+  └── tools/generate_tokens.py
+        ├── static/scss/_tokens.scss
+        └── static/styles/_docx_styles.json
+```
+
+## ⚡ **Change Impact Analysis**
+
+When modifying these modules, consider their dependencies:
+
+### **🔴 High Impact (Many Dependents)**
+- **`style_manager.py`** - Used by multiple output generators (HTML, PDF, DOCX)
+- **`app.py`** - Central controller, affects all workflows
+- **`design_tokens.json`** - Styling source of truth, affects all output formats
+- **`utils/docx_builder.py`** - Core DOCX generation with native bullets
+
+### **🟡 Medium Impact**
+- **`html_generator.py`** - Affects preview and PDF generation
+- **`claude_integration.py`** - Affects all tailoring workflows
+- **`tailoring_handler.py`** - Orchestrates entire process
+- **`word_styles/numbering_engine.py`** - Affects DOCX bullet behavior
+
+### **🟢 Isolated Impact**
+- **`word_styles/` package** - DOCX-specific functionality
+- **`metric_utils.py`** - Achievement-specific processing
+- **B-series utilities** - Edge case handling modules
+- **API logging utilities** - Diagnostic and monitoring tools
+
 ## ✅ Major Implementation: Native Bullet Points System (June 2025)
 
 ### **🎯 Implementation Success Overview**
@@ -124,7 +185,7 @@ design_tokens.json → style_engine.py → DOCX Styles
 #### **1. Feature Flag Detection**
 ```python
 # Environment configuration
-DOCX_USE_NATIVE_BULLETS = os.getenv('DOCX_USE_NATIVE_BULLETS', 'false').lower() == 'true'
+DOCX_USE_NATIVE_BULLETS = os.getenv('DOCX_USE_NATIVE_BULLETS', 'true').lower() == 'true'
 
 # Runtime decision
 if use_native and docx_styles:
@@ -885,6 +946,66 @@ The `word_styles` package was implemented to provide a more reliable and maintai
   - **Design Token Integration**: Works WITH design token spacing, doesn't override it
   - **Cross-Format Consistency**: 1em (HTML) = 221 twips (DOCX) alignment
   - **Feature Flag Support**: Integrates with `DOCX_USE_NATIVE_BULLETS` environment variable
+
+## Enhanced Utility Modules (B-Series + O3)
+
+### utils/unicode_bullet_sanitizer.py
+
+- **Purpose**: Handles international character bullet sanitization
+- **Key Dependencies**: `None` (standalone Unicode processing)
+- **Core Function**: `sanitize_bullet_text()` - removes Unicode bullet prefixes
+- **Used By**: `create_bullet_point()` for text preprocessing, O3 engine integration
+
+### utils/numid_collision_manager.py
+
+- **Purpose**: Prevents numbering ID collisions in multi-document scenarios
+- **Key Dependencies**: `os.getpid()` for process-specific allocation
+- **Core Function**: `allocate_safe_numid()` - generates collision-resistant IDs
+- **Used By**: `NumberingEngine` for safe numbering allocation, O3 engine fallback
+
+### utils/xml_repair_system.py
+
+- **Purpose**: Analyzes and repairs DOCX XML corruption
+- **Key Dependencies**: `docx.oxml`, XML parsing libraries
+- **Core Function**: `repair_docx_xml()` - fixes malformed bullet XML
+- **Used By**: Post-processing and error recovery workflows, O3 reconciliation
+
+### utils/style_collision_handler.py
+
+- **Purpose**: Manages style conflicts between different formatting layers
+- **Key Dependencies**: `docx.styles`, style inheritance system
+- **Core Function**: `validate_style_for_bullets()` - ensures style compatibility
+- **Used By**: Style application and conflict resolution workflows, O3 validation
+
+### ✅ **utils/o3_bullet_core_engine.py (NEW - January 2025)**
+
+- **Purpose**: ✅ **O3's comprehensive bullet consistency engine** implementing "build-then-reconcile" architecture
+- **Status**: ✅ **PRODUCTION-READY** Phase 4 implementation
+- **Key Classes**:
+  - `O3BulletCoreEngine`: Main engine class with document-level state management
+  - `BulletMetadata`: Dataclass for tracking bullet state and properties
+  - `BulletState`: Enum for bullet lifecycle states (pending, validated, failed, reconciled, stable)
+- **Key Functions**:
+  - `get_o3_engine()` - Document-specific engine creation and retrieval
+  - `create_bullet_trusted()` - Trust-based bullet creation without immediate verification
+  - `validate_document_bullets()` - Comprehensive document-wide bullet validation
+  - `reconcile_document_bullets()` - Atomic reconciliation with guaranteed consistency
+  - `cleanup_o3_engine()` - Engine resource cleanup and memory management
+- **Dependencies**: 
+  - B-series modules for edge case handling
+  - `NumberingEngine` for native bullet application
+  - `docx` library for document manipulation
+  - Flask app for API integration
+- **Used By**: 
+  - `create_bullet_point()` in DOCX builder for enhanced bullet management
+  - Flask API endpoints (`/api/o3-core/*`) for engine monitoring
+  - Production DOCX generation workflows
+- **Features**: 
+  - **Document-level state tracking** with comprehensive metadata
+  - **Performance metrics** and timing analysis
+  - **Error recovery** with multi-pass reconciliation
+  - **B-series integration** for Unicode sanitization and collision management
+  - **Production monitoring** via API endpoints and engine summaries
 
 ## Updated Workflows
 
