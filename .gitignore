@@ -87,6 +87,16 @@ Thumbs.db
 # Zip files
 *.zip
 
+# DOCX files (mostly testing and generated files)
+*.docx
+# Exception: Keep template files if needed
+!*template*.docx
+
+# Archive directories (old files and testing)
+archive/
+archived/
+archive_*/
+
 # Chat history (may contain sensitive data)
 .specstory/
 
