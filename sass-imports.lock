@@ -1,8 +1,0 @@
-# Sass Import Lockfile
-# Generated automatically - do not edit manually
-# Tracks @import and @use dependencies
-# Format: filepath:md5hash
-
-D:\AI\manusResume6\static\scss\_base.scss:9e434c74c2eb614916fca6a1662defdb
-D:\AI\manusResume6\static\scss\_resume.scss:8b5576c48a845c9f8541ad177db7b463
-D:\AI\manusResume6\static\scss\_tokens.scss:3f72980400d4a2e5aaf17a724f79d273

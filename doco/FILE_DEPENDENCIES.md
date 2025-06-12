@@ -1,7 +1,7 @@
 # File Dependencies for Resume Tailoring Application
 
 ## Overview
-This document outlines the dependencies and interactions between various modules in the resume tailoring application, focusing on the newly implemented features and scripts.
+This document outlines the dependencies and interactions between various modules in the resume tailoring application, focusing on the complete architecture including core features, advanced bullet systems (B-Series + O3), YC-specific functionality, build tools, testing infrastructure, and cross-platform rendering.
 
 ## 🌳 **Quick Reference: Core Dependencies Tree**
 
@@ -15,17 +15,43 @@ app.py
   │     └── resume_processor.py
   │           ├── llm_resume_parser.py
   │           ├── pdf_parser.py
-  │           └── format_handler.py
+  │           ├── format_handler.py ← ✅ Enhanced
+  │           └── resume_formatter.py ← ✅ Enhanced
   ├── job_parser_handler.py
   │     ├── job_parser.py
   │     └── llm_job_analyzer.py
   ├── pdf_exporter.py
   │     └── style_manager.py
-  └── utils/docx_builder.py
-        ├── word_styles/registry.py
-        ├── word_styles/section_builder.py
-        ├── word_styles/numbering_engine.py ← ✅ Native Bullets
-        └── utils/o3_bullet_core_engine.py ← ✅ O3 Enhanced
+  ├── utils/docx_builder.py
+  │     ├── word_styles/registry.py
+  │     ├── word_styles/section_builder.py
+  │     ├── word_styles/numbering_engine.py ← ✅ Native Bullets
+  │     └── utils/o3_bullet_core_engine.py ← ✅ O3 Enhanced
+  ├── ✅ YC Features
+  │     ├── yc_eddie_styler.py ← ✅ YC-Eddie Styling
+  │     ├── yc_resume_generator.py ← ✅ YC Generation
+  │     └── resume_styler.py ← ✅ Core Styling
+  ├── ✅ Deployment & Validation
+  │     ├── startup.py ← ✅ Production Setup
+  │     ├── validate_deployment.py ← ✅ Deployment Checks
+  │     └── restart_app.py ← ✅ Development Utils
+  ├── ✅ Tools Package (20+ files)
+  │     ├── tools/generate_tokens.py ← ✅ Token Generation
+  │     ├── tools/build_css.py ← ✅ CSS Compilation
+  │     ├── tools/cross_format_diagnostics.py ← ✅ Diagnostics
+  │     └── tools/* ← ✅ 17+ Additional Tools
+  ├── ✅ Testing Infrastructure
+  │     ├── tests/test_docx_builder.py ← ✅ Core Tests
+  │     ├── tests/docx_spacing/* ← ✅ Spacing Tests (7 files)
+  │     └── utils/staged_testing.py ← ✅ Advanced Testing
+  ├── ✅ Advanced Utils (B-Series + O3)
+  │     ├── utils/bullet_* ← ✅ Bullet System (6 files)
+  │     ├── utils/*_sanitizer.py ← ✅ Sanitization (2 files)
+  │     ├── utils/*_manager.py ← ✅ Management (3 files)
+  │     └── utils/* ← ✅ 14+ Utility Files
+  └── ✅ Cross-Platform Rendering
+        ├── rendering/compat/* ← ✅ Compatibility Layer (6 files)
+        └── rendering/compat/transforms/* ← ✅ Transform Engine (3 files)
 ```
 
 ## 🔄 **Styling System Dependencies**
@@ -924,7 +950,7 @@ The `word_styles` package was implemented to provide a more reliable and maintai
   - `docx.oxml`: For XML manipulation within DOCX.
 - **Used by**: `registry.py`, `section_builder.py`
 
-### ✅ **word_styles/numbering_engine.py (NEW - June 2025)**
+### ✅ **word_styles/numbering_engine.py (PRODUCTION READY)**
 
 - **Purpose**: ✅ **PRODUCTION-READY** Native Word numbering and bullet system with idempotent operations
 - **Status**: ✅ **SUCCESSFULLY IMPLEMENTED** 
@@ -946,6 +972,264 @@ The `word_styles` package was implemented to provide a more reliable and maintai
   - **Design Token Integration**: Works WITH design token spacing, doesn't override it
   - **Cross-Format Consistency**: 1em (HTML) = 221 twips (DOCX) alignment
   - **Feature Flag Support**: Integrates with `DOCX_USE_NATIVE_BULLETS` environment variable
+
+## ✅ **ENHANCED ARCHITECTURE: YC Features & Production Components**
+
+### **✅ YC-Eddie Styling System**
+
+#### **yc_eddie_styler.py**
+- **Purpose**: Y Combinator-specific resume styling and formatting guidelines
+- **Status**: ✅ **PRODUCTION FEATURE**
+- **Key Functions**:
+  - `apply_yc_guidelines()`: Applies YC-specific formatting rules
+  - `format_headers()`: Creates YC-compliant box-style headers
+  - `apply_yc_typography()`: Sets fonts and spacing per YC standards
+  - `validate_yc_compliance()`: Ensures resume meets YC requirements
+- **Dependencies**:
+  - `docx`: For document manipulation
+  - `style_engine.py`: For design token integration
+  - `design_tokens.json`: For YC-specific styling values
+- **Used by**: `yc_resume_generator.py`, `app.py` for YC-specific routes
+- **I/O**:
+  - **Input**: Resume document, YC formatting preferences
+  - **Output**: YC-compliant styled document
+
+#### **yc_resume_generator.py**
+- **Purpose**: Complete YC-specific resume generation with specialized sections
+- **Status**: ✅ **PRODUCTION FEATURE**
+- **Key Functions**:
+  - `generate_resume()`: Main YC resume generation function
+  - `build_sections()`: Creates YC-compliant sections
+  - `apply_yc_guidelines()`: Ensures adherence to YC standards
+  - `format_achievements()`: YC-specific achievement formatting
+- **Dependencies**:
+  - `yc_eddie_styler.py`: For YC-specific styling
+  - `claude_integration.py`: For YC-focused content generation
+  - `utils/docx_builder.py`: For document creation
+- **Used by**: `app.py` for YC resume generation routes
+- **I/O**:
+  - **Input**: Tailored resume content, YC requirements
+  - **Output**: Complete YC-formatted resume document
+
+#### **resume_styler.py**
+- **Purpose**: Core resume styling logic for all resume types
+- **Status**: ✅ **CORE FEATURE**
+- **Key Functions**:
+  - `style_resume()`: Main styling orchestration
+  - `apply_header_style()`: Section header formatting
+  - `style_bullet_points()`: Achievement bullet formatting
+  - `apply_cross_format_consistency()`: Ensures HTML/PDF/DOCX alignment
+- **Dependencies**:
+  - `style_engine.py`: For design token access
+  - `design_tokens.json`: For styling configuration
+  - `docx`: For DOCX styling operations
+- **Used by**: `html_generator.py`, `utils/docx_builder.py`, YC styling components
+- **I/O**:
+  - **Input**: Resume content, styling preferences
+  - **Output**: Consistently styled resume structure
+
+### **✅ Production Deployment & Validation System**
+
+#### **startup.py**
+- **Purpose**: Production environment initialization and configuration
+- **Status**: ✅ **DEPLOYMENT CRITICAL**
+- **Key Functions**:
+  - `create_required_directories()`: Creates necessary filesystem structure
+  - `validate_configuration()`: Validates environment variables and settings
+  - `initialize_logging()`: Sets up production logging
+  - `setup_error_handlers()`: Configures error handling
+- **Dependencies**:
+  - `os`: For environment and filesystem operations
+  - `logging`: For application logging setup
+  - `config.py`: For configuration management
+- **Used by**: Production deployment (Render, Docker, etc.)
+- **I/O**:
+  - **Input**: Environment variables, configuration files
+  - **Output**: Configured production environment
+
+#### **validate_deployment.py**
+- **Purpose**: Pre-deployment validation and health checks
+- **Status**: ✅ **DEPLOYMENT CRITICAL**
+- **Key Functions**:
+  - `validate_environment()`: Environment readiness checks
+  - `check_dependencies()`: Python package and system dependency verification
+  - `test_api_connections()`: API connectivity testing (Claude, OpenAI)
+  - `verify_feature_flags()`: Feature flag configuration validation
+  - `test_file_operations()`: File system operation testing
+- **Dependencies**:
+  - `anthropic`: For Claude API testing
+  - `openai`: For OpenAI API testing
+  - `weasyprint`: For PDF generation testing
+  - `docx`: For DOCX generation testing
+- **Used by**: CI/CD pipelines, deployment scripts
+- **I/O**:
+  - **Input**: Environment configuration, API keys
+  - **Output**: Deployment readiness report, validation results
+
+#### **restart_app.py**
+- **Purpose**: Development utilities for application restart and monitoring
+- **Status**: ✅ **DEVELOPMENT UTILITY**
+- **Key Functions**:
+  - `restart_flask_app()`: Restarts Flask development server
+  - `check_file_changes()`: Monitors file changes for auto-restart
+  - `verify_changes_to_docx_builder()`: Specific monitoring for core changes
+- **Dependencies**:
+  - `os`: For process management
+  - `subprocess`: For command execution
+  - `watchdog`: For file system monitoring
+- **Used by**: Development workflow, IDE integration
+- **I/O**:
+  - **Input**: File system changes, development commands
+  - **Output**: Application restart signals, change notifications
+
+## ✅ **BUILD TOOLS & DEVELOPMENT INFRASTRUCTURE**
+
+### **✅ Build & Token Generation Tools**
+
+#### **tools/generate_tokens.py**
+- **Purpose**: Converts design tokens to CSS/DOCX/JSON format distributions
+- **Status**: ✅ **BUILD CRITICAL**
+- **Key Functions**:
+  - `generate_all_tokens()`: Main token generation orchestration
+  - `load_design_tokens()`: Loads source design_tokens.json
+  - `generate_docx_styles()`: Creates _docx_styles.json
+  - `generate_css_variables()`: Creates CSS custom properties
+- **Dependencies**:
+  - `design_tokens.json`: Source of truth for all styling values
+  - `json`: For file operations
+- **Used by**: Build pipelines, development workflow
+- **I/O**:
+  - **Input**: `design_tokens.json`
+  - **Output**: `_docx_styles.json`, CSS variables
+
+#### **tools/build_css.py**
+- **Purpose**: Main CSS compilation and optimization
+- **Status**: ✅ **BUILD CRITICAL**  
+- **Key Functions**:
+  - `compile_all_css()`: Master CSS compilation function
+  - `process_scss()`: SCSS to CSS compilation
+  - `optimize_css()`: CSS minification and optimization
+  - `generate_critical_css()`: Critical path CSS extraction
+- **Dependencies**:
+  - `sass`: For SCSS compilation
+  - `tools/generate_tokens_css.py`: For token integration
+  - `tools/generate_css_variables.py`: For variable generation
+- **Used by**: Build pipeline, deployment process
+- **I/O**:
+  - **Input**: SCSS files, design tokens
+  - **Output**: Compiled CSS files
+
+#### **tools/generate_tokens_css.py**
+- **Purpose**: CSS-specific token generation and SCSS variable creation
+- **Status**: ✅ **BUILD SUPPORTING**
+- **Key Functions**:
+  - `generate_scss_variables()`: Creates SCSS variable definitions
+  - `create_css_custom_properties()`: Generates CSS custom properties
+  - `validate_css_tokens()`: Validates CSS token syntax
+- **Dependencies**:
+  - `design_tokens.json`: For source values
+  - `sass`: For SCSS validation
+- **Used by**: `tools/build_css.py`, CSS compilation pipeline
+- **I/O**:
+  - **Input**: Design tokens JSON
+  - **Output**: SCSS variables, CSS custom properties
+
+### **✅ Validation & Quality Assurance Tools**
+
+#### **tools/cross_format_diagnostics.py**
+- **Purpose**: Cross-format consistency validation (HTML/PDF/DOCX)
+- **Status**: ✅ **QA CRITICAL**
+- **Key Functions**:
+  - `validate_consistency()`: Main cross-format validation
+  - `compare_html_docx()`: HTML-DOCX visual consistency
+  - `analyze_spacing_differences()`: Spacing deviation analysis
+  - `generate_consistency_report()`: Comprehensive report generation
+- **Dependencies**:
+  - `html_generator.py`: For HTML output comparison
+  - `utils/docx_builder.py`: For DOCX output comparison
+  - `pdf_exporter.py`: For PDF output comparison
+- **Used by**: QA workflow, testing pipeline
+- **I/O**:
+  - **Input**: Generated HTML/PDF/DOCX files
+  - **Output**: Consistency validation reports
+
+#### **tools/css_safety_validator.py**
+- **Purpose**: CSS safety and compliance validation
+- **Status**: ✅ **QA SUPPORTING**
+- **Key Functions**:
+  - `validate_css_safety()`: CSS safety compliance checks
+  - `check_cross_browser_compatibility()`: Browser compatibility analysis
+  - `validate_print_css()`: Print-specific CSS validation
+- **Dependencies**:
+  - `css-validator`: For CSS syntax validation
+  - `browserslist`: For compatibility checking
+- **Used by**: Build pipeline, CSS quality assurance
+- **I/O**:
+  - **Input**: Generated CSS files
+  - **Output**: Safety validation reports
+
+#### **tools/style_linter.py**
+- **Purpose**: Style consistency and standards validation
+- **Status**: ✅ **QA SUPPORTING**
+- **Key Functions**:
+  - `validate_style_consistency()`: Cross-file style consistency
+  - `check_design_token_usage()`: Token usage validation
+  - `lint_style_definitions()`: Style definition standards
+- **Dependencies**:
+  - `design_tokens.json`: For token validation
+  - `style_engine.py`: For style definition analysis
+- **Used by**: QA workflow, style validation pipeline
+- **I/O**:
+  - **Input**: Style files, design tokens
+  - **Output**: Style consistency reports
+
+#### **tools/token_orphan_linter.py**
+- **Purpose**: Orphaned token detection and cleanup
+- **Status**: ✅ **MAINTENANCE UTILITY**
+- **Key Functions**:
+  - `detect_orphaned_tokens()`: Finds unused design tokens
+  - `analyze_token_usage()`: Token usage analysis across codebase
+  - `suggest_token_cleanup()`: Cleanup recommendations
+- **Dependencies**:
+  - `design_tokens.json`: For token definitions
+  - `grep` utilities: For usage searching
+- **Used by**: Maintenance workflow, token cleanup
+- **I/O**:
+  - **Input**: Design tokens, source code
+  - **Output**: Orphan detection reports
+
+### **✅ Integration & Utility Tools**
+
+#### **tools/integrate_translator.py**
+- **Purpose**: Translation system integration for multi-language support
+- **Status**: ✅ **FEATURE EXTENSION**
+- **Key Functions**:
+  - `setup_translation_system()`: Translation system initialization
+  - `integrate_language_support()`: Multi-language feature integration
+  - `validate_translations()`: Translation completeness validation
+- **Dependencies**:
+  - Translation service APIs
+  - `babel`: For internationalization support
+- **Used by**: Multi-language feature implementation
+- **I/O**:
+  - **Input**: Source text, translation configurations
+  - **Output**: Translated content, language support
+
+#### **tools/web_scraper.py**
+- **Purpose**: Web scraping utilities for job posting data extraction
+- **Status**: ✅ **DATA UTILITY**
+- **Key Functions**:
+  - `scrape_job_postings()`: Automated job posting extraction
+  - `extract_requirements()`: Job requirement parsing
+  - `normalize_job_data()`: Standardize scraped data
+- **Dependencies**:
+  - `requests`: For HTTP operations
+  - `beautifulsoup4`: For HTML parsing
+  - `selenium`: For dynamic content scraping
+- **Used by**: Job analysis enhancement, data collection
+- **I/O**:
+  - **Input**: Job posting URLs, scraping targets
+  - **Output**: Structured job requirement data
 
 ## Enhanced Utility Modules (B-Series + O3)
 
@@ -977,7 +1261,172 @@ The `word_styles` package was implemented to provide a more reliable and maintai
 - **Core Function**: `validate_style_for_bullets()` - ensures style compatibility
 - **Used By**: Style application and conflict resolution workflows, O3 validation
 
-### ✅ **utils/o3_bullet_core_engine.py (NEW - January 2025)**
+## ✅ **TESTING INFRASTRUCTURE & VALIDATION FRAMEWORK**
+
+### **✅ Core Testing Framework**
+
+#### **tests/test_docx_builder.py**
+- **Purpose**: Comprehensive testing for DOCX builder functionality
+- **Status**: ✅ **TESTING CRITICAL**
+- **Key Functions**:
+  - `test_content_first_architecture()`: Tests content-before-style requirement
+  - `test_style_application()`: Validates style application success
+  - `test_native_bullet_integration()`: Tests native bullet functionality
+  - `test_design_token_compliance()`: Ensures design token adherence
+- **Dependencies**:
+  - `pytest`: For test framework
+  - `utils/docx_builder.py`: Module under test
+  - `word_styles/`: For style testing
+- **Used by**: CI/CD pipeline, automated testing
+- **I/O**:
+  - **Input**: Test resume data, mock documents
+  - **Output**: Test results, validation reports
+
+#### **utils/staged_testing.py**
+- **Purpose**: Multi-phase testing framework for complex workflows
+- **Status**: ✅ **TESTING INFRASTRUCTURE**
+- **Key Functions**:
+  - `run_staged_tests()`: Executes multi-phase test scenarios
+  - `test_o3_performance()`: O3 engine performance testing
+  - `validate_cross_format_output()`: Cross-format consistency testing
+  - `benchmark_generation_speed()`: Performance benchmarking
+- **Dependencies**:
+  - `pytest`: For test orchestration
+  - All major modules: For comprehensive testing
+- **Used by**: Performance validation, integration testing
+- **I/O**:
+  - **Input**: Test scenarios, performance metrics
+  - **Output**: Staged test results, performance reports
+
+### **✅ DOCX-Specific Testing Suite**
+
+#### **tests/docx_spacing/test_exact_line_height.py**
+- **Purpose**: Precise line height and spacing validation
+- **Status**: ✅ **SPACING TESTING**
+- **Key Functions**:
+  - `test_line_height_accuracy()`: Validates exact line height measurements
+  - `test_spacing_calculations()`: Tests spacing calculation precision
+  - `validate_design_token_spacing()`: Design token spacing compliance
+- **Dependencies**:
+  - `python-docx`: For document measurement
+  - `design_tokens.json`: For expected values
+- **Used by**: Spacing validation pipeline
+- **I/O**:
+  - **Input**: Generated DOCX documents
+  - **Output**: Spacing accuracy reports
+
+#### **tests/docx_spacing/test_header_fix_simple.py**
+- **Purpose**: Header formatting and spacing validation
+- **Status**: ✅ **HEADER TESTING**
+- **Key Functions**:
+  - `test_header_spacing()`: Header spacing validation
+  - `test_header_style_application()`: Header style compliance
+  - `validate_header_hierarchy()`: Header hierarchy testing
+- **Dependencies**:
+  - `python-docx`: For header analysis
+  - `word_styles/`: For style validation
+- **Used by**: Header formatting validation
+- **I/O**:
+  - **Input**: Documents with headers
+  - **Output**: Header validation reports
+
+#### **tests/docx_spacing/test_line_height_matrix.py**
+- **Purpose**: Comprehensive line height testing across all scenarios
+- **Status**: ✅ **COMPREHENSIVE TESTING**
+- **Key Functions**:
+  - `test_line_height_matrix()`: Tests all line height combinations
+  - `validate_spacing_consistency()`: Cross-section spacing validation
+  - `test_edge_cases()`: Edge case line height scenarios
+- **Dependencies**:
+  - `python-docx`: For measurement validation
+  - Test data sets: For comprehensive scenarios
+- **Used by**: Comprehensive spacing validation
+- **I/O**:
+  - **Input**: Matrix of spacing scenarios
+  - **Output**: Comprehensive spacing reports
+
+## ✅ **CROSS-PLATFORM RENDERING ENGINE**
+
+### **✅ Compatibility Layer**
+
+#### **rendering/compat/capability_tables.py**
+- **Purpose**: Platform capability mapping and compatibility tables
+- **Status**: ✅ **RENDERING INFRASTRUCTURE**
+- **Key Functions**:
+  - `get_platform_capabilities()`: Platform feature detection
+  - `map_feature_compatibility()`: Feature compatibility mapping
+  - `generate_fallback_strategies()`: Fallback strategy generation
+- **Dependencies**:
+  - Platform detection utilities
+  - Feature compatibility databases
+- **Used by**: Cross-platform rendering, feature detection
+- **I/O**:
+  - **Input**: Platform information, feature requirements
+  - **Output**: Compatibility mappings, fallback strategies
+
+#### **rendering/compat/translator.py**
+- **Purpose**: Cross-platform rendering translation and adaptation
+- **Status**: ✅ **RENDERING CORE**
+- **Key Functions**:
+  - `translate_rendering()`: Platform-specific rendering translation
+  - `adapt_styles()`: Style adaptation for platform differences
+  - `normalize_output()`: Output normalization across platforms
+- **Dependencies**:
+  - `rendering/compat/capability_tables.py`: For platform capabilities
+  - Transform modules: For specific transformations
+- **Used by**: Multi-platform rendering pipeline
+- **I/O**:
+  - **Input**: Source styling, target platform
+  - **Output**: Platform-adapted rendering instructions
+
+### **✅ Transform Engine**
+
+#### **rendering/compat/transforms/color_mix.py**
+- **Purpose**: Cross-platform color handling and transformation
+- **Status**: ✅ **COLOR TRANSFORMATION**
+- **Key Functions**:
+  - `transform_colors()`: Platform-specific color transformation
+  - `handle_color_spaces()`: Color space conversion
+  - `validate_color_compatibility()`: Color compatibility validation
+- **Dependencies**:
+  - Color space libraries
+  - Platform color support detection
+- **Used by**: Color rendering pipeline
+- **I/O**:
+  - **Input**: Source colors, target platform
+  - **Output**: Platform-compatible colors
+
+#### **rendering/compat/transforms/font_features.py**
+- **Purpose**: Typography and font feature compatibility handling
+- **Status**: ✅ **TYPOGRAPHY TRANSFORMATION**
+- **Key Functions**:
+  - `transform_typography()`: Typography adaptation
+  - `handle_font_fallbacks()`: Font fallback management
+  - `validate_font_support()`: Font support validation
+- **Dependencies**:
+  - Font detection utilities
+  - Typography libraries
+- **Used by**: Typography rendering pipeline
+- **I/O**:
+  - **Input**: Font requirements, target platform
+  - **Output**: Platform-compatible typography
+
+#### **rendering/compat/transforms/logical_box.py**
+- **Purpose**: Layout box model and positioning compatibility
+- **Status**: ✅ **LAYOUT TRANSFORMATION**
+- **Key Functions**:
+  - `transform_layout()`: Layout adaptation for platform differences
+  - `handle_box_model()`: Box model compatibility handling
+  - `normalize_positioning()`: Position normalization
+- **Dependencies**:
+  - Layout calculation utilities
+  - Platform layout detection
+- **Used by**: Layout rendering pipeline
+- **I/O**:
+  - **Input**: Layout requirements, target platform
+  - **Output**: Platform-compatible layout
+
+### ✅ **utils/o3_bullet_core_engine.py (CRITICAL O3 ENGINE)**
 
 - **Purpose**: ✅ **O3's comprehensive bullet consistency engine** implementing "build-then-reconcile" architecture
 - **Status**: ✅ **PRODUCTION-READY** Phase 4 implementation

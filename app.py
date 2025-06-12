@@ -189,23 +189,9 @@ def download_tailored_resume(request_id):
         pdf_filename = f"tailored_resume_{request_id}.pdf"
         pdf_output_path = os.path.join(output_dir, pdf_filename)
 
-        # Generate the PDF file
-        pdf_path = create_pdf_from_html(
-            full_html,
-            pdf_output_path,
-            metadata={
-                'title': f'Tailored Resume {request_id}',
-                'author': 'Resume Tailoring App'
-            }
-        )
-
-        # Send the generated PDF file for download
-        return send_from_directory(
-            output_dir,
-            pdf_filename,
-            as_attachment=True,
-            mimetype='application/pdf'
-        )
+        # PDF generation disabled - redirect to DOCX download instead
+        app.logger.info(f"PDF download requested for {request_id}, redirecting to DOCX")
+        return redirect(url_for('download_docx_resume', request_id=request_id))
 
     except FileNotFoundError:
         app.logger.error(f"Data not found for generating PDF for request_id: {request_id}")
@@ -372,58 +358,21 @@ def download_file(filename):
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    """Generate a PDF from the current tailored resume"""
-    try:
-        # Get resume data from session or request
-        resume_data = session.get('tailored_resume')
-        
-        if not resume_data:
-            # If not in session, try to get from request
-            resume_data = request.json.get('resume')
-            
-        if not resume_data:
-            return jsonify({'error': 'No resume data found'}), 400
-        
-        # Generate unique filename
-        filename = f"resume_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        
-        # Generate PDF in memory
-        pdf_buffer = create_pdf_from_html(resume_data)
-        
-        # Return PDF for download
-        return send_file(
-            pdf_buffer,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=filename
-        )
-        
-    except Exception as e:
-        app.logger.error(f"Error generating PDF: {str(e)}")
-        return jsonify({'error': f'PDF generation failed: {str(e)}'}), 500
+    """PDF generation disabled - redirect to DOCX instead"""
+    app.logger.info("PDF generation request received, but PDF generation is disabled")
+    return jsonify({
+        'error': 'PDF generation is disabled. Please use DOCX download instead.',
+        'redirect': '/download/docx'
+    }), 410  # 410 Gone - service no longer available
 
 @app.route('/download_pdf', methods=['POST'])
 def download_pdf():
-    """Generate and download a PDF version of the tailored resume"""
-    # Get resume data from the request
-    resume_data = request.json
-    
-    if not resume_data:
-        return jsonify({"error": "No resume data provided"}), 400
-    
-    # Generate PDF from resume data
-    pdf_buffer = create_pdf_from_html(resume_data)
-    
-    # Get file name from the person's name or use a default
-    filename = f"{resume_data.get('name', 'Tailored_Resume').replace(' ', '_')}.pdf"
-    
-    # Send PDF file to the client
-    return send_file(
-        pdf_buffer,
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=filename
-    )
+    """PDF download disabled - use DOCX instead"""
+    app.logger.info("PDF download request received, but PDF generation is disabled")
+    return jsonify({
+        'error': 'PDF download is disabled. Please use "Generate DOCX" button instead.',
+        'alternative': 'Use the Generate DOCX button to download your tailored resume.'
+    }), 410  # 410 Gone - service no longer available
 
 # ==== A-SERIES IMPROVEMENTS: TESTING AND MONITORING ROUTES ====
 

@@ -1,0 +1,34 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Rules for Styling Changes
+
+## Styling Change Workflow
+
+Any changes to resume styling **MUST** follow the established workflow documented in `@doco/styling_changes.md`:
+
+1. **Edit SCSS Files** - Make changes to `static/scss/_resume.scss` or other SCSS files.
+2. **Re-generate Tokens** (if needed) - Run `python tools/generate_tokens_css.py` to update design tokens.
+3. **Build CSS** - Compile SCSS files into CSS:
+   ```
+   sass static/scss/preview.scss static/css/preview.css
+   sass static/scss/print.scss static/css/print.css
+   ```
+4. **Restart Flask Server** - This is CRITICAL to ensure changes are applied:
+   ```
+   Ctrl-C (to stop current server)
+   python app.py (to restart)
+   ```
+5. **Verify Changes** - Hard refresh browser (Ctrl+Shift+R) and check both HTML preview and PDF.
+
+## Important Notes
+
+- **Never** edit CSS files directly; always modify SCSS files and recompile.
+- **Always** restart the Flask server after making changes to Python files (especially `html_generator.py`).
+- **Document** any new styling changes in `doco/styling_changes.md`.
+- **Test** both preview and PDF output to ensure consistent appearance.
+
+Following these rules will prevent difficult-to-debug styling issues and ensure consistency in the application.
+

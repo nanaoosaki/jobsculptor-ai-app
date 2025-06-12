@@ -18,10 +18,49 @@ __pycache__/
 instance/
 .webassets-cache
 
-# Uploaded files
+# 🔒 CRITICAL USER DATA SECURITY - NEVER COMMIT THESE
+# Uploaded files - contains user resumes and personal information
 static/uploads/*
 !static/uploads/.gitkeep
 !static/uploads/template_resume.docx
+
+# User data archive (local development backup)
+user_data_archive/
+
+# All user-generated documents and PDFs
+*.pdf
+*.docx
+!*template*.docx
+!*sample*.docx
+!*example*.docx
+
+# LLM analysis files (contain parsed personal data)
+*_llm_parsed.json
+*_llm_analysis.json
+*_contact.json
+*_education.json
+*_experience.json
+*_projects.json
+*_skills.json
+*_summary.json
+
+# Generated/tailored resumes
+*tailored*.pdf
+*tailored*.docx
+tailored_resume_*.pdf
+tailored_resume_*.docx
+
+# Session and cache data (may contain personal info)
+static/uploads/job_analysis_cache/
+static/uploads/api_responses/
+static/uploads/temp_session_data/
+
+# Any UUID-named files (typically user data)
+[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*.json
+[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*.pdf
+[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*.docx
+
+# 🔒 END CRITICAL USER DATA SECURITY
 
 # Logs
 logs/
@@ -70,34 +109,6 @@ var/
 venv/
 ENV/
 
-# Upload directory content but keep directory
-static/uploads/*
-!static/uploads/.gitkeep
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Zip files
-*.zip
-
-# DOCX files (mostly testing and generated files)
-*.docx
-# Exception: Keep template files if needed
-!*template*.docx
-
-# Downloaded resume files (both PDF and DOCX)
-downloaded*.pdf
-downloaded*.docx
-*downloaded*.pdf
-*downloaded*.docx
-
 # Archive directories (old files and testing)
 archive/
 archived/
@@ -105,6 +116,15 @@ archive_*/
 
 # Chat history (may contain sensitive data)
 .specstory/
+
+# Downloaded resume files (both PDF and DOCX)
+downloaded*.pdf
+downloaded*.docx
+*downloaded*.pdf
+*downloaded*.docx
+
+# Zip files
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

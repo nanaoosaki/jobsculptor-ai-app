@@ -1,7 +1,5 @@
 import os
 import logging
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
 import tempfile
 from pathlib import Path
 from style_manager import StyleManager
@@ -9,6 +7,29 @@ from flask import render_template
 from io import BytesIO
 import io
 import re # Added for debug dumping
+
+# Try to import WeasyPrint, but gracefully handle failures on Windows
+try:
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError, Exception) as e:
+    logging.warning(f"WeasyPrint not available: {e}. PDF generation will be disabled.")
+    WEASYPRINT_AVAILABLE = False
+    # Create dummy classes to prevent import errors
+    class HTML:
+        def __init__(self, *args, **kwargs):
+            pass
+        def write_pdf(self, *args, **kwargs):
+            raise RuntimeError("WeasyPrint not available - PDF generation disabled")
+    
+    class CSS:
+        def __init__(self, *args, **kwargs):
+            pass
+    
+    class FontConfiguration:
+        def __init__(self, *args, **kwargs):
+            pass
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -24,6 +45,14 @@ class PDFExporter:
     def __init__(self):
         """Initialize the PDF exporter with default configuration"""
         logger.info("Initializing PDF Exporter")
+        
+        if not WEASYPRINT_AVAILABLE:
+            logger.warning("PDF Exporter initialized but WeasyPrint is not available")
+            self.font_config = None
+            self.print_css_path = None
+            self.preview_css_path = None
+            return
+            
         self.font_config = FontConfiguration()
         # Use StyleManager to get the CSS paths
         self.print_css_path = StyleManager.print_css_path()
@@ -49,6 +78,9 @@ class PDFExporter:
         Returns:
             str: Path to the generated PDF file.
         """
+        if not WEASYPRINT_AVAILABLE:
+            raise RuntimeError("PDF generation is not available. WeasyPrint libraries are not properly installed.")
+            
         try:
             logger.info(f"Converting HTML to PDF")
             
@@ -227,6 +259,9 @@ def create_pdf_from_html(html_body_content, output_path=None, metadata=None):
     Returns:
         str: Path to the generated PDF file.
     """
+    if not WEASYPRINT_AVAILABLE:
+        raise RuntimeError("PDF generation is not available. WeasyPrint libraries are not properly installed.")
+        
     exporter = PDFExporter()
     return exporter.generate_resume_pdf(html_body_content, metadata, output_path)
 
@@ -241,6 +276,9 @@ def generate_pdf_from_html(resume_data, output_path=None):
     Returns:
         BytesIO or None: If output_path is None, returns BytesIO containing the PDF.
     """
+    if not WEASYPRINT_AVAILABLE:
+        raise RuntimeError("PDF generation is not available. WeasyPrint libraries are not properly installed.")
+        
     # Render the HTML template with the resume data
     html_content = render_template('resume_pdf.html', resume=resume_data)
     

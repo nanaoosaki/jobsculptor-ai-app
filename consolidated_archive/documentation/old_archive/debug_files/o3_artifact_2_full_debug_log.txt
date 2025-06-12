@@ -1,0 +1,521 @@
+2025-06-08 07:39:32,943 - __main__ - INFO - ============================================================
+2025-06-08 07:39:32,943 - __main__ - INFO - Creating test data for request_id: o3_test_artifacts_2025
+2025-06-08 07:39:32,948 - __main__ - INFO - Saved test data: static\uploads\temp_session_data\o3_test_artifacts_2025_experience.json
+2025-06-08 07:39:32,953 - __main__ - INFO - Saved test data: static\uploads\temp_session_data\o3_test_artifacts_2025_education.json
+2025-06-08 07:39:32,957 - __main__ - INFO - Saved test data: static\uploads\temp_session_data\o3_test_artifacts_2025_projects.json
+2025-06-08 07:39:32,962 - __main__ - INFO - Saved test data: static\uploads\temp_session_data\o3_test_artifacts_2025_contact.json
+2025-06-08 07:39:32,966 - __main__ - INFO - Saved test data: static\uploads\temp_session_data\o3_test_artifacts_2025_summary.json
+2025-06-08 07:39:32,971 - __main__ - INFO - Saved test data: static\uploads\temp_session_data\o3_test_artifacts_2025_skills.json
+2025-06-08 07:39:33,204 - style_engine - INFO - Successfully loaded design tokens from D:\AI\manusResume6\design_tokens.json
+2025-06-08 07:39:33,205 - word_styles.registry - INFO - Typography system available: False
+2025-06-08 07:39:33,205 - word_styles.registry - INFO - Using legacy hardcoded style system
+2025-06-08 07:39:33,205 - word_styles.registry - INFO - Registered style 'BoxedHeading2' in registry
+2025-06-08 07:39:33,206 - word_styles.registry - INFO - Registered style 'BoxedHeading2Table' in registry
+2025-06-08 07:39:33,206 - word_styles.registry - INFO - Registered style 'HeaderBoxH2' in registry
+2025-06-08 07:39:33,206 - word_styles.registry - INFO - Registered style 'ContentParagraph' in registry
+2025-06-08 07:39:33,206 - word_styles.registry - INFO - Registered style 'EmptyParagraph' in registry
+2025-06-08 07:39:33,206 - word_styles.registry - INFO - Registered style 'RoleBoxText' in registry
+2025-06-08 07:39:33,221 - utils.docx_builder - INFO - Building DOCX for request ID: o3_test_artifacts_2025
+2025-06-08 07:39:33,222 - utils.docx_builder - INFO - Temp directory path: static/uploads/temp_session_data
+2025-06-08 07:39:33,222 - utils.docx_builder - INFO - Debug mode: True
+2025-06-08 07:39:33,225 - utils.docx_builder - INFO - Files containing request ID: ['o3_test_artifacts_2025_experience.json', 'o3_test_artifacts_2025_education.json', 'o3_test_artifacts_2025_projects.json', 'o3_test_artifacts_2025_contact.json', 'o3_test_artifacts_2025_summary.json', 'o3_test_artifacts_2025_skills.json']
+2025-06-08 07:39:33,226 - style_manager - INFO - Successfully loaded DOCX styles from D:\AI\manusResume6\static\styles\_docx_styles.json
+2025-06-08 07:39:33,244 - word_styles.numbering_engine - DEBUG - NumberingEngine initialized with fresh state
+2025-06-08 07:39:33,264 - style_engine - INFO - Successfully loaded design tokens from D:\AI\manusResume6\design_tokens.json
+2025-06-08 07:39:33,265 - style_engine - INFO - Successfully loaded DOCX style specification from D:\AI\manusResume6\static\styles\_docx_styles.json
+2025-06-08 07:39:33,360 - style_engine - WARNING - Style 'MR_Content' is in predefined_style_names but not found in DOCX style specification. It will not be created.
+2025-06-08 07:39:33,363 - style_engine - INFO - Final list of styles in document post-creation: ['Normal', 'Header', 'Header Char', 'Footer', 'Footer Char', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Heading 7', 'Heading 8', 'Heading 9', 'Default Paragraph Font', 'Normal Table', 'No List', 'No Spacing', 'Heading 1 Char', 'Heading 2 Char', 'Heading 3 Char', 'Title', 'Title Char', 'Subtitle', 'Subtitle Char', 'List Paragraph', 'Body Text', 'Body Text Char', 'Body Text 2', 'Body Text 2 Char', 'Body Text 3', 'Body Text 3 Char', 'List', 'List 2', 'List 3', 'List Bullet', 'List Bullet 2', 'List Bullet 3', 'List Number', 'List Number 2', 'List Number 3', 'List Continue', 'List Continue 2', 'List Continue 3', 'macro', 'Macro Text Char', 'Quote', 'Quote Char', 'Heading 4 Char', 'Heading 5 Char', 'Heading 6 Char', 'Heading 7 Char', 'Heading 8 Char', 'Heading 9 Char', 'Caption', 'Strong', 'Emphasis', 'Intense Quote', 'Intense Quote Char', 'Subtle Emphasis', 'Intense Emphasis', 'Subtle Reference', 'Intense Reference', 'Book Title', 'TOC Heading', 'Table Grid', 'Light Shading', 'Light Shading Accent 1', 'Light Shading Accent 2', 'Light Shading Accent 3', 'Light Shading Accent 4', 'Light Shading Accent 5', 'Light Shading Accent 6', 'Light List', 'Light List Accent 1', 'Light List Accent 2', 'Light List Accent 3', 'Light List Accent 4', 'Light List Accent 5', 'Light List Accent 6', 'Light Grid', 'Light Grid Accent 1', 'Light Grid Accent 2', 'Light Grid Accent 3', 'Light Grid Accent 4', 'Light Grid Accent 5', 'Light Grid Accent 6', 'Medium Shading 1', 'Medium Shading 1 Accent 1', 'Medium Shading 1 Accent 2', 'Medium Shading 1 Accent 3', 'Medium Shading 1 Accent 4', 'Medium Shading 1 Accent 5', 'Medium Shading 1 Accent 6', 'Medium Shading 2', 'Medium Shading 2 Accent 1', 'Medium Shading 2 Accent 2', 'Medium Shading 2 Accent 3', 'Medium Shading 2 Accent 4', 'Medium Shading 2 Accent 5', 'Medium Shading 2 Accent 6', 'Medium List 1', 'Medium List 1 Accent 1', 'Medium List 1 Accent 2', 'Medium List 1 Accent 3', 'Medium List 1 Accent 4', 'Medium List 1 Accent 5', 'Medium List 1 Accent 6', 'Medium List 2', 'Medium List 2 Accent 1', 'Medium List 2 Accent 2', 'Medium List 2 Accent 3', 'Medium List 2 Accent 4', 'Medium List 2 Accent 5', 'Medium List 2 Accent 6', 'Medium Grid 1', 'Medium Grid 1 Accent 1', 'Medium Grid 1 Accent 2', 'Medium Grid 1 Accent 3', 'Medium Grid 1 Accent 4', 'Medium Grid 1 Accent 5', 'Medium Grid 1 Accent 6', 'Medium Grid 2', 'Medium Grid 2 Accent 1', 'Medium Grid 2 Accent 2', 'Medium Grid 2 Accent 3', 'Medium Grid 2 Accent 4', 'Medium Grid 2 Accent 5', 'Medium Grid 2 Accent 6', 'Medium Grid 3', 'Medium Grid 3 Accent 1', 'Medium Grid 3 Accent 2', 'Medium Grid 3 Accent 3', 'Medium Grid 3 Accent 4', 'Medium Grid 3 Accent 5', 'Medium Grid 3 Accent 6', 'Dark List', 'Dark List Accent 1', 'Dark List Accent 2', 'Dark List Accent 3', 'Dark List Accent 4', 'Dark List Accent 5', 'Dark List Accent 6', 'Colorful Shading', 'Colorful Shading Accent 1', 'Colorful Shading Accent 2', 'Colorful Shading Accent 3', 'Colorful Shading Accent 4', 'Colorful Shading Accent 5', 'Colorful Shading Accent 6', 'Colorful List', 'Colorful List Accent 1', 'Colorful List Accent 2', 'Colorful List Accent 3', 'Colorful List Accent 4', 'Colorful List Accent 5', 'Colorful List Accent 6', 'Colorful Grid', 'Colorful Grid Accent 1', 'Colorful Grid Accent 2', 'Colorful Grid Accent 3', 'Colorful Grid Accent 4', 'Colorful Grid Accent 5', 'Colorful Grid Accent 6', 'MR_Name', 'MR_Contact', 'MR_SectionHeader', 'MR_Company', 'MR_RoleBox', 'MR_RoleDescription', 'MR_BulletPoint', 'MR_SummaryText', 'MR_SkillCategory', 'MR_SkillList']
+2025-06-08 07:39:33,366 - utils.docx_builder - INFO - Successfully created custom DOCX styles: []
+2025-06-08 07:39:33,396 - style_engine - INFO - Successfully loaded design tokens from D:\AI\manusResume6\design_tokens.json
+2025-06-08 07:39:33,396 - style_engine - INFO - Successfully loaded DOCX style specification from D:\AI\manusResume6\static\styles\_docx_styles.json
+2025-06-08 07:39:33,554 - style_engine - WARNING - Style 'MR_Content' is in predefined_style_names but not found in DOCX style specification. It will not be created.
+2025-06-08 07:39:33,557 - style_engine - INFO - Final list of styles in document post-creation: ['Normal', 'Header', 'Header Char', 'Footer', 'Footer Char', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Heading 7', 'Heading 8', 'Heading 9', 'Default Paragraph Font', 'Normal Table', 'No List', 'No Spacing', 'Heading 1 Char', 'Heading 2 Char', 'Heading 3 Char', 'Title', 'Title Char', 'Subtitle', 'Subtitle Char', 'List Paragraph', 'Body Text', 'Body Text Char', 'Body Text 2', 'Body Text 2 Char', 'Body Text 3', 'Body Text 3 Char', 'List', 'List 2', 'List 3', 'List Bullet', 'List Bullet 2', 'List Bullet 3', 'List Number', 'List Number 2', 'List Number 3', 'List Continue', 'List Continue 2', 'List Continue 3', 'macro', 'Macro Text Char', 'Quote', 'Quote Char', 'Heading 4 Char', 'Heading 5 Char', 'Heading 6 Char', 'Heading 7 Char', 'Heading 8 Char', 'Heading 9 Char', 'Caption', 'Strong', 'Emphasis', 'Intense Quote', 'Intense Quote Char', 'Subtle Emphasis', 'Intense Emphasis', 'Subtle Reference', 'Intense Reference', 'Book Title', 'TOC Heading', 'Table Grid', 'Light Shading', 'Light Shading Accent 1', 'Light Shading Accent 2', 'Light Shading Accent 3', 'Light Shading Accent 4', 'Light Shading Accent 5', 'Light Shading Accent 6', 'Light List', 'Light List Accent 1', 'Light List Accent 2', 'Light List Accent 3', 'Light List Accent 4', 'Light List Accent 5', 'Light List Accent 6', 'Light Grid', 'Light Grid Accent 1', 'Light Grid Accent 2', 'Light Grid Accent 3', 'Light Grid Accent 4', 'Light Grid Accent 5', 'Light Grid Accent 6', 'Medium Shading 1', 'Medium Shading 1 Accent 1', 'Medium Shading 1 Accent 2', 'Medium Shading 1 Accent 3', 'Medium Shading 1 Accent 4', 'Medium Shading 1 Accent 5', 'Medium Shading 1 Accent 6', 'Medium Shading 2', 'Medium Shading 2 Accent 1', 'Medium Shading 2 Accent 2', 'Medium Shading 2 Accent 3', 'Medium Shading 2 Accent 4', 'Medium Shading 2 Accent 5', 'Medium Shading 2 Accent 6', 'Medium List 1', 'Medium List 1 Accent 1', 'Medium List 1 Accent 2', 'Medium List 1 Accent 3', 'Medium List 1 Accent 4', 'Medium List 1 Accent 5', 'Medium List 1 Accent 6', 'Medium List 2', 'Medium List 2 Accent 1', 'Medium List 2 Accent 2', 'Medium List 2 Accent 3', 'Medium List 2 Accent 4', 'Medium List 2 Accent 5', 'Medium List 2 Accent 6', 'Medium Grid 1', 'Medium Grid 1 Accent 1', 'Medium Grid 1 Accent 2', 'Medium Grid 1 Accent 3', 'Medium Grid 1 Accent 4', 'Medium Grid 1 Accent 5', 'Medium Grid 1 Accent 6', 'Medium Grid 2', 'Medium Grid 2 Accent 1', 'Medium Grid 2 Accent 2', 'Medium Grid 2 Accent 3', 'Medium Grid 2 Accent 4', 'Medium Grid 2 Accent 5', 'Medium Grid 2 Accent 6', 'Medium Grid 3', 'Medium Grid 3 Accent 1', 'Medium Grid 3 Accent 2', 'Medium Grid 3 Accent 3', 'Medium Grid 3 Accent 4', 'Medium Grid 3 Accent 5', 'Medium Grid 3 Accent 6', 'Dark List', 'Dark List Accent 1', 'Dark List Accent 2', 'Dark List Accent 3', 'Dark List Accent 4', 'Dark List Accent 5', 'Dark List Accent 6', 'Colorful Shading', 'Colorful Shading Accent 1', 'Colorful Shading Accent 2', 'Colorful Shading Accent 3', 'Colorful Shading Accent 4', 'Colorful Shading Accent 5', 'Colorful Shading Accent 6', 'Colorful List', 'Colorful List Accent 1', 'Colorful List Accent 2', 'Colorful List Accent 3', 'Colorful List Accent 4', 'Colorful List Accent 5', 'Colorful List Accent 6', 'Colorful Grid', 'Colorful Grid Accent 1', 'Colorful Grid Accent 2', 'Colorful Grid Accent 3', 'Colorful Grid Accent 4', 'Colorful Grid Accent 5', 'Colorful Grid Accent 6', 'MR_Name', 'MR_Contact', 'MR_SectionHeader', 'MR_Company', 'MR_RoleBox', 'MR_RoleDescription', 'MR_BulletPoint', 'MR_SummaryText', 'MR_SkillCategory', 'MR_SkillList']
+2025-06-08 07:39:33,566 - utils.docx_builder - INFO - Applied document margins from specification: Top=1.5cm, Bottom=1.5cm, Left=1.5cm, Right=1.5cm
+2025-06-08 07:39:33,566 - utils.docx_builder - INFO - Processing Contact section...
+2025-06-08 07:39:33,575 - utils.docx_builder - INFO - Raw contact file content (first 200 chars): {
+  "name": "Test User",
+  "email": "test@example.com",
+  "phone": "(555) 123-4567",
+  "location": "San Francisco, CA"
+}
+2025-06-08 07:39:33,577 - utils.docx_builder - INFO - Looking for section file: static/uploads/temp_session_data\o3_test_artifacts_2025_contact.json
+2025-06-08 07:39:33,577 - utils.docx_builder - INFO - Successfully loaded 'contact' section: <class 'dict'>
+2025-06-08 07:39:33,577 - utils.docx_builder - INFO - Dict keys for contact: ['name', 'email', 'phone', 'location']
+2025-06-08 07:39:33,578 - utils.docx_builder - INFO - Contact data loaded: True
+2025-06-08 07:39:33,578 - utils.docx_builder - INFO - Contact data type: <class 'dict'>
+2025-06-08 07:39:33,578 - utils.docx_builder - INFO - Contact keys: ['name', 'email', 'phone', 'location']
+2025-06-08 07:39:33,578 - utils.docx_builder - INFO - Final contact data structure to use: {'name': 'Test User', 'email': 'test@example.com', 'phone': '(555) 123-4567', 'location': 'San Francisco, CA'}
+2025-06-08 07:39:33,737 - utils.docx_builder - INFO - Processing Summary section...
+2025-06-08 07:39:33,737 - utils.docx_builder - INFO - Looking for section file: static/uploads/temp_session_data\o3_test_artifacts_2025_summary.json
+2025-06-08 07:39:33,746 - utils.docx_builder - INFO - Successfully loaded 'summary' section: <class 'dict'>
+2025-06-08 07:39:33,747 - utils.docx_builder - INFO - Dict keys for summary: ['content']
+2025-06-08 07:39:33,747 - utils.docx_builder - INFO - Summary data loaded: True
+2025-06-08 07:39:33,844 - utils.docx_builder - INFO - Generated section header: 'PROFESSIONAL SUMMARY' using MR_SectionHeader from comprehensive specification
+2025-06-08 07:39:33,851 - utils.docx_builder - INFO - Processing Experience section...
+2025-06-08 07:39:33,851 - utils.docx_builder - INFO - Looking for section file: static/uploads/temp_session_data\o3_test_artifacts_2025_experience.json
+2025-06-08 07:39:33,870 - utils.docx_builder - INFO - Successfully loaded 'experience' section: <class 'dict'>
+2025-06-08 07:39:33,871 - utils.docx_builder - INFO - Dict keys for experience: ['companies']
+2025-06-08 07:39:33,872 - utils.docx_builder - INFO - Experience data loaded: True
+2025-06-08 07:39:33,872 - utils.docx_builder - INFO - Experience contains 'experiences' key: False
+2025-06-08 07:39:33,873 - utils.docx_builder - WARNING - Unexpected experience format: <class 'dict'>
+2025-06-08 07:39:33,873 - utils.docx_builder - INFO - Processing Education section...
+2025-06-08 07:39:33,873 - utils.docx_builder - INFO - Looking for section file: static/uploads/temp_session_data\o3_test_artifacts_2025_education.json
+2025-06-08 07:39:33,891 - utils.docx_builder - INFO - Successfully loaded 'education' section: <class 'dict'>
+2025-06-08 07:39:33,891 - utils.docx_builder - INFO - Dict keys for education: ['institutions']
+2025-06-08 07:39:33,892 - utils.docx_builder - INFO - Education data loaded: True
+2025-06-08 07:39:33,892 - utils.docx_builder - INFO - Education contains 'institutions' key: True
+2025-06-08 07:39:34,061 - utils.docx_builder - INFO - Generated section header: 'EDUCATION' using MR_SectionHeader from comprehensive specification
+2025-06-08 07:39:34,159 - utils.docx_builder - INFO - Applied 6pt before spacing to company entry: 'University of California, Berkeley'
+2025-06-08 07:39:34,167 - style_engine - INFO - Successfully loaded design tokens from D:\AI\manusResume6\design_tokens.json
+2025-06-08 07:39:34,168 - utils.docx_builder - INFO - Right-align calculation: L=1.5cm, R=1.5cm, PW=21.59cm, Content=18.59cm, TabPos=18.59cm
+2025-06-08 07:39:34,169 - word_styles.section_builder - INFO - Applied normal table spacing (no floating positioning)
+2025-06-08 07:39:34,175 - word_styles.registry - INFO - Created style 'RoleBoxText' in document
+2025-06-08 07:39:34,179 - word_styles.section_builder - INFO - Added role box: Bachelor of Science in Computer Science with dates: 2015 - 2019
+2025-06-08 07:39:34,179 - utils.docx_builder - INFO - Added role box for degree: 'Bachelor of Science in Computer Science' with dates: '2015 - 2019'
+2025-06-08 07:39:34,179 - utils.docx_builder - INFO - Formatted education entry: 'University of California, Berkeley - Bachelor of Science in Computer Science'
+2025-06-08 07:39:34,344 - word_styles.numbering_engine - DEBUG - Applying native bullet: numId=100, level=0, text='GPA: 3.8/4.0...'
+2025-06-08 07:39:34,366 - utils.docx_builder - DEBUG - Bullet created via native
+2025-06-08 07:39:34,558 - word_styles.numbering_engine - DEBUG - Applying native bullet: numId=100, level=0, text='Dean's List: Fall 2017, Spring 2018, Fall 2018...'
+2025-06-08 07:39:34,588 - utils.docx_builder - DEBUG - Bullet created via native
+2025-06-08 07:39:34,778 - word_styles.numbering_engine - DEBUG - Applying native bullet: numId=100, level=0, text='Relevant coursework: Data Structures, Algorithms, ...'
+2025-06-08 07:39:34,799 - utils.docx_builder - DEBUG - Bullet created via native
+2025-06-08 07:39:34,799 - utils.docx_builder - INFO - Processing Skills section...
+2025-06-08 07:39:34,800 - utils.docx_builder - INFO - Looking for section file: static/uploads/temp_session_data\o3_test_artifacts_2025_skills.json
+2025-06-08 07:39:34,809 - utils.docx_builder - INFO - Successfully loaded 'skills' section: <class 'dict'>
+2025-06-08 07:39:34,809 - utils.docx_builder - INFO - Dict keys for skills: ['Programming Languages', 'Frameworks & Tools', 'Databases']
+2025-06-08 07:39:34,810 - utils.docx_builder - INFO - Skills data loaded: True
+2025-06-08 07:39:34,810 - utils.docx_builder - INFO - Skills data type: <class 'dict'>
+2025-06-08 07:39:34,810 - utils.docx_builder - INFO - Skills content sample: {'Programming Languages': ['Python', 'JavaScript', 'Java', 'SQL'], 'Frameworks & Tools': ['Django', 
+2025-06-08 07:39:34,930 - utils.docx_builder - INFO - Generated section header: 'SKILLS' using MR_SectionHeader from comprehensive specification
+2025-06-08 07:39:34,930 - utils.docx_builder - INFO - Processing skills dict directly
+2025-06-08 07:39:34,932 - utils.docx_builder - INFO - Applied MR_SkillCategory style to category: Programming Languages
+2025-06-08 07:39:34,934 - utils.docx_builder - INFO - Applied MR_SkillList style to skills in category: Programming Languages
+2025-06-08 07:39:34,935 - utils.docx_builder - INFO - Applied MR_SkillCategory style to category: Frameworks & Tools
+2025-06-08 07:39:34,937 - utils.docx_builder - INFO - Applied MR_SkillList style to skills in category: Frameworks & Tools
+2025-06-08 07:39:34,939 - utils.docx_builder - INFO - Applied MR_SkillCategory style to category: Databases
+2025-06-08 07:39:34,941 - utils.docx_builder - INFO - Applied MR_SkillList style to skills in category: Databases
+2025-06-08 07:39:34,942 - utils.docx_builder - INFO - Processing Projects section...
+2025-06-08 07:39:34,942 - utils.docx_builder - INFO - Looking for section file: static/uploads/temp_session_data\o3_test_artifacts_2025_projects.json
+2025-06-08 07:39:34,954 - utils.docx_builder - INFO - Successfully loaded 'projects' section: <class 'dict'>
+2025-06-08 07:39:34,954 - utils.docx_builder - INFO - Dict keys for projects: ['projects']
+2025-06-08 07:39:34,955 - utils.docx_builder - INFO - Projects data loaded: True
+2025-06-08 07:39:34,955 - utils.docx_builder - INFO - Projects contains 'projects' key: True
+2025-06-08 07:39:35,051 - utils.docx_builder - INFO - Generated section header: 'PROJECTS' using MR_SectionHeader from comprehensive specification
+2025-06-08 07:39:35,052 - word_styles.section_builder - INFO - Applied normal table spacing (no floating positioning)
+2025-06-08 07:39:35,054 - word_styles.registry - INFO - Style 'RoleBoxText' already exists in document
+2025-06-08 07:39:35,057 - word_styles.section_builder - INFO - Added role box: Personal Finance Tracker with dates: 2021
+2025-06-08 07:39:35,057 - utils.docx_builder - INFO - Added role box for project title: 'Personal Finance Tracker' with dates: '2021'
+2025-06-08 07:39:35,058 - utils.docx_builder - INFO - Formatted project entry: 'Personal Finance Tracker'
+2025-06-08 07:39:35,213 - word_styles.numbering_engine - DEBUG - Applying native bullet: numId=100, level=0, text='Built full-stack web application using React, Expr...'
+2025-06-08 07:39:35,232 - utils.docx_builder - DEBUG - Bullet created via native
+2025-06-08 07:39:35,388 - word_styles.numbering_engine - DEBUG - Numbering already applied to paragraph, skipping
+2025-06-08 07:39:35,461 - utils.docx_builder - DEBUG - Creating legacy bullet: 'Implemented user authentication and authorization ...'
+2025-06-08 07:39:35,578 - utils.docx_builder - DEBUG - Bullet created via legacy
+2025-06-08 07:39:35,754 - word_styles.numbering_engine - DEBUG - Numbering already applied to paragraph, skipping
+2025-06-08 07:39:35,829 - utils.docx_builder - DEBUG - Creating legacy bullet: 'Created RESTful API for managing financial transac...'
+2025-06-08 07:39:35,947 - utils.docx_builder - DEBUG - Bullet created via legacy
+2025-06-08 07:39:36,145 - word_styles.numbering_engine - DEBUG - Applying native bullet: numId=100, level=0, text='Deployed application to AWS using Docker container...'
+2025-06-08 07:39:36,183 - utils.docx_builder - DEBUG - Bullet created via native
+2025-06-08 07:39:36,183 - utils.docx_builder - INFO - Starting tighten_before_headers process...
+2025-06-08 07:39:36,189 - word_styles.section_builder - INFO - Removed 1 empty paragraphs
+2025-06-08 07:39:36,190 - utils.docx_builder - INFO - Removed 1 unwanted empty paragraphs
+2025-06-08 07:39:36,277 - utils.docx_builder - INFO - Found 5 section headers
+2025-06-08 07:39:36,278 - utils.docx_builder - INFO - Fixed spacing: Set space_after=0 on paragraph before section header at index 3
+2025-06-08 07:39:36,279 - utils.docx_builder - INFO - Fixed spacing: Set space_after=0 on paragraph before section header at index 4
+2025-06-08 07:39:36,279 - utils.docx_builder - INFO - Fixed spacing: Set space_after=0 on paragraph before section header at index 9
+2025-06-08 07:39:36,280 - utils.docx_builder - INFO - Fixed spacing: Set space_after=0 on paragraph before section header at index 16
+2025-06-08 07:39:36,323 - utils.docx_builder - INFO - Saving DOCX to BytesIO...
+2025-06-08 07:39:36,364 - utils.docx_debug - INFO - Inspecting document paragraphs...
+2025-06-08 07:39:36,369 - utils.docx_debug - INFO - Paragraph 0: 'Test User' | Style: MR_Name | Has numbering: False
+2025-06-08 07:39:36,373 - utils.docx_debug - INFO - Paragraph 1: 'San Francisco, CA • (555) 123-4567 • test@example....' | Style: MR_Contact | Has numbering: False
+2025-06-08 07:39:36,377 - utils.docx_debug - INFO - Paragraph 2: 'PROFESSIONAL SUMMARY' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:36,381 - utils.docx_debug - INFO - Paragraph 3: 'Experienced software engineer with 5+ years of exp...' | Style: MR_SummaryText | Has numbering: False
+2025-06-08 07:39:36,386 - utils.docx_debug - INFO - Paragraph 4: 'EDUCATION' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:36,391 - utils.docx_debug - INFO - Paragraph 5: 'University of California, Berkeley	Berkeley, CA' | Style: MR_Company | Has numbering: False
+2025-06-08 07:39:36,395 - utils.docx_debug - INFO - Paragraph 6: 'GPA: 3.8/4.0' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:36,399 - utils.docx_debug - INFO - Paragraph 7: 'Dean's List: Fall 2017, Spring 2018, Fall 2018' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:36,404 - utils.docx_debug - INFO - Paragraph 8: 'Relevant coursework: Data Structures, Algorithms, ...' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:36,408 - utils.docx_debug - INFO - Paragraph 9: 'SKILLS' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:36,413 - utils.docx_debug - INFO - Paragraph 10: 'PROGRAMMING LANGUAGES' | Style: MR_SkillCategory | Has numbering: False
+2025-06-08 07:39:36,417 - utils.docx_debug - INFO - Paragraph 11: 'Python, JavaScript, Java, SQL' | Style: MR_SkillList | Has numbering: False
+2025-06-08 07:39:36,421 - utils.docx_debug - INFO - Paragraph 12: 'FRAMEWORKS & TOOLS' | Style: MR_SkillCategory | Has numbering: False
+2025-06-08 07:39:36,425 - utils.docx_debug - INFO - Paragraph 13: 'Django, React, Node.js, Docker, AWS' | Style: MR_SkillList | Has numbering: False
+2025-06-08 07:39:36,430 - utils.docx_debug - INFO - Paragraph 14: 'DATABASES' | Style: MR_SkillCategory | Has numbering: False
+2025-06-08 07:39:36,434 - utils.docx_debug - INFO - Paragraph 15: 'PostgreSQL, MySQL, MongoDB' | Style: MR_SkillList | Has numbering: False
+2025-06-08 07:39:36,438 - utils.docx_debug - INFO - Paragraph 16: 'PROJECTS' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:36,442 - utils.docx_debug - INFO - Paragraph 17: 'Built full-stack web application using React, Expr...' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:36,447 - utils.docx_debug - INFO - Paragraph 18: '• Implemented user authentication and authorizatio...' | Style: MR_BulletPoint | Has numbering: False
+2025-06-08 07:39:36,451 - utils.docx_debug - INFO - Paragraph 19: '• Created RESTful API for managing financial trans...' | Style: MR_BulletPoint | Has numbering: False
+2025-06-08 07:39:36,455 - utils.docx_debug - INFO - Paragraph 20: 'Deployed application to AWS using Docker container...' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:36,456 - utils.docx_debug - INFO - Inspected 21 paragraphs
+2025-06-08 07:39:36,456 - utils.docx_debug - INFO - Inspecting document styles...
+2025-06-08 07:39:36,456 - utils.docx_debug - INFO - Style: Normal | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,458 - utils.docx_debug - INFO - Style: Header | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,461 - utils.docx_debug - INFO - Style: Footer | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,463 - utils.docx_debug - INFO - Style: Heading 1 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,465 - utils.docx_debug - INFO - Style: Heading 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,467 - utils.docx_debug - INFO - Style: Heading 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,469 - utils.docx_debug - INFO - Style: Heading 4 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,471 - utils.docx_debug - INFO - Style: Heading 5 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,474 - utils.docx_debug - INFO - Style: Heading 6 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,476 - utils.docx_debug - INFO - Style: Heading 7 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,479 - utils.docx_debug - INFO - Style: Heading 8 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,481 - utils.docx_debug - INFO - Style: Heading 9 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,482 - utils.docx_debug - INFO - Style: Normal Table | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,483 - utils.docx_debug - INFO - Style: No Spacing | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,485 - utils.docx_debug - INFO - Style: Title | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,487 - utils.docx_debug - INFO - Style: Subtitle | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,490 - utils.docx_debug - INFO - Style: List Paragraph | Base: Normal | Left indent: 1.27 | First line indent: None
+2025-06-08 07:39:36,492 - utils.docx_debug - INFO - Style: Body Text | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,495 - utils.docx_debug - INFO - Style: Body Text 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,498 - utils.docx_debug - INFO - Style: Body Text 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,500 - utils.docx_debug - INFO - Style: List | Base: Normal | Left indent: 0.635 | First line indent: -0.635
+2025-06-08 07:39:36,502 - utils.docx_debug - INFO - Style: List 2 | Base: Normal | Left indent: 1.27 | First line indent: -0.635
+2025-06-08 07:39:36,505 - utils.docx_debug - INFO - Style: List 3 | Base: Normal | Left indent: 1.905 | First line indent: -0.635
+2025-06-08 07:39:36,507 - utils.docx_debug - INFO - Style: List Bullet | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,510 - utils.docx_debug - INFO - Style: List Bullet 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,512 - utils.docx_debug - INFO - Style: List Bullet 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,515 - utils.docx_debug - INFO - Style: List Number | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,517 - utils.docx_debug - INFO - Style: List Number 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,519 - utils.docx_debug - INFO - Style: List Number 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,521 - utils.docx_debug - INFO - Style: List Continue | Base: Normal | Left indent: 0.635 | First line indent: None
+2025-06-08 07:39:36,523 - utils.docx_debug - INFO - Style: List Continue 2 | Base: Normal | Left indent: 1.27 | First line indent: None
+2025-06-08 07:39:36,526 - utils.docx_debug - INFO - Style: List Continue 3 | Base: Normal | Left indent: 1.905 | First line indent: None
+2025-06-08 07:39:36,527 - utils.docx_debug - INFO - Style: macro | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,529 - utils.docx_debug - INFO - Style: Quote | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,531 - utils.docx_debug - INFO - Style: Caption | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,534 - utils.docx_debug - INFO - Style: Intense Quote | Base: Normal | Left indent: 1.651 | First line indent: None
+2025-06-08 07:39:36,536 - utils.docx_debug - INFO - Style: TOC Heading | Base: Heading 1 | Left indent: None | First line indent: None
+2025-06-08 07:39:36,539 - utils.docx_debug - INFO - Style: Table Grid | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,541 - utils.docx_debug - INFO - Style: Light Shading | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,543 - utils.docx_debug - INFO - Style: Light Shading Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,546 - utils.docx_debug - INFO - Style: Light Shading Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,548 - utils.docx_debug - INFO - Style: Light Shading Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,550 - utils.docx_debug - INFO - Style: Light Shading Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,552 - utils.docx_debug - INFO - Style: Light Shading Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,554 - utils.docx_debug - INFO - Style: Light Shading Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,556 - utils.docx_debug - INFO - Style: Light List | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,559 - utils.docx_debug - INFO - Style: Light List Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,561 - utils.docx_debug - INFO - Style: Light List Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,564 - utils.docx_debug - INFO - Style: Light List Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,566 - utils.docx_debug - INFO - Style: Light List Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,568 - utils.docx_debug - INFO - Style: Light List Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,570 - utils.docx_debug - INFO - Style: Light List Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,572 - utils.docx_debug - INFO - Style: Light Grid | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,574 - utils.docx_debug - INFO - Style: Light Grid Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,577 - utils.docx_debug - INFO - Style: Light Grid Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,579 - utils.docx_debug - INFO - Style: Light Grid Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,582 - utils.docx_debug - INFO - Style: Light Grid Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,584 - utils.docx_debug - INFO - Style: Light Grid Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,586 - utils.docx_debug - INFO - Style: Light Grid Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,588 - utils.docx_debug - INFO - Style: Medium Shading 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,590 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,592 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,595 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,597 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,599 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,601 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,603 - utils.docx_debug - INFO - Style: Medium Shading 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,605 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,607 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,610 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,612 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,614 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,616 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,618 - utils.docx_debug - INFO - Style: Medium List 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,620 - utils.docx_debug - INFO - Style: Medium List 1 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,622 - utils.docx_debug - INFO - Style: Medium List 1 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,625 - utils.docx_debug - INFO - Style: Medium List 1 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,627 - utils.docx_debug - INFO - Style: Medium List 1 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,629 - utils.docx_debug - INFO - Style: Medium List 1 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,631 - utils.docx_debug - INFO - Style: Medium List 1 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,633 - utils.docx_debug - INFO - Style: Medium List 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,635 - utils.docx_debug - INFO - Style: Medium List 2 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,638 - utils.docx_debug - INFO - Style: Medium List 2 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,640 - utils.docx_debug - INFO - Style: Medium List 2 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,642 - utils.docx_debug - INFO - Style: Medium List 2 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,644 - utils.docx_debug - INFO - Style: Medium List 2 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,647 - utils.docx_debug - INFO - Style: Medium List 2 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,649 - utils.docx_debug - INFO - Style: Medium Grid 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,651 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,653 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,655 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,657 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,660 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,662 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,664 - utils.docx_debug - INFO - Style: Medium Grid 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,667 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,669 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,671 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,673 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,675 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,678 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,680 - utils.docx_debug - INFO - Style: Medium Grid 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,682 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,684 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,686 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,688 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,690 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,693 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,695 - utils.docx_debug - INFO - Style: Dark List | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,697 - utils.docx_debug - INFO - Style: Dark List Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,699 - utils.docx_debug - INFO - Style: Dark List Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,702 - utils.docx_debug - INFO - Style: Dark List Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,704 - utils.docx_debug - INFO - Style: Dark List Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,706 - utils.docx_debug - INFO - Style: Dark List Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,708 - utils.docx_debug - INFO - Style: Dark List Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,710 - utils.docx_debug - INFO - Style: Colorful Shading | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,713 - utils.docx_debug - INFO - Style: Colorful Shading Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,715 - utils.docx_debug - INFO - Style: Colorful Shading Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,717 - utils.docx_debug - INFO - Style: Colorful Shading Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,719 - utils.docx_debug - INFO - Style: Colorful Shading Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,722 - utils.docx_debug - INFO - Style: Colorful Shading Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,724 - utils.docx_debug - INFO - Style: Colorful Shading Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,726 - utils.docx_debug - INFO - Style: Colorful List | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,728 - utils.docx_debug - INFO - Style: Colorful List Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,730 - utils.docx_debug - INFO - Style: Colorful List Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,732 - utils.docx_debug - INFO - Style: Colorful List Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,735 - utils.docx_debug - INFO - Style: Colorful List Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,737 - utils.docx_debug - INFO - Style: Colorful List Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,739 - utils.docx_debug - INFO - Style: Colorful List Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,741 - utils.docx_debug - INFO - Style: Colorful Grid | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,744 - utils.docx_debug - INFO - Style: Colorful Grid Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,747 - utils.docx_debug - INFO - Style: Colorful Grid Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,749 - utils.docx_debug - INFO - Style: Colorful Grid Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,751 - utils.docx_debug - INFO - Style: Colorful Grid Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,754 - utils.docx_debug - INFO - Style: Colorful Grid Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,756 - utils.docx_debug - INFO - Style: Colorful Grid Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:36,756 - utils.docx_debug - INFO - Style: MR_Name | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,757 - utils.docx_debug - INFO - Style: MR_Contact | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,757 - utils.docx_debug - INFO - Style: MR_SectionHeader | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,760 - utils.docx_debug - INFO - Style: MR_Company | Base: No Spacing | Left indent: None | First line indent: None
+2025-06-08 07:39:36,760 - utils.docx_debug - INFO - Style: MR_RoleBox | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,761 - utils.docx_debug - INFO - Style: MR_RoleDescription | Base: None | Left indent: 0.254 | First line indent: None
+2025-06-08 07:39:36,761 - utils.docx_debug - INFO - Style: MR_BulletPoint | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,762 - utils.docx_debug - INFO - Style: MR_SummaryText | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,763 - utils.docx_debug - INFO - Style: MR_SkillCategory | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,763 - utils.docx_debug - INFO - Style: MR_SkillList | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:36,765 - utils.docx_debug - INFO - Style: RoleBoxText | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:36,766 - utils.docx_debug - INFO - Inspected 147 paragraph styles
+2025-06-08 07:39:36,932 - utils.docx_builder - INFO -    Text: 'GPA: 3.8/4.0...'
+2025-06-08 07:39:36,937 - utils.docx_builder - INFO -    Text: 'Dean's List: Fall 2017, Spring 2018, Fal...'
+2025-06-08 07:39:36,942 - utils.docx_builder - INFO -    Text: 'Relevant coursework: Data Structures, Al...'
+2025-06-08 07:39:36,961 - utils.docx_builder - INFO -    Text: 'Built full-stack web application using R...'
+2025-06-08 07:39:36,977 - utils.docx_builder - INFO -    Text: 'Deployed application to AWS using Docker...'
+2025-06-08 07:39:36,980 - utils.docx_builder - INFO -    Total bullet paragraphs found: 7
+2025-06-08 07:39:36,981 - utils.docx_builder - INFO -    Numbering issues found: 2
+2025-06-08 07:39:36,984 - utils.docx_builder - ERROR -    Paragraph 18 missing numPr: '• Implemented user authentication and au...'
+2025-06-08 07:39:36,984 - utils.docx_builder - ERROR -    Paragraph 19 missing numPr: '• Created RESTful API for managing finan...'
+2025-06-08 07:39:36,990 - utils.docx_builder - INFO -    AbstractNum definitions: 10
+2025-06-08 07:39:36,990 - utils.docx_builder - INFO -    Num instances: 10
+2025-06-08 07:39:36,990 - utils.docx_builder - INFO -    AbstractNum ID: 0
+2025-06-08 07:39:36,990 - utils.docx_builder - INFO -      Bullet character: '%1.'
+2025-06-08 07:39:36,991 - utils.docx_builder - INFO -      Indentation: left=1800 twips, hanging=360 twips
+2025-06-08 07:39:36,991 - utils.docx_builder - INFO -    AbstractNum ID: 1
+2025-06-08 07:39:36,991 - utils.docx_builder - INFO -      Bullet character: '%1.'
+2025-06-08 07:39:36,992 - utils.docx_builder - INFO -      Indentation: left=1440 twips, hanging=360 twips
+2025-06-08 07:39:36,992 - utils.docx_builder - INFO -    AbstractNum ID: 2
+2025-06-08 07:39:36,993 - utils.docx_builder - INFO -      Bullet character: '%1.'
+2025-06-08 07:39:36,994 - utils.docx_builder - INFO -      Indentation: left=1080 twips, hanging=360 twips
+2025-06-08 07:39:36,995 - utils.docx_builder - INFO -    AbstractNum ID: 3
+2025-06-08 07:39:36,995 - utils.docx_builder - INFO -      Bullet character: '%1.'
+2025-06-08 07:39:36,996 - utils.docx_builder - INFO -      Indentation: left=720 twips, hanging=360 twips
+2025-06-08 07:39:36,996 - utils.docx_builder - INFO -    AbstractNum ID: 4
+2025-06-08 07:39:37,001 - utils.docx_builder - INFO -      Indentation: left=1440 twips, hanging=360 twips
+2025-06-08 07:39:37,001 - utils.docx_builder - INFO -    AbstractNum ID: 5
+2025-06-08 07:39:37,005 - utils.docx_builder - INFO -      Indentation: left=1080 twips, hanging=360 twips
+2025-06-08 07:39:37,005 - utils.docx_builder - INFO -    AbstractNum ID: 6
+2025-06-08 07:39:37,008 - utils.docx_builder - INFO -      Indentation: left=720 twips, hanging=360 twips
+2025-06-08 07:39:37,009 - utils.docx_builder - INFO -    AbstractNum ID: 7
+2025-06-08 07:39:37,009 - utils.docx_builder - INFO -      Bullet character: '%1.'
+2025-06-08 07:39:37,009 - utils.docx_builder - INFO -      Indentation: left=360 twips, hanging=360 twips
+2025-06-08 07:39:37,009 - utils.docx_builder - INFO -    AbstractNum ID: 8
+2025-06-08 07:39:37,013 - utils.docx_builder - INFO -      Indentation: left=360 twips, hanging=360 twips
+2025-06-08 07:39:37,013 - utils.docx_builder - INFO -    AbstractNum ID: 100
+2025-06-08 07:39:37,013 - utils.docx_builder - INFO -      Bullet character: '•'
+2025-06-08 07:39:37,013 - utils.docx_builder - INFO -      Indentation: left=331 twips, hanging=187 twips
+2025-06-08 07:39:37,068 - utils.docx_debug - INFO - Inspecting document paragraphs...
+2025-06-08 07:39:37,072 - utils.docx_debug - INFO - Paragraph 0: 'Test User' | Style: MR_Name | Has numbering: False
+2025-06-08 07:39:37,076 - utils.docx_debug - INFO - Paragraph 1: 'San Francisco, CA • (555) 123-4567 • test@example....' | Style: MR_Contact | Has numbering: False
+2025-06-08 07:39:37,081 - utils.docx_debug - INFO - Paragraph 2: 'PROFESSIONAL SUMMARY' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:37,085 - utils.docx_debug - INFO - Paragraph 3: 'Experienced software engineer with 5+ years of exp...' | Style: MR_SummaryText | Has numbering: False
+2025-06-08 07:39:37,089 - utils.docx_debug - INFO - Paragraph 4: 'EDUCATION' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:37,094 - utils.docx_debug - INFO - Paragraph 5: 'University of California, Berkeley	Berkeley, CA' | Style: MR_Company | Has numbering: False
+2025-06-08 07:39:37,098 - utils.docx_debug - INFO - Paragraph 6: 'GPA: 3.8/4.0' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:37,101 - utils.docx_debug - INFO - Paragraph 7: 'Dean's List: Fall 2017, Spring 2018, Fall 2018' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:37,106 - utils.docx_debug - INFO - Paragraph 8: 'Relevant coursework: Data Structures, Algorithms, ...' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:37,110 - utils.docx_debug - INFO - Paragraph 9: 'SKILLS' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:37,114 - utils.docx_debug - INFO - Paragraph 10: 'PROGRAMMING LANGUAGES' | Style: MR_SkillCategory | Has numbering: False
+2025-06-08 07:39:37,118 - utils.docx_debug - INFO - Paragraph 11: 'Python, JavaScript, Java, SQL' | Style: MR_SkillList | Has numbering: False
+2025-06-08 07:39:37,122 - utils.docx_debug - INFO - Paragraph 12: 'FRAMEWORKS & TOOLS' | Style: MR_SkillCategory | Has numbering: False
+2025-06-08 07:39:37,126 - utils.docx_debug - INFO - Paragraph 13: 'Django, React, Node.js, Docker, AWS' | Style: MR_SkillList | Has numbering: False
+2025-06-08 07:39:37,130 - utils.docx_debug - INFO - Paragraph 14: 'DATABASES' | Style: MR_SkillCategory | Has numbering: False
+2025-06-08 07:39:37,135 - utils.docx_debug - INFO - Paragraph 15: 'PostgreSQL, MySQL, MongoDB' | Style: MR_SkillList | Has numbering: False
+2025-06-08 07:39:37,139 - utils.docx_debug - INFO - Paragraph 16: 'PROJECTS' | Style: MR_SectionHeader | Has numbering: False
+2025-06-08 07:39:37,143 - utils.docx_debug - INFO - Paragraph 17: 'Built full-stack web application using React, Expr...' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:37,147 - utils.docx_debug - INFO - Paragraph 18: '• Implemented user authentication and authorizatio...' | Style: MR_BulletPoint | Has numbering: False
+2025-06-08 07:39:37,151 - utils.docx_debug - INFO - Paragraph 19: '• Created RESTful API for managing financial trans...' | Style: MR_BulletPoint | Has numbering: False
+2025-06-08 07:39:37,155 - utils.docx_debug - INFO - Paragraph 20: 'Deployed application to AWS using Docker container...' | Style: MR_BulletPoint | Has numbering: True
+2025-06-08 07:39:37,155 - utils.docx_debug - INFO - Inspected 21 paragraphs
+2025-06-08 07:39:37,156 - utils.docx_debug - INFO - Inspecting document styles...
+2025-06-08 07:39:37,156 - utils.docx_debug - INFO - Style: Normal | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,158 - utils.docx_debug - INFO - Style: Header | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,161 - utils.docx_debug - INFO - Style: Footer | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,163 - utils.docx_debug - INFO - Style: Heading 1 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,165 - utils.docx_debug - INFO - Style: Heading 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,167 - utils.docx_debug - INFO - Style: Heading 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,171 - utils.docx_debug - INFO - Style: Heading 4 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,174 - utils.docx_debug - INFO - Style: Heading 5 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,176 - utils.docx_debug - INFO - Style: Heading 6 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,179 - utils.docx_debug - INFO - Style: Heading 7 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,181 - utils.docx_debug - INFO - Style: Heading 8 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,184 - utils.docx_debug - INFO - Style: Heading 9 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,184 - utils.docx_debug - INFO - Style: Normal Table | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,185 - utils.docx_debug - INFO - Style: No Spacing | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,187 - utils.docx_debug - INFO - Style: Title | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,189 - utils.docx_debug - INFO - Style: Subtitle | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,191 - utils.docx_debug - INFO - Style: List Paragraph | Base: Normal | Left indent: 1.27 | First line indent: None
+2025-06-08 07:39:37,193 - utils.docx_debug - INFO - Style: Body Text | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,195 - utils.docx_debug - INFO - Style: Body Text 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,198 - utils.docx_debug - INFO - Style: Body Text 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,200 - utils.docx_debug - INFO - Style: List | Base: Normal | Left indent: 0.635 | First line indent: -0.635
+2025-06-08 07:39:37,202 - utils.docx_debug - INFO - Style: List 2 | Base: Normal | Left indent: 1.27 | First line indent: -0.635
+2025-06-08 07:39:37,204 - utils.docx_debug - INFO - Style: List 3 | Base: Normal | Left indent: 1.905 | First line indent: -0.635
+2025-06-08 07:39:37,206 - utils.docx_debug - INFO - Style: List Bullet | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,208 - utils.docx_debug - INFO - Style: List Bullet 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,212 - utils.docx_debug - INFO - Style: List Bullet 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,215 - utils.docx_debug - INFO - Style: List Number | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,217 - utils.docx_debug - INFO - Style: List Number 2 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,220 - utils.docx_debug - INFO - Style: List Number 3 | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,222 - utils.docx_debug - INFO - Style: List Continue | Base: Normal | Left indent: 0.635 | First line indent: None
+2025-06-08 07:39:37,224 - utils.docx_debug - INFO - Style: List Continue 2 | Base: Normal | Left indent: 1.27 | First line indent: None
+2025-06-08 07:39:37,226 - utils.docx_debug - INFO - Style: List Continue 3 | Base: Normal | Left indent: 1.905 | First line indent: None
+2025-06-08 07:39:37,227 - utils.docx_debug - INFO - Style: macro | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,229 - utils.docx_debug - INFO - Style: Quote | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,232 - utils.docx_debug - INFO - Style: Caption | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,234 - utils.docx_debug - INFO - Style: Intense Quote | Base: Normal | Left indent: 1.651 | First line indent: None
+2025-06-08 07:39:37,236 - utils.docx_debug - INFO - Style: TOC Heading | Base: Heading 1 | Left indent: None | First line indent: None
+2025-06-08 07:39:37,239 - utils.docx_debug - INFO - Style: Table Grid | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,241 - utils.docx_debug - INFO - Style: Light Shading | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,243 - utils.docx_debug - INFO - Style: Light Shading Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,246 - utils.docx_debug - INFO - Style: Light Shading Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,248 - utils.docx_debug - INFO - Style: Light Shading Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,250 - utils.docx_debug - INFO - Style: Light Shading Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,253 - utils.docx_debug - INFO - Style: Light Shading Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,255 - utils.docx_debug - INFO - Style: Light Shading Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,258 - utils.docx_debug - INFO - Style: Light List | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,261 - utils.docx_debug - INFO - Style: Light List Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,263 - utils.docx_debug - INFO - Style: Light List Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,265 - utils.docx_debug - INFO - Style: Light List Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,268 - utils.docx_debug - INFO - Style: Light List Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,270 - utils.docx_debug - INFO - Style: Light List Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,272 - utils.docx_debug - INFO - Style: Light List Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,274 - utils.docx_debug - INFO - Style: Light Grid | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,276 - utils.docx_debug - INFO - Style: Light Grid Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,279 - utils.docx_debug - INFO - Style: Light Grid Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,281 - utils.docx_debug - INFO - Style: Light Grid Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,283 - utils.docx_debug - INFO - Style: Light Grid Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,285 - utils.docx_debug - INFO - Style: Light Grid Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,287 - utils.docx_debug - INFO - Style: Light Grid Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,289 - utils.docx_debug - INFO - Style: Medium Shading 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,291 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,294 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,297 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,299 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,301 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,303 - utils.docx_debug - INFO - Style: Medium Shading 1 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,305 - utils.docx_debug - INFO - Style: Medium Shading 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,307 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,309 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,311 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,313 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,315 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,317 - utils.docx_debug - INFO - Style: Medium Shading 2 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,319 - utils.docx_debug - INFO - Style: Medium List 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,321 - utils.docx_debug - INFO - Style: Medium List 1 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,323 - utils.docx_debug - INFO - Style: Medium List 1 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,326 - utils.docx_debug - INFO - Style: Medium List 1 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,328 - utils.docx_debug - INFO - Style: Medium List 1 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,331 - utils.docx_debug - INFO - Style: Medium List 1 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,333 - utils.docx_debug - INFO - Style: Medium List 1 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,335 - utils.docx_debug - INFO - Style: Medium List 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,337 - utils.docx_debug - INFO - Style: Medium List 2 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,340 - utils.docx_debug - INFO - Style: Medium List 2 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,342 - utils.docx_debug - INFO - Style: Medium List 2 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,344 - utils.docx_debug - INFO - Style: Medium List 2 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,347 - utils.docx_debug - INFO - Style: Medium List 2 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,349 - utils.docx_debug - INFO - Style: Medium List 2 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,351 - utils.docx_debug - INFO - Style: Medium Grid 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,353 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,355 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,357 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,360 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,362 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,364 - utils.docx_debug - INFO - Style: Medium Grid 1 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,367 - utils.docx_debug - INFO - Style: Medium Grid 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,369 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,371 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,373 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,376 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,378 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,381 - utils.docx_debug - INFO - Style: Medium Grid 2 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,385 - utils.docx_debug - INFO - Style: Medium Grid 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,388 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,390 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,396 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,399 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,402 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,406 - utils.docx_debug - INFO - Style: Medium Grid 3 Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,411 - utils.docx_debug - INFO - Style: Dark List | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,414 - utils.docx_debug - INFO - Style: Dark List Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,417 - utils.docx_debug - INFO - Style: Dark List Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,419 - utils.docx_debug - INFO - Style: Dark List Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,422 - utils.docx_debug - INFO - Style: Dark List Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,425 - utils.docx_debug - INFO - Style: Dark List Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,428 - utils.docx_debug - INFO - Style: Dark List Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,430 - utils.docx_debug - INFO - Style: Colorful Shading | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,433 - utils.docx_debug - INFO - Style: Colorful Shading Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,435 - utils.docx_debug - INFO - Style: Colorful Shading Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,437 - utils.docx_debug - INFO - Style: Colorful Shading Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,439 - utils.docx_debug - INFO - Style: Colorful Shading Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,442 - utils.docx_debug - INFO - Style: Colorful Shading Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,444 - utils.docx_debug - INFO - Style: Colorful Shading Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,446 - utils.docx_debug - INFO - Style: Colorful List | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,449 - utils.docx_debug - INFO - Style: Colorful List Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,451 - utils.docx_debug - INFO - Style: Colorful List Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,453 - utils.docx_debug - INFO - Style: Colorful List Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,455 - utils.docx_debug - INFO - Style: Colorful List Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,457 - utils.docx_debug - INFO - Style: Colorful List Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,459 - utils.docx_debug - INFO - Style: Colorful List Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,462 - utils.docx_debug - INFO - Style: Colorful Grid | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,464 - utils.docx_debug - INFO - Style: Colorful Grid Accent 1 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,466 - utils.docx_debug - INFO - Style: Colorful Grid Accent 2 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,468 - utils.docx_debug - INFO - Style: Colorful Grid Accent 3 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,470 - utils.docx_debug - INFO - Style: Colorful Grid Accent 4 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,472 - utils.docx_debug - INFO - Style: Colorful Grid Accent 5 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,474 - utils.docx_debug - INFO - Style: Colorful Grid Accent 6 | Base: Normal Table | Left indent: None | First line indent: None
+2025-06-08 07:39:37,475 - utils.docx_debug - INFO - Style: MR_Name | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,476 - utils.docx_debug - INFO - Style: MR_Contact | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,477 - utils.docx_debug - INFO - Style: MR_SectionHeader | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,479 - utils.docx_debug - INFO - Style: MR_Company | Base: No Spacing | Left indent: None | First line indent: None
+2025-06-08 07:39:37,479 - utils.docx_debug - INFO - Style: MR_RoleBox | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,480 - utils.docx_debug - INFO - Style: MR_RoleDescription | Base: None | Left indent: 0.254 | First line indent: None
+2025-06-08 07:39:37,481 - utils.docx_debug - INFO - Style: MR_BulletPoint | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,482 - utils.docx_debug - INFO - Style: MR_SummaryText | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,482 - utils.docx_debug - INFO - Style: MR_SkillCategory | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,483 - utils.docx_debug - INFO - Style: MR_SkillList | Base: None | Left indent: None | First line indent: None
+2025-06-08 07:39:37,485 - utils.docx_debug - INFO - Style: RoleBoxText | Base: Normal | Left indent: None | First line indent: None
+2025-06-08 07:39:37,486 - utils.docx_debug - INFO - Inspected 147 paragraph styles
+2025-06-08 07:39:37,509 - utils.docx_builder - INFO - Debug report saved to D:\AI\manusResume6\debug_o3_test_artifacts_2025.json
+2025-06-08 07:39:37,513 - utils.docx_builder - INFO - Debug DOCX saved to D:\AI\manusResume6\debug_o3_test_artifacts_2025.docx
+2025-06-08 07:39:37,514 - utils.docx_builder - INFO - Successfully built DOCX for request ID: o3_test_artifacts_2025
+2025-06-08 07:39:37,522 - __main__ - INFO - ============================================================
+2025-06-08 07:39:37,524 - __main__ - INFO - 
+2025-06-08 07:39:37,524 - __main__ - INFO - Generated artifacts:
+2025-06-08 07:39:37,525 - __main__ - INFO -   1. o3_artifact_2_full_debug_log.txt - Complete DEBUG log
+2025-06-08 07:39:37,525 - __main__ - INFO -   2. o3_artifact_3_post_processing_analysis.md - Post-processing analysis
+2025-06-08 07:39:37,525 - __main__ - INFO -   3. pre_reconciliation_*.docx - DOCX before reconciliation (auto-generated)
+2025-06-08 07:39:37,526 - __main__ - INFO -   4. pre_reconciliation_debug_*.json - Debug analysis (auto-generated)
+2025-06-08 07:39:37,526 - __main__ - INFO -   5. o3_artifact_final_docx_o3_test_artifacts_2025.docx - Final DOCX for comparison
+2025-06-08 07:39:37,526 - __main__ - INFO - 
+2025-06-08 07:39:37,526 - __main__ - INFO - These artifacts can now be provided to O3 for final analysis.

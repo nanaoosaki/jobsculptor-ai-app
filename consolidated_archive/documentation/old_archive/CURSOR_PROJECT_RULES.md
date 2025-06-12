@@ -1,0 +1,182 @@
+# Cursor Project Rules - Resume Tailor DOCX Styling
+
+## 🎯 **Critical DOCX Styling Rules**
+
+### **1. Style Precedence Hierarchy - NEVER VIOLATE**
+```
+Direct ¶ formatting ▶ Paragraph style ▶ Linked character style ▶ Document defaults
+```
+- **RULE**: Never apply direct formatting (`paragraph_format.space_before = Pt(6)`) after assigning a style
+- **WHY**: Direct formatting always wins, creating race conditions and inconsistent spacing
+- **DO**: Set paragraph properties via style definitions in `StyleEngine.create_docx_custom_styles()`
+- **DON'T**: Mix direct formatting with style assignment
+
+### **2. Content-First Architecture - MANDATORY**
+- **RULE**: Always add content (`paragraph.add_run(text)`) BEFORE applying styles  
+- **WHY**: Word ignores style assignments on empty paragraphs, falls back to "Normal" style
+- **PATTERN**: 
+  ```python
+  para = doc.add_paragraph()
+  para.add_run(text)  # ← MUST come first
+  para.style = 'MR_Company'  # ← Only after content exists
+  ```
+- **ANTI-PATTERN**:
+  ```python
+  para = doc.add_paragraph()
+  para.style = 'MR_Company'  # ← FAILS silently, no runs exist
+  para.add_run(text)
+  ```
+
+### **3. Design Token Hierarchy - SINGLE SOURCE OF TRUTH**
+- **RULE**: All styling values MUST come from `design_tokens.json` → `_docx_styles.json` → `StyleEngine`
+- **LAYERS**:
+  1. `design_tokens.json` - Source of truth values
+  2. `StyleEngine.create_docx_custom_styles()` - Applies tokens to Word styles
+  3. `_apply_paragraph_style()` - Uses pre-created styles only
+- **DON'T**: Hardcode values in multiple places (creates inconsistency)
+- **DO**: Change values only in design tokens, regenerate with `python tools/generate_tokens.py`
+
+### **4. Style Creation Idempotency - REQUIRED**
+- **RULE**: Style creation must be idempotent (safe to call multiple times)
+- **PATTERN**: Use "get-or-create-then-configure" approach
+- **IMPLEMENTATION**:
+  ```python
+  try:
+      style = doc.styles['MR_Company']  # Try to get existing
+  except KeyError:
+      style = doc.styles.add_style('MR_Company', WD_STYLE_TYPE.PARAGRAPH)  # Create if missing
+  # Always configure regardless of whether created or retrieved
+  style.paragraph_format.space_before = Pt(config['spaceBeforePt'])
+  ```
+
+### **5. Style Application Rules - STRICT SEPARATION**
+- **RULE**: Keep style definition separate from style application
+- **DEFINITION**: Only in `StyleEngine.create_docx_custom_styles()` 
+- **APPLICATION**: Only in `_apply_paragraph_style()` or direct assignment
+- **DON'T**: Modify paragraph formatting after style assignment
+- **EXCEPTION**: Only apply direct formatting BEFORE style assignment if absolutely necessary
+
+### **6. Bullet Point Architecture - NATIVE ONLY**
+- **RULE**: Use Word's native numbering system, never manual bullets
+- **IMPLEMENTATION**: `NumberingEngine.apply_native_bullet()` with XML numbering definitions
+- **DON'T**: Use `"• " + text` with manual indentation (overrides native spacing)
+- **DO**: Create proper `<w:abstractNum>` and `<w:num>` definitions
+- **INDENTATION**: Controlled by design tokens, applied via XML `<w:ind>` elements
+
+### **7. Logging Requirements - MANDATORY FOR DEBUGGING**
+- **RULE**: Log style assignments and spacing values during debugging
+- **PATTERN**:
+  ```python
+  para.style = style_name
+  logger.info(f"Applied style '{style_name}' to paragraph: '{para.text[:50]}...'")
+  logger.info(f"Space before: {para.paragraph_format.space_before}")
+  logger.info(f"Space after: {para.paragraph_format.space_after}")
+  ```
+- **PURPOSE**: Detect direct formatting overrides and style application failures
+
+### **8. MR_Company Style Special Handling**
+- **RULE**: MR_Company spacing must respect design tokens (`paragraph-spacing-company-before`)
+- **DON'T**: Hardcode `space_before = Pt(0)` in StyleEngine
+- **DON'T**: Apply direct spacing overrides in docx_builder
+- **DO**: Let design tokens control all MR_Company spacing values
+- **XML**: Use contextual spacing controls for advanced behavior, never for basic spacing
+
+## 🚨 **Anti-Patterns - NEVER DO THESE**
+
+### **Race Condition Creators**
+```python
+# ❌ BAD: Direct formatting after style
+para.style = 'MR_Company' 
+para.paragraph_format.space_before = Pt(6)  # Overrides style!
+
+# ❌ BAD: Style on empty paragraph  
+para = doc.add_paragraph()
+para.style = 'MR_Company'  # Silently fails
+para.add_run(text)
+
+# ❌ BAD: Multiple hardcoded values
+# In design_tokens.json: "paragraph-spacing-company-before": "6"
+# In style_engine.py: pf.space_before = Pt(0)  # Conflicts!
+# In docx_builder.py: para.paragraph_format.space_before = Pt(6)  # Race condition!
+```
+
+### **Hardcoded Value Violations**
+```python
+# ❌ BAD: Magic numbers
+indent_xml = f'<w:ind w:left="221" w:hanging="221"/>'
+
+# ✅ GOOD: Design token driven
+left_indent_cm = float(design_tokens.get("docx-bullet-left-indent-cm", "0.965"))
+left_indent_twips = int(left_indent_cm * 567)
+indent_xml = f'<w:ind w:left="{left_indent_twips}" w:hanging="{hanging_indent_twips}"/>'
+```
+
+## ✅ **Correct Patterns - ALWAYS DO THESE**
+
+### **Content-First Style Application**
+```python
+# ✅ CORRECT: Content first, then style
+para = doc.add_paragraph()
+para.add_run(text)  # Content must exist first
+_apply_paragraph_style(doc, para, "MR_Company", docx_styles)  # Style application
+```
+
+### **Design Token Integration**
+```python
+# ✅ CORRECT: Single source of truth
+design_tokens = StyleEngine.load_tokens()
+docx_styles = StyleEngine.create_docx_custom_styles(doc, design_tokens)
+# All styling now controlled by design_tokens.json
+```
+
+### **Debugging Pattern**
+```python
+# ✅ CORRECT: Comprehensive logging
+logger.info(f"Before style: {para.style.name if para.style else 'None'}")
+para.style = style_name
+logger.info(f"After style: {para.style.name if para.style else 'None'}")
+logger.info(f"Final spacing: before={para.paragraph_format.space_before}, after={para.paragraph_format.space_after}")
+```
+
+## 🔧 **File-Specific Rules**
+
+### **`design_tokens.json`**
+- ✅ ONLY place for spacing/sizing values
+- ✅ Use consistent naming: `paragraph-spacing-{style}-{before|after}`
+- ❌ NEVER hardcode values elsewhere
+
+### **`style_engine.py`** 
+- ✅ ONLY place for style creation and configuration
+- ✅ Apply ALL design token values including MR_Company spacing
+- ❌ NEVER hardcode spacing values
+- ❌ NEVER exclude styles from design token application
+
+### **`utils/docx_builder.py`**
+- ✅ ONLY place for style application and content creation
+- ✅ Content-first: add_run() before style assignment
+- ❌ NEVER apply direct formatting after style assignment
+- ❌ NEVER hardcode spacing overrides
+
+### **`word_styles/numbering_engine.py`**
+- ✅ ONLY place for native Word numbering XML generation
+- ✅ Use design tokens for all indentation values  
+- ❌ NEVER hardcode XML attribute values
+- ❌ NEVER mix manual bullets with native numbering
+
+## 🎯 **Testing Requirements**
+
+### **Before Any Style Changes**
+1. **Run**: `python tools/generate_tokens.py` after design token changes
+2. **Verify**: `_docx_styles.json` reflects your changes
+3. **Test**: Create minimal document to verify style application
+4. **Log**: Enable verbose logging to trace style application flow
+
+### **Regression Prevention**
+- ✅ Test multiple entries of same style (company, school, etc.)
+- ✅ Verify consistent spacing across all instances  
+- ✅ Check Word style inspector for actual applied values
+- ❌ Never commit changes without testing consistency
+
+---
+
+*These rules prevent the three-layer styling conflicts that cause spacing inconsistencies and ensure maintainable, predictable DOCX generation.* 

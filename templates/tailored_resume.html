@@ -2,15 +2,13 @@
     <button id="copyResumeBtn" class="btn btn-secondary">
         <i class="fas fa-copy"></i> Copy to Clipboard
     </button>
-    <button id="download-pdf" class="btn btn-primary">
-        <i class="fas fa-file-pdf"></i> Download PDF
-    </button>
-    <button id="download-docx" class="btn btn-outline-primary">
+    <button id="download-docx" class="btn btn-primary">
         <i class="fas fa-file-word"></i> Download DOCX
     </button>
     <button id="back-button" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Back
     </button>
+    <!-- PDF generation disabled -->
 </div>
 
 <div class="resume-container">
@@ -23,69 +21,7 @@
     // Store resume data in JavaScript variable
     const resumeData = {{ resume|tojson }};
     
-    // Handle PDF download
-    document.getElementById('download-pdf').addEventListener('click', async function() {
-        try {
-            const downloadButton = this;
-            
-            // Disable the button and show loading state
-            downloadButton.disabled = true;
-            downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-            
-            // Send the resume data to the backend
-            const response = await fetch('/download_pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(resumeData)
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to generate PDF');
-            }
-            
-            // Convert the response to a blob
-            const blob = await response.blob();
-            
-            // Create a URL for the blob
-            const url = window.URL.createObjectURL(blob);
-            
-            // Create a temporary anchor element to trigger download
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            
-            // Set the file name
-            let filename = resumeData.name ? 
-                `${resumeData.name.replace(/\s+/g, '_')}_Resume.pdf` : 
-                'Tailored_Resume.pdf';
-            
-            a.download = filename;
-            
-            // Append to the document
-            document.body.appendChild(a);
-            
-            // Trigger download
-            a.click();
-            
-            // Clean up
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            
-            // Reset button state
-            downloadButton.disabled = false;
-            downloadButton.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
-            
-        } catch (error) {
-            console.error('Error downloading PDF:', error);
-            alert('Failed to generate PDF. Please try again.');
-            
-            // Reset button state
-            downloadButton.disabled = false;
-            downloadButton.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
-        }
-    });
+    // PDF download removed - use DOCX instead
     
     // Handle DOCX download
     document.getElementById('download-docx').addEventListener('click', async function() {

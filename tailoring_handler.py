@@ -242,60 +242,34 @@ def setup_tailoring_routes(app):
                     f"{filename_base}_tailored_{provider}.pdf"
                 )
                 
+                # Skip PDF generation - just return preview with DOCX download option
+                logger.info(f"Resume tailored successfully with {provider} - PDF generation disabled")
+                
+                # Get resume ID from filename
+                resume_id = os.path.splitext(os.path.basename(resume_path))[0]
+                
+                # Log in resume index system
                 try:
-                    # Generate PDF using the clean HTML body content
-                    pdf_path = create_pdf_from_html(
-                        clean_html_body, # Pass only the body content
-                        pdf_output_path,
-                        metadata={
-                            'title': f'Tailored Resume - {provider.capitalize()}',
-                            'author': 'Resume Tailoring App'
-                        }
-                    )
+                    resume_index = get_resume_index()
+                    resume_index.add_resume(resume_id, os.path.basename(resume_path))
                     
-                    # Get just the filename part for the response
-                    pdf_filename = os.path.basename(pdf_path)
+                    # If we get to this point, update the index with job details
+                    job_title = job_data.get('job_title', 'Unknown Position')
+                    company = job_data.get('company', 'Unknown Company')
+                    resume_index.add_note(resume_id, f"Processing for job: {job_title} at {company}")
                     
-                    logger.info(f"Resume tailored successfully with {provider}: {pdf_filename}")
-                    
-                    # Get resume ID from filename
-                    resume_id = os.path.splitext(os.path.basename(resume_path))[0]
-                    
-                    # Log in resume index system
-                    try:
-                        resume_index = get_resume_index()
-                        resume_index.add_resume(resume_id, os.path.basename(resume_path))
-                        
-                        # If we get to this point, update the index with job details
-                        job_title = job_data.get('job_title', 'Unknown Position')
-                        company = job_data.get('company', 'Unknown Company')
-                        resume_index.add_note(resume_id, f"Processing for job: {job_title} at {company}")
-                        
-                    except Exception as e:
-                        logger.warning(f"Error updating resume index: {e}")
-                    
-                    return jsonify({
-                        'success': True,
-                        'filename': pdf_filename,
-                        'preview': preview_html_for_screen, # Return the version for the screen
-                        'request_id': request_id,
-                        'provider': provider,
-                        'fileType': 'pdf',  # Indicate this is a PDF file
-                        'message': f'Resume tailored successfully using {provider.upper()}'
-                    }), 200
-                except Exception as pdf_error:
-                    # If PDF generation fails, fallback (potentially remove DOCX fallback)
-                    logger.error(f"PDF generation failed: {str(pdf_error)}")
-                    logger.error(traceback.format_exc())
-                    # Decide on fallback behavior - maybe just return the preview?
-                    # For now, return error
-                    return jsonify({
-                        'success': False,
-                        'error': f'PDF generation failed: {str(pdf_error)}',
-                        'preview': preview_html_for_screen, # Still return preview
-                        'request_id': request_id,
-                        'provider': provider
-                    }), 500
+                except Exception as e:
+                    logger.warning(f"Error updating resume index: {e}")
+                
+                return jsonify({
+                    'success': True,
+                    'filename': None,  # No PDF file generated
+                    'preview': preview_html_for_screen, # Return the version for the screen
+                    'request_id': request_id,
+                    'provider': provider,
+                    'fileType': 'html',  # Indicate this is HTML preview only
+                    'message': f'Resume tailored successfully using {provider.upper()}. Use "Generate DOCX" to download.'
+                }), 200
                     
             except Exception as e:
                 logger.error(f"Error tailoring resume with {provider.upper()} API: {str(e)}")

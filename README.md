@@ -1,6 +1,6 @@
 # Resume Tailoring Website Using LLM Technology
 
-A web application that helps job seekers optimize their resumes for specific job postings using Claude AI.
+A web application that helps job seekers optimize their resumes for specific job postings using AI technology.
 
 ## Features
 
@@ -13,16 +13,16 @@ A web application that helps job seekers optimize their resumes for specific job
 
 - **Backend**: Python, Flask
 - **Frontend**: HTML, CSS, JavaScript, Bootstrap
-- **AI Integration**: Claude API (Anthropic)
-- **Document Processing**: python-docx
+- **AI Integration**: OpenAI API (with support for multiple LLM providers)
+- **Document Processing**: python-docx, WeasyPrint
 - **Web Scraping**: BeautifulSoup, Requests
 
 ## Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/nanaoosaki/manus_resume.git
-   cd manus_resume
+   git clone <repository_url>
+   cd manusResume6
    ```
 
 2. Install dependencies:
@@ -33,7 +33,8 @@ A web application that helps job seekers optimize their resumes for specific job
 3. Create a `.env` file with your API keys:
    ```
    SECRET_KEY=your_flask_secret_key
-   CLAUDE_API_KEY=your_claude_api_key
+   OPENAI_API_KEY=your_openai_api_key
+   # Optional: CLAUDE_API_KEY=your_claude_api_key
    ```
 
 4. Run the application:
@@ -47,7 +48,7 @@ A web application that helps job seekers optimize their resumes for specific job
 
 - `app.py`: Main Flask application
 - `config.py`: Configuration settings
-- `claude_integration.py`: Claude API integration for resume tailoring
+- `claude_integration.py`: LLM API integration for resume tailoring (supports OpenAI and Claude)
 - `job_parser.py`: Job listing parsing functionality
 - `resume_formatter.py`: Resume formatting utilities
 - `resume_processor.py`: Resume processing and analysis
@@ -62,7 +63,7 @@ A web application that helps job seekers optimize their resumes for specific job
 1. Upload your resume (DOCX format)
 2. Enter a job listing URL
 3. The application parses the job listing to extract requirements and skills
-4. Claude AI tailors your resume to highlight relevant experience and skills
+4. AI (OpenAI) tailors your resume to highlight relevant experience and skills
 5. Download your tailored resume
 
 ## Recent Updates
@@ -76,7 +77,7 @@ A web application that helps job seekers optimize their resumes for specific job
 - Consistent formatting between HTML preview and Word document downloads
 
 ### LLM-Based Resume Parsing
-- Implemented intelligent resume parsing using LLM (Claude/OpenAI)
+- Implemented intelligent resume parsing using LLM (OpenAI/Claude)
 - Added fallback to traditional parsing for resilience
 - Improved section detection for varied resume formats
 - Added caching to avoid repeated API calls
@@ -85,7 +86,7 @@ A web application that helps job seekers optimize their resumes for specific job
 - Added comprehensive job analysis with AI insights
 - Extraction of candidate profiles, hard/soft skills, and ideal candidate descriptions
 - Enhanced UI with dedicated AI analysis section
-- Support for both Claude and OpenAI as analysis providers
+- Primary support for OpenAI with Claude as secondary option
 
 ### Job Parser Enhancements
 - Improved structure detection for job listings
@@ -93,8 +94,8 @@ A web application that helps job seekers optimize their resumes for specific job
 - Better extraction of required skills and qualifications
 - Support for more job posting formats
 
-### Claude API Integration
-- Improved error handling for API requests
+### AI API Integration
+- Improved error handling for API requests (OpenAI primary, Claude secondary)
 - Enhanced prompt engineering for better tailoring results
 - Structured logging for API interactions
 
@@ -120,6 +121,29 @@ A web application that helps job seekers optimize their resumes for specific job
 - Improved job parsing accuracy with enhanced LLM-based analysis
 - Updated resume styling for better ATS compatibility
 
+## 🔒 Security & Privacy
+
+This application handles sensitive personal information. **CRITICAL SECURITY MEASURES**:
+
+### Before Making Repository Public
+```bash
+# Clean all user data (REQUIRED before public commits)
+python scripts/cleanup_user_data.py --backup
+```
+
+### User Data Protection
+- All uploaded resumes and personal data are automatically excluded from git
+- Comprehensive `.gitignore` prevents accidental commits of sensitive files
+- UUID-based session management for user privacy
+- No permanent storage of personal information
+
+### Deployment Security
+- Use environment variables for API keys
+- Enable HTTPS in production
+- User data is automatically cleaned during deployment
+
+**See [SECURITY.md](SECURITY.md) for complete security guidelines.**
+
 ## License
 
 MIT
@@ -127,3 +151,8 @@ MIT
 ## Important Note: Temporary File Cleanup
 
 The application currently stores temporary tailored resume data in `static/uploads/temp_session_data/` using unique request IDs. These files are necessary during the tailoring process but are not automatically cleaned up afterwards. **A cleanup mechanism (e.g., a scheduled task to delete files older than 24 hours) should be implemented** to prevent disk space issues in a production environment. 
+
+For automated cleanup, use the provided script:
+```bash
+python scripts/cleanup_user_data.py --backup
+``` 

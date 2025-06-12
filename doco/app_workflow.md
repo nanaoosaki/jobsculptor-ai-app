@@ -376,6 +376,10 @@ logger.info(f"✅ DOCX generated with CORRECTED native bullets: {use_native_bull
 | **Processing** | `tailoring_handler.py` | Tailoring orchestration | Session coordination, workflow management |
 | **AI Integration** | `claude_integration.py` | LLM communication | Section tailoring, content generation |
 | **Output** | `html_generator.py` | HTML preview generation | Template rendering, styling application |
+| **✅ Deployment** | `startup.py` | Production environment setup | Directory creation, configuration validation |
+| **✅ Validation** | `validate_deployment.py` | Pre-deployment testing | Environment validation, dependency checks |
+| **✅ YC Features** | `yc_eddie_styler.py` | YC-Eddie specific styling | YC formatting guidelines, box styling |
+| **✅ YC Generation** | `yc_resume_generator.py` | YC-specific resume creation | YC template compliance, specialized sections |
 
 ### **Input Processing System**
 
@@ -385,6 +389,10 @@ logger.info(f"✅ DOCX generated with CORRECTED native bullets: {use_native_bull
 | `resume_processor.py` | Resume parsing | Raw text | Structured text |
 | `llm_resume_parser.py` | AI structure analysis | Structured text | Resume JSON |
 | `job_parser_handler.py` | Job analysis | Job posting text | Job requirements JSON |
+| `✅ format_handler.py` | Format detection & conversion | Various file formats | Normalized text content |
+| `✅ pdf_parser.py` | PDF text extraction | PDF resume files | Extracted text |
+| `✅ resume_formatter.py` | Resume standardization | Raw parsed sections | Standardized structure |
+| `✅ resume_styler.py` | Core styling logic | Resume content | Styled resume structure |
 
 ### **✅ Enhanced Output Generation System**
 
@@ -411,6 +419,91 @@ logger.info(f"✅ DOCX generated with CORRECTED native bullets: {use_native_bull
 | `metric_utils.py` | Achievement metric processing | Quantifiable result enhancement | Ensures bullet content quality |
 | `token_counts.py` | API usage monitoring | Cost tracking, optimization | Tracks bullet-related API usage |
 | **✅ word_styles/numbering_engine.py** | **CORRECTED Native Word numbering** | **Professional tight bullet spacing** | **✅ CORRECTED IMPLEMENTATION** |
+| `✅ sample_experience_snippet.py` | Achievement template system | Example structures for LLM prompts | Guides bullet content generation |
+| `✅ restart_app.py` | Development utilities | Auto-restart Flask server | N/A (development tool) |
+
+### **✅ Advanced Bullet & Formatting System (B-Series + O3)**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| **✅ utils/o3_bullet_core_engine.py** | **O3 bullet consistency engine** | **Document-level state management** | **🔴 Critical** |
+| `✅ utils/achievement_sanitizer.py` | Achievement text sanitization | Clean bullet content preprocessing | 🟡 Medium |
+| `✅ utils/bullet_error_categorizer.py` | Error categorization system | Bullet failure analysis | 🟡 Medium |
+| `✅ utils/bullet_reconciliation.py` | Bullet reconciliation logic | Cross-format consistency | 🟡 Medium |
+| `✅ utils/bullet_testing_framework.py` | Bullet testing infrastructure | Automated bullet validation | 🟡 Medium |
+| `✅ utils/bullet_utils.py` | General bullet utilities | Common bullet operations | 🟡 Medium |
+| `✅ utils/unicode_bullet_sanitizer.py` | Unicode character handling | International bullet support | 🟡 Medium |
+| `✅ utils/numid_collision_manager.py` | Numbering ID collision prevention | Safe numbering allocation | 🟡 Medium |
+| `✅ utils/style_collision_handler.py` | Style conflict resolution | Prevent formatting conflicts | 🟡 Medium |
+| `✅ utils/xml_repair_system.py` | XML corruption repair | DOCX recovery mechanisms | 🟡 Medium |
+
+### **✅ System Infrastructure & Support**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| `✅ utils/docx_debug.py` | DOCX debugging utilities | Document analysis and diagnostics | 🟡 Medium |
+| `✅ utils/memory_manager.py` | Memory management system | Resource optimization | 🟡 Medium |
+| `✅ utils/request_correlation.py` | Request tracking system | Session correlation | 🟡 Medium |
+| `✅ utils/staged_testing.py` | Staged testing framework | Multi-phase testing | 🟡 Medium |
+
+### **✅ Build & Development Tools Package**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| `✅ tools/generate_tokens.py` | Design token generation | Convert tokens to CSS/DOCX formats | 🟡 Medium |
+| `✅ tools/generate_tokens_css.py` | CSS token generation | SCSS variable compilation | 🟡 Medium |
+| `✅ tools/build_css.py` | CSS compilation | Main CSS build process | 🟡 Medium |
+| `✅ tools/build_hybrid_css.py` | Hybrid CSS building | Multi-format CSS generation | 🟡 Medium |
+| `✅ tools/build_spacing_css.py` | Spacing CSS generation | Spacing-specific compilation | 🟡 Medium |
+| `✅ tools/generate_css_variables.py` | CSS variable generation | Dynamic variable creation | 🟡 Medium |
+| `✅ tools/generate_raw_rules.py` | Raw CSS rule generation | Base rule compilation | 🟡 Medium |
+| `✅ tools/extract_spacing_rules.py` | Spacing rule extraction | Spacing analysis tools | 🟡 Medium |
+| `✅ tools/migrate_scss.py` | SCSS migration tools | Style migration utilities | 🟡 Medium |
+| `✅ tools/sass_import_lockfile.py` | SASS import management | Import dependency tracking | 🟡 Medium |
+
+### **✅ Validation & Diagnostic Tools**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| `✅ tools/cross_format_diagnostics.py` | Cross-format diagnostic analysis | Multi-format consistency checking | 🟡 Medium |
+| `✅ tools/css_safety_validator.py` | CSS safety validation | CSS compliance checking | 🟡 Medium |
+| `✅ tools/debug_docx.py` | DOCX debugging tools | DOCX analysis utilities | 🟡 Medium |
+| `✅ tools/style_linter.py` | Style linting system | Style rule validation | 🟡 Medium |
+| `✅ tools/token_orphan_linter.py` | Token orphan detection | Unused token identification | 🟡 Medium |
+| `✅ tools/test_docx_real.py` | Real DOCX testing | Production DOCX validation | 🟡 Medium |
+
+### **✅ Integration & Utility Tools**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| `✅ tools/integrate_translator.py` | Translator integration | Translation system setup | 🟡 Medium |
+| `✅ tools/llm_api.py` | LLM API utilities | API interaction helpers | 🟡 Medium |
+| `✅ tools/search_engine.py` | Search functionality | Content search utilities | 🟡 Medium |
+| `✅ tools/web_scraper.py` | Web scraping utilities | Data extraction tools | 🟡 Medium |
+| `✅ tools/screenshot_utils.py` | Screenshot utilities | Visual testing support | 🟢 Low |
+
+### **✅ Testing Infrastructure**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| `✅ tests/test_docx_builder.py` | DOCX builder testing | Core DOCX functionality tests | 🟡 Medium |
+| `✅ tests/docx_spacing/test_exact_line_height.py` | Line height testing | Precise spacing validation | 🟡 Medium |
+| `✅ tests/docx_spacing/test_header_fix_simple.py` | Header fix testing | Header formatting tests | 🟡 Medium |
+| `✅ tests/docx_spacing/test_header_style_fix.py` | Header style testing | Header style validation | 🟡 Medium |
+| `✅ tests/docx_spacing/test_line_height_matrix.py` | Line height matrix testing | Comprehensive spacing tests | 🟡 Medium |
+| `✅ tests/docx_spacing/test_no_blank_paras.py` | Blank paragraph testing | Empty paragraph detection | 🟡 Medium |
+| `✅ tests/docx_spacing/test_table_section_headers.py` | Table header testing | Table-based header validation | 🟡 Medium |
+
+### **✅ Cross-Platform Rendering Engine**
+
+| File | Purpose | Usage | Impact Level |
+|------|---------|-------|--------------|
+| `✅ rendering/compat/capability_tables.py` | Capability tables | Platform compatibility mapping | 🟡 Medium |
+| `✅ rendering/compat/transforms/color_mix.py` | Color transformation | Cross-platform color handling | 🟡 Medium |
+| `✅ rendering/compat/transforms/font_features.py` | Font feature handling | Typography compatibility | 🟡 Medium |
+| `✅ rendering/compat/transforms/logical_box.py` | Logical box rendering | Layout compatibility | 🟡 Medium |
+| `✅ rendering/compat/translator.py` | Rendering translation | Cross-platform rendering | 🟡 Medium |
+| `✅ rendering/compat/utils.py` | Rendering utilities | Rendering support functions | 🟡 Medium |
 
 ---
 
@@ -512,11 +605,12 @@ pdf_bytes = weasyprint.HTML(string=styled_html).write_pdf()
 doc = Document()
 docx_styles = style_engine.create_docx_custom_styles(doc)
 
-# 2. Initialize CORRECTED native bullet system
+# 2. Initialize CORRECTED native bullet system + O3 engine
 numbering_engine = NumberingEngine()
+o3_engine = o3_bullet_core_engine.get_o3_engine(doc)
 use_native_bullets = os.getenv('DOCX_USE_NATIVE_BULLETS', 'true').lower() == 'true'
 
-# 3. Build sections with content-first + design token + CORRECTED native bullets approach
+# 3. Build sections with O3 + content-first + design token + CORRECTED native bullets approach
 for section in tailored_resume:
     # Step 1: Add content FIRST (enables style application)
     para = doc.add_paragraph()
@@ -571,8 +665,10 @@ logger.info(f"✅ DOCX generated with CORRECTED native bullets: {use_native_bull
 | **PDF Export** | 100% | 100% | Stable (no changes needed) |
 | **DOCX Style Application** | ~20% | 100% | **Content-first architecture** |
 | **DOCX Spacing Control** | 0% | 100% | **Direct formatting removal** |
-| **✅ DOCX Bullet Formatting** | **Manual only** | **100% native** | **Word native numbering system** |
+| **✅ DOCX Bullet Formatting** | **Manual only** | **100% native + O3** | **Word native numbering + O3 engine** |
 | **✅ BULLET SPACING** | **Wide spacing** | **100% tight spacing** | **✅ CORRECTED hanging indent calculations** |
+| **✅ O3 Bullet Management** | **No state tracking** | **100% document-level state** | **Build-then-reconcile architecture** |
+| **✅ YC Styling Features** | **Generic only** | **100% YC-compliant** | **Specialized YC-Eddie formatting** |
 
 ### **✅ Key Performance Improvements**
 
@@ -707,6 +803,92 @@ para.paragraph_format.space_after = Pt(0)  # OVERRIDES style!
 6. **✅ Consider Native Word Features** before manual implementations
 7. **✅ Implement Feature Flags** for safe production rollout
 8. **✅ VERIFY MEASUREMENTS** in actual Word, not just python-docx
+9. **✅ Use O3 Engine** for advanced bullet management and state tracking
+10. **✅ Implement YC-Specific Features** when targeting YC applications
+
+### **✅ YC-Specific Resume Generation Workflow**
+
+#### **YC Resume Requirements**
+- Specialized formatting guidelines for Y Combinator applications
+- Box-style headers with specific spacing
+- Achievement-focused bullet points with quantifiable metrics
+- Consistent with YC application standards
+
+#### **YC Generation Process**
+```python
+# 1. YC-specific styling application
+yc_styler = yc_eddie_styler.YCEddieStyler()
+resume_data = yc_styler.apply_yc_guidelines(resume_data)
+
+# 2. YC resume generation
+yc_generator = yc_resume_generator.YCResumeGenerator()
+yc_resume = yc_generator.generate_resume(resume_data, job_requirements)
+
+# 3. YC-specific formatting validation
+yc_validator = yc_styler.validate_yc_compliance(yc_resume)
+```
+
+### **✅ Production Deployment Workflow**
+
+#### **Pre-Deployment Validation**
+```python
+# 1. Environment validation
+deployment_status = validate_deployment.validate_environment()
+
+# 2. Dependency verification
+dependency_check = validate_deployment.check_dependencies()
+
+# 3. API connectivity testing
+api_status = validate_deployment.test_api_connections()
+
+# 4. Feature flag verification
+feature_flags = validate_deployment.verify_feature_flags()
+```
+
+#### **Production Startup Process**
+```python
+# 1. Production environment setup
+startup.create_required_directories()
+startup.validate_configuration()
+startup.initialize_logging()
+
+# 2. Start application with production settings
+app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+```
+
+### **✅ Advanced Testing & Validation Workflows**
+
+#### **Comprehensive Testing Framework**
+```python
+# 1. DOCX builder testing
+test_result = tests.test_docx_builder.run_comprehensive_tests()
+
+# 2. Spacing validation
+spacing_tests = tests.docx_spacing.run_all_spacing_tests()
+
+# 3. Cross-format consistency testing
+consistency = tools.cross_format_diagnostics.validate_consistency()
+
+# 4. Performance testing with O3 engine
+o3_performance = utils.staged_testing.test_o3_performance()
+```
+
+#### **Build & Validation Pipeline**
+```python
+# 1. CSS compilation and validation
+tools.build_css.compile_all_css()
+tools.css_safety_validator.validate_css_safety()
+
+# 2. Token generation and orphan detection
+tools.generate_tokens.generate_all_tokens()
+tools.token_orphan_linter.detect_orphaned_tokens()
+
+# 3. Style validation
+tools.style_linter.validate_style_consistency()
+
+# 4. Cross-platform compatibility testing
+rendering.compat.test_cross_platform_compatibility()
+```
 
 ### **For Bug Fixes**
 
