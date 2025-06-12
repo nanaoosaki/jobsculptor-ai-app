@@ -909,8 +909,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
                 logger.error(f"Error saving raw API response: {str(e)}")
 
             logger.info(
-    f"OpenAI API response for {section_name}: {
-        len(response_text)} chars")
+    f"OpenAI API response for {section_name}: {len(response_text)} chars")
             
             # Log token usage
             prompt_tokens = response.usage.prompt_tokens
@@ -1303,8 +1302,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                                 cleaned_content = clean_bullet_points(content)
                                 processed_sections[section] = cleaned_content
                                 logger.info(
-    f"LLM extracted and cleaned {section} section: {
-        len(cleaned_content)} chars")
+    f"LLM extracted and cleaned {section} section: {len(cleaned_content)} chars")
                             else:
                                 # Handle unexpected content types if necessary
                                 logger.warning(f"Unexpected content type for LLM section {section}: {type(content)}. Storing as string.")
@@ -1382,10 +1380,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
             if para.style.name.startswith('Heading') or any(
                 p.bold for p in para.runs):
                 logger.info(
-    f"Potential header found at para {i}: '{text}' (Style: {
-        para.style.name}, Bold: {
-            any(
-                p.bold for p in para.runs)})")
+    f"Potential header found at para {i}: '{text}' (Style: {para.style.name}, Bold: {any(p.bold for p in para.runs)})")
         
         # First pass - try to extract based on formatting
         for para in doc.paragraphs:
@@ -1454,8 +1449,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                 if len(all_content) > 0:
                     sections["experience"] = all_content
                     logger.info(
-    f"Fallback: Added {
-        len(all_content)} chars to experience section")
+    f"Fallback: Added {len(all_content)} chars to experience section")
         
         # Clean bullet points from traditional parsing results
         cleaned_sections = {}
@@ -1464,8 +1458,7 @@ def extract_resume_sections(doc_path: str) -> Dict[str, str]:
                 cleaned_content = clean_bullet_points(content)
                 cleaned_sections[section] = cleaned_content
                 logger.info(
-    f"Traditional parsing: cleaned {section} section: {
-        len(cleaned_content)} chars")
+    f"Traditional parsing: cleaned {section} section: {len(cleaned_content)} chars")
             else:
                 cleaned_sections[section] = ""
         
