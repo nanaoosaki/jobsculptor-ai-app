@@ -1,6 +1,6 @@
-# Resume Tailoring Website Using LLM Technology
+# JobSculptor AI - Resume Tailoring Platform
 
-A web application that helps job seekers optimize their resumes for specific job postings using AI technology.
+A powerful web application that helps job seekers optimize their resumes for specific job postings using advanced AI technology.
 
 ## Features
 
@@ -23,8 +23,8 @@ A web application that helps job seekers optimize their resumes for specific job
 
 1. Clone the repository:
    ```
-   git clone <repository_url>
-   cd manusResume6
+   git clone https://github.com/nanaoosaki/jobsculptor-ai-app.git
+   cd jobsculptor-ai-app
    ```
 
 2. Install dependencies:

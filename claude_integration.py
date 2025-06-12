@@ -488,8 +488,7 @@ Focus on emphasizing elements most relevant to this job opportunity.
             # Get the response content
             response_content = response.content[0].text.strip()
             logger.info(
-    f"Claude API response for {section_name}: {
-        len(response_content)} chars")
+    f"Claude API response for {section_name}: {len(response_content)} chars")
 
             # Parse JSON response
             try:
@@ -637,8 +636,7 @@ class OpenAIClient(LLMClient):
                 
                 # Add candidate profile if available
                 if 'candidate_profile' in analysis and analysis['candidate_profile']:
-                    analysis_prompt += f"\n\nCANDIDATE PROFILE:\n{
-    analysis['candidate_profile']}"
+                    analysis_prompt += f"\n\nCANDIDATE PROFILE:\n{analysis['candidate_profile']}"
                 
                 # Add hard skills if available
                 if 'hard_skills' in analysis and analysis['hard_skills']:
@@ -652,8 +650,7 @@ class OpenAIClient(LLMClient):
                 
                 # Add ideal candidate if available
                 if 'ideal_candidate' in analysis and analysis['ideal_candidate']:
-                    analysis_prompt += f"\n\nIDEAL CANDIDATE:\n{
-    analysis['ideal_candidate']}"
+                    analysis_prompt += f"\n\nIDEAL CANDIDATE:\n{analysis['ideal_candidate']}"
 
             # Build section-specific prompts
             if section_name == "experience":

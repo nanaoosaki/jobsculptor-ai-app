@@ -29,7 +29,7 @@ git push origin main
 ### 3. Create Render Service
 1. Go to [render.com](https://render.com) and sign up/login
 2. Click "New +" → "Web Service"
-3. Connect your GitHub account and select `manus_resume_site` repository
+3. Connect your GitHub account and select `jobsculptor-ai-app` repository
 4. Choose `main` branch
 
 ### 4. Configure Deployment Settings

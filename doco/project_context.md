@@ -4,7 +4,7 @@
 The Resume Tailor is an AI-powered application that helps users customize their resumes for specific job postings. It uses Claude or OpenAI to analyze job listings and tailor resumes to highlight relevant skills and experience. The application provides a professional PDF output with consistent formatting based on YC-Eddie style guidelines.
 
 ## Repository Details
-- **GitHub Repository**: https://github.com/nanaoosaki/manus_resume_site
+- **GitHub Repository**: https://github.com/nanaoosaki/jobsculptor-ai-app
 - **Current Branch**: main
 - **Local Development Path**: D:\AI\manus_resumeTailor
 
