@@ -110,6 +110,33 @@ def allowed_file(filename):
 def index():
     return render_template('index.html')
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring services"""
+    try:
+        # Basic health checks
+        upload_dir_exists = os.path.exists(app.config['UPLOAD_FOLDER'])
+        temp_dir_exists = os.path.exists(TEMP_SESSION_DATA_PATH)
+        
+        status = {
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'upload_dir': upload_dir_exists,
+            'temp_dir': temp_dir_exists,
+            'api_keys': {
+                'claude': bool(app.config.get('CLAUDE_API_KEY')),
+                'openai': bool(app.config.get('OPENAI_API_KEY'))
+            }
+        }
+        
+        return jsonify(status)
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.route('/spacing-comparison')
 def spacing_comparison():
     """Show before/after spacing comparison"""
@@ -1331,9 +1358,14 @@ if __name__ == '__main__':
     if app.secret_key == 'dev-secret-key-please-change':
         print("WARNING: Using default Flask secret key. Set FLASK_SECRET_KEY environment variable for production.")
 
+    # Get port from environment variable (for Render deployment) or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    # Disable debug mode in production
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    
     # Run with HTTP only
-    print("Running with HTTP on http://0.0.0.0:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print(f"Running with HTTP on http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=debug)
     
     # # Check if certificates exist
     # cert_path = 'certs/cert.pem'

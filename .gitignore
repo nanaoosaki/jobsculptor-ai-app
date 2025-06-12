@@ -5,6 +5,12 @@
 .env.test
 .env.production
 
+# Deployment files (keep these tracked)
+!Procfile
+!render.yaml
+!startup.py
+!DEPLOYMENT.md
+
 # Flask files
 __pycache__/
 *.py[cod]

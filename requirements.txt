@@ -27,9 +27,14 @@ unittest2>=1.1.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.5
 
-# WeasyPrint
+# WeasyPrint with dependencies for Linux deployment
 weasyprint>=60.0
 libsass>=0.22.0
+cairocffi>=1.4.0
+cffi>=1.15.0
 
-# Gunicorn
-gunicorn>=21.2.0 
+# Gunicorn for production WSGI server
+gunicorn>=21.2.0
+
+# Additional dependencies for production
+psutil>=5.9.0 

@@ -1,0 +1,71 @@
+services:
+- type: web
+  name: manus-resume-tailor
+  env: python
+  buildCommand: |
+    apt-get update && apt-get install -y \
+      gir1.2-pango-1.0 \
+      libgirepository1.0-dev \
+      libcairo2-dev \
+      pkg-config \
+      python3-dev \
+      libffi-dev \
+      shared-mime-info \
+      libnss3 \
+      libatk-bridge2.0-0 \
+      libdrm2 \
+      libxkbcommon0 \
+      libxcomposite1 \
+      libxdamage1 \
+      libxrandr2 \
+      libgbm1 \
+      libxss1 \
+      libasound2 && \
+    pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    playwright install chromium && \
+    python startup.py
+  startCommand: gunicorn --bind 0.0.0.0:$PORT app:app --workers 2 --timeout 120
+  plan: free
+  runtime: python
+  envVars:
+  - key: PYTHON_VERSION
+    value: 3.12
+  - key: FLASK_SECRET_KEY
+    generateValue: true
+  - key: FLASK_ENV
+    value: production
+  - key: CLAUDE_API_KEY
+    sync: false
+  - key: OPENAI_API_KEY
+    sync: false
+  - key: USE_LLM_RESUME_PARSING
+    value: "true"
+  - key: LLM_RESUME_PARSER_PROVIDER
+    value: auto
+  - key: USE_LLM_JOB_ANALYSIS
+    value: "true"
+  - key: LLM_JOB_ANALYZER_PROVIDER
+    value: auto
+  - key: USE_ENHANCED_SPACING
+    value: "true"
+  autoDeploy: true
+  
+  # File patterns to watch for auto-deploy
+  buildFilter:
+    paths:
+    - requirements.txt
+    - app.py
+    - config.py
+    - startup.py
+    - Procfile
+    - "**/*.py"
+    - templates/**
+    - static/**
+    ignoredPaths:
+    - "*.docx"
+    - "*.pdf"
+    - "logs/**"
+    - "static/uploads/**"
+    - ".venv/**"
+    - "__pycache__/**" 
