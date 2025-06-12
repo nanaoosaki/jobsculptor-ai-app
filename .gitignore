@@ -92,6 +92,12 @@ Thumbs.db
 # Exception: Keep template files if needed
 !*template*.docx
 
+# Downloaded resume files (both PDF and DOCX)
+downloaded*.pdf
+downloaded*.docx
+*downloaded*.pdf
+*downloaded*.docx
+
 # Archive directories (old files and testing)
 archive/
 archived/
